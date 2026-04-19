@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useGymStore } from "../../store/gymStore";
-import { expiringUsers, payments, type Status } from "../../data/mockData";
+import { expiringUsers, payments } from "../../data/mockData";
 import {
   EmptyState,
   GlassCard,
@@ -11,6 +11,7 @@ import {
   Table,
 } from "../../components/ui/primitives";
 import AdminDashboard from "../AdminDashboard";
+import { UserManagement } from "../../components/admin/UserManagement";
 
 export function AdminPortalPages({ page }: { page: string }) {
   const {
@@ -21,9 +22,6 @@ export function AdminPortalPages({ page }: { page: string }) {
     publicPageConfig,
     designThemes,
     currentDesignTheme,
-    addUser,
-    updateUser,
-    deleteUser,
     addPlan,
     updatePlan,
     deletePlan,
@@ -36,15 +34,11 @@ export function AdminPortalPages({ page }: { page: string }) {
     updatePublicPageConfig,
     setDesignTheme,
   } = useGymStore();
-  const [selectedUser, setSelectedUser] = useState<number | null>(
-    users[0]?.id ?? null,
-  );
   const [paymentStatus, setPaymentStatus] = useState<
     "All" | "Paid" | "Pending"
   >("All");
   const [paymentUser, setPaymentUser] = useState("All");
   const [paymentDate, setPaymentDate] = useState("");
-  const [editUser, setEditUser] = useState<number | null>(null);
   const [editPlan, setEditPlan] = useState<string | null>(null);
   const [editOffer, setEditOffer] = useState<number | null>(null);
 
@@ -66,7 +60,6 @@ export function AdminPortalPages({ page }: { page: string }) {
   const [publicConfigForm, setPublicConfigForm] = useState(publicPageConfig);
 
   // Modal states
-  const [userModalOpen, setUserModalOpen] = useState(false);
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [offerModalOpen, setOfferModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -76,7 +69,6 @@ export function AdminPortalPages({ page }: { page: string }) {
   } | null>(null);
 
   // Form states
-  const [userForm, setUserForm] = useState({ name: "", trainer: "", plan: "" });
   const [planForm, setPlanForm] = useState({
     name: "",
     price: "",
@@ -124,175 +116,7 @@ export function AdminPortalPages({ page }: { page: string }) {
 
   if (page === "dashboard") return <AdminDashboard />;
 
-  if (page === "users")
-    return (
-      <GlassCard>
-        <SectionTitle
-          title="User Management"
-          subtitle="Add, edit, delete users, assign plans and trainers."
-        />
-        <GlowButton
-          className="mb-3"
-          onClick={() => {
-            setUserForm({ name: "", trainer: "", plan: "" });
-            setEditUser(null);
-            setUserModalOpen(true);
-          }}
-        >
-          Add User
-        </GlowButton>
-        <Table
-          headers={["Name", "Trainer", "Plan", "Status", "Actions"]}
-          rows={users.map((u) => [
-            u.name,
-            u.trainer,
-            u.plan,
-            <StatusBadge key={`${u.id}s`} status={u.status as Status} />,
-            <div key={u.id} className="flex gap-2">
-              <button
-                className="text-cyan-300"
-                onClick={() => {
-                  setUserForm({
-                    name: u.name,
-                    trainer: u.trainer,
-                    plan: u.plan,
-                  });
-                  setEditUser(u.id);
-                  setUserModalOpen(true);
-                }}
-              >
-                Edit
-              </button>
-              <button
-                className="text-red-300"
-                onClick={() => {
-                  setDeleteTarget({ type: "user", id: u.id });
-                  setDeleteModalOpen(true);
-                }}
-              >
-                Delete
-              </button>
-            </div>,
-          ])}
-        />
-        {selectedUser ? (
-          <GlassCard className="mt-4">
-            <p className="mb-2 text-sm text-slate-300">Full Profile</p>
-            {users
-              .filter((u) => u.id === selectedUser)
-              .map((u) => (
-                <p key={u.id} className="text-sm">
-                  {u.name} | {u.email} | {u.phone} | Goal: {u.fitnessGoal} |
-                  Trainer: {u.trainer}
-                </p>
-              ))}
-          </GlassCard>
-        ) : null}
-
-        {/* User Modal */}
-        <Modal
-          open={userModalOpen}
-          onClose={() => setUserModalOpen(false)}
-          title={editUser ? "Edit User" : "Add User"}
-          footer={
-            <>
-              <GlowButton
-                className="bg-gray-600"
-                onClick={() => setUserModalOpen(false)}
-              >
-                Cancel
-              </GlowButton>
-              <GlowButton
-                onClick={() => {
-                  if (editUser) {
-                    updateUser(editUser, {
-                      name: userForm.name,
-                      trainer: userForm.trainer,
-                      plan: userForm.plan,
-                    });
-                  } else {
-                    addUser({
-                      name: userForm.name,
-                      trainer: userForm.trainer,
-                      plan: userForm.plan,
-                      email: `${userForm.name.toLowerCase().replace(/\s+/g, ".")}@example.com`,
-                      phone: "+1 555 900 000",
-                      status: "Pending",
-                      fitnessGoal: "General fitness",
-                      bodyFat: "N/A",
-                    });
-                  }
-                  setUserModalOpen(false);
-                }}
-              >
-                Apply
-              </GlowButton>
-            </>
-          }
-        >
-          <div className="space-y-4">
-            <input
-              className="w-full rounded bg-white/10 p-2"
-              placeholder="Name"
-              value={userForm.name}
-              onChange={(e) =>
-                setUserForm({ ...userForm, name: e.target.value })
-              }
-            />
-            <input
-              className="w-full rounded bg-white/10 p-2"
-              placeholder="Trainer"
-              value={userForm.trainer}
-              onChange={(e) =>
-                setUserForm({ ...userForm, trainer: e.target.value })
-              }
-            />
-            <input
-              className="w-full rounded bg-white/10 p-2"
-              placeholder="Plan"
-              value={userForm.plan}
-              onChange={(e) =>
-                setUserForm({ ...userForm, plan: e.target.value })
-              }
-            />
-          </div>
-        </Modal>
-
-        {/* Delete Modal for Users */}
-        <Modal
-          open={deleteModalOpen && deleteTarget?.type === "user"}
-          onClose={() => setDeleteModalOpen(false)}
-          title="Confirm Delete"
-          footer={
-            <>
-              <GlowButton
-                className="bg-gray-600"
-                onClick={() => setDeleteModalOpen(false)}
-              >
-                Cancel
-              </GlowButton>
-              <GlowButton
-                onClick={() => {
-                  if (deleteTarget && deleteTarget.type === "user")
-                    deleteUser(deleteTarget.id);
-                  setDeleteModalOpen(false);
-                  setDeleteTarget(null);
-                }}
-              >
-                Apply
-              </GlowButton>
-            </>
-          }
-        >
-          <div className="text-sm text-slate-300">
-            <p>
-              Are you sure you want to delete this user? This action cannot be
-              undone.
-            </p>
-          </div>
-        </Modal>
-      </GlassCard>
-    );
+  if (page === "users") return <UserManagement />;
 
   if (page === "subscriptions")
     return (

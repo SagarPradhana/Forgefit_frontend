@@ -15,20 +15,23 @@ import {
 } from "lucide-react";
 import { CommonButton } from "../components/ui/primitives";
 import { ThemeProvider } from "../components/ui/ThemeProvider";
-
-// NAV ITEMS
-const navItems = [
-  { path: "/", label: "Home", icon: Home },
-  { path: "/about", label: "About", icon: Info },
-  { path: "/services", label: "Services", icon: Briefcase },
-  { path: "/pricing", label: "Pricing", icon: CreditCard },
-  { path: "/testimonials", label: "Testimonials", icon: MessageSquare },
-  { path: "/contact", label: "Contact", icon: Phone },
-];
+import { Footer } from "../components/common/Footer";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../components/ui/LanguageSwitcher";
 
 // ?? ANIMATED NAV COMPONENT
 function AnimatedNav() {
   const location = useLocation();
+  const { t } = useTranslation();
+
+  const navItems = [
+    { path: "/", label: t("home"), icon: Home },
+    { path: "/about", label: t("about"), icon: Info },
+    { path: "/services", label: t("services"), icon: Briefcase },
+    { path: "/pricing", label: t("pricing"), icon: CreditCard },
+    { path: "/testimonials", label: t("testimonials"), icon: MessageSquare },
+    { path: "/contact", label: t("contact"), icon: Phone },
+  ];
 
   return (
     <div className="hidden lg:flex items-center bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-1 relative">
@@ -74,6 +77,16 @@ function MobileMenu({
   onClose: () => void;
 }) {
   const location = useLocation();
+  const { t } = useTranslation();
+
+  const navItems = [
+    { path: "/", label: t("home"), icon: Home },
+    { path: "/about", label: t("about"), icon: Info },
+    { path: "/services", label: t("services"), icon: Briefcase },
+    { path: "/pricing", label: t("pricing"), icon: CreditCard },
+    { path: "/testimonials", label: t("testimonials"), icon: MessageSquare },
+    { path: "/contact", label: t("contact"), icon: Phone },
+  ];
 
   return (
     <>
@@ -114,7 +127,7 @@ function MobileMenu({
           })}
           <Link to="/signin" onClick={onClose}>
             <CommonButton className="w-full h-10 flex items-center justify-center mt-4">
-              Sign In
+              {t("login")}
             </CommonButton>
           </Link>
         </div>
@@ -126,10 +139,11 @@ function MobileMenu({
 // ?? MAIN LAYOUT
 export function PublicLayout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { t } = useTranslation();
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen bg-hero-gradient text-white">
+      <div className="flex flex-col min-h-screen bg-hero-gradient text-white">
         <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/60 backdrop-blur-xl">
           <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between px-4 sm:px-6 py-4">
             <Link to="/" className="flex items-center gap-3 flex-shrink-0">
@@ -146,9 +160,10 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
             <div className="hidden lg:flex items-center gap-3">
               <AnimatedNav />
+              <LanguageSwitcher />
               <Link to="/signin">
                 <CommonButton className="h-10 px-5 flex items-center">
-                  Sign In
+                  {t("login")}
                 </CommonButton>
               </Link>
             </div>
@@ -167,9 +182,11 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           onClose={() => setMobileMenuOpen(false)}
         />
 
-        <main className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 py-6 sm:py-10">
+        <main className="flex-grow mx-auto w-full max-w-[1600px] px-4 sm:px-6 py-6 sm:py-10">
           {children}
         </main>
+
+        <Footer />
       </div>
     </ThemeProvider>
   );

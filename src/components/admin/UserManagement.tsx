@@ -1,0 +1,1219 @@
+import { useState, useMemo } from "react";
+import { useGymStore } from "../../store/gymStore";
+import { GlassCard, SectionTitle } from "../../components/ui/primitives";
+import {
+  Search,
+  Grid,
+  List,
+  Edit2,
+  Trash2,
+  Plus,
+  ChevronLeft,
+} from "lucide-react";
+import { motion } from "framer-motion";
+
+type ViewType = "grid" | "list";
+type UserRole = "admin" | "trainee" | "employee";
+type ModalStep =
+  | "role"
+  | "details"
+  | "personalInfo"
+  | "healthInfo"
+  | "membershipDetails"
+  | "preferences";
+
+interface PersonalInfo {
+  age: string;
+  gender: string;
+  height: string;
+  weight: string;
+  fitnessGoal: string;
+}
+
+interface HealthInfo {
+  medicalConditions: string;
+  injuries: string;
+  allergies: string;
+}
+
+interface MembershipDetails {
+  planType: string;
+  joiningDate: string;
+  trainerAssigned: string;
+}
+
+interface PreferencesInfo {
+  workoutTime: string;
+  notificationPreference: string;
+}
+
+interface UserFormData {
+  name: string;
+  phone: string;
+  email: string;
+  address: string;
+  role: UserRole;
+  profilePhoto?: string;
+  personalInfo?: PersonalInfo;
+  healthInfo?: HealthInfo;
+  membershipDetails?: MembershipDetails;
+  preferences?: PreferencesInfo;
+}
+
+export function UserManagement() {
+  const { users, addUser, updateUser, deleteUser } = useGymStore();
+
+  // State management
+  const [viewType, setViewType] = useState<ViewType>("grid");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<number | null>(null);
+  const [modalStep, setModalStep] = useState<ModalStep>("role");
+  const [photoPreview, setPhotoPreview] = useState<string>("");
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+
+  const [formData, setFormData] = useState<UserFormData>({
+    name: "",
+    phone: "",
+    email: "",
+    address: "",
+    role: "trainee",
+    profilePhoto: "",
+    personalInfo: {
+      age: "",
+      gender: "",
+      height: "",
+      weight: "",
+      fitnessGoal: "General Fitness",
+    },
+    healthInfo: {
+      medicalConditions: "",
+      injuries: "",
+      allergies: "",
+    },
+    membershipDetails: {
+      planType: "",
+      joiningDate: new Date().toISOString().split("T")[0],
+      trainerAssigned: "",
+    },
+    preferences: {
+      workoutTime: "Morning",
+      notificationPreference: "Email",
+    },
+  });
+
+  // Filter and search users
+  const filteredUsers = useMemo(() => {
+    return users.filter(
+      (u) =>
+        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.phone.includes(searchQuery),
+    );
+  }, [users, searchQuery]);
+
+  const handleAddNew = () => {
+    setFormData({
+      name: "",
+      phone: "",
+      email: "",
+      address: "",
+      role: "trainee",
+      profilePhoto: "",
+      personalInfo: {
+        age: "",
+        gender: "",
+        height: "",
+        weight: "",
+        fitnessGoal: "General Fitness",
+      },
+      healthInfo: {
+        medicalConditions: "",
+        injuries: "",
+        allergies: "",
+      },
+      membershipDetails: {
+        planType: "",
+        joiningDate: new Date().toISOString().split("T")[0],
+        trainerAssigned: "",
+      },
+      preferences: {
+        workoutTime: "Morning",
+        notificationPreference: "Email",
+      },
+    });
+    setPhotoPreview("");
+    setEditingUserId(null);
+    setModalStep("role");
+    setModalOpen(true);
+  };
+
+  const handleEdit = (user: any) => {
+    setFormData({
+      name: user.name,
+      phone: user.phone || "",
+      email: user.email,
+      address: user.address || "",
+      role: user.role || "trainee",
+      profilePhoto: user.profilePhoto || "",
+      personalInfo: user.personalInfo || {
+        age: "",
+        gender: "",
+        height: "",
+        weight: "",
+        fitnessGoal: "General Fitness",
+      },
+      healthInfo: user.healthInfo || {
+        medicalConditions: "",
+        injuries: "",
+        allergies: "",
+      },
+      membershipDetails: user.membershipDetails || {
+        planType: "",
+        joiningDate: new Date().toISOString().split("T")[0],
+        trainerAssigned: "",
+      },
+      preferences: user.preferences || {
+        workoutTime: "Morning",
+        notificationPreference: "Email",
+      },
+    });
+    setPhotoPreview(user.profilePhoto || "");
+    setEditingUserId(user.id);
+    setModalStep("details");
+    setModalOpen(true);
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        setPhotoPreview(base64);
+        setFormData({ ...formData, profilePhoto: base64 });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleNextStep = () => {
+    if (modalStep === "role") {
+      if (
+        !formData.name ||
+        !formData.phone ||
+        !formData.email ||
+        !formData.role
+      ) {
+        alert("Please fill in all required fields");
+        return;
+      }
+
+      if (formData.role === "admin") {
+        setModalStep("details");
+      } else {
+        setModalStep("personalInfo");
+      }
+      return;
+    }
+
+    if (modalStep === "details") {
+      if (!formData.address) {
+        alert("Please fill in all required fields");
+        return;
+      }
+      setModalStep("personalInfo");
+      return;
+    }
+
+    if (modalStep === "personalInfo") {
+      setModalStep("healthInfo");
+      return;
+    }
+
+    if (modalStep === "healthInfo") {
+      setModalStep("membershipDetails");
+      return;
+    }
+
+    if (modalStep === "membershipDetails") {
+      setModalStep("preferences");
+      return;
+    }
+  };
+
+  const handleBackStep = () => {
+    if (modalStep === "personalInfo") {
+      setModalStep("details");
+    } else if (modalStep === "healthInfo") {
+      setModalStep("personalInfo");
+    } else if (modalStep === "membershipDetails") {
+      setModalStep("healthInfo");
+    } else if (modalStep === "preferences") {
+      setModalStep("membershipDetails");
+    } else if (modalStep === "details") {
+      setModalStep("role");
+    }
+  };
+
+  const handleSaveUser = () => {
+    if (
+      !formData.name ||
+      !formData.phone ||
+      !formData.email ||
+      !formData.address
+    ) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    if (editingUserId) {
+      updateUser(editingUserId, {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        trainer: formData.address,
+        plan: formData.role,
+        status: "Active",
+        fitnessGoal: formData.personalInfo?.fitnessGoal || "General Fitness",
+        bodyFat: "N/A",
+      });
+    } else {
+      addUser({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        trainer: formData.address,
+        plan: formData.role,
+        status: "Active",
+        fitnessGoal: formData.personalInfo?.fitnessGoal || "General Fitness",
+        bodyFat: "N/A",
+      });
+    }
+
+    setModalOpen(false);
+  };
+
+  const handleDeleteUser = (userId: number) => {
+    deleteUser(userId);
+    setDeleteModalOpen(false);
+    setDeleteTarget(null);
+  };
+
+  const getModalTitle = () => {
+    if (modalStep === "personalInfo") return "Personal Information";
+    if (modalStep === "healthInfo") return "Health Information";
+    if (modalStep === "membershipDetails") return "Membership Details";
+    if (modalStep === "preferences") return "Preferences";
+    if (modalStep === "details")
+      return formData.role === "admin"
+        ? "Personal Details"
+        : "Personal Details";
+    return editingUserId ? "Edit User" : "Add User";
+  };
+
+  const getStepNumber = () => {
+    if (formData.role === "admin") {
+      if (modalStep === "role") return "1/2";
+      if (modalStep === "details") return "2/2";
+      return "";
+    }
+
+    if (modalStep === "role") return "1/5";
+    if (modalStep === "details") return "2/5";
+    if (modalStep === "personalInfo") return "3/5";
+    if (modalStep === "healthInfo") return "4/5";
+    if (modalStep === "membershipDetails") return "5/5";
+    if (modalStep === "preferences") return "6/6";
+    return "";
+  };
+
+  return (
+    <GlassCard>
+      {/* Header */}
+      <div className="mb-6">
+        <SectionTitle
+          title="User Management"
+          subtitle="Manage gym members, trainers, and employees"
+        />
+      </div>
+
+      {/* Top Controls */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
+        {/* Left: View Toggle */}
+        <div className="flex gap-2 bg-white/5 border border-white/10 rounded-lg p-2">
+          <button
+            onClick={() => setViewType("grid")}
+            className={`p-2 rounded transition ${viewType === "grid" ? "bg-indigo-500/30 text-indigo-300" : "text-slate-400 hover:text-white"}`}
+            title="Grid view"
+          >
+            <Grid size={20} />
+          </button>
+          <button
+            onClick={() => setViewType("list")}
+            className={`p-2 rounded transition ${viewType === "list" ? "bg-indigo-500/30 text-indigo-300" : "text-slate-400 hover:text-white"}`}
+            title="List view"
+          >
+            <List size={20} />
+          </button>
+        </div>
+
+        {/* Center: Search */}
+        <div className="flex-1 max-w-md">
+          <div className="relative">
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+              size={18}
+            />
+            <input
+              type="text"
+              placeholder="Search by name, email, or phone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+            />
+          </div>
+        </div>
+
+        {/* Right: Add Button */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleAddNew}
+          className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-orange-400 hover:from-indigo-600 hover:to-orange-500 text-white font-medium px-4 py-2 rounded-lg transition"
+        >
+          <Plus size={18} />
+          Add User
+        </motion.button>
+      </div>
+
+      {/* Grid View */}
+      {viewType === "grid" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          {filteredUsers.length > 0 ? (
+            filteredUsers.map((user) => (
+              <motion.div
+                key={user.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -8 }}
+                className="group relative bg-gradient-to-br from-white/8 to-white/5 border border-white/15 rounded-xl p-5 hover:border-indigo-500/50 transition-all duration-300 overflow-hidden shadow-lg"
+              >
+                {/* Background gradient effect */}
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-orange-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                {/* Content */}
+                <div className="relative z-10">
+                  {/* Header with Avatar */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-orange-400 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-white truncate text-base">
+                          {user.name}
+                        </p>
+                        <p className="text-xs font-semibold text-indigo-300 uppercase tracking-wider">
+                          {user.plan}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Info Section */}
+                  <div className="space-y-2.5 mb-5 pb-5 border-b border-white/10">
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-400 text-xs font-semibold">
+                        EMAIL
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-300 truncate">
+                      {user.email}
+                    </p>
+
+                    <div className="flex items-center gap-2 mt-3">
+                      <span className="text-slate-400 text-xs font-semibold">
+                        PHONE
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-300">{user.phone}</p>
+                  </div>
+
+                  {/* Status Badge */}
+                  <div className="mb-4 flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-400 rounded-full" />
+                    <span className="text-xs text-green-300 font-medium">
+                      {user.status || "Active"}
+                    </span>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => handleEdit(user)}
+                      className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500/30 to-indigo-600/30 hover:from-indigo-500/50 hover:to-indigo-600/50 text-indigo-300 py-2.5 rounded-lg text-sm font-medium transition border border-indigo-400/30"
+                    >
+                      <Edit2 size={16} />
+                      Edit
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        setDeleteTarget(user.id);
+                        setDeleteModalOpen(true);
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-red-500/30 to-red-600/30 hover:from-red-500/50 hover:to-red-600/50 text-red-300 py-2.5 rounded-lg text-sm font-medium transition border border-red-400/30"
+                    >
+                      <Trash2 size={16} />
+                      Delete
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <p className="text-slate-400 text-lg">No users found</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* List View */}
+      {viewType === "list" && (
+        <div className="space-y-2 mb-6">
+          {filteredUsers.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 bg-white/5">
+                    <th className="text-left py-4 px-4 text-slate-300 font-bold">
+                      Name
+                    </th>
+                    <th className="text-left py-4 px-4 text-slate-300 font-bold">
+                      Email
+                    </th>
+                    <th className="text-left py-4 px-4 text-slate-300 font-bold">
+                      Phone
+                    </th>
+                    <th className="text-left py-4 px-4 text-slate-300 font-bold">
+                      Role
+                    </th>
+                    <th className="text-center py-4 px-4 text-slate-300 font-bold">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.map((user) => (
+                    <motion.tr
+                      key={user.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="border-b border-white/5 hover:bg-white/8 transition"
+                    >
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-orange-400 flex items-center justify-center text-white text-xs font-bold">
+                            {user.name.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="font-medium text-white">
+                            {user.name}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-slate-300">{user.email}</td>
+                      <td className="py-4 px-4 text-slate-300">{user.phone}</td>
+                      <td className="py-4 px-4">
+                        <span className="inline-block bg-indigo-500/20 text-indigo-300 px-3 py-1 rounded-full text-xs font-semibold">
+                          {user.plan}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="flex justify-center gap-3">
+                          <button
+                            onClick={() => handleEdit(user)}
+                            className="text-indigo-400 hover:text-indigo-300 hover:scale-125 transition"
+                          >
+                            <Edit2 size={18} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDeleteTarget(user.id);
+                              setDeleteModalOpen(true);
+                            }}
+                            className="text-red-400 hover:text-red-300 hover:scale-125 transition"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-slate-400">
+              No users found
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Enhanced User Modal */}
+      <div
+        className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300 ${modalOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+      >
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: modalOpen ? 1 : 0 }}
+          onClick={() => setModalOpen(false)}
+          className="absolute inset-0 bg-black/60 backdrop-blur-md"
+        />
+
+        {/* Modal Container */}
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{
+            scale: modalOpen ? 1 : 0.9,
+            opacity: modalOpen ? 1 : 0,
+            y: modalOpen ? 0 : 20,
+          }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="relative z-[9999] w-full max-w-2xl mx-4 bg-slate-950/95 border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] backdrop-blur-xl"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-white/15 bg-gradient-to-r from-indigo-600/30 to-orange-400/20 flex-shrink-0">
+            <div>
+              <h2 className="text-2xl font-bold text-white">
+                {getModalTitle()}
+              </h2>
+              <p className="text-xs text-slate-300 mt-1">
+                Step {getStepNumber()}
+              </p>
+            </div>
+            <button
+              onClick={() => setModalOpen(false)}
+              className="p-2 hover:bg-white/10 rounded-lg transition text-slate-300 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="p-6 overflow-y-auto flex-1">
+            {/* Step 1: Role Selection */}
+            {modalStep === "role" && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="space-y-5"
+              >
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-3">
+                    Name <span className="text-orange-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter full name"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-3">
+                    Phone Number <span className="text-orange-400">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="Enter phone number"
+                    value={formData.phone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-3">
+                    Email <span className="text-orange-400">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="Enter email"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-3">
+                    Role <span className="text-orange-400">*</span>
+                  </label>
+                  <select
+                    value={formData.role}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        role: e.target.value as UserRole,
+                      })
+                    }
+                    disabled={editingUserId !== null}
+                    className={`w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition ${
+                      editingUserId ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                  >
+                    <option value="admin" className="bg-slate-900 text-white">
+                      Admin
+                    </option>
+                    <option value="trainee" className="bg-slate-900 text-white">
+                      Trainee
+                    </option>
+                    <option
+                      value="employee"
+                      className="bg-slate-900 text-white"
+                    >
+                      Employee
+                    </option>
+                  </select>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 2: Personal Details */}
+            {modalStep === "details" && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="space-y-5"
+              >
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-3">
+                    Address <span className="text-orange-400">*</span>
+                  </label>
+                  <textarea
+                    placeholder="Enter address"
+                    value={formData.address}
+                    onChange={(e) =>
+                      setFormData({ ...formData, address: e.target.value })
+                    }
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition resize-none"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-3">
+                    Profile Photo
+                  </label>
+                  <div className="flex gap-4">
+                    {photoPreview && (
+                      <img
+                        src={photoPreview}
+                        alt="Preview"
+                        className="w-20 h-20 rounded-lg object-cover border border-white/20 shadow-lg"
+                      />
+                    )}
+                    <label className="flex-1 flex items-center justify-center border-2 border-dashed border-white/30 hover:border-indigo-400 rounded-lg cursor-pointer transition p-4 bg-white/5 hover:bg-white/8">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoChange}
+                        className="hidden"
+                      />
+                      <span className="text-sm text-slate-300 text-center">
+                        Click to upload photo
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 3: Personal Info */}
+            {modalStep === "personalInfo" && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="space-y-5"
+              >
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Age
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Age"
+                      value={formData.personalInfo?.age || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          personalInfo: {
+                            ...formData.personalInfo!,
+                            age: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Gender
+                    </label>
+                    <select
+                      value={formData.personalInfo?.gender || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          personalInfo: {
+                            ...formData.personalInfo!,
+                            gender: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                    >
+                      <option value="" className="bg-slate-900 text-white">
+                        Select Gender
+                      </option>
+                      <option value="Male" className="bg-slate-900 text-white">
+                        Male
+                      </option>
+                      <option
+                        value="Female"
+                        className="bg-slate-900 text-white"
+                      >
+                        Female
+                      </option>
+                      <option value="Other" className="bg-slate-900 text-white">
+                        Other
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Height (cm)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Height"
+                      value={formData.personalInfo?.height || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          personalInfo: {
+                            ...formData.personalInfo!,
+                            height: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Weight (kg)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Weight"
+                      value={formData.personalInfo?.weight || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          personalInfo: {
+                            ...formData.personalInfo!,
+                            weight: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">
+                    Fitness Goal
+                  </label>
+                  <select
+                    value={formData.personalInfo?.fitnessGoal || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        personalInfo: {
+                          ...formData.personalInfo!,
+                          fitnessGoal: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                  >
+                    <option
+                      value="Fat Loss"
+                      className="bg-slate-900 text-white"
+                    >
+                      Fat Loss
+                    </option>
+                    <option
+                      value="Muscle Gain"
+                      className="bg-slate-900 text-white"
+                    >
+                      Muscle Gain
+                    </option>
+                    <option
+                      value="General Fitness"
+                      className="bg-slate-900 text-white"
+                    >
+                      General Fitness
+                    </option>
+                  </select>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 4: Health Info */}
+            {modalStep === "healthInfo" && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="space-y-5"
+              >
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">
+                    Medical Conditions (Optional)
+                  </label>
+                  <textarea
+                    placeholder="e.g., Diabetes, Hypertension"
+                    value={formData.healthInfo?.medicalConditions || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        healthInfo: {
+                          ...formData.healthInfo!,
+                          medicalConditions: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition resize-none"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">
+                    Injuries (Optional)
+                  </label>
+                  <textarea
+                    placeholder="e.g., Knee pain, Back injury"
+                    value={formData.healthInfo?.injuries || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        healthInfo: {
+                          ...formData.healthInfo!,
+                          injuries: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition resize-none"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">
+                    Allergies (Optional)
+                  </label>
+                  <textarea
+                    placeholder="e.g., Peanuts, Latex"
+                    value={formData.healthInfo?.allergies || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        healthInfo: {
+                          ...formData.healthInfo!,
+                          allergies: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition resize-none"
+                    rows={3}
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 5: Membership Details */}
+            {modalStep === "membershipDetails" && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="space-y-5"
+              >
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">
+                    Plan Type
+                  </label>
+                  <select
+                    value={formData.membershipDetails?.planType || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        membershipDetails: {
+                          ...formData.membershipDetails!,
+                          planType: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                  >
+                    <option value="" className="bg-slate-900 text-white">
+                      Select Plan
+                    </option>
+                    <option value="Starter" className="bg-slate-900 text-white">
+                      Starter
+                    </option>
+                    <option
+                      value="Performance"
+                      className="bg-slate-900 text-white"
+                    >
+                      Performance
+                    </option>
+                    <option value="Elite" className="bg-slate-900 text-white">
+                      Elite
+                    </option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">
+                    Joining Date
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.membershipDetails?.joiningDate || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        membershipDetails: {
+                          ...formData.membershipDetails!,
+                          joiningDate: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">
+                    Trainer Assigned
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., John Trainer"
+                    value={formData.membershipDetails?.trainerAssigned || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        membershipDetails: {
+                          ...formData.membershipDetails!,
+                          trainerAssigned: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 6: Preferences */}
+            {modalStep === "preferences" && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="space-y-5"
+              >
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">
+                    Workout Time
+                  </label>
+                  <select
+                    value={formData.preferences?.workoutTime || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        preferences: {
+                          ...formData.preferences!,
+                          workoutTime: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                  >
+                    <option value="Morning" className="bg-slate-900 text-white">
+                      Morning
+                    </option>
+                    <option value="Evening" className="bg-slate-900 text-white">
+                      Evening
+                    </option>
+                    <option value="Both" className="bg-slate-900 text-white">
+                      Both
+                    </option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">
+                    Notification Preference
+                  </label>
+                  <select
+                    value={formData.preferences?.notificationPreference || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        preferences: {
+                          ...formData.preferences!,
+                          notificationPreference: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                  >
+                    <option value="Email" className="bg-slate-900 text-white">
+                      Email
+                    </option>
+                    <option value="SMS" className="bg-slate-900 text-white">
+                      SMS
+                    </option>
+                    <option value="Push" className="bg-slate-900 text-white">
+                      Push Notification
+                    </option>
+                    <option value="None" className="bg-slate-900 text-white">
+                      None
+                    </option>
+                  </select>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between gap-3 p-6 border-t border-white/15 bg-white/5 flex-shrink-0">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setModalOpen(false)}
+              className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition"
+            >
+              Cancel
+            </motion.button>
+
+            {modalStep !== "role" && modalStep !== "details" && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleBackStep}
+                className="px-6 py-2.5 bg-slate-600 hover:bg-slate-500 text-white font-medium rounded-lg transition flex items-center gap-2"
+              >
+                <ChevronLeft size={18} />
+                Back
+              </motion.button>
+            )}
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={
+                modalStep === "preferences" ||
+                (modalStep === "details" && formData.role === "admin")
+                  ? handleSaveUser
+                  : handleNextStep
+              }
+              className="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-orange-400 hover:from-indigo-600 hover:to-orange-500 text-white font-medium rounded-lg transition"
+            >
+              {modalStep === "preferences"
+                ? editingUserId
+                  ? "Update User"
+                  : "Create User"
+                : modalStep === "details" && formData.role === "admin"
+                  ? editingUserId
+                    ? "Update User"
+                    : "Create User"
+                  : "Next"}
+            </motion.button>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Delete Modal */}
+      {deleteModalOpen && deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            onClick={() => setDeleteModalOpen(false)}
+            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+          />
+
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="relative z-10 w-full max-w-md mx-4 bg-gradient-to-br from-slate-900/98 to-slate-800/98 border border-white/20 rounded-2xl shadow-2xl p-6"
+          >
+            <h3 className="text-xl font-bold text-white mb-2">
+              Confirm Delete
+            </h3>
+            <p className="text-slate-300 mb-6">
+              Are you sure you want to delete this user? This action cannot be
+              undone.
+            </p>
+
+            <div className="flex gap-3 justify-end">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setDeleteModalOpen(false)}
+                className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition"
+              >
+                Cancel
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => deleteTarget && handleDeleteUser(deleteTarget)}
+                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition"
+              >
+                Delete
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </GlassCard>
+  );
+}
