@@ -343,6 +343,7 @@ export function Sidebar({
       ? [
         { name: "dashboard", icon: LayoutDashboard, label: t("dashboard") },
         { name: "users", icon: Users, label: t("users") },
+        { name: "attendance", icon: Bell, label: t("attendance") },
         { name: "subscriptions", icon: CreditCard, label: t("subscription") },
         { name: "offers", icon: Box, label: t("offers") },
         { name: "payments", icon: CreditCard, label: t("payments") },

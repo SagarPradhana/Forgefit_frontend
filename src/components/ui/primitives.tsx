@@ -28,7 +28,7 @@ export function GlowButton({
   children,
   className,
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+}: import("framer-motion").HTMLMotionProps<"button">) {
   return (
     <motion.button
       whileHover={{ scale: 1.04 }}
@@ -49,7 +49,7 @@ export function CommonButton({
   className,
   variant = "primary",
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+}: import("framer-motion").HTMLMotionProps<"button"> & {
   variant?: "primary" | "secondary" | "ghost" | "danger";
 }) {
   const styles = {
@@ -111,20 +111,35 @@ export function Modal({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
-      <GlassCard className="w-full max-w-md border-indigo-300/20 bg-slate-900/70">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-6 py-4">
+          <h3 className="text-xl font-bold text-white">{title}</h3>
           <button
             onClick={onClose}
-            className="rounded-full p-1 text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
+            className="rounded-full p-2 text-slate-400 transition hover:bg-white/10 hover:text-white"
           >
             <X size={20} />
           </button>
         </div>
-        <div className="text-slate-200">{children}</div>
-        {footer && <div className="mt-6 flex justify-end gap-2">{footer}</div>}
-      </GlassCard>
+
+        {/* Body */}
+        <div className="max-h-[70vh] overflow-y-auto px-6 py-5 text-slate-200">
+          {children}
+        </div>
+
+        {/* Footer */}
+        {footer && (
+          <div className="flex justify-end gap-3 border-t border-white/10 bg-white/5 px-6 py-4">
+            {footer}
+          </div>
+        )}
+      </motion.div>
     </div>
   );
 }

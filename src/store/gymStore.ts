@@ -16,9 +16,13 @@ type PlanEntity = {
 
 type OfferEntity = {
   id: number;
-  code: string;
-  discount: string;
-  validity: string;
+  name?: string;
+  description?: string;
+  validFrom?: string;
+  validTo?: string;
+  code?: string;
+  discount?: string;
+  validity?: string;
 };
 
 type FeatureFlags = Record<number, { showProducts: boolean; allowUpgrade: boolean; showOffers: boolean }>;

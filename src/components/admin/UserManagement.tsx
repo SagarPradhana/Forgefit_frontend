@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { GlassCard, SectionTitle, LoadingSpinner } from "../../components/ui/primitives";
+import { GlassCard, SectionTitle, LoadingSpinner, CommonButton } from "../../components/ui/primitives";
 import {
   Search,
   Grid,
@@ -10,11 +10,16 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  ToggleLeft,
+  ToggleRight,
+  Calendar,
+  UserCheck,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useGet, useMutation } from "../../hooks/useApi";
 import { API_ENDPOINTS } from "../../utils/url";
 import { toast } from "../../store/toastStore";
+import { Modal, Table as PrimitiveTable } from "../../components/ui/primitives";
 
 type ViewType = "grid" | "list";
 type UserRole = "admin" | "trainee" | "employee";
@@ -136,6 +141,10 @@ export function UserManagement() {
   const [modalStep, setModalStep] = useState<ModalStep>("role");
   const [photoPreview, setPhotoPreview] = useState<string>("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  // Attendance Modal State
+  const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
+  const [selectedUserForAttendance, setSelectedUserForAttendance] = useState<any>(null);
 
   // Infinite Scroll Observer
   const observer = useRef<IntersectionObserver | null>(null);
@@ -499,14 +508,47 @@ export function UserManagement() {
                     </div>
                   </div>
 
-                  <div className="space-y-2.5 mb-5 pb-5 border-b border-white/10">
-                    <p className="text-sm text-slate-300 truncate">{user.email}</p>
-                    <p className="text-sm text-slate-300">{user.mobile || user.phone}</p>
+                  <div className="space-y-2.5 mb-5 pb-5 border-b border-white/10 uppercase tracking-widest text-[10px] font-bold">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Email</span>
+                      <span className="text-white truncate max-w-[150px]">{user.email}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Mobile</span>
+                      <span className="text-white">{user.mobile || user.phone}</span>
+                    </div>
                   </div>
 
                   <div className="flex gap-2">
-                    <button onClick={() => handleEdit(user)} className="flex-1 bg-indigo-500/30 text-indigo-300 py-2 rounded-lg text-sm border border-indigo-400/30">Edit</button>
-                    <button className="flex-1 bg-red-500/30 text-red-300 py-2 rounded-lg text-sm border border-red-400/30">Delete</button>
+                    <button
+                      onClick={() => handleEdit(user)}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-indigo-500/20 text-indigo-300 py-2 rounded-lg text-xs font-bold border border-indigo-500/30 hover:bg-indigo-500/30 transition"
+                      title="Edit User"
+                    >
+                      <Edit2 size={14} />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedUserForAttendance(user);
+                        setAttendanceModalOpen(true);
+                      }}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-500/20 text-emerald-300 py-2 rounded-lg text-xs font-bold border border-emerald-500/30 hover:bg-emerald-500/30 transition"
+                      title="View Attendance"
+                    >
+                      <Calendar size={14} />
+                      Log
+                    </button>
+                    <button
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold border transition ${user.is_active !== false
+                          ? "bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30"
+                          : "bg-slate-500/20 text-slate-300 border-slate-500/30 hover:bg-slate-500/30"
+                        }`}
+                      title={user.is_active !== false ? "Deactivate User" : "Activate User"}
+                    >
+                      {user.is_active !== false ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+                      {user.is_active !== false ? "Active" : "Inactive"}
+                    </button>
                   </div>
                 </div>
               </motion.div>
@@ -551,10 +593,41 @@ export function UserManagement() {
                         </span>
                       </td>
                       <td className="py-4 px-4">
-                         <div className="flex justify-center gap-3">
-                            <button onClick={() => handleEdit(user)} className="text-indigo-400"><Edit2 size={18}/></button>
-                            <button className="text-red-400"><Trash2 size={18}/></button>
-                         </div>
+                        <div className="flex justify-center gap-3">
+                          <button
+                            onClick={() => handleEdit(user)}
+                            className="text-indigo-400 hover:text-indigo-300 transition-transform hover:scale-110"
+                            title="Edit"
+                          >
+                            <Edit2 size={18} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedUserForAttendance(user);
+                              setAttendanceModalOpen(true);
+                            }}
+                            className="text-emerald-400 hover:text-emerald-300 transition-transform hover:scale-110"
+                            title="Attendance"
+                          >
+                            <Calendar size={18} />
+                          </button>
+                          <button
+                            className={`${user.is_active !== false ? "text-amber-400" : "text-slate-500"} hover:scale-110 transition-transform`}
+                            title={user.is_active !== false ? "Deactivate" : "Activate"}
+                          >
+                            {user.is_active !== false ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDeleteTarget(user.id);
+                              setDeleteModalOpen(true);
+                            }}
+                            className="text-red-400 hover:text-red-300 transition-transform hover:scale-110"
+                            title="Delete"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -565,14 +638,14 @@ export function UserManagement() {
               <div className="flex items-center justify-between p-4 border-t border-white/10">
                 <p className="text-sm text-slate-400">Page {page}</p>
                 <div className="flex gap-2">
-                  <button 
+                  <button
                     disabled={page === 1}
                     onClick={() => setPage(p => p - 1)}
                     className="p-2 rounded bg-white/10 disabled:opacity-50"
                   >
                     <ChevronLeft size={20} />
                   </button>
-                  <button 
+                  <button
                     disabled={!hasMore}
                     onClick={() => setPage(p => p + 1)}
                     className="p-2 rounded bg-white/10 disabled:opacity-50"
@@ -696,9 +769,8 @@ export function UserManagement() {
                       })
                     }
                     disabled={editingUserId !== null}
-                    className={`w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition ${
-                      editingUserId ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
+                    className={`w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition ${editingUserId ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
                   >
                     {roles.map((r: any) => {
                       const roleName = typeof r === 'string' ? r : r.role;
@@ -1169,7 +1241,7 @@ export function UserManagement() {
               whileTap={{ scale: 0.95 }}
               onClick={
                 modalStep === "preferences" ||
-                (modalStep === "details" && formData.role === "admin")
+                  (modalStep === "details" && formData.role === "admin")
                   ? handleSaveUser
                   : handleNextStep
               }
@@ -1233,6 +1305,47 @@ export function UserManagement() {
           </motion.div>
         </div>
       )}
+
+      {/* Attendance History Modal */}
+      <Modal
+        open={attendanceModalOpen}
+        onClose={() => setAttendanceModalOpen(false)}
+        title={`Attendance History - ${selectedUserForAttendance?.name}`}
+        footer={
+          <CommonButton onClick={() => setAttendanceModalOpen(false)}>
+            Close
+          </CommonButton>
+        }
+      >
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+              <p className="text-xs text-slate-400 uppercase font-bold mb-1">Total Days</p>
+              <p className="text-2xl font-bold text-white">24</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+              <p className="text-xs text-slate-400 uppercase font-bold mb-1">This Month</p>
+              <p className="text-2xl font-bold text-emerald-400">18</p>
+            </div>
+          </div>
+
+          <PrimitiveTable
+            headers={["Date", "Check In", "Check Out", "Status"]}
+            rows={[
+              ["2026-04-20", "07:15 AM", "08:42 AM", <span key="s1" className="text-emerald-400">Present</span>],
+              ["2026-04-18", "07:30 AM", "09:00 AM", <span key="s2" className="text-emerald-400">Present</span>],
+              ["2026-04-17", "08:15 AM", "09:45 AM", <span key="s3" className="text-amber-400">Late</span>],
+              ["2026-04-15", "--", "--", <span key="s4" className="text-red-400">Absent</span>],
+            ]}
+          />
+
+          <div className="flex justify-center pt-2">
+            <button className="text-indigo-400 hover:text-indigo-300 text-sm font-semibold flex items-center gap-2">
+              <Plus size={14} /> Add Manuel Entry
+            </button>
+          </div>
+        </div>
+      </Modal>
     </GlassCard>
   );
 }

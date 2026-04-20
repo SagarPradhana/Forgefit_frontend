@@ -111,8 +111,24 @@ export const userManagementSeed = [
 ];
 
 export const offersSeed = [
-  { id: 1, code: 'SPRING20', discount: '20%', validity: '2026-05-30' },
-  { id: 2, code: 'FIT10', discount: '10%', validity: '2026-12-31' },
+  { 
+    id: 1, 
+    name: 'Spring Launch', 
+    description: '20% off on all seasonal memberships', 
+    validFrom: '2026-03-01', 
+    validTo: '2026-05-30',
+    code: 'SPRING20',
+    discount: '20%'
+  },
+  { 
+    id: 2, 
+    name: 'Fit Starter', 
+    description: 'Get 10% discount on your first monthly plan', 
+    validFrom: '2026-01-01', 
+    validTo: '2026-12-31',
+    code: 'FIT10',
+    discount: '10%'
+  },
 ];
 
 export const services = [
