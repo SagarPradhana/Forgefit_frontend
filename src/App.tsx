@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
 import DashboardLayout from "./pages/DashboardLayout";
 import { NotFound404, LoadingSpinner } from "./components/ui/primitives";
+import { ToastContainer } from "./components/ui/ToastContainer";
 
 const HomePage = lazy(() =>
   import("./pages/public/HomePage").then((m) => ({ default: m.HomePage })),
@@ -79,8 +80,10 @@ function RoleRoute({ role }: { role: "admin" | "user" }) {
 
 export default function App() {
   return (
-    <Suspense fallback={<LoadingSpinner />}>
-      <Routes>
+    <>
+      <ToastContainer />
+      <Suspense fallback={<LoadingSpinner />}>
+        <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/services" element={<ServicesPage />} />
@@ -94,6 +97,7 @@ export default function App() {
         <Route path="/user/:page" element={<RoleRoute role="user" />} />
         <Route path="*" element={<NotFound404 />} />
       </Routes>
-    </Suspense>
+      </Suspense>
+    </>
   );
 }

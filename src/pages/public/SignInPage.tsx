@@ -7,7 +7,9 @@ import {
 } from "../../components/ui/primitives";
 import { PublicLayout } from "../../layouts/PublicLayout";
 import { useAuthStore } from "../../store/authStore";
-import { Dumbbell } from "lucide-react";
+import { Dumbbell, Loader2, Eye, EyeOff } from "lucide-react";
+import { useMutation } from "../../hooks/useApi";
+import { API_ENDPOINTS } from "../../utils/url";
 
 export function SignInPage() {
   const navigate = useNavigate();
@@ -15,10 +17,35 @@ export function SignInPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleDemoSignIn = (role: "admin" | "user") => {
-    login(role);
-    navigate(role === "admin" ? "/admin/dashboard" : "/user/dashboard");
+  const { mutate: performLogin, loading } = useMutation("post", {
+    onSuccess: (data) => {
+      const role = data.role === "admin" ? "admin" : "user";
+      login(role, data.access_token, data.refresh_token);
+      navigate(`/${role}/dashboard`);
+    },
+  });
+
+  const handleRealSignIn = async () => {
+    if (!email || !password) return;
+
+    // Detect login type
+    let login_type: "email" | "phone" | "username" = "username";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\+?[\d\s-]{10,}$/;
+
+    if (emailRegex.test(email)) {
+      login_type = "email";
+    } else if (phoneRegex.test(email)) {
+      login_type = "phone";
+    }
+
+    await performLogin(API_ENDPOINTS.AUTH.LOGIN, {
+      login_value: email,
+      password: password,
+      login_type: login_type,
+    });
   };
 
   return (
@@ -79,12 +106,22 @@ export function SignInPage() {
                 onChange={(e: any) => setEmail(e)}
               />
 
-              <InputField
-                placeholder="Password"
-                type="password"
-                value={password}
-                onChange={(e: any) => setPassword(e)}
-              />
+              <div className="relative">
+                <InputField
+                  placeholder="Password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e: any) => setPassword(e)}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
 
               {/* FORGOT */}
               <div className="flex justify-end">
@@ -98,41 +135,15 @@ export function SignInPage() {
               {/* BUTTON */}
               <CommonButton
                 className="w-full h-11 text-base"
-                onClick={() => {
-                  login("user");
-                  navigate("/user/dashboard");
-                }}
+                disabled={loading}
+                onClick={handleRealSignIn}
               >
-                Sign In
+                {loading ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  "Sign In"
+                )}
               </CommonButton>
-
-              {/* DIVIDER */}
-              <div className="relative py-4">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/10"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-slate-900/50 text-slate-400">
-                    Or try demo
-                  </span>
-                </div>
-              </div>
-
-              {/* DEMO BUTTONS */}
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => handleDemoSignIn("user")}
-                  className="px-4 py-2.5 rounded-lg bg-indigo-500/20 border border-indigo-400/50 text-indigo-300 text-sm font-semibold hover:bg-indigo-500/30 transition"
-                >
-                  👤 Demo User
-                </button>
-                <button
-                  onClick={() => handleDemoSignIn("admin")}
-                  className="px-4 py-2.5 rounded-lg bg-orange-500/20 border border-orange-400/50 text-orange-300 text-sm font-semibold hover:bg-orange-500/30 transition"
-                >
-                  👨‍💼 Demo Admin
-                </button>
-              </div>
             </div>
           </CommonCard>
         </div>
