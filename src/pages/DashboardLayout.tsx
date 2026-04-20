@@ -566,7 +566,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className={`rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${currentTheme.cardBg} p-3 lg:p-4 ${currentTheme.shadowColor} backdrop-blur-xl`}
+            className={`relative z-[60] rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${currentTheme.cardBg} p-3 lg:p-4 ${currentTheme.shadowColor} backdrop-blur-xl`}
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">

@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import clsx from "clsx";
 import { useEffect, useState, type ReactNode } from "react";
 import { ChevronDown, Search, X } from "lucide-react";
+import { createPortal } from "react-dom";
 
 export function GlassCard({
   className,
@@ -110,12 +111,13 @@ export function Modal({
   footer?: ReactNode;
 }) {
   if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md">
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-start justify-center bg-slate-950/80 p-4 pb-10 pt-10 md:pt-20 backdrop-blur-md overflow-y-auto custom-scrollbar">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        initial={{ opacity: 0, scale: 0.95, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl"
+        className="w-full max-w-lg rounded-2xl border border-white/10 bg-slate-900 shadow-2xl relative"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-6 py-4">
@@ -129,7 +131,7 @@ export function Modal({
         </div>
 
         {/* Body */}
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-5 text-slate-200">
+        <div className="max-h-[70vh] overflow-y-auto px-6 py-5 text-slate-200 custom-scrollbar">
           {children}
         </div>
 
@@ -140,7 +142,8 @@ export function Modal({
           </div>
         )}
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

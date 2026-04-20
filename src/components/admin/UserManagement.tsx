@@ -14,8 +14,16 @@ import {
   ToggleRight,
   Calendar,
   UserCheck,
+  FileText,
+  Upload,
+  File,
+  HardDrive,
+  Mail,
+  Phone,
+  Users
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { createPortal } from "react-dom";
 import { useGet, useMutation } from "../../hooks/useApi";
 import { API_ENDPOINTS } from "../../utils/url";
 import { toast } from "../../store/toastStore";
@@ -141,6 +149,11 @@ export function UserManagement() {
   const [modalStep, setModalStep] = useState<ModalStep>("role");
   const [photoPreview, setPhotoPreview] = useState<string>("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  // Document Modal State
+  const [docModalOpen, setDocModalOpen] = useState(false);
+  const [selectedUserForDocs, setSelectedUserForDocs] = useState<any>(null);
+  const [docUploading, setDocUploading] = useState<string | null>(null); // 'profile' | 'id' | 'others'
 
   // Attendance Modal State
   const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
@@ -284,30 +297,25 @@ export function UserManagement() {
 
   const handleNextStep = () => {
     if (modalStep === "role") {
-      if (
-        !formData.name ||
-        !formData.phone ||
-        !formData.email ||
-        !formData.role
-      ) {
-        alert("Please fill in all required fields");
+      if (!formData.name || !formData.phone || !formData.email || !formData.role) {
+        toast.error("Please fill in all required fields");
         return;
       }
-
-      if (formData.role === "admin") {
-        setModalStep("details");
-      } else {
-        setModalStep("personalInfo");
-      }
+      setModalStep("details");
       return;
     }
 
     if (modalStep === "details") {
       if (!formData.address) {
-        alert("Please fill in all required fields");
+        toast.error("Please provide an address");
         return;
       }
-      setModalStep("personalInfo");
+      // Admins finish after details section
+      if (formData.role === "admin") {
+        handleSaveUser();
+      } else {
+        setModalStep("personalInfo");
+      }
       return;
     }
 
@@ -328,16 +336,22 @@ export function UserManagement() {
   };
 
   const handleBackStep = () => {
-    if (modalStep === "personalInfo") {
-      setModalStep("details");
-    } else if (modalStep === "healthInfo") {
-      setModalStep("personalInfo");
-    } else if (modalStep === "membershipDetails") {
-      setModalStep("healthInfo");
-    } else if (modalStep === "preferences") {
-      setModalStep("membershipDetails");
-    } else if (modalStep === "details") {
-      setModalStep("role");
+    switch (modalStep) {
+      case "details":
+        setModalStep("role");
+        break;
+      case "personalInfo":
+        setModalStep("details");
+        break;
+      case "healthInfo":
+        setModalStep("personalInfo");
+        break;
+      case "membershipDetails":
+        setModalStep("healthInfo");
+        break;
+      case "preferences":
+        setModalStep("membershipDetails");
+        break;
     }
   };
 
@@ -403,19 +417,16 @@ export function UserManagement() {
   };
 
   const getStepNumber = () => {
-    if (formData.role === "admin") {
-      if (modalStep === "role") return "1/2";
-      if (modalStep === "details") return "2/2";
-      return "";
+    const totalSteps = formData.role === "admin" ? "2" : "6";
+    switch (modalStep) {
+      case "role": return `1/${totalSteps}`;
+      case "details": return `2/${totalSteps}`;
+      case "personalInfo": return `3/${totalSteps}`;
+      case "healthInfo": return `4/${totalSteps}`;
+      case "membershipDetails": return `5/${totalSteps}`;
+      case "preferences": return `6/${totalSteps}`;
+      default: return `1/${totalSteps}`;
     }
-
-    if (modalStep === "role") return "1/5";
-    if (modalStep === "details") return "2/5";
-    if (modalStep === "personalInfo") return "3/5";
-    if (modalStep === "healthInfo") return "4/5";
-    if (modalStep === "membershipDetails") return "5/5";
-    if (modalStep === "preferences") return "6/6";
-    return "";
   };
 
   return (
@@ -479,88 +490,118 @@ export function UserManagement() {
 
       {/* Grid View */}
       {viewType === "grid" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-8">
           {filteredUsers.length > 0 ? (
-            filteredUsers.map((user, index) => (
+            filteredUsers.map((user: any, index) => (
               <motion.div
                 key={user.id || index}
-                ref={index === filteredUsers.length - 1 ? lastUserElementRef : null}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -8 }}
-                className="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-white/5 p-6 backdrop-blur-xl shadow-xl dark:shadow-2xl transition-all hover:shadow-2xl dark:hover:shadow-indigo-500/10"
+                transition={{ delay: index * 0.05 }}
+                className="group relative"
+                ref={index === filteredUsers.length - 1 ? lastUserElementRef : null}
               >
-                {/* ... existing card content ... */}
-                <div className="relative z-10">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-orange-400 flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                        {user.name.charAt(0).toUpperCase()}
+                <div className="relative h-full flex flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-slate-900/40 backdrop-blur-xl p-6 transition-all duration-500 hover:-translate-y-2 hover:border-indigo-500/40 hover:bg-slate-900/60 hover:shadow-[0_20px_50px_rgba(79,70,229,0.2)]">
+                  {/* Glass Highlight */}
+                  <div className="absolute -right-20 -top-20 h-40 w-40 rounded-full bg-indigo-500/10 blur-[80px]" />
+
+                  {/* Header: Identity */}
+                  <div className="relative mb-6 flex items-center gap-4">
+                    <div className="relative flex-shrink-0">
+                      <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-emerald-400 p-[2px] shadow-lg">
+                        <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-slate-950 font-black text-xl text-white uppercase tracking-tighter">
+                          {user.name.charAt(0)}
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-white truncate text-base">
-                          {user.name}
-                        </p>
-                        <p className="text-xs font-semibold text-indigo-300 uppercase tracking-wider">
+                      <div className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-[3px] border-slate-900 ${user.is_active !== false ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-slate-500'}`} />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="truncate text-lg font-black tracking-tight text-white uppercase group-hover:text-indigo-300 transition-colors">
+                        {user.name}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-md border border-indigo-500/20">
                           {user.role || 'Member'}
-                        </p>
+                        </span>
                       </div>
                     </div>
+                    <div className="ml-auto">
+                      <button
+                        onClick={() => {
+                          setSelectedUserForDocs(user);
+                          setDocModalOpen(true);
+                        }}
+                        className="p-2.5 bg-white/5 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-300 rounded-xl transition border border-white/10 shadow-lg"
+                        title="Document Vault"
+                      >
+                        <FileText size={18} />
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="space-y-2.5 mb-5 pb-5 border-b border-white/10 uppercase tracking-widest text-[10px] font-bold">
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-400">Email</span>
-                      <span className="text-white truncate max-w-[150px]">{user.email}</span>
+                  {/* Body: Metadata Icons */}
+                  <div className="flex-1 space-y-3 mb-6">
+                    <div className="flex items-center gap-3 text-slate-400 group-hover:text-slate-300 transition-colors">
+                      <div className="h-9 w-9 rounded-xl bg-white/5 flex items-center justify-center border border-white/5">
+                        <Mail size={14} className="text-indigo-400" />
+                      </div>
+                      <span className="text-xs font-medium truncate">{user.email}</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-400">Mobile</span>
-                      <span className="text-white">{user.mobile || user.phone}</span>
+                    <div className="flex items-center gap-3 text-slate-400 group-hover:text-slate-300 transition-colors">
+                      <div className="h-9 w-9 rounded-xl bg-white/5 flex items-center justify-center border border-white/5">
+                        <Phone size={14} className="text-emerald-400" />
+                      </div>
+                      <span className="text-xs font-medium tracking-wider">{user.mobile || user.phone || 'N/A'}</span>
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEdit(user)}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-indigo-500/20 text-indigo-300 py-2 rounded-lg text-xs font-bold border border-indigo-500/30 hover:bg-indigo-500/30 transition"
-                      title="Edit User"
-                    >
-                      <Edit2 size={14} />
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedUserForAttendance(user);
-                        setAttendanceModalOpen(true);
-                      }}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-500/20 text-emerald-300 py-2 rounded-lg text-xs font-bold border border-emerald-500/30 hover:bg-emerald-500/30 transition"
-                      title="View Attendance"
-                    >
-                      <Calendar size={14} />
-                      Log
-                    </button>
-                    <button
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold border transition ${user.is_active !== false
-                          ? "bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30"
-                          : "bg-slate-500/20 text-slate-300 border-slate-500/30 hover:bg-slate-500/30"
-                        }`}
-                      title={user.is_active !== false ? "Deactivate User" : "Activate User"}
-                    >
-                      {user.is_active !== false ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
-                      {user.is_active !== false ? "Active" : "Inactive"}
-                    </button>
+                  {/* Footer: Multi-Action Zone */}
+                  <div className="pt-5 border-t border-white/5 flex items-center justify-between gap-3">
+                    <div className="flex gap-2 flex-1">
+                      <button
+                        onClick={() => handleEdit(user)}
+                        className="flex-1 h-10 flex items-center justify-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 rounded-xl transition border border-indigo-500/20 text-[10px] font-black uppercase tracking-widest"
+                      >
+                        <Edit2 size={12} /> Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedUserForAttendance(user);
+                          setAttendanceModalOpen(true);
+                        }}
+                        className="flex-1 h-10 flex items-center justify-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 rounded-xl transition border border-emerald-500/20 text-[10px] font-black uppercase tracking-widest"
+                      >
+                        <Calendar size={12} /> Log
+                      </button>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setDeleteTarget(user.id);
+                          setDeleteModalOpen(true);
+                        }}
+                        className="h-10 w-10 flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition border border-red-500/20"
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
             ))
           ) : !usersLoading && (
-            <div className="col-span-full text-center py-12">
-              <p className="text-slate-400 text-lg">No users found</p>
+            <div className="col-span-full py-20 text-center">
+              <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-white/5 border border-white/10 mb-4">
+                <Users size={32} className="text-slate-600" />
+              </div>
+              <h4 className="text-xl font-bold text-white mb-1">No users found</h4>
+              <p className="text-slate-400">Try adjusting your search or filters</p>
             </div>
           )}
           {usersLoading && (
-            <div className="col-span-full flex justify-center py-8">
-              <Loader2 className="animate-spin text-white" />
+            <div className="col-span-full py-20 flex justify-center">
+              <Loader2 className="animate-spin text-indigo-500" size={40} />
             </div>
           )}
         </div>
@@ -619,6 +660,16 @@ export function UserManagement() {
                           </button>
                           <button
                             onClick={() => {
+                              setSelectedUserForDocs(user);
+                              setDocModalOpen(true);
+                            }}
+                            className="text-slate-400 hover:text-indigo-400 transition-transform hover:scale-110"
+                            title="Documents"
+                          >
+                            <FileText size={18} />
+                          </button>
+                          <button
+                            onClick={() => {
                               setDeleteTarget(user.id);
                               setDeleteModalOpen(true);
                             }}
@@ -662,604 +713,602 @@ export function UserManagement() {
       )}
 
       {/* Enhanced User Modal */}
-      <div
-        className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300 ${modalOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-      >
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: modalOpen ? 1 : 0 }}
-          onClick={() => setModalOpen(false)}
-          className="absolute inset-0 bg-black/60 backdrop-blur-md"
-        />
-
-        {/* Modal Container */}
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0, y: 20 }}
-          animate={{
-            scale: modalOpen ? 1 : 0.9,
-            opacity: modalOpen ? 1 : 0,
-            y: modalOpen ? 0 : 20,
-          }}
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="relative z-[9999] w-full max-w-2xl mx-4 bg-slate-950/95 border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] backdrop-blur-xl"
+      {createPortal(
+        <div
+          className={`fixed inset-0 z-50 flex items-start justify-center pt-10 md:pt-20 pb-10 overflow-y-auto custom-scrollbar transition-opacity duration-300 ${modalOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-white/15 bg-gradient-to-r from-indigo-600/30 to-orange-400/20 flex-shrink-0">
-            <div>
-              <h2 className="text-2xl font-bold text-white">
-                {getModalTitle()}
-              </h2>
-              <p className="text-xs text-slate-300 mt-1">
-                Step {getStepNumber()}
-              </p>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: modalOpen ? 1 : 0 }}
+            onClick={() => setModalOpen(false)}
+            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+          />
+
+          {/* Modal Container */}
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 30 }}
+            animate={{
+              scale: modalOpen ? 1 : 0.9,
+              opacity: modalOpen ? 1 : 0,
+              y: modalOpen ? 0 : 30,
+            }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="relative z-[9999] w-full max-w-2xl mx-4 bg-slate-950/95 border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-fit backdrop-blur-xl mb-10"
+          >
+            {/* Header */}
+            <div className="relative border-b border-white/15 bg-slate-900 flex-shrink-0 rounded-t-2xl overflow-hidden">
+              {/* Centered Step Indicator (Non-Absolute for reliability) */}
+              <div className="py-2 bg-gradient-to-r from-indigo-600 to-orange-400 flex justify-center">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">
+                  Step {getStepNumber()}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between p-8">
+                <div>
+                  <h2 className="text-2xl font-black text-white uppercase tracking-tight">
+                    {getModalTitle()}
+                  </h2>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
+                    Registration Wizard
+                  </p>
+                </div>
+                <button
+                  onClick={() => setModalOpen(false)}
+                  className="h-10 w-10 flex items-center justify-center hover:bg-white/10 rounded-xl transition text-slate-300 hover:text-white border border-white/10"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
-            <button
-              onClick={() => setModalOpen(false)}
-              className="p-2 hover:bg-white/10 rounded-lg transition text-slate-300 hover:text-white"
-            >
-              ✕
-            </button>
-          </div>
 
-          {/* Content */}
-          <div className="p-6 overflow-y-auto flex-1">
-            {/* Step 1: Role Selection */}
-            {modalStep === "role" && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-5"
-              >
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-3">
-                    Name <span className="text-orange-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter full name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-3">
-                    Phone Number <span className="text-orange-400">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    placeholder="Enter phone number"
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-3">
-                    Email <span className="text-orange-400">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="Enter email"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-3">
-                    Role <span className="text-orange-400">*</span>
-                  </label>
-                  <select
-                    value={formData.role}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        role: e.target.value as UserRole,
-                      })
-                    }
-                    disabled={editingUserId !== null}
-                    className={`w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition ${editingUserId ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
-                  >
-                    {roles.map((r: any) => {
-                      const roleName = typeof r === 'string' ? r : r.role;
-                      const roleKey = typeof r === 'string' ? r : (r.id || r.role_id);
-                      return (
-                        <option key={roleKey} value={roleName} className="bg-slate-900 text-white capitalize">
-                          {roleName}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Step 2: Personal Details */}
-            {modalStep === "details" && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-5"
-              >
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-3">
-                    Address <span className="text-orange-400">*</span>
-                  </label>
-                  <textarea
-                    placeholder="Enter address"
-                    value={formData.address}
-                    onChange={(e) =>
-                      setFormData({ ...formData, address: e.target.value })
-                    }
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition resize-none"
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-3">
-                    Profile Photo
-                  </label>
-                  <div className="flex gap-4">
-                    {photoPreview && (
-                      <img
-                        src={photoPreview}
-                        alt="Preview"
-                        className="w-20 h-20 rounded-lg object-cover border border-white/20 shadow-lg"
-                      />
-                    )}
-                    <label className="flex-1 flex items-center justify-center border-2 border-dashed border-white/30 hover:border-indigo-400 rounded-lg cursor-pointer transition p-4 bg-white/5 hover:bg-white/8">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoChange}
-                        className="hidden"
-                      />
-                      <span className="text-sm text-slate-300 text-center">
-                        Click to upload photo
-                      </span>
-                    </label>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Step 3: Personal Info */}
-            {modalStep === "personalInfo" && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-5"
-              >
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Content */}
+            <div className="p-6 overflow-y-auto flex-1">
+              {/* Step 1: Role Selection */}
+              {modalStep === "role" && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-5"
+                >
                   <div>
-                    <label className="block text-sm font-semibold text-white mb-2">
-                      Age
+                    <label className="block text-sm font-semibold text-white mb-3">
+                      Name <span className="text-orange-400">*</span>
                     </label>
                     <input
-                      type="number"
-                      placeholder="Age"
-                      value={formData.personalInfo?.age || ""}
+                      type="text"
+                      placeholder="Enter full name"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-3">
+                      Phone Number <span className="text-orange-400">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="Enter phone number"
+                      value={formData.phone}
+                      onChange={(e) =>
+                        setFormData({ ...formData, phone: e.target.value })
+                      }
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-3">
+                      Email <span className="text-orange-400">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="Enter email"
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-3">
+                      Role <span className="text-orange-400">*</span>
+                    </label>
+                    <select
+                      value={formData.role}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          role: e.target.value as UserRole,
+                        })
+                      }
+                      disabled={editingUserId !== null}
+                      className={`w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition ${editingUserId ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                    >
+                      {roles.map((r: any) => {
+                        const roleName = typeof r === 'string' ? r : r.role;
+                        const roleKey = typeof r === 'string' ? r : (r.id || r.role_id);
+                        return (
+                          <option key={roleKey} value={roleName} className="bg-slate-900 text-white capitalize">
+                            {roleName}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 2: Personal Details */}
+              {modalStep === "details" && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-5"
+                >
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-3">
+                      Address <span className="text-orange-400">*</span>
+                    </label>
+                    <textarea
+                      placeholder="Enter address"
+                      value={formData.address}
+                      onChange={(e) =>
+                        setFormData({ ...formData, address: e.target.value })
+                      }
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition resize-none"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                        <FileText size={20} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-white uppercase tracking-tight">Documents Policy</p>
+                        <p className="text-xs text-slate-400 font-medium">Profile photo and ID proofs are now managed via the "Document Vault" icon on the user card.</p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 3: Personal Info */}
+              {modalStep === "personalInfo" && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-5"
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">
+                        Age
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="Age"
+                        value={formData.personalInfo?.age || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            personalInfo: {
+                              ...formData.personalInfo!,
+                              age: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">
+                        Gender
+                      </label>
+                      <select
+                        value={formData.personalInfo?.gender || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            personalInfo: {
+                              ...formData.personalInfo!,
+                              gender: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                      >
+                        <option value="" className="bg-slate-900 text-white">
+                          Select Gender
+                        </option>
+                        <option value="Male" className="bg-slate-900 text-white">
+                          Male
+                        </option>
+                        <option
+                          value="Female"
+                          className="bg-slate-900 text-white"
+                        >
+                          Female
+                        </option>
+                        <option value="Other" className="bg-slate-900 text-white">
+                          Other
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">
+                        Height (cm)
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="Height"
+                        value={formData.personalInfo?.height || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            personalInfo: {
+                              ...formData.personalInfo!,
+                              height: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">
+                        Weight (kg)
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="Weight"
+                        value={formData.personalInfo?.weight || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            personalInfo: {
+                              ...formData.personalInfo!,
+                              weight: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Fitness Goal
+                    </label>
+                    <select
+                      value={formData.personalInfo?.fitnessGoal || ""}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
                           personalInfo: {
                             ...formData.personalInfo!,
-                            age: e.target.value,
+                            fitnessGoal: e.target.value,
                           },
                         })
                       }
-                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                    >
+                      <option
+                        value="Fat Loss"
+                        className="bg-slate-900 text-white"
+                      >
+                        Fat Loss
+                      </option>
+                      <option
+                        value="Muscle Gain"
+                        className="bg-slate-900 text-white"
+                      >
+                        Muscle Gain
+                      </option>
+                      <option
+                        value="General Fitness"
+                        className="bg-slate-900 text-white"
+                      >
+                        General Fitness
+                      </option>
+                    </select>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 4: Health Info */}
+              {modalStep === "healthInfo" && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-5"
+                >
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Medical Conditions (Optional)
+                    </label>
+                    <textarea
+                      placeholder="e.g., Diabetes, Hypertension"
+                      value={formData.healthInfo?.medicalConditions || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          healthInfo: {
+                            ...formData.healthInfo!,
+                            medicalConditions: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition resize-none"
+                      rows={3}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-semibold text-white mb-2">
-                      Gender
+                      Injuries (Optional)
                     </label>
-                    <select
-                      value={formData.personalInfo?.gender || ""}
+                    <textarea
+                      placeholder="e.g., Knee pain, Back injury"
+                      value={formData.healthInfo?.injuries || ""}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          personalInfo: {
-                            ...formData.personalInfo!,
-                            gender: e.target.value,
+                          healthInfo: {
+                            ...formData.healthInfo!,
+                            injuries: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition resize-none"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Allergies (Optional)
+                    </label>
+                    <textarea
+                      placeholder="e.g., Peanuts, Latex"
+                      value={formData.healthInfo?.allergies || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          healthInfo: {
+                            ...formData.healthInfo!,
+                            allergies: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition resize-none"
+                      rows={3}
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 5: Membership Details */}
+              {modalStep === "membershipDetails" && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-5"
+                >
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Plan Type
+                    </label>
+                    <select
+                      value={formData.membershipDetails?.planType || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          membershipDetails: {
+                            ...formData.membershipDetails!,
+                            planType: e.target.value,
                           },
                         })
                       }
                       className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
                     >
                       <option value="" className="bg-slate-900 text-white">
-                        Select Gender
+                        Select Plan
                       </option>
-                      <option value="Male" className="bg-slate-900 text-white">
-                        Male
+                      <option value="Starter" className="bg-slate-900 text-white">
+                        Starter
                       </option>
                       <option
-                        value="Female"
+                        value="Performance"
                         className="bg-slate-900 text-white"
                       >
-                        Female
+                        Performance
                       </option>
-                      <option value="Other" className="bg-slate-900 text-white">
-                        Other
+                      <option value="Elite" className="bg-slate-900 text-white">
+                        Elite
                       </option>
                     </select>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-white mb-2">
-                      Height (cm)
+                      Joining Date
                     </label>
                     <input
-                      type="number"
-                      placeholder="Height"
-                      value={formData.personalInfo?.height || ""}
+                      type="date"
+                      value={formData.membershipDetails?.joiningDate || ""}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          personalInfo: {
-                            ...formData.personalInfo!,
-                            height: e.target.value,
+                          membershipDetails: {
+                            ...formData.membershipDetails!,
+                            joiningDate: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Trainer Assigned
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., John Trainer"
+                      value={formData.membershipDetails?.trainerAssigned || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          membershipDetails: {
+                            ...formData.membershipDetails!,
+                            trainerAssigned: e.target.value,
                           },
                         })
                       }
                       className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
                     />
                   </div>
+                </motion.div>
+              )}
 
+              {/* Step 6: Preferences */}
+              {modalStep === "preferences" && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-5"
+                >
                   <div>
                     <label className="block text-sm font-semibold text-white mb-2">
-                      Weight (kg)
+                      Workout Time
                     </label>
-                    <input
-                      type="number"
-                      placeholder="Weight"
-                      value={formData.personalInfo?.weight || ""}
+                    <select
+                      value={formData.preferences?.workoutTime || ""}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          personalInfo: {
-                            ...formData.personalInfo!,
-                            weight: e.target.value,
+                          preferences: {
+                            ...formData.preferences!,
+                            workoutTime: e.target.value,
                           },
                         })
                       }
-                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
-                    />
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                    >
+                      <option value="Morning" className="bg-slate-900 text-white">
+                        Morning
+                      </option>
+                      <option value="Evening" className="bg-slate-900 text-white">
+                        Evening
+                      </option>
+                      <option value="Both" className="bg-slate-900 text-white">
+                        Both
+                      </option>
+                    </select>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-2">
-                    Fitness Goal
-                  </label>
-                  <select
-                    value={formData.personalInfo?.fitnessGoal || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        personalInfo: {
-                          ...formData.personalInfo!,
-                          fitnessGoal: e.target.value,
-                        },
-                      })
-                    }
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
-                  >
-                    <option
-                      value="Fat Loss"
-                      className="bg-slate-900 text-white"
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
+                      Notification Preference
+                    </label>
+                    <select
+                      value={formData.preferences?.notificationPreference || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          preferences: {
+                            ...formData.preferences!,
+                            notificationPreference: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
                     >
-                      Fat Loss
-                    </option>
-                    <option
-                      value="Muscle Gain"
-                      className="bg-slate-900 text-white"
-                    >
-                      Muscle Gain
-                    </option>
-                    <option
-                      value="General Fitness"
-                      className="bg-slate-900 text-white"
-                    >
-                      General Fitness
-                    </option>
-                  </select>
-                </div>
-              </motion.div>
-            )}
+                      <option value="Email" className="bg-slate-900 text-white">
+                        Email
+                      </option>
+                      <option value="SMS" className="bg-slate-900 text-white">
+                        SMS
+                      </option>
+                      <option value="Push" className="bg-slate-900 text-white">
+                        Push Notification
+                      </option>
+                      <option value="None" className="bg-slate-900 text-white">
+                        None
+                      </option>
+                    </select>
+                  </div>
+                </motion.div>
+              )}
+            </div>
 
-            {/* Step 4: Health Info */}
-            {modalStep === "healthInfo" && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-5"
-              >
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-2">
-                    Medical Conditions (Optional)
-                  </label>
-                  <textarea
-                    placeholder="e.g., Diabetes, Hypertension"
-                    value={formData.healthInfo?.medicalConditions || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        healthInfo: {
-                          ...formData.healthInfo!,
-                          medicalConditions: e.target.value,
-                        },
-                      })
-                    }
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition resize-none"
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-2">
-                    Injuries (Optional)
-                  </label>
-                  <textarea
-                    placeholder="e.g., Knee pain, Back injury"
-                    value={formData.healthInfo?.injuries || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        healthInfo: {
-                          ...formData.healthInfo!,
-                          injuries: e.target.value,
-                        },
-                      })
-                    }
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition resize-none"
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-2">
-                    Allergies (Optional)
-                  </label>
-                  <textarea
-                    placeholder="e.g., Peanuts, Latex"
-                    value={formData.healthInfo?.allergies || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        healthInfo: {
-                          ...formData.healthInfo!,
-                          allergies: e.target.value,
-                        },
-                      })
-                    }
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition resize-none"
-                    rows={3}
-                  />
-                </div>
-              </motion.div>
-            )}
-
-            {/* Step 5: Membership Details */}
-            {modalStep === "membershipDetails" && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-5"
-              >
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-2">
-                    Plan Type
-                  </label>
-                  <select
-                    value={formData.membershipDetails?.planType || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        membershipDetails: {
-                          ...formData.membershipDetails!,
-                          planType: e.target.value,
-                        },
-                      })
-                    }
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
-                  >
-                    <option value="" className="bg-slate-900 text-white">
-                      Select Plan
-                    </option>
-                    <option value="Starter" className="bg-slate-900 text-white">
-                      Starter
-                    </option>
-                    <option
-                      value="Performance"
-                      className="bg-slate-900 text-white"
-                    >
-                      Performance
-                    </option>
-                    <option value="Elite" className="bg-slate-900 text-white">
-                      Elite
-                    </option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-2">
-                    Joining Date
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.membershipDetails?.joiningDate || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        membershipDetails: {
-                          ...formData.membershipDetails!,
-                          joiningDate: e.target.value,
-                        },
-                      })
-                    }
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-2">
-                    Trainer Assigned
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g., John Trainer"
-                    value={formData.membershipDetails?.trainerAssigned || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        membershipDetails: {
-                          ...formData.membershipDetails!,
-                          trainerAssigned: e.target.value,
-                        },
-                      })
-                    }
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
-                  />
-                </div>
-              </motion.div>
-            )}
-
-            {/* Step 6: Preferences */}
-            {modalStep === "preferences" && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-5"
-              >
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-2">
-                    Workout Time
-                  </label>
-                  <select
-                    value={formData.preferences?.workoutTime || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        preferences: {
-                          ...formData.preferences!,
-                          workoutTime: e.target.value,
-                        },
-                      })
-                    }
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
-                  >
-                    <option value="Morning" className="bg-slate-900 text-white">
-                      Morning
-                    </option>
-                    <option value="Evening" className="bg-slate-900 text-white">
-                      Evening
-                    </option>
-                    <option value="Both" className="bg-slate-900 text-white">
-                      Both
-                    </option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-white mb-2">
-                    Notification Preference
-                  </label>
-                  <select
-                    value={formData.preferences?.notificationPreference || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        preferences: {
-                          ...formData.preferences!,
-                          notificationPreference: e.target.value,
-                        },
-                      })
-                    }
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
-                  >
-                    <option value="Email" className="bg-slate-900 text-white">
-                      Email
-                    </option>
-                    <option value="SMS" className="bg-slate-900 text-white">
-                      SMS
-                    </option>
-                    <option value="Push" className="bg-slate-900 text-white">
-                      Push Notification
-                    </option>
-                    <option value="None" className="bg-slate-900 text-white">
-                      None
-                    </option>
-                  </select>
-                </div>
-              </motion.div>
-            )}
-          </div>
-
-          {/* Footer */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-6 border-t border-white/15 bg-white/5 flex-shrink-0">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setModalOpen(false)}
-              className="w-full sm:w-auto px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition"
-            >
-              Cancel
-            </motion.button>
-
-            {modalStep !== "role" && modalStep !== "details" && (
+            {/* Footer */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-6 border-t border-white/15 bg-white/5 flex-shrink-0">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={handleBackStep}
-                className="px-6 py-2.5 bg-slate-600 hover:bg-slate-500 text-white font-medium rounded-lg transition flex items-center gap-2"
+                onClick={() => setModalOpen(false)}
+                className="w-full sm:w-auto px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition"
               >
-                <ChevronLeft size={18} />
-                Back
+                Cancel
               </motion.button>
-            )}
 
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={
-                modalStep === "preferences" ||
-                  (modalStep === "details" && formData.role === "admin")
-                  ? handleSaveUser
-                  : handleNextStep
-              }
-              className="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-orange-400 hover:from-indigo-600 hover:to-orange-500 text-white font-medium rounded-lg transition"
-            >
-              {modalStep === "preferences"
-                ? editingUserId
-                  ? "Update User"
-                  : "Create User"
-                : modalStep === "details" && formData.role === "admin"
+              {modalStep !== "role" && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleBackStep}
+                  className="px-6 py-2.5 bg-slate-600 hover:bg-slate-500 text-white font-medium rounded-lg transition flex items-center gap-2"
+                >
+                  <ChevronLeft size={18} />
+                  Back
+                </motion.button>
+              )}
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={
+                  modalStep === "preferences" ||
+                    (modalStep === "details" && formData.role === "admin")
+                    ? handleSaveUser
+                    : handleNextStep
+                }
+                className="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-orange-400 hover:from-indigo-600 hover:to-orange-500 text-white font-medium rounded-lg transition"
+              >
+                {modalStep === "preferences"
                   ? editingUserId
                     ? "Update User"
                     : "Create User"
-                  : "Next"}
-            </motion.button>
-          </div>
-        </motion.div>
-      </div>
+                  : modalStep === "details" && formData.role === "admin"
+                    ? editingUserId
+                      ? "Update User"
+                      : "Create User"
+                    : "Next"}
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>,
+        document.body
+      )}
 
       {/* Delete Modal */}
       {deleteModalOpen && deleteTarget && (
@@ -1343,6 +1392,119 @@ export function UserManagement() {
             <button className="text-indigo-400 hover:text-indigo-300 text-sm font-semibold flex items-center gap-2">
               <Plus size={14} /> Add Manuel Entry
             </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Document Vault Modal */}
+      <Modal
+        open={docModalOpen}
+        onClose={() => setDocModalOpen(false)}
+        title={`Document Vault - ${selectedUserForDocs?.name}`}
+        footer={<CommonButton onClick={() => setDocModalOpen(false)}>Finished</CommonButton>}
+      >
+        <div className="space-y-6">
+          {/* Profile Picture Section */}
+          <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                  <UserCheck size={16} />
+                </div>
+                <h4 className="text-sm font-black text-white uppercase tracking-tight">Profile Photo</h4>
+              </div>
+              <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-bold uppercase">Required</span>
+            </div>
+
+            <div className="flex items-center gap-6">
+              <div className="relative group">
+                <div className="h-20 w-20 rounded-full bg-slate-800 border-2 border-white/10 overflow-hidden shadow-2xl">
+                  {selectedUserForDocs?.profilePhoto ? (
+                    <img src={selectedUserForDocs.profilePhoto} className="h-full w-full object-cover" alt="Profile" />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center text-slate-600 font-black text-2xl uppercase">
+                      {selectedUserForDocs?.name?.charAt(0)}
+                    </div>
+                  )}
+                </div>
+                <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-full cursor-pointer">
+                  <Upload size={20} className="text-white" />
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setDocUploading('profile');
+                      const reader = new FileReader();
+                      reader.onload = (ev) => {
+                        // In real app, call uploadFile api here
+                        toast.success("Profile photo uploaded successfully");
+                        setDocUploading(null);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }} />
+                </label>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Upload a clear, high-resolution portrait. Supports JPG, PNG. Max size 2MB.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Identity Proof Section */}
+          <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-lg bg-orange-500/20 flex items-center justify-center text-orange-400">
+                  <FileText size={16} />
+                </div>
+                <h4 className="text-sm font-black text-white uppercase tracking-tight">Identity Proof</h4>
+              </div>
+              <span className="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full font-bold uppercase">ID/Passport</span>
+            </div>
+
+            <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-white/10 hover:border-orange-500/50 rounded-2xl transition hover:bg-orange-500/5 cursor-pointer group">
+              <div className="text-center">
+                <div className="mx-auto h-10 w-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-400 group-hover:scale-110 transition">
+                  {docUploading === 'id' ? <Loader2 size={24} className="animate-spin" /> : <Upload size={20} />}
+                </div>
+                <p className="mt-2 text-xs font-bold text-slate-300 uppercase tracking-widest">Click to upload ID scan</p>
+                <p className="text-[10px] text-slate-500 mt-1">PDF, JPG or PNG (Max 5MB)</p>
+              </div>
+              <input type="file" className="hidden" onChange={() => {
+                setDocUploading('id');
+                setTimeout(() => {
+                  toast.success("ID proof verified and stored");
+                  setDocUploading(null);
+                }, 1500);
+              }} />
+            </label>
+          </div>
+
+          {/* Others / Attachments Section */}
+          <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <HardDrive size={16} />
+                </div>
+                <h4 className="text-sm font-black text-white uppercase tracking-tight">Miscellaneous Docs</h4>
+              </div>
+            </div>
+
+            <label className="flex items-center justify-between p-3 rounded-xl border border-white/10 bg-black/20 hover:border-indigo-500/50 cursor-pointer group transition">
+              <div className="flex items-center gap-3">
+                <File size={18} className="text-slate-500 group-hover:text-indigo-400" />
+                <span className="text-xs font-bold text-slate-300">Attach medical clearances, waivers...</span>
+              </div>
+              <Plus size={16} className="text-slate-500" />
+              <input type="file" multiple className="hidden" />
+            </label>
+
+            <p className="mt-3 text-[10px] text-slate-500 flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> All uploads are encrypted and securely stored.
+            </p>
           </div>
         </div>
       </Modal>
