@@ -74,7 +74,7 @@ export function UserPortalPages({ page }: { page: string }) {
           )}
         </GlassCard>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {plans.map((p, i) => (
             <SubscriptionCard
               key={p.id}
@@ -175,7 +175,7 @@ export function UserPortalPages({ page }: { page: string }) {
           title="Products"
           subtitle="Recommended supplements & fitness gear"
         />
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((p) => (
             <ProductCard key={p.name} product={p} />
           ))}

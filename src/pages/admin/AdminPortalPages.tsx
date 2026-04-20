@@ -441,7 +441,7 @@ export function AdminPortalPages({ page }: { page: string }) {
           title="Payments"
           subtitle="Transaction history with date, status, and user filters."
         />
-        <div className="mb-3 grid gap-3 md:grid-cols-3">
+        <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <select
             className="rounded bg-white/10 p-2"
             value={paymentStatus}
@@ -495,7 +495,7 @@ export function AdminPortalPages({ page }: { page: string }) {
         {users.map((u) => (
           <div key={u.id} className="mb-3 rounded-lg bg-white/5 p-3">
             <p className="mb-2 font-medium">{u.name}</p>
-            <div className="grid gap-2 md:grid-cols-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               <label className="flex items-center justify-between rounded border border-white/10 p-2 text-sm">
                 Show products
                 <input
@@ -568,7 +568,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                 <h4 className="mb-3 text-lg font-semibold text-white">
                   App Branding
                 </h4>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">
                       App Name
@@ -645,7 +645,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                 <h4 className="mb-3 text-lg font-semibold text-white">
                   Contact Information
                 </h4>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">
                       Email
@@ -1097,7 +1097,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                     (t) => t.id === currentDesignTheme,
                   );
                   return activeTheme ? (
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <h5 className="font-medium text-white mb-2">Colors</h5>
                         <div className="space-y-2">

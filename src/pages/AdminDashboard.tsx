@@ -40,7 +40,7 @@ function AdminDashboard() {
         subtitle="Monitor users, subscriptions, and revenue growth."
       />
 
-      <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="mb-4 grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         <GlassCard className="p-6">
           <p className="text-sm text-slate-300">Total Users</p>
           <p className="mt-3 text-3xl font-bold">{adminMetrics.users}</p>
@@ -57,7 +57,7 @@ function AdminDashboard() {
         </GlassCard>
       </div>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="mb-6 grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         <GlassCard className="p-6">
           <p className="text-sm text-slate-300">New Signups</p>
           <p className="mt-3 text-3xl font-bold">{newSignups}</p>
@@ -136,7 +136,7 @@ function AdminDashboard() {
         </GlassCard>
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-[1.55fr_0.75fr]">
+      <div className="mt-4 grid gap-4 lg:grid-cols-1 xl:grid-cols-[1.55fr_0.75fr]">
         <GlassCard className="p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -213,7 +213,7 @@ function AdminDashboard() {
         </GlassCard>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-6 grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         {serviceHighlights.map((service) => (
           <GlassCard key={service.title} className="p-5">
             <p className="text-sm text-slate-300">Service</p>

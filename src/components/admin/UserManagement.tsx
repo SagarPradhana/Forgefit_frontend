@@ -752,7 +752,7 @@ export function UserManagement() {
                 animate={{ opacity: 1, x: 0 }}
                 className="space-y-5"
               >
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-white mb-2">
                       Age
@@ -810,7 +810,7 @@ export function UserManagement() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-white mb-2">
                       Height (cm)
@@ -1123,12 +1123,12 @@ export function UserManagement() {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between gap-3 p-6 border-t border-white/15 bg-white/5 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-6 border-t border-white/15 bg-white/5 flex-shrink-0">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setModalOpen(false)}
-              className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition"
+              className="w-full sm:w-auto px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition"
             >
               Cancel
             </motion.button>

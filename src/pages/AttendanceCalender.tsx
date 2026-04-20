@@ -22,7 +22,7 @@ export function AttendanceCalendar({ data }: any) {
           return (
             <div
               key={day}
-              className={`h-20 p-2 rounded-lg text-xs flex flex-col justify-between
+              className={`h-16 sm:h-20 p-1 sm:p-2 rounded-lg text-[9px] sm:text-xs flex flex-col justify-between
               ${
                 record
                   ? "bg-gradient-to-r from-indigo-500/40 to-orange-400/40 text-white"

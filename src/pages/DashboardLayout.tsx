@@ -13,6 +13,8 @@ import {
   Settings,
   User,
   Users,
+  Menu,
+  X,
 } from "lucide-react";
 import { CommonButton } from "../components/ui/primitives";
 import { motion } from "framer-motion";
@@ -224,17 +226,17 @@ function AnimatedBackground({
         animate={{
           background: isLight
             ? [
-                "radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.25), transparent 60%)",
-                "radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.2), transparent 60%)",
-                "radial-gradient(circle at 40% 80%, rgba(59, 130, 246, 0.25), transparent 60%)",
-                "radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.2), transparent 60%)",
-              ]
+              "radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.25), transparent 60%)",
+              "radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.2), transparent 60%)",
+              "radial-gradient(circle at 40% 80%, rgba(59, 130, 246, 0.25), transparent 60%)",
+              "radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.2), transparent 60%)",
+            ]
             : [
-                "radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3), transparent 50%)",
-                "radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.2), transparent 50%)",
-                "radial-gradient(circle at 40% 80%, rgba(120, 119, 198, 0.3), transparent 50%)",
-                "radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.2), transparent 50%)",
-              ],
+              "radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3), transparent 50%)",
+              "radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.2), transparent 50%)",
+              "radial-gradient(circle at 40% 80%, rgba(120, 119, 198, 0.3), transparent 50%)",
+              "radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.2), transparent 50%)",
+            ],
         }}
         transition={{
           duration: 8,
@@ -311,44 +313,60 @@ function AnimatedBackground({
 export function Sidebar({
   colorTheme,
   systemTheme,
+  isMobile,
+  onClose,
 }: {
   colorTheme: keyof typeof themeStyles;
   systemTheme: "light" | "dark";
+  isMobile: boolean;
+  onClose?: () => void;
 }) {
   const { role, logout } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setCollapsed(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   const currentTheme = themeStyles[colorTheme][systemTheme];
   const isLight = systemTheme === "light";
 
   const links =
     role === "admin"
       ? [
-          { name: "dashboard", icon: LayoutDashboard, label: t("dashboard") },
-          { name: "users", icon: Users, label: t("users") },
-          { name: "subscriptions", icon: CreditCard, label: t("subscription") },
-          { name: "offers", icon: Box, label: t("offers") },
-          { name: "payments", icon: CreditCard, label: t("payments") },
-          { name: "features", icon: Settings, label: t("features") },
-          { name: "settings", icon: Settings, label: t("settings") },
-          { name: "notifications", icon: Bell, label: t("notifications") },
-        ]
+        { name: "dashboard", icon: LayoutDashboard, label: t("dashboard") },
+        { name: "users", icon: Users, label: t("users") },
+        { name: "subscriptions", icon: CreditCard, label: t("subscription") },
+        { name: "offers", icon: Box, label: t("offers") },
+        { name: "payments", icon: CreditCard, label: t("payments") },
+        { name: "features", icon: Settings, label: t("features") },
+        { name: "settings", icon: Settings, label: t("settings") },
+        { name: "notifications", icon: Bell, label: t("notifications") },
+      ]
       : [
-          { name: "dashboard", icon: LayoutDashboard, label: t("dashboard") },
-          { name: "profile", icon: User, label: t("profile") },
-          { name: "subscription", icon: CreditCard, label: t("subscription") },
-          { name: "attendance", icon: Users, label: t("attendance") },
-          { name: "payments", icon: CreditCard, label: t("payments") },
-          { name: "products", icon: Box, label: t("products") },
-          { name: "settings", icon: Settings, label: t("settings") },
-        ];
+        { name: "dashboard", icon: LayoutDashboard, label: t("dashboard") },
+        { name: "profile", icon: User, label: t("profile") },
+        { name: "subscription", icon: CreditCard, label: t("subscription") },
+        { name: "attendance", icon: Users, label: t("attendance") },
+        { name: "payments", icon: CreditCard, label: t("payments") },
+        { name: "products", icon: Box, label: t("products") },
+        { name: "settings", icon: Settings, label: t("settings") },
+      ];
 
   return (
     <motion.aside
-      animate={{ width: collapsed ? 80 : 240 }}
-      className={`relative flex h-full min-h-0 flex-col rounded-2xl ${currentTheme.borderColor} ${currentTheme.sidebarBg} backdrop-blur-xl p-4 shadow-2xl overflow-hidden`}
+      animate={{
+        width: collapsed ? 80 : 240,
+      }}
+      initial={false}
+      className={`relative flex h-full flex-col rounded-2xl ${currentTheme.borderColor} ${currentTheme.sidebarBg} backdrop-blur-3xl p-4 shadow-2xl overflow-hidden`}
     >
       {/* 🔥 LOGO */}
       <motion.div
@@ -368,7 +386,7 @@ export function Sidebar({
               <Dumbbell size={18} />
             </motion.div>
           </div>
-          {!collapsed && (
+          {(!collapsed || (isMobile && !collapsed)) && (
             <span
               className={`font-semibold ${isLight ? "text-gray-900" : "text-white"}`}
             >
@@ -377,19 +395,29 @@ export function Sidebar({
           )}
         </div>
 
-        {/* COLLAPSE BUTTON */}
+        {/* COLLAPSE/CLOSE BUTTON */}
         <button
-          className={`hidden md:inline-flex ${isLight ? "text-gray-600 hover:text-gray-800" : "text-gray-400 hover:text-white"} transition-colors`}
-          onClick={() => setCollapsed(!collapsed)}
+          className={`${isMobile ? "inline-flex" : "hidden md:inline-flex"} ${isLight ? "text-gray-600 hover:text-gray-800" : "text-gray-400 hover:text-white"} transition-colors`}
+          onClick={() => {
+            if (isMobile && onClose) {
+              onClose();
+            } else {
+              setCollapsed(!collapsed);
+            }
+          }}
         >
-          <ChevronLeft
-            className={`transition ${collapsed ? "rotate-180" : ""}`}
-          />
+          {isMobile ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <ChevronLeft
+              className={`transition ${collapsed ? "rotate-180" : ""}`}
+            />
+          )}
         </button>
       </motion.div>
 
       {/* NAV */}
-      <div className="flex-1 min-h-0 overflow-y-auto space-y-1 pr-1">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
         {links.map(({ name, icon: Icon, label }) => {
           const path = `/${role}/${name}`;
           const isActive = location.pathname === path;
@@ -398,6 +426,9 @@ export function Sidebar({
             <NavLink
               key={name}
               to={path}
+              onClick={() => {
+                if (isMobile && onClose) onClose();
+              }}
               className={`relative flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:scale-105 ${isLight ? "text-gray-700 hover:text-gray-900" : "text-gray-300 hover:text-white"}`}
             >
               {/* ACTIVE BG */}
@@ -414,16 +445,16 @@ export function Sidebar({
 
               <Icon size={18} className="relative z-10" />
 
-              {!collapsed && (
-                <span className="relative z-10 capitalize text-sm">
+              {(!collapsed || (isMobile && !collapsed)) && (
+                <span className="relative z-10 capitalize text-sm font-medium">
                   {label}
                 </span>
               )}
 
-              {/* TOOLTIP */}
-              {collapsed && (
+              {/* TOOLTIP (Only for desktop collapsed) */}
+              {collapsed && !isMobile && (
                 <span
-                  className={`absolute left-14 ${isLight ? "bg-gray-800 text-white" : "bg-black text-white"} text-xs px-2 py-1 rounded opacity-0 hover:opacity-100 transition-opacity`}
+                  className={`absolute left-14 ${isLight ? "bg-gray-800 text-white" : "bg-black text-white"} text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[110]`}
                 >
                   {label}
                 </span>
@@ -438,7 +469,7 @@ export function Sidebar({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.3 }}
-        className="mt-4"
+        className="mt-4 pt-4 border-t border-white/10"
       >
         <button
           onClick={() => {
@@ -448,7 +479,9 @@ export function Sidebar({
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:scale-105 ${isLight ? "text-red-600 hover:text-red-700 hover:bg-red-50" : "text-red-400 hover:text-red-300 hover:bg-red-950/20"}`}
         >
           <LogOut size={18} />
-          {!collapsed && <span className="text-sm">{t("logout")}</span>}
+          {(!collapsed || (isMobile && !collapsed)) && (
+            <span className="text-sm font-medium">{t("logout")}</span>
+          )}
         </button>
       </motion.div>
     </motion.aside>
@@ -460,6 +493,14 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   const systemTheme = useSystemTheme();
   const [colorTheme, setColorTheme] =
     useState<keyof typeof themeStyles>("theme1");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   const currentTheme = themeStyles[colorTheme][systemTheme];
   const colorThemeKeys = Object.keys(themeStyles) as Array<
     keyof typeof themeStyles
@@ -478,67 +519,92 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
       {/* 🔥 ENHANCED ANIMATED BACKGROUND */}
       <AnimatedBackground colorTheme={colorTheme} systemTheme={systemTheme} />
 
-      <div className="grid h-full lg:grid-cols-[auto_1fr] gap-6 p-4 md:p-6">
-        {/* 🧭 SIDEBAR */}
+      {/* MOBILE SIDEBAR OVERLAY */}
+      {sidebarOpen && (
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex h-full min-w-0 flex-col gap-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 z-[90] bg-slate-950/40 backdrop-blur-sm lg:hidden"
+        />
+      )}
+
+      <div className="flex h-full gap-0 lg:gap-6 p-2 md:p-4 lg:p-6">
+        <div
+          className={`fixed inset-y-0 left-0 z-[100] w-[280px] transform transition-transform duration-300 lg:relative lg:w-auto lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
         >
-          <Sidebar colorTheme={colorTheme} systemTheme={systemTheme} />
-        </motion.div>
+          <div className="h-full p-4 lg:p-0">
+            <Sidebar
+              colorTheme={colorTheme}
+              systemTheme={systemTheme}
+              isMobile={isMobile}
+              onClose={() => setSidebarOpen(false)}
+            />
+          </div>
+        </div>
 
         {/* 📊 MAIN CONTENT */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex h-full min-h-0 flex-col gap-5"
+          className="flex flex-1 flex-col gap-4 min-w-0"
         >
           {/* 🔝 TOP BAR */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className={`rounded-3xl ${currentTheme.borderColor} ${currentTheme.cardBg} p-4 ${currentTheme.shadowColor} backdrop-blur-xl hover:opacity-90 transition-opacity duration-300`}
+            className={`rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${currentTheme.cardBg} p-3 lg:p-4 ${currentTheme.shadowColor} backdrop-blur-xl`}
           >
             <div className="flex items-center justify-between gap-3">
-              <div
-                className={`flex items-center gap-3 rounded-3xl ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-gray-100/70" : "bg-slate-950/70"} px-3 py-2 shadow-inner`}
-              >
-                <Bell
-                  className={
-                    systemTheme === "light"
-                      ? "text-orange-500"
-                      : "text-orange-300"
-                  }
-                />
+              <div className="flex items-center gap-3">
+                {/* HAMBURGER FOR MOBILE */}
                 <button
-                  type="button"
-                  onClick={nextColorTheme}
-                  className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition ${
-                    systemTheme === "light"
-                      ? "border-gray-300/50 bg-gray-200/30 text-gray-600 hover:bg-gray-300/50"
-                      : "border-white/15 bg-white/5 text-slate-100 hover:bg-white/10"
-                  }`}
-                  title={`Switch theme (current: ${themeStyles[colorTheme].label})`}
+                  onClick={() => setSidebarOpen(true)}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 lg:hidden"
                 >
-                  <Palette size={18} />
+                  <Menu size={20} />
                 </button>
+
+                <div
+                  className={`flex items-center gap-2 lg:gap-3 rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-gray-100/70" : "bg-slate-950/70"} px-2 lg:px-3 py-1.5 lg:py-2 shadow-inner`}
+                >
+                  <Bell
+                    size={18}
+                    className={
+                      systemTheme === "light"
+                        ? "text-orange-500"
+                        : "text-orange-300"
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={nextColorTheme}
+                    className={`inline-flex h-8 w-8 lg:h-10 lg:w-10 items-center justify-center rounded-full border transition ${systemTheme === "light"
+                        ? "border-gray-300/50 bg-gray-200/30 text-gray-600 hover:bg-gray-300/50"
+                        : "border-white/15 bg-white/5 text-slate-100 hover:bg-white/10"
+                      }`}
+                    title={`Switch theme`}
+                  >
+                    <Palette size={isMobile ? 16 : 18} />
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 lg:gap-3">
                 <div
-                  className={`text-xs uppercase tracking-[0.25em] ${systemTheme === "light" ? "text-gray-500" : "text-slate-400"}`}
+                  className={`hidden md:block text-[10px] lg:text-xs uppercase tracking-[0.25em] ${systemTheme === "light" ? "text-gray-500" : "text-slate-400"}`}
                 >
                   {themeStyles[colorTheme].label}
                 </div>
                 <LanguageSwitcher />
                 <div
-                  className={`inline-flex items-center gap-2 rounded-full ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-gray-100/70" : "bg-slate-950/70"} px-3 py-2 shadow-inner`}
+                  className={`inline-flex items-center gap-2 rounded-full ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-gray-100/70" : "bg-slate-950/70"} px-2 lg:px-3 py-1.5 lg:py-2 shadow-inner`}
                 >
                   <User
+                    size={16}
                     className={
                       systemTheme === "light"
                         ? "text-gray-700"
@@ -546,7 +612,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                     }
                   />
                   <span
-                    className={`text-sm capitalize ${systemTheme === "light" ? "text-gray-700" : "text-slate-100"}`}
+                    className={`text-xs lg:text-sm capitalize font-medium ${systemTheme === "light" ? "text-gray-700" : "text-slate-100"}`}
                   >
                     {role}
                   </span>
@@ -557,12 +623,12 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
 
           {/* 📦 CONTENT AREA */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className={`flex-1 min-h-0 overflow-hidden rounded-3xl ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-gradient-to-b from-gray-50/80 to-white/60" : "bg-gradient-to-b from-white/5 to-white/0"} backdrop-blur-xl shadow-inner hover:shadow-2xl transition-shadow duration-300`}
+            className={`flex-1 min-h-0 overflow-hidden rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-gradient-to-b from-gray-50/80 to-white/60" : "bg-gradient-to-b from-white/5 to-white/0"} backdrop-blur-xl shadow-inner`}
           >
-            <div className="custom-scrollbar h-full min-h-0 overflow-y-auto p-4 md:p-6">
+            <div className="custom-scrollbar h-full min-h-0 overflow-y-auto p-4 lg:p-6">
               {children}
             </div>
           </motion.div>

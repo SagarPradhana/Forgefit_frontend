@@ -39,9 +39,9 @@ function UserDashboard() {
       />
 
       {/* 🔥 GRID */}
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* LEFT SIDE */}
-        <div className="md:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6">
           {/* HERO */}
           <GlassCard className="p-6 bg-gradient-to-r from-indigo-500/10 to-orange-400/10 border-indigo-400/20">
             <div className="flex justify-between items-center flex-wrap gap-4">
@@ -92,7 +92,7 @@ function UserDashboard() {
           </GlassCard>
 
           {/* 📊 STATS */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <GlassCard className="p-4">
               <div className="flex justify-between">
                 <p className="text-xs text-slate-400">Attendance</p>
