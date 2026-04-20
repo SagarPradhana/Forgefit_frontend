@@ -78,69 +78,7 @@ interface UserFormData {
 }
 
 export function UserManagement() {
-  // --- API State & Hooks ---
-  const [page, setPage] = useState(1);
-  const [perPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [allUsers, setAllUsers] = useState<any[]>([]);
-  const [hasMore, setHasMore] = useState(true);
-
-  // Search sanitation: Don't send empty search params
-  const queryParams = new URLSearchParams({
-    page: String(page),
-    per_page: String(perPage),
-  });
-  if (searchQuery.trim()) {
-    queryParams.append("search", searchQuery.trim());
-  }
-
-  // Fetch Users
-  const { loading: usersLoading, refetch: refetchUsers } = useGet(
-    `${API_ENDPOINTS.ADMIN.USERS}?${queryParams.toString()}`,
-    {
-      onSuccess: (res) => {
-        const newUsers = res.data || [];
-        if (page === 1) {
-          setAllUsers(newUsers);
-        } else {
-          setAllUsers((prev) => [...prev, ...newUsers]);
-        }
-        setHasMore(newUsers.length === perPage);
-      },
-    }
-  );
-
-  // Fetch Roles
-  const { data: rolesData } = useGet(API_ENDPOINTS.ADMIN.ROLES);
-  const roles = rolesData?.data || ["admin", "trainer", "user"];
-
-  // Mutations
-  const { mutate: createUser, loading: creating } = useMutation("post", {
-    onSuccess: () => {
-      setModalOpen(false);
-      setPage(1);
-      refetchUsers();
-    }
-  });
-
-  const { mutate: editUser, loading: editing } = useMutation("patch", {
-    onSuccess: () => {
-      setModalOpen(false);
-      setPage(1);
-      refetchUsers();
-    }
-  });
-
-  const { mutate: uploadFile } = useMutation("upload");
-
-  const { mutate: performDelete } = useMutation("delete", {
-    onSuccess: () => {
-      setDeleteModalOpen(false);
-      refetchUsers();
-    }
-  });
-
-  // State management
+  // --- State management ---
   // View State management
   const [viewType, setViewType] = useState<ViewType>("grid");
   const [modalOpen, setModalOpen] = useState(false);
@@ -158,6 +96,76 @@ export function UserManagement() {
   // Attendance Modal State
   const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
   const [selectedUserForAttendance, setSelectedUserForAttendance] = useState<any>(null);
+
+  // Pagination & Search State
+  const [page, setPage] = useState(1);
+  const [perPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+
+  // --- API Fetching ---
+  const queryParams = new URLSearchParams({
+    page: String(page),
+    per_page: String(perPage),
+  });
+  if (searchQuery.trim()) queryParams.append("search", searchQuery.trim());
+
+  const { loading: usersLoading, refetch: refetchUsers } = useGet(
+    `${API_ENDPOINTS.ADMIN.USERS}?${queryParams.toString()}`,
+    {
+      onSuccess: (res) => {
+        const newUsers = res.data || [];
+        if (page === 1) setAllUsers(newUsers);
+        else setAllUsers((prev) => [...prev, ...newUsers]);
+        setHasMore(newUsers.length === perPage);
+      },
+    }
+  );
+
+  const { data: rolesData } = useGet(API_ENDPOINTS.ADMIN.ROLES);
+  const roles = rolesData?.data || ["admin", "trainer", "user"];
+
+  // --- Mutations ---
+  const { mutate: createUser, loading: creating } = useMutation("post", {
+    onSuccess: () => {
+      setModalOpen(false);
+      setPage(1);
+      toast.success("User created successfully");
+      refetchUsers();
+    }
+  });
+
+  const { mutate: editUser } = useMutation("patch", {
+    onSuccess: () => {
+      setModalOpen(false);
+      setPage(1);
+      toast.success("User updated successfully");
+      refetchUsers();
+    }
+  });
+
+  const { mutate: patchStatus } = useMutation("patch", {
+    onSuccess: () => {
+      toast.success("User status updated successfully");
+      refetchUsers();
+    }
+  });
+
+  const { mutate: deleteUserRecord } = useMutation("delete", {
+    onSuccess: () => {
+      toast.success("User deleted successfully from records");
+      setDeleteModalOpen(false);
+      refetchUsers();
+    }
+  });
+
+  const { mutate: deleteDocument } = useMutation("delete", {
+    onSuccess: () => {
+      toast.success("Document permanently removed");
+      refetchUsers();
+    }
+  });
 
   // Infinite Scroll Observer
   const observer = useRef<IntersectionObserver | null>(null);
@@ -398,10 +406,20 @@ export function UserManagement() {
     setModalOpen(false);
   };
 
+  const handleToggleStatus = (userId: string, currentStatus: boolean) => {
+    patchStatus(API_ENDPOINTS.ADMIN.USER_STATUS(userId), { status: !currentStatus });
+  };
+
+  const handleDocDelete = (docType: string, docUrl: string) => {
+    if (!selectedUserForDocs) return;
+    const url = `${API_ENDPOINTS.ADMIN.USER_DOC_DELETE(selectedUserForDocs.id)}?doc_type=${docType}&doc_full_url=${encodeURIComponent(docUrl)}`;
+    deleteDocument(url);
+  };
+
   const handleDeleteUser = (userId: string) => {
-    // Assuming delete endpoint follows /api/admin/user_roles/users/{id}
-    performDelete(`${API_ENDPOINTS.ADMIN.USERS}/${userId}`);
+    deleteUserRecord(API_ENDPOINTS.ADMIN.USER_DELETE(userId));
     setDeleteTarget(null);
+    setDeleteModalOpen(false);
   };
 
   const getModalTitle = () => {
@@ -575,16 +593,27 @@ export function UserManagement() {
                       </button>
                     </div>
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          setDeleteTarget(user.id);
-                          setDeleteModalOpen(true);
-                        }}
-                        className="h-10 w-10 flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition border border-red-500/20"
-                        title="Delete"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                       <button
+                         onClick={() => handleToggleStatus(user.id, user.is_active !== false)}
+                         className={`flex-1 flex items-center justify-center gap-1.5 h-10 px-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition ${user.is_active !== false
+                           ? "bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20"
+                           : "bg-slate-500/10 text-slate-400 border-slate-500/20 hover:bg-slate-500/20"
+                           }`}
+                         title={user.is_active !== false ? "Deactivate User" : "Activate User"}
+                       >
+                         {user.is_active !== false ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                         {user.is_active !== false ? "Active" : "Inactive"}
+                       </button>
+                       <button
+                         onClick={() => {
+                           setDeleteTarget(user.id);
+                           setDeleteModalOpen(true);
+                         }}
+                         className="h-10 w-10 flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition border border-red-500/20"
+                         title="Delete"
+                       >
+                         <Trash2 size={16} />
+                       </button>
                     </div>
                   </div>
                 </div>
@@ -653,6 +682,7 @@ export function UserManagement() {
                             <Calendar size={18} />
                           </button>
                           <button
+                            onClick={() => handleToggleStatus(user.id, user.is_active !== false)}
                             className={`${user.is_active !== false ? "text-amber-400" : "text-slate-500"} hover:scale-110 transition-transform`}
                             title={user.is_active !== false ? "Deactivate" : "Activate"}
                           >
@@ -1416,8 +1446,7 @@ export function UserManagement() {
               <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-bold uppercase">Required</span>
             </div>
 
-            <div className="flex items-center gap-6">
-              <div className="relative group">
+            <div className="flex items-center gap-6">               <div className="relative group">
                 <div className="h-20 w-20 rounded-full bg-slate-800 border-2 border-white/10 overflow-hidden shadow-2xl">
                   {selectedUserForDocs?.profilePhoto ? (
                     <img src={selectedUserForDocs.profilePhoto} className="h-full w-full object-cover" alt="Profile" />
@@ -1427,23 +1456,34 @@ export function UserManagement() {
                     </div>
                   )}
                 </div>
-                <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-full cursor-pointer">
-                  <Upload size={20} className="text-white" />
-                  <input type="file" className="hidden" accept="image/*" onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setDocUploading('profile');
-                      const reader = new FileReader();
-                      reader.onload = (ev) => {
-                        // In real app, call uploadFile api here
-                        toast.success("Profile photo uploaded successfully");
-                        setDocUploading(null);
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }} />
-                </label>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-full gap-2">
+                  <label className="cursor-pointer hover:text-indigo-400 text-white transition">
+                    <Upload size={18} />
+                    <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setDocUploading('profile');
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                          // In real app, call uploadFile api here
+                          toast.success("Profile photo uploaded successfully");
+                          setDocUploading(null);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }} />
+                  </label>
+                  {selectedUserForDocs?.profilePhoto && (
+                    <button 
+                      onClick={() => handleDocDelete('profile', selectedUserForDocs.profilePhoto)}
+                      className="text-red-400 hover:text-red-300 transition"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
+                </div>
               </div>
+
               <div className="flex-1">
                 <p className="text-xs text-slate-400 leading-relaxed">
                   Upload a clear, high-resolution portrait. Supports JPG, PNG. Max size 2MB.
@@ -1464,22 +1504,33 @@ export function UserManagement() {
               <span className="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full font-bold uppercase">ID/Passport</span>
             </div>
 
-            <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-white/10 hover:border-orange-500/50 rounded-2xl transition hover:bg-orange-500/5 cursor-pointer group">
-              <div className="text-center">
-                <div className="mx-auto h-10 w-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-400 group-hover:scale-110 transition">
-                  {docUploading === 'id' ? <Loader2 size={24} className="animate-spin" /> : <Upload size={20} />}
+            <div className="relative group">
+              <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-white/10 hover:border-orange-500/50 rounded-2xl transition hover:bg-orange-500/5 cursor-pointer group">
+                <div className="text-center">
+                  <div className="mx-auto h-10 w-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-400 group-hover:scale-110 transition">
+                    {docUploading === 'id' ? <Loader2 size={24} className="animate-spin" /> : <Upload size={20} />}
+                  </div>
+                  <p className="mt-2 text-xs font-bold text-slate-300 uppercase tracking-widest">Click to upload ID scan</p>
+                  <p className="text-[10px] text-slate-500 mt-1">PDF, JPG or PNG (Max 5MB)</p>
                 </div>
-                <p className="mt-2 text-xs font-bold text-slate-300 uppercase tracking-widest">Click to upload ID scan</p>
-                <p className="text-[10px] text-slate-500 mt-1">PDF, JPG or PNG (Max 5MB)</p>
-              </div>
-              <input type="file" className="hidden" onChange={() => {
-                setDocUploading('id');
-                setTimeout(() => {
-                  toast.success("ID proof verified and stored");
-                  setDocUploading(null);
-                }, 1500);
-              }} />
-            </label>
+                <input type="file" className="hidden" onChange={() => {
+                  setDocUploading('id');
+                  setTimeout(() => {
+                    toast.success("ID proof verified and stored");
+                    setDocUploading(null);
+                  }, 1500);
+                }} />
+              </label>
+              {selectedUserForDocs?.idProof && (
+                <button 
+                  onClick={() => handleDocDelete('identity_proof', selectedUserForDocs.idProof)}
+                  className="absolute top-2 right-2 p-2 bg-red-500/20 text-red-400 rounded-lg opacity-0 group-hover:opacity-100 transition hover:bg-red-500/30"
+                  title="Remove ID"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Others / Attachments Section */}
