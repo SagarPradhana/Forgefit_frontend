@@ -9,7 +9,11 @@ export const API_ENDPOINTS = {
     UPDATE: "/api/user/update",
   },
   ADMIN: {
-    USERS: "/api/admin/users",
+    USERS: "/api/admin/user_roles/users",
+    USER_CREATE: "/api/admin/user_roles/users/create",
+    USER_EDIT: (id: string) => `/api/admin/user_roles/users/${id}/edit`,
+    USER_UPLOAD: (id: string) => `/api/admin/user_roles/users/${id}/upload_file`,
+    ROLES: "/api/admin/user_roles/roles",
     PLANS: "/api/admin/plans",
     PAYMENTS: "/api/admin/payments",
   },

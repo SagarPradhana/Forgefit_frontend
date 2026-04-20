@@ -1,6 +1,5 @@
-import { useState, useMemo } from "react";
-import { useGymStore } from "../../store/gymStore";
-import { GlassCard, SectionTitle } from "../../components/ui/primitives";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { GlassCard, SectionTitle, LoadingSpinner } from "../../components/ui/primitives";
 import {
   Search,
   Grid,
@@ -9,8 +8,13 @@ import {
   Trash2,
   Plus,
   ChevronLeft,
+  ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useGet, useMutation } from "../../hooks/useApi";
+import { API_ENDPOINTS } from "../../utils/url";
+import { toast } from "../../store/toastStore";
 
 type ViewType = "grid" | "list";
 type UserRole = "admin" | "trainee" | "employee";
@@ -61,17 +65,95 @@ interface UserFormData {
 }
 
 export function UserManagement() {
-  const { users, addUser, updateUser, deleteUser } = useGymStore();
+  // --- API State & Hooks ---
+  const [page, setPage] = useState(1);
+  const [perPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+
+  // Search sanitation: Don't send empty search params
+  const queryParams = new URLSearchParams({
+    page: String(page),
+    per_page: String(perPage),
+  });
+  if (searchQuery.trim()) {
+    queryParams.append("search", searchQuery.trim());
+  }
+
+  // Fetch Users
+  const { loading: usersLoading, refetch: refetchUsers } = useGet(
+    `${API_ENDPOINTS.ADMIN.USERS}?${queryParams.toString()}`,
+    {
+      onSuccess: (res) => {
+        const newUsers = res.data || [];
+        if (page === 1) {
+          setAllUsers(newUsers);
+        } else {
+          setAllUsers((prev) => [...prev, ...newUsers]);
+        }
+        setHasMore(newUsers.length === perPage);
+      },
+    }
+  );
+
+  // Fetch Roles
+  const { data: rolesData } = useGet(API_ENDPOINTS.ADMIN.ROLES);
+  const roles = rolesData?.data || ["admin", "trainer", "user"];
+
+  // Mutations
+  const { mutate: createUser, loading: creating } = useMutation("post", {
+    onSuccess: () => {
+      setModalOpen(false);
+      setPage(1);
+      refetchUsers();
+    }
+  });
+
+  const { mutate: editUser, loading: editing } = useMutation("patch", {
+    onSuccess: () => {
+      setModalOpen(false);
+      setPage(1);
+      refetchUsers();
+    }
+  });
+
+  const { mutate: uploadFile } = useMutation("upload");
+
+  const { mutate: performDelete } = useMutation("delete", {
+    onSuccess: () => {
+      setDeleteModalOpen(false);
+      refetchUsers();
+    }
+  });
 
   // State management
+  // View State management
   const [viewType, setViewType] = useState<ViewType>("grid");
-  const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [editingUserId, setEditingUserId] = useState<number | null>(null);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [modalStep, setModalStep] = useState<ModalStep>("role");
   const [photoPreview, setPhotoPreview] = useState<string>("");
-  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  // Infinite Scroll Observer
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastUserElementRef = useCallback((node: HTMLDivElement) => {
+    if (usersLoading) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore && viewType === "grid") {
+        setPage(prev => prev + 1);
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, [usersLoading, hasMore, viewType]);
+
+  // Reset page on search
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery]);
 
   const [formData, setFormData] = useState<UserFormData>({
     name: "",
@@ -104,14 +186,7 @@ export function UserManagement() {
   });
 
   // Filter and search users
-  const filteredUsers = useMemo(() => {
-    return users.filter(
-      (u) =>
-        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.phone.includes(searchQuery),
-    );
-  }, [users, searchQuery]);
+  const filteredUsers = allUsers;
 
   const handleAddNew = () => {
     setFormData({
@@ -268,36 +343,41 @@ export function UserManagement() {
       return;
     }
 
+    const payload = {
+      username: formData.email.split('@')[0],
+      mobile: formData.phone,
+      name: formData.name,
+      email: formData.email,
+      address: formData.address,
+      role: formData.role,
+      metadata: {
+        height: Number(formData.personalInfo?.height || 0),
+        weight: Number(formData.personalInfo?.weight || 0),
+        gender: formData.personalInfo?.gender || "Male",
+        dob: 0, // Placeholder
+        profile_image_path: "",
+        identity_proof_image_path: "",
+        other_docs_path: []
+      },
+      joining_date: Math.floor(new Date(formData.membershipDetails?.joiningDate || "").getTime() / 1000),
+      trainer_id: "00000000-0000-0000-0000-000000000000",
+      plan_id: "00000000-0000-0000-0000-000000000000",
+      duration_in_months: 12,
+      amount: 0
+    };
+
     if (editingUserId) {
-      updateUser(editingUserId, {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        trainer: formData.address,
-        plan: formData.role,
-        status: "Active",
-        fitnessGoal: formData.personalInfo?.fitnessGoal || "General Fitness",
-        bodyFat: "N/A",
-      });
+      editUser(API_ENDPOINTS.ADMIN.USER_EDIT(editingUserId), payload);
     } else {
-      addUser({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        trainer: formData.address,
-        plan: formData.role,
-        status: "Active",
-        fitnessGoal: formData.personalInfo?.fitnessGoal || "General Fitness",
-        bodyFat: "N/A",
-      });
+      createUser(API_ENDPOINTS.ADMIN.USER_CREATE, payload);
     }
 
     setModalOpen(false);
   };
 
-  const handleDeleteUser = (userId: number) => {
-    deleteUser(userId);
-    setDeleteModalOpen(false);
+  const handleDeleteUser = (userId: string) => {
+    // Assuming delete endpoint follows /api/admin/user_roles/users/{id}
+    performDelete(`${API_ENDPOINTS.ADMIN.USERS}/${userId}`);
     setDeleteTarget(null);
   };
 
@@ -392,20 +472,17 @@ export function UserManagement() {
       {viewType === "grid" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           {filteredUsers.length > 0 ? (
-            filteredUsers.map((user) => (
+            filteredUsers.map((user, index) => (
               <motion.div
-                key={user.id}
+                key={user.id || index}
+                ref={index === filteredUsers.length - 1 ? lastUserElementRef : null}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ y: -8 }}
                 className="group relative bg-gradient-to-br from-white/8 to-white/5 border border-white/15 rounded-xl p-5 hover:border-indigo-500/50 transition-all duration-300 overflow-hidden shadow-lg"
               >
-                {/* Background gradient effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-orange-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                {/* Content */}
+                {/* ... existing card content ... */}
                 <div className="relative z-10">
-                  {/* Header with Avatar */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3 flex-1">
                       <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-orange-400 flex items-center justify-center text-white font-bold text-lg shadow-lg">
@@ -416,69 +493,32 @@ export function UserManagement() {
                           {user.name}
                         </p>
                         <p className="text-xs font-semibold text-indigo-300 uppercase tracking-wider">
-                          {user.plan}
+                          {user.role || 'Member'}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Info Section */}
                   <div className="space-y-2.5 mb-5 pb-5 border-b border-white/10">
-                    <div className="flex items-center gap-2">
-                      <span className="text-slate-400 text-xs font-semibold">
-                        EMAIL
-                      </span>
-                    </div>
-                    <p className="text-sm text-slate-300 truncate">
-                      {user.email}
-                    </p>
-
-                    <div className="flex items-center gap-2 mt-3">
-                      <span className="text-slate-400 text-xs font-semibold">
-                        PHONE
-                      </span>
-                    </div>
-                    <p className="text-sm text-slate-300">{user.phone}</p>
+                    <p className="text-sm text-slate-300 truncate">{user.email}</p>
+                    <p className="text-sm text-slate-300">{user.mobile || user.phone}</p>
                   </div>
 
-                  {/* Status Badge */}
-                  <div className="mb-4 flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full" />
-                    <span className="text-xs text-green-300 font-medium">
-                      {user.status || "Active"}
-                    </span>
-                  </div>
-
-                  {/* Action Buttons */}
                   <div className="flex gap-2">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handleEdit(user)}
-                      className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500/30 to-indigo-600/30 hover:from-indigo-500/50 hover:to-indigo-600/50 text-indigo-300 py-2.5 rounded-lg text-sm font-medium transition border border-indigo-400/30"
-                    >
-                      <Edit2 size={16} />
-                      Edit
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        setDeleteTarget(user.id);
-                        setDeleteModalOpen(true);
-                      }}
-                      className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-red-500/30 to-red-600/30 hover:from-red-500/50 hover:to-red-600/50 text-red-300 py-2.5 rounded-lg text-sm font-medium transition border border-red-400/30"
-                    >
-                      <Trash2 size={16} />
-                      Delete
-                    </motion.button>
+                    <button onClick={() => handleEdit(user)} className="flex-1 bg-indigo-500/30 text-indigo-300 py-2 rounded-lg text-sm border border-indigo-400/30">Edit</button>
+                    <button className="flex-1 bg-red-500/30 text-red-300 py-2 rounded-lg text-sm border border-red-400/30">Delete</button>
                   </div>
                 </div>
               </motion.div>
             ))
-          ) : (
+          ) : !usersLoading && (
             <div className="col-span-full text-center py-12">
               <p className="text-slate-400 text-lg">No users found</p>
+            </div>
+          )}
+          {usersLoading && (
+            <div className="col-span-full flex justify-center py-8">
+              <Loader2 className="animate-spin text-white" />
             </div>
           )}
         </div>
@@ -486,82 +526,64 @@ export function UserManagement() {
 
       {/* List View */}
       {viewType === "list" && (
-        <div className="space-y-2 mb-6">
+        <div className="mb-6">
           {filteredUsers.length > 0 ? (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-xl border border-white/10 bg-white/5">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/10 bg-white/5">
-                    <th className="text-left py-4 px-4 text-slate-300 font-bold">
-                      Name
-                    </th>
-                    <th className="text-left py-4 px-4 text-slate-300 font-bold">
-                      Email
-                    </th>
-                    <th className="text-left py-4 px-4 text-slate-300 font-bold">
-                      Phone
-                    </th>
-                    <th className="text-left py-4 px-4 text-slate-300 font-bold">
-                      Role
-                    </th>
-                    <th className="text-center py-4 px-4 text-slate-300 font-bold">
-                      Actions
-                    </th>
+                  <tr className="border-b border-white/10">
+                    <th className="text-left py-4 px-4 text-slate-300">Name</th>
+                    <th className="text-left py-4 px-4 text-slate-300">Email</th>
+                    <th className="text-left py-4 px-4 text-slate-300">Mobile</th>
+                    <th className="text-left py-4 px-4 text-slate-300">Role</th>
+                    <th className="text-center py-4 px-4 text-slate-300">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((user) => (
-                    <motion.tr
-                      key={user.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="border-b border-white/5 hover:bg-white/8 transition"
-                    >
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-orange-400 flex items-center justify-center text-white text-xs font-bold">
-                            {user.name.charAt(0).toUpperCase()}
-                          </div>
-                          <span className="font-medium text-white">
-                            {user.name}
-                          </span>
-                        </div>
-                      </td>
+                  {allUsers.map((user) => (
+                    <tr key={user.id} className="border-b border-white/5 hover:bg-white/5 transition">
+                      <td className="py-4 px-4 text-white font-medium">{user.name}</td>
                       <td className="py-4 px-4 text-slate-300">{user.email}</td>
-                      <td className="py-4 px-4 text-slate-300">{user.phone}</td>
+                      <td className="py-4 px-4 text-slate-300">{user.mobile || user.phone}</td>
                       <td className="py-4 px-4">
-                        <span className="inline-block bg-indigo-500/20 text-indigo-300 px-3 py-1 rounded-full text-xs font-semibold">
-                          {user.plan}
+                        <span className="capitalize bg-indigo-500/20 text-indigo-300 px-3 py-1 rounded-full text-xs">
+                          {user.role}
                         </span>
                       </td>
                       <td className="py-4 px-4">
-                        <div className="flex justify-center gap-3">
-                          <button
-                            onClick={() => handleEdit(user)}
-                            className="text-indigo-400 hover:text-indigo-300 hover:scale-125 transition"
-                          >
-                            <Edit2 size={18} />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setDeleteTarget(user.id);
-                              setDeleteModalOpen(true);
-                            }}
-                            className="text-red-400 hover:text-red-300 hover:scale-125 transition"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
+                         <div className="flex justify-center gap-3">
+                            <button onClick={() => handleEdit(user)} className="text-indigo-400"><Edit2 size={18}/></button>
+                            <button className="text-red-400"><Trash2 size={18}/></button>
+                         </div>
                       </td>
-                    </motion.tr>
+                    </tr>
                   ))}
                 </tbody>
               </table>
+
+              {/* Pagination Footer for List View */}
+              <div className="flex items-center justify-between p-4 border-t border-white/10">
+                <p className="text-sm text-slate-400">Page {page}</p>
+                <div className="flex gap-2">
+                  <button 
+                    disabled={page === 1}
+                    onClick={() => setPage(p => p - 1)}
+                    className="p-2 rounded bg-white/10 disabled:opacity-50"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  <button 
+                    disabled={!hasMore}
+                    onClick={() => setPage(p => p + 1)}
+                    className="p-2 rounded bg-white/10 disabled:opacity-50"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
-            <div className="text-center py-12 text-slate-400">
-              No users found
-            </div>
+            <div className="text-center py-12 text-slate-400">No users found</div>
           )}
         </div>
       )}
@@ -678,18 +700,15 @@ export function UserManagement() {
                       editingUserId ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                   >
-                    <option value="admin" className="bg-slate-900 text-white">
-                      Admin
-                    </option>
-                    <option value="trainee" className="bg-slate-900 text-white">
-                      Trainee
-                    </option>
-                    <option
-                      value="employee"
-                      className="bg-slate-900 text-white"
-                    >
-                      Employee
-                    </option>
+                    {roles.map((r: any) => {
+                      const roleName = typeof r === 'string' ? r : r.role;
+                      const roleKey = typeof r === 'string' ? r : (r.id || r.role_id);
+                      return (
+                        <option key={roleKey} value={roleName} className="bg-slate-900 text-white capitalize">
+                          {roleName}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               </motion.div>

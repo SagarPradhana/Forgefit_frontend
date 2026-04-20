@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "../utils/httputils";
 
 interface UseGetOptions {
@@ -8,25 +8,29 @@ interface UseGetOptions {
 }
 
 export function useGet<T = any>(url: string, options: UseGetOptions = {}) {
-  const { enabled = true, onSuccess, onError } = options;
+  const { enabled = true } = options;
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<any>(null);
+
+  // Use a ref for options to avoid infinite loops when anonymous functions are passed
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const result = await api.get(url);
       setData(result);
-      if (onSuccess) onSuccess(result);
+      if (optionsRef.current.onSuccess) optionsRef.current.onSuccess(result);
       setError(null);
     } catch (err: any) {
       setError(err);
-      if (onError) onError(err);
+      if (optionsRef.current.onError) optionsRef.current.onError(err);
     } finally {
       setLoading(false);
     }
-  }, [url, onSuccess, onError]);
+  }, [url]);
 
   useEffect(() => {
     if (enabled) {
@@ -43,7 +47,7 @@ interface UseMutationOptions {
 }
 
 export function useMutation<T = any>(
-  method: "post" | "put" | "delete",
+  method: "post" | "put" | "delete" | "patch" | "upload",
   options: UseMutationOptions = {}
 ) {
   const { onSuccess, onError } = options;

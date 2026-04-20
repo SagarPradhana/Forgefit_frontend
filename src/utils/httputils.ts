@@ -12,11 +12,13 @@ export async function httpFetch(endpoint: string, options: RequestOptions = {}) 
   const { showToast = true, ...fetchOptions } = options;
   const { token, refreshToken, updateTokens, logout } = useAuthStore.getState();
 
+  const isFormData = fetchOptions.body instanceof FormData;
+
   const headers = new Headers(fetchOptions.headers);
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
-  if (!headers.has("Content-Type")) {
+  if (!headers.has("Content-Type") && !isFormData) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -41,7 +43,8 @@ export async function httpFetch(endpoint: string, options: RequestOptions = {}) 
       });
 
       if (refreshRes.ok) {
-        const { access_token, refresh_token } = await refreshRes.json();
+        const refreshData = await refreshRes.json();
+        const { access_token, refresh_token } = refreshData.data;
         updateTokens(access_token, refresh_token);
         
         // Retry original request
@@ -87,4 +90,8 @@ export const api = {
     httpFetch(url, { ...options, method: "PUT", body: JSON.stringify(body) }),
   delete: (url: string, options?: RequestOptions) => 
     httpFetch(url, { ...options, method: "DELETE" }),
+  patch: (url: string, body: any, options?: RequestOptions) => 
+    httpFetch(url, { ...options, method: "PATCH", body: JSON.stringify(body) }),
+  upload: (url: string, formData: FormData, options?: RequestOptions) =>
+    httpFetch(url, { ...options, method: "POST", body: formData }),
 };
