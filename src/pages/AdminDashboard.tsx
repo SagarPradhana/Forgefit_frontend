@@ -180,10 +180,10 @@ function AdminDashboard() {
               {expiringUsers.map((user) => (
                 <div
                   key={user.name}
-                  className="rounded-3xl border border-white/10 bg-slate-900/60 p-4"
+                  className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md p-4 transition-colors"
                 >
-                  <p className="font-semibold text-white">{user.name}</p>
-                  <p className="text-sm text-slate-400">
+                  <p className="font-black text-slate-900 dark:text-white uppercase tracking-tight">{user.name}</p>
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">
                     {user.daysLeft} day(s) left
                   </p>
                 </div>
@@ -196,15 +196,15 @@ function AdminDashboard() {
             />
           )}
 
-          <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-4">
-            <p className="text-sm text-slate-300">Attendance snapshot</p>
+          <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md p-5 mt-6">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-4">Attendance snapshot</p>
             {attendanceHistory.slice(-3).map((item) => (
               <div
                 key={item.date}
-                className="mt-3 rounded-2xl bg-slate-950/70 p-3"
+                className="mt-3 rounded-2xl bg-white/80 dark:bg-slate-950/70 p-3 border border-slate-100 dark:border-transparent shadow-sm dark:shadow-none"
               >
-                <p className="font-medium text-white">{item.date}</p>
-                <p className="text-sm text-slate-400">
+                <p className="font-bold text-slate-900 dark:text-white">{item.date}</p>
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
                   {item.checkIn} — {item.checkOut}
                 </p>
               </div>

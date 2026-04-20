@@ -347,7 +347,6 @@ export function Sidebar({
         { name: "subscriptions", icon: CreditCard, label: t("subscription") },
         { name: "offers", icon: Box, label: t("offers") },
         { name: "payments", icon: CreditCard, label: t("payments") },
-        { name: "features", icon: Settings, label: t("features") },
         { name: "settings", icon: Settings, label: t("settings") },
         { name: "notifications", icon: Bell, label: t("notifications") },
       ]
@@ -367,38 +366,41 @@ export function Sidebar({
         width: collapsed ? 80 : 240,
       }}
       initial={false}
-      className={`relative flex h-full flex-col rounded-2xl ${currentTheme.borderColor} ${currentTheme.sidebarBg} backdrop-blur-3xl p-4 shadow-2xl overflow-hidden`}
+      className={`relative flex h-full flex-col rounded-2xl ${currentTheme.borderColor} ${currentTheme.sidebarBg} backdrop-blur-3xl p-4 shadow-2xl overflow-x-hidden select-none transition-colors duration-300`}
     >
       {/* 🔥 LOGO */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="mb-6 flex items-center justify-between gap-3"
+        className={`mb-8 flex ${collapsed ? "flex-col items-center gap-6" : "items-center justify-between gap-3"} transition-all duration-300`}
       >
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center ${collapsed ? "flex-col gap-2" : "gap-2"}`}>
           <div
-            className={`h-10 w-10 flex items-center justify-center rounded-xl bg-gradient-to-br ${currentTheme.accent} shadow-lg hover:shadow-xl transition-shadow duration-300`}
+            className={`h-11 w-11 flex items-center justify-center rounded-2xl bg-gradient-to-br ${currentTheme.accent} shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all duration-300`}
           >
             <motion.div
               animate={{ scale: [1, 1.1, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              <Dumbbell size={18} />
+              <Dumbbell size={20} className="text-white" />
             </motion.div>
           </div>
-          {(!collapsed || (isMobile && !collapsed)) && (
-            <span
-              className={`font-semibold ${isLight ? "text-gray-900" : "text-white"}`}
+          {!collapsed && (
+            <motion.span
+              key="brand-name"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className={`font-black text-lg tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}
             >
               ForgeFit
-            </span>
+            </motion.span>
           )}
         </div>
 
         {/* COLLAPSE/CLOSE BUTTON */}
         <button
-          className={`${isMobile ? "inline-flex" : "hidden md:inline-flex"} ${isLight ? "text-gray-600 hover:text-gray-800" : "text-gray-400 hover:text-white"} transition-colors`}
+          className={`${isMobile ? "inline-flex" : "hidden md:inline-flex"} h-9 w-9 items-center justify-center rounded-xl bg-slate-500/5 hover:bg-slate-500/10 ${isLight ? "text-slate-600 hover:text-indigo-600" : "text-slate-400 hover:text-white"} transition-all duration-200`}
           onClick={() => {
             if (isMobile && onClose) {
               onClose();
@@ -411,14 +413,15 @@ export function Sidebar({
             <X className="h-6 w-6" />
           ) : (
             <ChevronLeft
-              className={`transition ${collapsed ? "rotate-180" : ""}`}
+              size={20}
+              className={`transition-transform duration-300 ${collapsed ? "rotate-180" : ""}`}
             />
           )}
         </button>
       </motion.div>
 
       {/* NAV */}
-      <div className="flex-1 min-h-0 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden space-y-1 pr-1 custom-scrollbar">
         {links.map(({ name, icon: Icon, label }) => {
           const path = `/${role}/${name}`;
           const isActive = location.pathname === path;
@@ -430,35 +433,33 @@ export function Sidebar({
               onClick={() => {
                 if (isMobile && onClose) onClose();
               }}
-              className={`relative flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:scale-105 ${isLight ? "text-gray-700 hover:text-gray-900" : "text-gray-300 hover:text-white"}`}
+              className={`relative flex ${collapsed ? "justify-center" : "items-center gap-3 px-3"} py-2.5 rounded-xl transition-all duration-200 hover:scale-105 group overflow-hidden ${isActive ? "text-white" : isLight ? "text-slate-600 hover:text-indigo-600" : "text-slate-400 hover:text-white"}`}
             >
               {/* ACTIVE BG */}
               {isActive && (
                 <motion.div
                   layoutId="active-pill"
-                  className="absolute inset-0 rounded-lg shadow-lg"
-                  style={{
-                    backgroundImage: currentTheme.navGradient,
-                    boxShadow: `0 0 20px ${currentTheme.accent.split(" ")[0].replace("from-", "").replace("-500", "")}`,
-                  }}
+                  className={`absolute inset-0 rounded-xl bg-gradient-to-r ${currentTheme.accent} shadow-lg shadow-indigo-500/20`}
                 />
               )}
 
-              <Icon size={18} className="relative z-10" />
+              <Icon size={18} className="relative z-10 shrink-0" />
 
-              {(!collapsed || (isMobile && !collapsed)) && (
-                <span className="relative z-10 capitalize text-sm font-medium">
+              {!collapsed && (
+                <motion.span
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="relative z-10 capitalize text-sm font-black tracking-tight whitespace-nowrap"
+                >
                   {label}
-                </span>
+                </motion.span>
               )}
 
               {/* TOOLTIP (Only for desktop collapsed) */}
               {collapsed && !isMobile && (
-                <span
-                  className={`absolute left-14 ${isLight ? "bg-gray-800 text-white" : "bg-black text-white"} text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[110]`}
-                >
+                <div className="fixed left-20 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-[1000] border border-white/10 shadow-2xl translate-x-2 group-hover:translate-x-0">
                   {label}
-                </span>
+                </div>
               )}
             </NavLink>
           );
@@ -470,18 +471,26 @@ export function Sidebar({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.3 }}
-        className="mt-4 pt-4 border-t border-white/10"
+        className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10"
       >
         <button
           onClick={() => {
             logout();
             navigate("/");
           }}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:scale-105 ${isLight ? "text-red-600 hover:text-red-700 hover:bg-red-50" : "text-red-400 hover:text-red-300 hover:bg-red-950/20"}`}
+          className={`group w-full flex ${collapsed ? "justify-center px-0" : "items-center gap-3 px-4"} py-3 rounded-xl transition-all duration-300 hover:scale-[1.02] border border-transparent ${isLight
+            ? "text-red-600 hover:bg-red-50 hover:border-red-100"
+            : "text-red-400 hover:bg-red-500/10 hover:border-red-500/20 shadow-lg shadow-red-500/0 hover:shadow-red-500/5"} shadow-sm`}
         >
-          <LogOut size={18} />
-          {(!collapsed || (isMobile && !collapsed)) && (
-            <span className="text-sm font-medium">{t("logout")}</span>
+          <LogOut size={20} className="shrink-0 transition-transform group-hover:-translate-x-1" />
+          {!collapsed && (
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-xs font-black uppercase tracking-widest"
+            >
+              {t("logout")}
+            </motion.span>
           )}
         </button>
       </motion.div>
@@ -584,8 +593,8 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                     type="button"
                     onClick={nextColorTheme}
                     className={`inline-flex h-8 w-8 lg:h-10 lg:w-10 items-center justify-center rounded-full border transition ${systemTheme === "light"
-                        ? "border-gray-300/50 bg-gray-200/30 text-gray-600 hover:bg-gray-300/50"
-                        : "border-white/15 bg-white/5 text-slate-100 hover:bg-white/10"
+                      ? "border-gray-300/50 bg-gray-200/30 text-gray-600 hover:bg-gray-300/50"
+                      : "border-white/15 bg-white/5 text-slate-100 hover:bg-white/10"
                       }`}
                     title={`Switch theme`}
                   >

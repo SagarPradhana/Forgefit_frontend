@@ -460,7 +460,7 @@ export function UserManagement() {
               placeholder="Search by name, email, or phone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+              className="w-full bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-10 pr-4 py-2 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition shadow-sm dark:shadow-none"
             />
           </div>
         </div>
@@ -488,7 +488,7 @@ export function UserManagement() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ y: -8 }}
-                className="group relative bg-gradient-to-br from-white/8 to-white/5 border border-white/15 rounded-xl p-5 hover:border-indigo-500/50 transition-all duration-300 overflow-hidden shadow-lg"
+                className="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-white/5 p-6 backdrop-blur-xl shadow-xl dark:shadow-2xl transition-all hover:shadow-2xl dark:hover:shadow-indigo-500/10"
               >
                 {/* ... existing card content ... */}
                 <div className="relative z-10">

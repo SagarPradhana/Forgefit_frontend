@@ -292,7 +292,7 @@ export function AdminPortalPages({ page }: { page: string }) {
     );
 
   if (page === "offers") {
-    const filteredOffers = offers.filter(o => 
+    const filteredOffers = offers.filter(o =>
       (o.name || o.code)?.toLowerCase().includes(offerSearch.toLowerCase()) ||
       o.description?.toLowerCase().includes(offerSearch.toLowerCase())
     );
@@ -537,47 +537,6 @@ export function AdminPortalPages({ page }: { page: string }) {
     );
   }
 
-  if (page === "features")
-    return (
-      <GlassCard>
-        <SectionTitle
-          title="User Configuration"
-          subtitle="Feature control toggles per user."
-        />
-        {users.map((u) => (
-          <div key={u.id} className="mb-3 rounded-lg bg-white/5 p-3">
-            <p className="mb-2 font-medium">{u.name}</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              <label className="flex items-center justify-between rounded border border-white/10 p-2 text-sm">
-                Show products
-                <input
-                  type="checkbox"
-                  checked={featureFlags[u.id]?.showProducts ?? true}
-                  onChange={() => toggleFlag(u.id, "showProducts")}
-                />
-              </label>
-              <label className="flex items-center justify-between rounded border border-white/10 p-2 text-sm">
-                Allow upgrade
-                <input
-                  type="checkbox"
-                  checked={featureFlags[u.id]?.allowUpgrade ?? true}
-                  onChange={() => toggleFlag(u.id, "allowUpgrade")}
-                />
-              </label>
-              <label className="flex items-center justify-between rounded border border-white/10 p-2 text-sm">
-                Show offers
-                <input
-                  type="checkbox"
-                  checked={featureFlags[u.id]?.showOffers ?? true}
-                  onChange={() => toggleFlag(u.id, "showOffers")}
-                />
-              </label>
-            </div>
-          </div>
-        ))}
-      </GlassCard>
-    );
-
   if (page === "settings")
     return (
       <GlassCard>
@@ -597,11 +556,10 @@ export function AdminPortalPages({ page }: { page: string }) {
               <button
                 key={tab.id}
                 onClick={() => setSettingsTab(tab.id as any)}
-                className={`flex items-center gap-2 border-b-2 px-1 py-2 text-sm font-medium transition-colors ${
-                  settingsTab === tab.id
+                className={`flex items-center gap-2 border-b-2 px-1 py-2 text-sm font-medium transition-colors ${settingsTab === tab.id
                     ? "border-cyan-400 text-cyan-400"
                     : "border-transparent text-slate-400 hover:text-white"
-                }`}
+                  }`}
               >
                 <span>{tab.icon}</span>
                 {tab.label}
@@ -1095,11 +1053,10 @@ export function AdminPortalPages({ page }: { page: string }) {
                 {designThemes.map((theme) => (
                   <div
                     key={theme.id}
-                    className={`rounded-lg border-2 p-4 transition-all cursor-pointer ${
-                      currentDesignTheme === theme.id
+                    className={`rounded-lg border-2 p-4 transition-all cursor-pointer ${currentDesignTheme === theme.id
                         ? "border-cyan-400 bg-cyan-400/10"
                         : "border-white/10 bg-white/5 hover:border-white/20"
-                    }`}
+                      }`}
                     onClick={() => setDesignTheme(theme.id)}
                   >
                     <div className="mb-3 aspect-video rounded bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center">
