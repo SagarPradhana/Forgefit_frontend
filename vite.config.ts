@@ -18,35 +18,40 @@ export default defineConfig({
 
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: null,
+      injectRegister: "auto",
       includeAssets: ['favicon.svg', 'icons.svg', 'robots.txt', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
       devOptions: {
         enabled: true,
       },
 
       manifest: {
-        id: '/',
+        // id: '/',
+        // name: 'ForgeFit Gym Management',
+        // short_name: 'ForgeFit',
+        // description: 'Premium Gym Management SaaS Solution',
+        // theme_color: '#6366f1',
+        // background_color: '#020617',
+        // display: 'standalone',
+        // start_url: '/',
+        // scope: '/',
+        // orientation: 'portrait',
         name: 'ForgeFit Gym Management',
         short_name: 'ForgeFit',
-        description: 'Premium Gym Management SaaS Solution',
-        theme_color: '#6366f1',
-        background_color: '#020617',
-        display: 'standalone',
         start_url: '/',
-        scope: '/',
-        orientation: 'portrait',
+        display: 'standalone',
+        background_color: '#020617',
+        theme_color: '#6366f1',
+
         icons: [
           {
             src: '/pwa-192x192.png',
             sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any',
+            type: 'image/png'
           },
           {
             src: '/pwa-512x512.png',
             sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any',
+            type: 'image/png'
           },
           {
             src: '/pwa-512x512.png',
