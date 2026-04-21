@@ -28,6 +28,10 @@ export function AdminPortalPages({ page }: { page: string }) {
     addOffer,
     updateOffer,
     deleteOffer,
+    products,
+    addProduct,
+    updateProduct,
+    deleteProduct,
     updateAppConfig,
     updatePublicPageConfig,
     setDesignTheme,
@@ -96,6 +100,19 @@ export function AdminPortalPages({ page }: { page: string }) {
     validTo: "",
   });
   const [offerSearch, setOfferSearch] = useState("");
+
+  // Product states
+  const [productSearch, setProductSearch] = useState("");
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [editProduct, setEditProduct] = useState<string | null>(null);
+  const [productForm, setProductForm] = useState({
+    name: "",
+    category: "Supplements",
+    price: "",
+    stock: "",
+    image: "",
+    description: ""
+  });
 
   // Plan Fetching
   const fetchPlans = async (p = plansMeta.page_no, search = planSearch) => {
@@ -600,6 +617,220 @@ export function AdminPortalPages({ page }: { page: string }) {
               Are you sure you want to delete this offer? This action cannot be
               undone.
             </p>
+          </div>
+        </Modal>
+      </GlassCard>
+    );
+  }
+
+  if (page === "products") {
+    const filteredProducts = products.filter(p =>
+      p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+      p.category.toLowerCase().includes(productSearch.toLowerCase())
+    );
+
+    return (
+      <GlassCard>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+          <SectionTitle
+            title="Inventory Management"
+            subtitle="Manage gym merchandise, supplements, and equipment stock."
+          />
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="relative flex-1 md:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-white outline-none focus:border-indigo-500 transition"
+              />
+            </div>
+            <GlowButton
+              onClick={() => {
+                setProductForm({ name: "", category: "Supplements", price: "", stock: "", image: "", description: "" });
+                setEditProduct(null);
+                setProductModalOpen(true);
+              }}
+            >
+              Add Product
+            </GlowButton>
+          </div>
+        </div>
+
+        <Table
+          headers={["Product Info", "Category", "Price", "Stock", "Actions"]}
+          rows={filteredProducts.map((p) => [
+            <div key={p.id} className="flex items-center gap-3 text-left">
+              <img src={p.image} alt={p.name} className="h-10 w-10 rounded-lg object-cover border border-white/10" />
+              <div className="flex flex-col">
+                <span className="font-bold text-white tracking-tight uppercase text-xs">{p.name}</span>
+                <span className="text-[10px] text-slate-500 truncate max-w-[120px]">{p.description}</span>
+              </div>
+            </div>,
+            <span key={`${p.id}-cat`} className="text-[10px] font-black uppercase tracking-widest text-slate-400">{p.category}</span>,
+            <span key={`${p.id}-price`} className="text-emerald-400 font-bold">${p.price}</span>,
+            <div key={`${p.id}-stock`} className="flex flex-col items-center gap-1">
+              <span className={`text-xs font-bold ${p.stock < 10 ? 'text-red-400' : 'text-indigo-300'}`}>{p.stock}</span>
+              {p.stock < 10 && <span className="text-[8px] font-black uppercase text-red-500/80 animate-pulse">Low Stock</span>}
+            </div>,
+            <div key={`${p.id}-actions`} className="flex gap-4">
+              <button
+                className="text-indigo-400 hover:text-indigo-300 transition-transform hover:scale-125"
+                onClick={() => {
+                  setProductForm({
+                    name: p.name,
+                    category: p.category,
+                    price: p.price.toString(),
+                    stock: p.stock.toString(),
+                    image: p.image,
+                    description: p.description
+                  });
+                  setEditProduct(p.id);
+                  setProductModalOpen(true);
+                }}
+              >
+                <Edit2 size={18} />
+              </button>
+              <button
+                className="text-red-400 hover:text-red-300 transition-transform hover:scale-125"
+                onClick={() => {
+                  setDeleteTarget({ type: "product", id: p.id });
+                  setDeleteModalOpen(true);
+                }}
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>,
+          ])}
+        />
+
+        {/* Product Modal */}
+        <Modal
+          open={productModalOpen}
+          onClose={() => setProductModalOpen(false)}
+          title={editProduct ? "Modify Inventory" : "Register Product"}
+          footer={
+            <>
+              <GlowButton className="bg-gray-600" onClick={() => setProductModalOpen(false)}>Abort</GlowButton>
+              <GlowButton
+                onClick={() => {
+                  const payload = {
+                    name: productForm.name,
+                    category: productForm.category,
+                    price: Number(productForm.price),
+                    stock: Number(productForm.stock),
+                    image: productForm.image || "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&q=80&w=400",
+                    description: productForm.description
+                  };
+                  if (editProduct) updateProduct(editProduct, payload);
+                  else addProduct(payload);
+                  setProductModalOpen(false);
+                }}
+              >
+                Sync Inventory
+              </GlowButton>
+            </>
+          }
+        >
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Product Designation</label>
+              <input
+                className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
+                placeholder="Product Name"
+                value={productForm.name}
+                onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Classification</label>
+                <select
+                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
+                  value={productForm.category}
+                  onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
+                >
+                  <option>Supplements</option>
+                  <option>Apparel</option>
+                  <option>Equipment</option>
+                  <option>Accessories</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Price ($)</label>
+                <input
+                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
+                  type="number"
+                  placeholder="0.00"
+                  value={productForm.price}
+                  onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Stock Level</label>
+                <input
+                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
+                  type="number"
+                  placeholder="0"
+                  value={productForm.stock}
+                  onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Image URL</label>
+                <input
+                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold text-xs"
+                  placeholder="https://..."
+                  value={productForm.image}
+                  onChange={(e) => setProductForm({ ...productForm, image: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Detailed Specifications</label>
+              <textarea
+                className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition resize-none h-24 font-medium"
+                placeholder="Describe product details..."
+                value={productForm.description}
+                onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+              />
+            </div>
+          </div>
+        </Modal>
+
+        {/* Delete Modal for Products */}
+        <Modal
+          open={deleteModalOpen && deleteTarget?.type === "product"}
+          onClose={() => setDeleteModalOpen(false)}
+          title="Archive Protocol"
+          footer={
+            <>
+              <GlowButton className="bg-gray-600" onClick={() => setDeleteModalOpen(false)}>Abort</GlowButton>
+              <GlowButton
+                onClick={() => {
+                  if (deleteTarget && deleteTarget.type === "product") deleteProduct(deleteTarget.id);
+                  setDeleteModalOpen(false);
+                  setDeleteTarget(null);
+                }}
+              >
+                Confirm Termination
+              </GlowButton>
+            </>
+          }
+        >
+          <div className="text-sm text-slate-300 text-center py-4">
+            <div className="h-16 w-16 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mx-auto mb-4">
+              <Trash2 size={32} />
+            </div>
+            <p className="font-bold text-white mb-2">Terminate Product Listing?</p>
+            <p className="text-xs">This will permanently remove the item from the active inventory catalog.</p>
           </div>
         </Modal>
       </GlassCard>

@@ -33,7 +33,7 @@ export function AttendanceCalendar({ data }: any) {
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-3 sm:gap-4">
+      <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-4">
         {days.map((day) => {
           const key = String(day).padStart(2, "0");
           const record = attendanceMap[key];
@@ -44,31 +44,31 @@ export function AttendanceCalendar({ data }: any) {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               whileHover={{ scale: 1.05 }}
-              className={`relative h-20 sm:h-28 rounded-2xl border transition-all duration-500 flex flex-col items-center justify-center p-2
+              className={`relative h-24 sm:h-28 rounded-xl sm:rounded-2xl border transition-all duration-500 flex flex-col items-center justify-center p-1 sm:p-2
                 ${record 
                   ? "bg-gradient-to-br from-indigo-500/20 to-orange-400/20 border-indigo-500/30 shadow-[0_0_20px_rgba(99,102,241,0.1)]" 
                   : "bg-white/5 border-white/5 text-slate-600 hover:border-white/10"
                 }`}
             >
               {/* DATE NUMBER */}
-              <span className={`absolute top-2 left-3 text-[10px] sm:text-xs font-black tracking-tighter ${record ? "text-indigo-300" : "text-slate-700"}`}>
+              <span className={`absolute top-1.5 left-2 sm:top-2 sm:left-3 text-[8px] sm:text-xs font-black tracking-tighter ${record ? "text-indigo-300" : "text-slate-700"}`}>
                 {day}
               </span>
 
               {/* DATA POINT */}
               {record ? (
-                <div className="flex flex-col items-center gap-2 mt-2 w-full">
+                <div className="flex flex-col items-center gap-1 sm:gap-2 mt-2 w-full">
                   <div className="flex flex-col items-center group">
-                    <span className="text-[10px] font-black text-white/90 tracking-tighter flex items-center gap-1">
-                      <LogIn size={10} className="text-emerald-400" />
+                    <span className="text-[7px] sm:text-[10px] font-black text-white/90 tracking-tighter flex items-center gap-0.5 sm:gap-1">
+                      <LogIn size={8} className="text-emerald-400 sm:w-[10px] sm:h-[10px]" />
                       {record.checkIn}
                     </span>
-                    <span className="text-[10px] font-black text-white/50 tracking-tighter flex items-center gap-1">
-                      <LogOut size={10} className="text-orange-400" />
+                    <span className="text-[7px] sm:text-[10px] font-black text-white/50 tracking-tighter flex items-center gap-0.5 sm:gap-1">
+                      <LogOut size={8} className="text-orange-400 sm:w-[10px] sm:h-[10px]" />
                       {record.checkOut}
                     </span>
                   </div>
-                  <CheckCircle2 size={12} className="text-emerald-400 drop-shadow-[0_0_5px_rgba(16,185,129,0.5)]" />
+                  <CheckCircle2 size={10} className="text-emerald-400 sm:w-[12px] sm:h-[12px] drop-shadow-[0_0_5px_rgba(16,185,129,0.5)]" />
                 </div>
               ) : (
                 <div className="h-1 w-1 rounded-full bg-slate-800" />

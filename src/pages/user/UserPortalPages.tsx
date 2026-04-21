@@ -107,26 +107,26 @@ export function UserPortalPages({ page }: { page: string }) {
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative p-1 rounded-[2.5rem] bg-gradient-to-r from-indigo-500/20 via-emerald-500/20 to-orange-500/20 shadow-2xl"
+          className="relative p-1 rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-to-r from-indigo-500/20 via-emerald-500/20 to-orange-500/20 shadow-2xl"
         >
-          <div className="bg-slate-950/90 backdrop-blur-2xl px-10 py-12 rounded-[2.3rem] border border-white/5 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="bg-slate-950/90 backdrop-blur-2xl px-6 py-10 sm:px-10 sm:py-12 rounded-[1.8rem] sm:rounded-[2.3rem] border border-white/5 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 blur-[120px] -mr-48 -mt-48" />
 
-            <div className="flex items-center gap-8 relative z-10">
-              <div className="h-24 w-24 rounded-[2rem] bg-gradient-to-br from-indigo-500 to-emerald-400 p-[3px] shadow-2xl shadow-indigo-500/30">
-                <div className="h-full w-full bg-slate-950 rounded-[1.8rem] flex items-center justify-center">
-                  <Star size={40} className="text-white" fill="currentColor" />
+            <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6 sm:gap-8 relative z-10 w-full sm:w-auto">
+              <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-[1.5rem] sm:rounded-[2rem] bg-gradient-to-br from-indigo-500 to-emerald-400 p-[3px] shadow-2xl shadow-indigo-500/30 shrink-0">
+                <div className="h-full w-full bg-slate-950 rounded-[1.3rem] sm:rounded-[1.8rem] flex items-center justify-center">
+                  <Star size={32} className="text-white sm:w-[40px] sm:h-[40px]" fill="currentColor" />
                 </div>
               </div>
               <div>
-                <p className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-2 leading-none">Primary Strategy</p>
-                <h2 className="text-5xl font-black text-white italic tracking-tighter leading-none mb-4">{userProfile.currentPlan}</h2>
-                <div className="flex flex-wrap gap-4">
-                  <span className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    <Clock size={14} className="text-emerald-500" /> Renews May 20, 2026
+                <p className="text-[9px] sm:text-[11px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-2 leading-none">Primary Strategy</p>
+                <h2 className="text-3xl sm:text-5xl font-black text-white italic tracking-tighter leading-none mb-4">{userProfile.currentPlan}</h2>
+                <div className="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-4">
+                  <span className="flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                    <Clock size={12} className="text-emerald-500 sm:w-[14px] sm:h-[14px]" /> May 20, 2026
                   </span>
-                  <span className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    <CheckCircle2 size={14} className="text-emerald-500" /> 12 Benefits Unlocked
+                  <span className="flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                    <CheckCircle2 size={12} className="text-emerald-500 sm:w-[14px] sm:h-[14px]" /> 12 Benefits
                   </span>
                 </div>
               </div>
@@ -134,7 +134,7 @@ export function UserPortalPages({ page }: { page: string }) {
 
             {flags.allowUpgrade && (
               <GlowButton
-                className="relative z-10 px-12 h-16 rounded-2xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-indigo-500/40"
+                className="relative z-10 w-full md:w-auto px-8 md:px-12 h-14 md:h-16 rounded-xl md:rounded-2xl text-[10px] md:text-sm font-black uppercase tracking-widest shadow-2xl shadow-indigo-500/40"
                 onClick={() => setUpgradeOpen(true)}
               >
                 Request Manual Renewal

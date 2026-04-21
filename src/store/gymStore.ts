@@ -103,10 +103,21 @@ type DesignTheme = {
   };
 };
 
+type ProductEntity = {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  stock: number;
+  image: string;
+  description: string;
+};
+
 type GymState = {
   users: User[];
   plans: PlanEntity[];
   offers: OfferEntity[];
+  products: ProductEntity[];
   featureFlags: FeatureFlags;
   appConfig: AppConfig;
   publicPageConfig: PublicPageConfig;
@@ -121,6 +132,9 @@ type GymState = {
   addOffer: (offer: Omit<OfferEntity, 'id'>) => void;
   updateOffer: (id: number, patch: Partial<OfferEntity>) => void;
   deleteOffer: (id: number) => void;
+  addProduct: (product: Omit<ProductEntity, 'id'>) => void;
+  updateProduct: (id: string, patch: Partial<ProductEntity>) => void;
+  deleteProduct: (id: string) => void;
   toggleFlag: (userId: number, key: 'showProducts' | 'allowUpgrade' | 'showOffers') => void;
   updateAppConfig: (config: Partial<AppConfig>) => void;
   updatePublicPageConfig: (config: Partial<PublicPageConfig>) => void;
@@ -131,6 +145,11 @@ export const useGymStore = create<GymState>((set) => ({
   users: userManagementSeed as unknown as User[],
   plans: pricingPlans,
   offers: offersSeed,
+  products: [
+    { id: "p1", name: "Whey Protein Isolated", category: "Supplements", price: 59.99, stock: 45, image: "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&q=80&w=400", description: "Premium quality whey protein for muscle recovery." },
+    { id: "p2", name: "Gym Performance Tee", category: "Apparel", price: 24.99, stock: 120, image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=400", description: "Breathable moisture-wicking fabric for intense workouts." },
+    { id: "p3", name: "Resistance Bands Set", category: "Equipment", price: 19.99, stock: 15, image: "https://images.unsplash.com/photo-1598289431512-b97b0917a63e?auto=format&fit=crop&q=80&w=400", description: "Complete set of 5 resistance levels for home or gym." },
+  ],
   featureFlags: {
     1: { showProducts: true, allowUpgrade: true, showOffers: true },
     2: { showProducts: true, allowUpgrade: true, showOffers: false },
@@ -282,6 +301,9 @@ export const useGymStore = create<GymState>((set) => ({
   addOffer: (offer) => set((state) => ({ offers: [...state.offers, { ...offer, id: Date.now() }] })),
   updateOffer: (id, patch) => set((state) => ({ offers: state.offers.map((o) => (o.id === id ? { ...o, ...patch } : o)) })),
   deleteOffer: (id) => set((state) => ({ offers: state.offers.filter((o) => o.id !== id) })),
+  addProduct: (product) => set((state) => ({ products: [...state.products, { ...product, id: `p-${Date.now()}` }] })),
+  updateProduct: (id, patch) => set((state) => ({ products: state.products.map((p) => (p.id === id ? { ...p, ...patch } : p)) })),
+  deleteProduct: (id) => set((state) => ({ products: state.products.filter((p) => p.id !== id) })),
   toggleFlag: (userId, key) =>
     set((state) => ({
       featureFlags: {

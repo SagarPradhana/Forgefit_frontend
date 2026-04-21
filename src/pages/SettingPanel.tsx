@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "react-router-dom";
 import { 
   Bell, 
   Lock, 
@@ -22,7 +23,15 @@ import { toast } from "../store/toastStore";
 type TabType = "general" | "security" | "notifications";
 
 export function SettingsPanel() {
-  const [activeTab, setActiveTab] = useState<TabType>("general");
+  const [searchParams] = useSearchParams();
+  const isPasswordOnly = searchParams.get("view") === "password";
+  const [activeTab, setActiveTab] = useState<TabType>(isPasswordOnly ? "security" : "general");
+  
+  useEffect(() => {
+    if (isPasswordOnly) {
+      setActiveTab("security");
+    }
+  }, [isPasswordOnly]);
   const [passwords, setPasswords] = useState({ current: "", new: "", confirm: "" });
   const [prefs, setPrefs] = useState({
     workoutReminders: true,
@@ -49,33 +58,34 @@ export function SettingsPanel() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* --- TAB NAVIGATION --- */}
-      <div className="flex p-1.5 bg-slate-900/50 backdrop-blur-md border border-white/5 rounded-2xl w-full sm:w-fit mx-auto sm:mx-0 overflow-x-auto no-scrollbar">
-        <div className="flex min-w-max sm:min-w-0">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as TabType)}
-                className={`relative flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all duration-300 ${
-                  isActive ? "text-white" : "text-slate-500 hover:text-slate-300"
-                }`}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="activeTabBg"
-                    className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-indigo-600/20 border border-indigo-500/30 rounded-xl"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-                <Icon size={14} className="relative z-10" />
-                <span className="relative z-10">{tab.label}</span>
-              </button>
-            );
-          })}
+      {!isPasswordOnly && (
+        <div className="flex p-1.5 bg-slate-900/50 backdrop-blur-md border border-white/5 rounded-2xl w-full sm:w-fit mx-auto sm:mx-0 overflow-x-auto no-scrollbar">
+          <div className="flex min-w-max sm:min-w-0">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as TabType)}
+                  className={`relative flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all duration-300 ${isActive ? "text-white" : "text-slate-500 hover:text-slate-300"
+                    }`}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeTabBg"
+                      className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-indigo-600/20 border border-indigo-500/30 rounded-xl"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                  <Icon size={14} className="relative z-10" />
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* --- CONTENT AREA --- */}
       <AnimatePresence mode="wait">
@@ -126,8 +136,8 @@ export function SettingsPanel() {
             <div className="space-y-6">
               <GlassCard className="p-8">
                 <SectionTitle 
-                  title="Security Vault" 
-                  subtitle="Fortify your account with advanced authentication"
+                  title={isPasswordOnly ? "Change Password" : "Security Vault"} 
+                  subtitle={isPasswordOnly ? "Update your account credentials" : "Fortify your account with advanced authentication"}
                   className="mb-8"
                 />
 
@@ -224,19 +234,21 @@ export function SettingsPanel() {
       </AnimatePresence>
 
       {/* --- FOOTER ACTIONS --- */}
-      <div className="flex items-center justify-between p-6 bg-white/5 border border-white/10 rounded-[2.5rem] shadow-xl">
-        <div className="flex items-center gap-2 text-slate-500">
-          <AlertCircle size={14} />
-          <span className="text-[10px] font-bold uppercase tracking-widest">Auto-saved to local storage</span>
+      {!isPasswordOnly && (
+        <div className="flex items-center justify-between p-6 bg-white/5 border border-white/10 rounded-[2.5rem] shadow-xl">
+          <div className="flex items-center gap-2 text-slate-500">
+            <AlertCircle size={14} />
+            <span className="text-[10px] font-bold uppercase tracking-widest">Auto-saved to local storage</span>
+          </div>
+          <CommonButton
+            variant="secondary"
+            onClick={handleSave}
+            className="px-10 h-12 text-xs font-black uppercase tracking-widest shadow-orange-500/20"
+          >
+            Confirm Synchronization
+          </CommonButton>
         </div>
-        <CommonButton 
-          variant="secondary" 
-          onClick={handleSave}
-          className="px-10 h-12 text-xs font-black uppercase tracking-widest shadow-orange-500/20"
-        >
-          Confirm Synchronization
-        </CommonButton>
-      </div>
+      )}
     </div>
   );
 }

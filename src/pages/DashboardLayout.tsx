@@ -16,8 +16,9 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
+import { Helmet } from "react-helmet-async";
 import LanguageSwitcher from "../components/ui/LanguageSwitcher";
 import { useNotificationStore } from "../store/notificationStore";
 import { NotificationModal } from "../components/ui/NotificationModal";
@@ -348,17 +349,16 @@ export function Sidebar({
         { name: "subscriptions", icon: CreditCard, label: t("subscription") },
         { name: "offers", icon: Box, label: t("offers") },
         { name: "payments", icon: CreditCard, label: t("payments") },
+        { name: "products", icon: Box, label: t("products") },
         { name: "settings", icon: Settings, label: t("settings") },
         { name: "notifications", icon: Bell, label: t("notifications") },
       ]
       : [
         { name: "dashboard", icon: LayoutDashboard, label: t("dashboard") },
-        { name: "profile", icon: User, label: t("profile") },
         { name: "subscription", icon: CreditCard, label: t("subscription") },
         { name: "attendance", icon: Users, label: t("attendance") },
         { name: "payments", icon: CreditCard, label: t("payments") },
         { name: "products", icon: Box, label: t("products") },
-        { name: "settings", icon: Settings, label: t("settings") },
       ];
 
   return (
@@ -510,11 +510,25 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { notifications } = useNotificationStore();
   const unreadCount = notifications?.filter?.(n => !n?.read)?.length;
 
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const { t } = useTranslation();
+  const { logout } = useAuthStore();
+  const navigate = useNavigate();
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window?.innerWidth < 1024);
     window?.addEventListener("resize", handleResize);
     return () => window?.removeEventListener("resize", handleResize);
   }, []);
+
+  // Close menus on clicks outside
+  useEffect(() => {
+    if (!profileMenuOpen) return;
+    const closeMenu = () => setProfileMenuOpen(false);
+    window.addEventListener("click", closeMenu);
+    return () => window.removeEventListener("click", closeMenu);
+  }, [profileMenuOpen]);
+
   const currentTheme = themeStyles?.[colorTheme]?.[systemTheme];
   const colorThemeKeys = Object?.keys?.(themeStyles) as Array<
     keyof typeof themeStyles
@@ -530,6 +544,9 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
     <div
       className={`relative h-screen min-h-screen overflow-hidden ${systemTheme === "light" ? "text-gray-900" : "text-white"}`}
     >
+      <Helmet>
+        <title>{`${role === 'admin' ? 'Admin' : 'Member'} Portal | ${authName || 'ForgeFit'}`}</title>
+      </Helmet>
       {/* 🔥 ENHANCED ANIMATED BACKGROUND */}
       <AnimatedBackground colorTheme={colorTheme} systemTheme={systemTheme} />
 
@@ -617,39 +634,102 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 lg:gap-4 overflow-visible shrink-0">
+              <div className="flex items-center gap-2 lg:gap-4 overflow-visible shrink-0 relative">
                 <div className="hidden sm:block">
-                   <LanguageSwitcher />
+                  <LanguageSwitcher />
                 </div>
-                
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`group relative inline-flex items-center gap-2 lg:gap-3 rounded-2xl border ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-white shadow-sm" : "bg-slate-900 border-white/5 shadow-2xl"} pl-2 pr-3 lg:pl-2 lg:pr-4 py-1.5 backdrop-blur-xl cursor-pointer transition-all duration-300 hover:border-indigo-500/50`}
-                >
-                  {/* Premium Avatar Circle */}
-                  <div className="relative h-8 w-8 lg:h-9 lg:w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-emerald-400 p-[2px] shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/40 transition-shadow">
-                    <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-slate-950">
-                      <User size={isMobile ? 16 : 16} className="text-white" />
+
+                <div className="relative">
+                  <motion.div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setProfileMenuOpen(!profileMenuOpen);
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`group relative inline-flex items-center gap-2 lg:gap-3 rounded-2xl border ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-white shadow-sm" : "bg-slate-900 border-white/5 shadow-2xl"} pl-2 pr-3 lg:pl-2 lg:pr-4 py-1.5 backdrop-blur-xl cursor-pointer transition-all duration-300 hover:border-indigo-500/50`}
+                  >
+                    {/* Premium Avatar Circle */}
+                    <div className="relative h-8 w-8 lg:h-9 lg:w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-emerald-400 p-[2px] shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/40 transition-shadow">
+                      <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-slate-950">
+                        <User size={isMobile ? 16 : 16} className="text-white" />
+                      </div>
+                      {/* Online Status Dot */}
+                      <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-slate-950 bg-emerald-500 shadow-lg" />
                     </div>
-                    {/* Online Status Dot */}
-                    <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-slate-950 bg-emerald-500 shadow-lg" />
-                  </div>
 
-                  <div className="flex flex-col items-start leading-none gap-0.5 overflow-hidden">
-                    <span
-                      className={`text-[10px] lg:text-[11px] font-black uppercase tracking-tighter bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent group-hover:from-white group-hover:to-white transition-all duration-500 truncate max-w-[60px] md:max-w-[120px]`}
-                    >
-                      {authName || role || "Account"}
-                    </span>
-                    <span className="text-[7px] font-black uppercase tracking-[0.2em] text-slate-500 group-hover:text-amber-400 transition-colors whitespace-nowrap">
-                      {role === "admin" ? "Master Admin" : "Active Member"}
-                    </span>
-                  </div>
+                    <div className="flex flex-col items-start leading-none gap-0.5 overflow-hidden">
+                      <span
+                        className={`text-[10px] lg:text-[11px] font-black uppercase tracking-tighter bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent group-hover:from-white group-hover:to-white transition-all duration-500 truncate max-w-[60px] md:max-w-[120px]`}
+                      >
+                        {authName || role || "Account"}
+                      </span>
+                      <span className="text-[7px] font-black uppercase tracking-[0.2em] text-slate-500 group-hover:text-amber-400 transition-colors whitespace-nowrap">
+                        {role === "admin" ? "Master Admin" : "Active Member"}
+                      </span>
+                    </div>
 
-                  {/* Subtle Glow Effect */}
-                  <div className="absolute inset-0 rounded-2xl bg-indigo-500/0 group-hover:bg-indigo-500/5 transition-all duration-300 -z-10" />
-                </motion.div>
+                    {/* Subtle Glow Effect */}
+                    <div className="absolute inset-0 rounded-2xl bg-indigo-500/0 group-hover:bg-indigo-500/5 transition-all duration-300 -z-10" />
+                  </motion.div>
+
+                  {/* 💎 USER POPUP MENU */}
+                  <AnimatePresence>
+                    {profileMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className={`absolute right-0 mt-2 w-64 rounded-2xl border-2 ${currentTheme.borderColor} ${systemTheme === 'light' ? 'bg-white text-slate-900' : 'bg-slate-950 text-white'} shadow-[0_20px_50px_rgba(0,0,0,0.8)] p-3 z-[1000] ring-1 ring-white/10`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="px-3 py-3 border-b border-white/10 mb-2">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 leading-none">Accessing Account</p>
+                          <p className={`text-[13px] font-black truncate uppercase tracking-tight ${systemTheme === 'light' ? 'text-indigo-600' : 'text-indigo-400'}`}>
+                            {authName || "User Account"}
+                          </p>
+                        </div>
+
+                        <div className="space-y-1 relative">
+                          <button
+                            onClick={() => {
+                              navigate(`/${role}/profile`);
+                              setProfileMenuOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-indigo-500/10 transition-all group ${systemTheme === 'light' ? 'text-slate-600 hover:text-indigo-600' : 'text-slate-300 hover:text-white'}`}
+                          >
+                            <User size={16} className={`${systemTheme === 'light' ? 'text-indigo-600' : 'text-indigo-400'}`} />
+                            <span className="text-[11px] font-black uppercase tracking-widest">My Profile</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              navigate(`/${role}/settings?view=password`);
+                              setProfileMenuOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-amber-500/10 transition-all group ${systemTheme === 'light' ? 'text-slate-600 hover:text-amber-600' : 'text-slate-300 hover:text-white'}`}
+                          >
+                            <Settings size={16} className={`${systemTheme === 'light' ? 'text-amber-600' : 'text-amber-400'}`} />
+                            <span className="text-[11px] font-black uppercase tracking-widest">Change Password</span>
+                          </button>
+                        </div>
+
+                        <div className="h-px bg-white/10 my-3" />
+
+                        <button
+                          onClick={() => {
+                            logout();
+                            navigate("/");
+                          }}
+                          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all group shadow-inner"
+                        >
+                          <LogOut size={16} />
+                          <span className="text-[11px] font-black uppercase tracking-widest">Log Out</span>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             </div>
           </motion.div>

@@ -46,7 +46,7 @@ export async function httpFetch(endpoint: string, options: RequestOptions = {}) 
         const refreshData = await refreshRes.json();
         const { access_token, refresh_token } = refreshData.data;
         updateTokens(access_token, refresh_token);
-        
+
         // Retry original request
         headers.set("Authorization", `Bearer ${access_token}`);
         response = await fetch(`${BASE_URL}${endpoint}`, {
@@ -69,28 +69,28 @@ export async function httpFetch(endpoint: string, options: RequestOptions = {}) 
   if (!response.ok) {
     if (showToast) {
       const errorMessage = data?.message || data?.error || data?.errors?.[0]?.msg || "Something went wrong";
-      toast.error(errorMessage, "Error");
+      toast.error(errorMessage);
     }
     throw data;
   }
 
   if (showToast && fetchOptions.method && fetchOptions.method !== "GET") {
-    toast.success(data?.message || "Operation successful", "Notice");
+    toast.success(data?.message || "Operation successful");
   }
 
   return data;
 }
 
 export const api = {
-  get: (url: string, options?: RequestOptions) => 
+  get: (url: string, options?: RequestOptions) =>
     httpFetch(url, { ...options, method: "GET" }),
-  post: (url: string, body: any, options?: RequestOptions) => 
+  post: (url: string, body: any, options?: RequestOptions) =>
     httpFetch(url, { ...options, method: "POST", body: JSON.stringify(body) }),
-  put: (url: string, body: any, options?: RequestOptions) => 
+  put: (url: string, body: any, options?: RequestOptions) =>
     httpFetch(url, { ...options, method: "PUT", body: JSON.stringify(body) }),
-  delete: (url: string, options?: RequestOptions) => 
+  delete: (url: string, options?: RequestOptions) =>
     httpFetch(url, { ...options, method: "DELETE" }),
-  patch: (url: string, body: any, options?: RequestOptions) => 
+  patch: (url: string, body: any, options?: RequestOptions) =>
     httpFetch(url, { ...options, method: "PATCH", body: JSON.stringify(body) }),
   upload: (url: string, formData: FormData, options?: RequestOptions) =>
     httpFetch(url, { ...options, method: "POST", body: formData }),

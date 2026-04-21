@@ -41,8 +41,10 @@ export function SignInPage() {
       const decoded = decodeToken(access_token);
       const role = decoded?.role || "user";
       const name = decoded?.name || decoded?.preferred_username || decoded?.username || "authenticated user";
+      const userEmail = decoded?.email || "";
+      const userPhone = decoded?.phone || decoded?.phone_number || "";
       
-      login(role, name, access_token, refresh_token);
+      login(role, name, userEmail, userPhone, access_token, refresh_token);
       navigate(`/${role}/dashboard`);
     },
   });
