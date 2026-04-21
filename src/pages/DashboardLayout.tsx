@@ -500,7 +500,7 @@ export function Sidebar({
 }
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { role } = useAuthStore();
+  const { role, name } = useAuthStore();
   const systemTheme = useSystemTheme();
   const [colorTheme, setColorTheme] =
     useState<keyof typeof themeStyles>("theme1");
@@ -508,15 +508,15 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [notiModalOpen, setNotiModalOpen] = useState(false);
   const { notifications } = useNotificationStore();
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications?.filter?.(n => !n?.read)?.length;
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 1024);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    const handleResize = () => setIsMobile(window?.innerWidth < 1024);
+    window?.addEventListener("resize", handleResize);
+    return () => window?.removeEventListener("resize", handleResize);
   }, []);
-  const currentTheme = themeStyles[colorTheme][systemTheme];
-  const colorThemeKeys = Object.keys(themeStyles) as Array<
+  const currentTheme = themeStyles?.[colorTheme]?.[systemTheme];
+  const colorThemeKeys = Object?.keys?.(themeStyles) as Array<
     keyof typeof themeStyles
   >;
 
@@ -619,23 +619,34 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
 
               <div className="flex items-center gap-2 lg:gap-3">
                 <LanguageSwitcher />
-                <div
-                  className={`inline-flex items-center gap-2 rounded-full ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-gray-100/70" : "bg-slate-950/70"} px-2 lg:px-3 py-1.5 lg:py-2 shadow-inner`}
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`group inline-flex items-center gap-3 rounded-2xl border ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-white shadow-sm" : "bg-white/5 shadow-2xl"} pl-2 pr-4 py-1.5 backdrop-blur-xl cursor-pointer transition-all duration-300 hover:border-indigo-500/50`}
                 >
-                  <User
-                    size={16}
-                    className={
-                      systemTheme === "light"
-                        ? "text-gray-700"
-                        : "text-slate-100"
-                    }
-                  />
-                  <span
-                    className={`text-xs lg:text-sm capitalize font-medium ${systemTheme === "light" ? "text-gray-700" : "text-slate-100"}`}
-                  >
-                    {role}
-                  </span>
-                </div>
+                  {/* Premium Avatar Circle */}
+                  <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-emerald-400 p-[2px] shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/40 transition-shadow">
+                    <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-slate-950">
+                      <User size={16} className="text-white" />
+                    </div>
+                    {/* Online Status Dot */}
+                    <span className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-slate-950 bg-emerald-500 shadow-lg" />
+                  </div>
+
+                  <div className="flex flex-col items-start leading-none gap-1">
+                    <span
+                      className={`text-[11px] font-black uppercase tracking-tighter bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent group-hover:from-white group-hover:to-white transition-all duration-500`}
+                    >
+                      {name || role || "Account"}
+                    </span>
+                    <span className="text-[8px] font-black uppercase tracking-widest text-slate-500 group-hover:text-amber-400 transition-colors">
+                      {role === "admin" ? "Master Admin" : "Active Member"}
+                    </span>
+                  </div>
+
+                  {/* Subtle Glow Effect */}
+                  <div className="absolute inset-0 rounded-2xl bg-indigo-500/0 group-hover:bg-indigo-500/5 transition-all duration-300 -z-10" />
+                </motion.div>
               </div>
             </div>
           </motion.div>

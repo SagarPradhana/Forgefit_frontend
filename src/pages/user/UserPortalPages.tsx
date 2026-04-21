@@ -4,7 +4,6 @@ import {
   attendanceHistory,
   payments,
   products,
-  type Status,
   userProfile,
 } from "../../data/mockData";
 import {
@@ -17,12 +16,15 @@ import {
   StatusBadge,
   Table,
 } from "../../components/ui/primitives";
+import { Calendar as CalendarIcon, List as ListIcon, Info, Users, Clock, Filter, CalendarCheck, ShieldCheck, Star, CheckCircle2, Zap } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import UserDashboard from "../UserDashboard";
 import { ProfileCard } from "../ProfileCard";
 import { SubscriptionCard } from "../SubscriptionCard";
 import { AttendanceCalendar } from "../AttendanceCalender";
 import { ProductCard } from "../ProductCard";
 import { SettingsPanel } from "../SettingPanel";
+import { toast } from "../../store/toastStore";
 
 export function UserPortalPages({ page }: { page: string }) {
   const plans = useGymStore((s) => s.plans);
@@ -34,9 +36,33 @@ export function UserPortalPages({ page }: { page: string }) {
         showOffers: true,
       },
   );
+
+  // --- STATE HOOKS (MUST BE TOP LEVEL) ---
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [selectedPlanForUpgrade, setSelectedPlanForUpgrade] = useState<any>(null);
   const [view, setView] = useState<"table" | "calendar">("calendar");
 
+  // Attendance Dates & State
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split("T")[0];
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split("T")[0];
+  const day = today.getDay();
+  const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+  const startOfWeek = new Date(today.setDate(diff)).toISOString().split("T")[0];
+
+  const [range, setRange] = useState<"weekly" | "monthly" | "custom">("monthly");
+  const [customDates, setCustomDates] = useState({ start: firstDay, end: lastDay });
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedWeek, setSelectedWeek] = useState(startOfWeek);
+
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  const years = ["2024", "2025", "2026"];
+
+  // --- CONDITIONAL RENDERING (AFTER HOOKS) ---
   if (page === "dashboard") return <UserDashboard />;
 
   if (page === "profile") {
@@ -51,82 +77,296 @@ export function UserPortalPages({ page }: { page: string }) {
     );
   }
 
-  if (page === "subscription")
+  if (page === "subscription") {
+    const handlePlanSelect = (plan: any) => {
+      setSelectedPlanForUpgrade(plan);
+      setUpgradeOpen(true);
+    };
+
+    const handleConfirmUpgrade = () => {
+      toast.success(`Request for ${selectedPlanForUpgrade?.name} plan sent successfully! Our team will process it shortly.`);
+      setUpgradeOpen(false);
+    };
+
     return (
-      <div className="space-y-6">
-        <SectionTitle
-          title="Subscription"
-          subtitle="Manage your plan and upgrade anytime"
-        />
+      <div className="space-y-10 max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <SectionTitle
+            title="Sovereign Subscription"
+            subtitle="Architect your fitness journey with our elite membership strategies"
+          />
+          <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-slate-400">
+            <ShieldCheck size={14} className="text-emerald-400" /> Auto-Renewal Enabled
+          </div>
+        </div>
 
-        <GlassCard className="p-6 bg-gradient-to-r from-indigo-500/10 to-orange-400/10 border-indigo-400/20">
-          <p className="text-sm text-slate-400">Current Plan</p>
-          <h2 className="text-2xl font-bold mt-1">{userProfile.currentPlan}</h2>
+        {/* --- ACTIVE STRATEGY BANNER --- */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative p-1 rounded-[2.5rem] bg-gradient-to-r from-indigo-500/20 via-emerald-500/20 to-orange-500/20 shadow-2xl"
+        >
+          <div className="bg-slate-950/90 backdrop-blur-2xl px-10 py-12 rounded-[2.3rem] border border-white/5 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 blur-[120px] -mr-48 -mt-48" />
 
-          {flags.allowUpgrade ? (
-            <GlowButton className="mt-4" onClick={() => setUpgradeOpen(true)}>
-              Upgrade / Renew
-            </GlowButton>
-          ) : (
-            <p className="mt-2 text-sm text-slate-400">
-              Upgrades disabled for this profile
-            </p>
-          )}
-        </GlassCard>
+            <div className="flex items-center gap-8 relative z-10">
+              <div className="h-24 w-24 rounded-[2rem] bg-gradient-to-br from-indigo-500 to-emerald-400 p-[3px] shadow-2xl shadow-indigo-500/30">
+                <div className="h-full w-full bg-slate-950 rounded-[1.8rem] flex items-center justify-center">
+                  <Star size={40} className="text-white" fill="currentColor" />
+                </div>
+              </div>
+              <div>
+                <p className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-2 leading-none">Primary Strategy</p>
+                <h2 className="text-5xl font-black text-white italic tracking-tighter leading-none mb-4">{userProfile.currentPlan}</h2>
+                <div className="flex flex-wrap gap-4">
+                  <span className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    <Clock size={14} className="text-emerald-500" /> Renews May 20, 2026
+                  </span>
+                  <span className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    <CheckCircle2 size={14} className="text-emerald-500" /> 12 Benefits Unlocked
+                  </span>
+                </div>
+              </div>
+            </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {plans.map((p, i) => (
+            {flags.allowUpgrade && (
+              <GlowButton
+                className="relative z-10 px-12 h-16 rounded-2xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-indigo-500/40"
+                onClick={() => setUpgradeOpen(true)}
+              >
+                Request Manual Renewal
+              </GlowButton>
+            )}
+          </div>
+        </motion.div>
+
+        {/* --- PLAN MATRIX --- */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {plans.map((p) => (
             <SubscriptionCard
               key={p.id}
               plan={p}
               currentPlan={userProfile.currentPlan}
-              highlight={i === 1}
-              onSelect={() => setUpgradeOpen(true)}
+              highlight={p.name === "Performance"} // Assuming Performance is popular
+              onSelect={handlePlanSelect}
             />
           ))}
         </div>
 
+        {/* --- UPGRADE WIZARD --- */}
         <Modal
           open={upgradeOpen}
           onClose={() => setUpgradeOpen(false)}
-          title="Upgrade Subscription"
+          title={selectedPlanForUpgrade ? `Request: ${selectedPlanForUpgrade.name}` : "Upgrade Strategy"}
         >
-          <div className="space-y-4 text-sm text-slate-300">
-            <p>Select your preferred plan and confirm payment.</p>
-            <GlowButton className="w-full">Proceed to Payment</GlowButton>
+          <div className="space-y-8 p-4">
+            <div className="p-6 rounded-2xl bg-indigo-500/5 border border-indigo-500/20 flex items-start gap-4">
+              <div className="h-10 w-10 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0">
+                <Zap size={20} className="text-indigo-400" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white mb-1 uppercase tracking-tight">Upgrade Confirmation</p>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  You are requesting to transition from <span className="text-white font-bold">{userProfile.currentPlan}</span> to <span className="text-indigo-400 font-bold">{selectedPlanForUpgrade?.name || "a New Plan"}</span>.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Request Details</h4>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-slate-400">Strategy Level</span>
+                  <span className="text-white font-black uppercase tracking-tighter">{selectedPlanForUpgrade?.name || "Inquiry Only"}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-slate-400">Monthly Commitment</span>
+                  <span className="text-white font-black italic">${selectedPlanForUpgrade?.price || "0"}.00</span>
+                </div>
+                <div className="h-px bg-white/10" />
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400 text-xs">Administrative Processing</span>
+                  <span className="text-emerald-400 text-[10px] font-black uppercase tracking-widest">24-48 Hours</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4">
+              <GlowButton
+                className="w-full h-14 rounded-2xl text-xs font-black uppercase tracking-widest"
+                onClick={handleConfirmUpgrade}
+              >
+                Confirm Strategy Transition
+              </GlowButton>
+              <p className="text-[9px] text-center text-slate-500 italic mt-4 px-6">
+                By confirming, you authorize our administrative team to process your plan change. Final billing will be adjusted on your next cycle.
+              </p>
+            </div>
           </div>
         </Modal>
       </div>
     );
+  }
 
   if (page === "attendance") {
     return (
       <div className="space-y-6">
-        <SectionTitle
-          title="Attendance"
-          subtitle="Track your daily gym visits"
-        />
-        <div className="flex gap-2">
-          <button
-            onClick={() => setView("calendar")}
-            className={`px-4 py-2 rounded-lg text-sm ${
-              view === "calendar"
-                ? "bg-indigo-500 text-white"
-                : "bg-white/5 text-slate-300"
-            }`}
-          >
-            Calendar
-          </button>
-          <button
-            onClick={() => setView("table")}
-            className={`px-4 py-2 rounded-lg text-sm ${
-              view === "table"
-                ? "bg-indigo-500 text-white"
-                : "bg-white/5 text-slate-300"
-            }`}
-          >
-            Table
-          </button>
+        <div className="flex items-center justify-between">
+          <SectionTitle
+            title="Attendance Hub"
+            subtitle="Monitor your performance and consistency"
+          />
+          <div className="flex p-1 bg-slate-900/50 backdrop-blur-md border border-white/5 rounded-xl">
+            <button
+              onClick={() => setView("calendar")}
+              className={`p-2.5 rounded-lg transition-all duration-300 relative group ${view === "calendar" ? "text-white" : "text-slate-500 hover:text-slate-300"
+                }`}
+              title="Calendar View"
+            >
+              {view === "calendar" && (
+                <motion.div layoutId="viewActive" className="absolute inset-0 bg-indigo-500/20 border border-indigo-500/30 rounded-lg" />
+              )}
+              <CalendarIcon size={18} className="relative z-10" />
+            </button>
+            <button
+              onClick={() => setView("table")}
+              className={`p-2.5 rounded-lg transition-all duration-300 relative group ${view === "table" ? "text-white" : "text-slate-500 hover:text-slate-300"
+                }`}
+              title="List View"
+            >
+              {view === "table" && (
+                <motion.div layoutId="viewActive" className="absolute inset-0 bg-indigo-500/20 border border-indigo-500/30 rounded-lg" />
+              )}
+              <ListIcon size={18} className="relative z-10" />
+            </button>
+          </div>
+        </div>
+
+        {/* --- DYNAMIC FILTER BAR --- */}
+        <div className="flex flex-wrap items-center justify-between gap-4 py-2">
+          <div className="flex p-1 bg-white/5 border border-white/10 rounded-2xl">
+            {["weekly", "monthly", "custom"].map((r) => (
+              <button
+                key={r}
+                onClick={() => setRange(r as any)}
+                className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 relative ${range === r ? "text-white" : "text-slate-500 hover:text-slate-300"
+                  }`}
+              >
+                {range === r && (
+                  <motion.div layoutId="rangeActive" className="absolute inset-0 bg-indigo-500/20 border border-indigo-500/30 rounded-xl shadow-[0_0_15px_rgba(99,102,241,0.2)]" />
+                )}
+                <span className="relative z-10">{r}</span>
+              </button>
+            ))}
+          </div>
+
+          <AnimatePresence mode="wait">
+            {range === "custom" && (
+              <motion.div
+                key="custom"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="flex items-center gap-3 bg-white/5 p-1 rounded-2xl border border-white/10 shadow-xl"
+              >
+                <div className="flex items-center gap-2 px-3">
+                  <CalendarCheck size={14} className="text-indigo-400" />
+                  <input
+                    type="date"
+                    className="bg-transparent text-[10px] font-bold text-white outline-none [color-scheme:dark]"
+                    value={customDates.start}
+                    onChange={(e) => setCustomDates({ ...customDates, start: e.target.value })}
+                  />
+                  <span className="text-slate-600 text-xs">to</span>
+                  <input
+                    type="date"
+                    className="bg-transparent text-[10px] font-bold text-white outline-none [color-scheme:dark]"
+                    value={customDates.end}
+                    onChange={(e) => setCustomDates({ ...customDates, end: e.target.value })}
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {range === "weekly" && (
+              <motion.div
+                key="weekly"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="flex items-center gap-3 bg-white/5 p-1.5 rounded-2xl border border-white/10 shadow-xl"
+              >
+                <span className="text-[10px] font-black uppercase text-slate-500 pl-3">Select Week Start</span>
+                <input
+                  type="date"
+                  className="bg-transparent text-[10px] font-bold text-white outline-none [color-scheme:dark] pr-3"
+                  value={selectedWeek}
+                  onChange={(e) => setSelectedWeek(e.target.value)}
+                />
+              </motion.div>
+            )}
+
+            {range === "monthly" && (
+              <motion.div
+                key="monthly"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="flex items-center gap-2 bg-white/5 p-1 rounded-2xl border border-white/10 shadow-xl"
+              >
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                  className="bg-transparent text-[10px] font-bold text-white outline-none cursor-pointer px-3 py-1.5"
+                >
+                  {months.map((m, i) => <option key={m} value={i} className="bg-slate-900">{m}</option>)}
+                </select>
+                <div className="w-px h-4 bg-white/10" />
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(Number(e.target.value))}
+                  className="bg-transparent text-[10px] font-bold text-white outline-none cursor-pointer px-3 py-1.5"
+                >
+                  {years.map(y => <option key={y} value={y} className="bg-slate-900">{y}</option>)}
+                </select>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400">
+            <Filter size={14} />
+            <span className="text-[10px] font-black uppercase tracking-widest">Active Filter</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <GlassCard className="p-4 flex items-center gap-4">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+              <Users size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Total visits</p>
+              <p className="text-xl font-black text-white leading-none">18 <span className="text-[10px] text-emerald-500">Days</span></p>
+            </div>
+          </GlassCard>
+          <GlassCard className="p-4 flex items-center gap-4">
+            <div className="h-10 w-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+              <Clock size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Avg Duration</p>
+              <p className="text-xl font-black text-white leading-none">1.5 <span className="text-[10px] text-indigo-500">Hours</span></p>
+            </div>
+          </GlassCard>
+          <GlassCard className="p-4 flex items-center gap-4">
+            <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400">
+              <Info size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Current Streak</p>
+              <p className="text-xl font-black text-white leading-none">4 <span className="text-[10px] text-orange-500">Days</span></p>
+            </div>
+          </GlassCard>
         </div>
 
         {view === "calendar" ? (

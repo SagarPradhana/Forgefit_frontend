@@ -182,12 +182,14 @@ export function ConfirmationModal({
 export function SectionTitle({
   title,
   subtitle,
+  className,
 }: {
   title: string;
   subtitle?: string;
+  className?: string;
 }) {
   return (
-    <div className="mb-4">
+    <div className={clsx("mb-4", className)}>
       <h2 className="text-2xl font-semibold text-white">{title}</h2>
       {subtitle ? <p className="text-sm text-slate-300">{subtitle}</p> : null}
     </div>

@@ -39,9 +39,10 @@ export function SignInPage() {
     onSuccess: (response) => {
       const { access_token, refresh_token } = response.data;
       const decoded = decodeToken(access_token);
-      const role = decoded?.role || "user"; // Fallback to 'user' if not found
+      const role = decoded?.role || "user";
+      const name = decoded?.name || decoded?.preferred_username || decoded?.username || "authenticated user";
       
-      login(role, access_token, refresh_token);
+      login(role, name, access_token, refresh_token);
       navigate(`/${role}/dashboard`);
     },
   });

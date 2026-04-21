@@ -1,5 +1,6 @@
+import { motion } from "framer-motion";
+import { Check, Zap, ShieldCheck, Star } from "lucide-react";
 import { GlassCard, GlowButton } from "../components/ui/primitives";
-import { Check, Crown } from "lucide-react";
 import clsx from "clsx";
 
 export function SubscriptionCard({
@@ -10,47 +11,109 @@ export function SubscriptionCard({
 }: any) {
   const isCurrent = plan.name === currentPlan;
 
+  // Dynamic styling based on plan type
+  const isElite = plan.name?.toLowerCase().includes("elite");
+  const borderGradient = isElite
+    ? "border-amber-500/30 shadow-amber-500/10"
+    : highlight
+      ? "border-indigo-500/30 shadow-indigo-500/10"
+      : "border-emerald-500/30 shadow-emerald-500/10";
+
   return (
-    <GlassCard
-      className={clsx(
-        "p-6 flex flex-col justify-between relative transition",
-        highlight &&
-          "border-orange-400/40 shadow-[0_0_30px_rgba(249,115,22,0.3)] scale-105",
-      )}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -8, scale: 1.02 }}
+      className="relative h-full"
     >
-      {/* 🔥 BADGE */}
-      {highlight && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-500 to-orange-400 text-xs px-3 py-1 rounded-full flex items-center gap-1">
-          <Crown size={12} /> Popular
-        </div>
-      )}
-
-      <div>
-        <p className="text-lg font-semibold">{plan.name}</p>
-        <p className="text-3xl font-bold mt-2">
-          ${plan.price}
-          <span className="text-sm text-slate-400">/month</span>
-        </p>
-
-        {/* FEATURES */}
-        <ul className="mt-4 space-y-2 text-sm text-slate-300">
-          {plan.features?.map((f: string) => (
-            <li key={f} className="flex items-center gap-2">
-              <Check size={14} className="text-green-400" />
-              {f}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* ACTION */}
-      <GlowButton
-        className="mt-6 w-full"
-        disabled={isCurrent}
-        onClick={() => onSelect(plan)}
+      <GlassCard
+        className={clsx(
+          "h-full p-8 flex flex-col justify-between relative transition-all duration-500 overflow-hidden",
+          borderGradient,
+          isCurrent && "border-emerald-500/40 bg-emerald-500/5 ring-1 ring-emerald-500/20"
+        )}
       >
-        {isCurrent ? "Current Plan" : "Choose Plan"}
-      </GlowButton>
-    </GlassCard>
+        {/* --- DECORATIVE GLOW --- */}
+        <div className={`absolute top-0 right-0 w-32 h-32 blur-[60px] opacity-20 -mr-16 -mt-16 rounded-full ${isElite ? "bg-amber-500" : highlight ? "bg-indigo-500" : "bg-emerald-500"
+          }`} />
+
+        {/* --- TIER BADGE --- */}
+        {highlight && !isCurrent && (
+          <div className="absolute top-4 right-4 bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg flex items-center gap-1.5 shadow-lg">
+            <Zap size={12} fill="currentColor" /> Popular Choice
+          </div>
+        )}
+
+        {isCurrent && (
+          <div className="absolute top-4 right-4 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg flex items-center gap-1.5 shadow-lg group">
+            <ShieldCheck size={12} fill="currentColor" className="animate-pulse" /> Active Plan
+          </div>
+        )}
+
+        {isElite && !isCurrent && !highlight && (
+          <div className="absolute top-4 right-4 bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg flex items-center gap-1.5 shadow-lg">
+            <Star size={12} fill="currentColor" /> Ultimate
+          </div>
+        )}
+
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-6">
+            <div className={`h-12 w-12 rounded-2xl flex items-center justify-center border ${isElite ? "bg-amber-500/10 border-amber-500/20 shadow-amber-500/20"
+                : highlight ? "bg-indigo-500/10 border-indigo-500/20 shadow-indigo-500/20"
+                  : "bg-emerald-500/10 border-emerald-500/20 shadow-emerald-500/20"
+              } shadow-inner`}>
+              {isElite ? <Star className="text-amber-400" /> : highlight ? <Zap className="text-indigo-400" /> : <ShieldCheck className="text-emerald-400" />}
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-white uppercase tracking-tighter leading-none">{plan.name}</h3>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Tier Level Access</p>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <div className="flex items-baseline gap-1">
+              <span className="text-4xl font-black text-white italic tracking-tighter">${plan.price}</span>
+              <span className="text-sm font-black text-slate-500 uppercase tracking-widest">/month</span>
+            </div>
+            <p className="text-[11px] font-medium text-slate-400 mt-2 leading-relaxed">
+              Unlock professional gym equipment and specialized training zones with this tier.
+            </p>
+          </div>
+
+          {/* --- FEATURES LIST --- */}
+          <div className="space-y-4">
+            <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent w-full" />
+            <ul className="space-y-3">
+              {plan.features?.map((f: string) => (
+                <li key={f} className="flex items-center gap-3 group/item">
+                  <div className={`h-5 w-5 rounded-md flex items-center justify-center transition-all ${isCurrent ? "bg-emerald-500/20 border border-emerald-500/30" : "bg-white/5 border border-white/10 group-hover/item:border-white/20"
+                    }`}>
+                    <Check size={12} className={isCurrent ? "text-emerald-400" : "text-white/40 group-hover/item:text-white"} />
+                  </div>
+                  <span className={`text-[13px] font-bold transition-colors ${isCurrent ? "text-white" : "text-slate-400 group-hover/item:text-slate-200"
+                    }`}>
+                    {f}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* --- ACTION BUTTON --- */}
+        <div className="mt-10 relative z-10">
+          <GlowButton
+            className={clsx(
+              "w-full h-12 text-xs font-black uppercase tracking-widest transition-all",
+              isCurrent ? "bg-emerald-500/10 border-emerald-500/20 !text-emerald-400 cursor-default shadow-none" : ""
+            )}
+            onClick={() => !isCurrent && onSelect(plan)}
+          >
+            {isCurrent ? "Current Plan Active" : "Choose Strategy"}
+          </GlowButton>
+        </div>
+      </GlassCard>
+    </motion.div>
   );
 }
+
