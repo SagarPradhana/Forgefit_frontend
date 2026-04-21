@@ -22,7 +22,10 @@ export function ProfileCard({ user: initialUser }: any) {
     setIsEditOpen(false);
   };
 
-  const userName = useAuthStore((s) => s.name);
+  const auth = useAuthStore();
+  const userName = auth.name;
+  const userEmail = auth.email || user.email;
+  const userPhone = auth.phone || user.phone;
 
   return (
     <>
@@ -34,7 +37,7 @@ export function ProfileCard({ user: initialUser }: any) {
           <div className="relative mb-6">
             <div className="h-28 w-28 rounded-[2rem] bg-gradient-to-br from-indigo-500 via-purple-500 to-orange-400 p-[3px] shadow-2xl rotate-3">
               <div className="flex h-full w-full items-center justify-center rounded-[1.8rem] bg-slate-950 -rotate-3 overflow-hidden font-black text-4xl text-white uppercase tracking-tighter">
-                {userName?.[0] || "U"}
+                {userName?.[0] || user.name?.[0] || "U"}
               </div>
             </div>
             <div className="absolute -bottom-2 -left-2 h-10 w-10 rounded-2xl bg-slate-900 border border-white/10 flex items-center justify-center p-2 shadow-xl">
@@ -42,7 +45,7 @@ export function ProfileCard({ user: initialUser }: any) {
             </div>
           </div>
 
-          <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-1">{userName || "User"}</h2>
+          <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-1">{userName || user.name}</h2>
           <p className="text-sm font-bold text-indigo-400 uppercase tracking-[0.2em] mb-8">{user.currentPlan}</p>
 
           <div className="flex flex-col gap-3 w-full">
@@ -50,7 +53,7 @@ export function ProfileCard({ user: initialUser }: any) {
               <AtSign size={18} className="text-indigo-400 group-hover/field:scale-110 transition-transform" />
               <div className="flex-1 min-w-0">
                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Authenticated Account</p>
-                <span className="text-xs font-black text-white truncate block">{user.email}</span>
+                <span className="text-xs font-black text-white truncate block">{userEmail}</span>
               </div>
             </div>
 
@@ -58,7 +61,7 @@ export function ProfileCard({ user: initialUser }: any) {
               <Phone size={18} className="text-orange-400 group-hover/field:scale-110 transition-transform" />
               <div className="flex-1 min-w-0">
                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Direct Communication</p>
-                <span className="text-xs font-black text-white truncate block">{user.phone}</span>
+                <span className="text-xs font-black text-white truncate block">{userPhone}</span>
               </div>
             </div>
 
@@ -66,7 +69,7 @@ export function ProfileCard({ user: initialUser }: any) {
               <Fingerprint size={18} className="text-emerald-400 group-hover/field:scale-110 transition-transform" />
               <div className="flex-1 min-w-0">
                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Global Handle</p>
-                <span className="text-xs font-black text-emerald-400 truncate block">@{userName?.toLowerCase().replace(/\s+/g, "_") || "user_identifier"}</span>
+                <span className="text-xs font-black text-emerald-400 truncate block">@{ (userName || user.name)?.toLowerCase()?.replace(/\s+/g, "_") || "user_identifier"}</span>
               </div>
             </div>
 
@@ -74,7 +77,7 @@ export function ProfileCard({ user: initialUser }: any) {
               <Dumbbell size={18} className="text-amber-400 group-hover/field:scale-110 transition-transform" />
               <div className="flex-1 min-w-0">
                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Assigned Trainer</p>
-                <span className="text-xs font-black text-white truncate block">{user.trainer}</span>
+                <span className="text-xs font-black text-white truncate block">{user?.trainer}</span>
               </div>
             </div>
           </div>

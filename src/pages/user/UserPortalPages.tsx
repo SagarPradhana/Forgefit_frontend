@@ -24,6 +24,7 @@ import { SubscriptionCard } from "../SubscriptionCard";
 import { AttendanceCalendar } from "../AttendanceCalender";
 import { ProductCard } from "../ProductCard";
 import { SettingsPanel } from "../SettingPanel";
+import { useAuthStore } from "../../store/authStore";
 import { toast } from "../../store/toastStore";
 
 export function UserPortalPages({ page }: { page: string }) {
@@ -62,7 +63,9 @@ export function UserPortalPages({ page }: { page: string }) {
   ];
   const years = ["2024", "2025", "2026"];
 
-  // --- CONDITIONAL RENDERING (AFTER HOOKS) ---
+  const auth = useAuthStore();
+  const authName = auth.name;
+
   if (page === "dashboard") return <UserDashboard />;
 
   if (page === "profile") {
@@ -394,7 +397,7 @@ export function UserPortalPages({ page }: { page: string }) {
         <Table
           headers={["Transaction", "Amount", "Date", "Status"]}
           rows={payments
-            .filter((p) => p.user === userProfile.name)
+            .filter((p) => p.user === (authName || userProfile.name))
             .map((p) => [
               p.id,
               p.amount,

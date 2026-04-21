@@ -7,6 +7,7 @@ import {
   GlowButton,
   Modal,
   SectionTitle,
+  Skeleton,
   StatusBadge,
   Table,
 } from "../../components/ui/primitives";
@@ -14,28 +15,35 @@ import { Edit2, Search, Trash2 } from "lucide-react";
 import AdminDashboard from "../AdminDashboard";
 import { UserManagement } from "../../components/admin/UserManagement";
 import { AttendanceManagement } from "../../components/admin/AttendanceManagement";
+import { adminSubscriptionService, type PlanResponse } from "../../services/adminSubscriptionService";
+import { toast } from "../../store/toastStore";
 
 export function AdminPortalPages({ page }: { page: string }) {
   const {
-    users,
-    plans,
     offers,
     appConfig,
     publicPageConfig,
     designThemes,
     currentDesignTheme,
-    addPlan,
-    updatePlan,
-    deletePlan,
     addOffer,
     updateOffer,
     deleteOffer,
-    featureFlags,
-    toggleFlag,
     updateAppConfig,
     updatePublicPageConfig,
     setDesignTheme,
   } = useGymStore();
+
+  const [plans, setPlans] = useState<PlanResponse[]>([]);
+  const [plansMeta, setPlansMeta] = useState({
+    page_no: 1,
+    total_count: 0,
+    page_size: 10,
+    has_next: false,
+    has_previous: false
+  });
+  const [planSearch, setPlanSearch] = useState("");
+  const [plansLoading, setPlansLoading] = useState(false);
+
   const [paymentStatus, setPaymentStatus] = useState<
     "All" | "Paid" | "Pending"
   >("All");
@@ -55,6 +63,10 @@ export function AdminPortalPages({ page }: { page: string }) {
     contactEmail: appConfig.contactEmail,
     contactPhone: appConfig.contactPhone,
     contactAddress: appConfig.contactAddress,
+    locations: appConfig.locations || [],
+    timezone: appConfig.timezone || "UTC+0",
+    currency: appConfig.currency || "USD",
+    language: appConfig.language || "English",
     facebook: appConfig.socialLinks.facebook,
     instagram: appConfig.socialLinks.instagram,
     twitter: appConfig.socialLinks.twitter,
@@ -73,9 +85,9 @@ export function AdminPortalPages({ page }: { page: string }) {
   // Form states
   const [planForm, setPlanForm] = useState({
     name: "",
+    description: "",
     price: "",
-    duration: "",
-    features: "",
+    duration_in_months: "1",
   });
   const [offerForm, setOfferForm] = useState({
     name: "",
@@ -84,6 +96,41 @@ export function AdminPortalPages({ page }: { page: string }) {
     validTo: "",
   });
   const [offerSearch, setOfferSearch] = useState("");
+
+  // Plan Fetching
+  const fetchPlans = async (p = plansMeta.page_no, search = planSearch) => {
+    setPlansLoading(true);
+    try {
+      const res = await adminSubscriptionService.getPlans({ page: p, search });
+      if (res && res.data) {
+        setPlans(res.data);
+        setPlansMeta({
+          page_no: res.page_no,
+          total_count: res.total_count,
+          page_size: res.page_size,
+          has_next: res.has_next,
+          has_previous: res.has_previous
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setPlansLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (page === "subscriptions") {
+      fetchPlans(1);
+    }
+  }, [page]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (page === "subscriptions") fetchPlans(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [planSearch]);
 
   // Sync config form with store changes
   useEffect(() => {
@@ -94,6 +141,10 @@ export function AdminPortalPages({ page }: { page: string }) {
       contactEmail: appConfig.contactEmail,
       contactPhone: appConfig.contactPhone,
       contactAddress: appConfig.contactAddress,
+      locations: appConfig.locations || [],
+      timezone: appConfig.timezone || "UTC+0",
+      currency: appConfig.currency || "USD",
+      language: appConfig.language || "English",
       facebook: appConfig.socialLinks.facebook,
       instagram: appConfig.socialLinks.instagram,
       twitter: appConfig.socialLinks.twitter,
@@ -124,134 +175,199 @@ export function AdminPortalPages({ page }: { page: string }) {
 
   if (page === "attendance") return <AttendanceManagement />;
 
-  if (page === "subscriptions")
+  if (page === "subscriptions") {
+    const lastPage = Math.ceil(plansMeta.total_count / plansMeta.page_size) || 1;
+
     return (
       <GlassCard>
-        <SectionTitle
-          title="Subscription Management"
-          subtitle="CRUD for plans."
-        />
-        <GlowButton
-          className="mb-3"
-          onClick={() => {
-            setPlanForm({ name: "", price: "", duration: "", features: "" });
-            setEditPlan(null);
-            setPlanModalOpen(true);
-          }}
-        >
-          Create Plan
-        </GlowButton>
-        <Table
-          headers={["Plan", "Price", "Duration", "Features", "Actions"]}
-          rows={plans.map((p) => [
-            p.name,
-            `$${p.price}`,
-            p.duration,
-            p.features.join(", "),
-            <div key={p.id} className="flex gap-2">
-              <button
-                className="text-cyan-300"
-                onClick={() => {
-                  setPlanForm({
-                    name: p.name,
-                    price: p.price.toString(),
-                    duration: p.duration,
-                    features: p.features.join(", "),
-                  });
-                  setEditPlan(p.id);
-                  setPlanModalOpen(true);
-                }}
-              >
-                Edit
-              </button>
-              <button
-                className="text-red-300"
-                onClick={() => {
-                  setDeleteTarget({ type: "plan", id: p.id });
-                  setDeleteModalOpen(true);
-                }}
-              >
-                Delete
-              </button>
-            </div>,
-          ])}
-        />
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+          <SectionTitle
+            title="Subscription Management"
+            subtitle="Manage gym membership plans and pricing strategies."
+          />
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="relative flex-1 md:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                placeholder="Search plans..."
+                value={planSearch}
+                onChange={(e) => setPlanSearch(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-white outline-none focus:border-indigo-500 transition"
+              />
+            </div>
+            <GlowButton
+              onClick={() => {
+                setPlanForm({ name: "", description: "", price: "", duration_in_months: "1" });
+                setEditPlan(null);
+                setPlanModalOpen(true);
+              }}
+            >
+              Create Plan
+            </GlowButton>
+          </div>
+        </div>
+
+        {plansLoading ? (
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-xl" />
+            ))}
+          </div>
+        ) : plans.length > 0 ? (
+          <>
+            <Table
+              headers={["Plan Details", "Pricing", "Duration", "Description", "Actions"]}
+              rows={plans.map((p) => [
+                <span className="font-bold text-white uppercase tracking-tight" key={p.id}>{p.name}</span>,
+                <span className="text-emerald-400 font-black" key={`${p.id}-price`}>${p.price}</span>,
+                <span className="text-indigo-300 font-bold" key={`${p.id}-dur`}>{p.duration_in_months} Months</span>,
+                <span className="text-slate-400 text-xs truncate max-w-xs block" key={`${p.id}-desc`}>{p.description}</span>,
+                <div key={`${p.id}-actions`} className="flex gap-4">
+                  <button
+                    className="text-indigo-400 hover:text-indigo-300 transition-transform hover:scale-125"
+                    onClick={() => {
+                      setPlanForm({
+                        name: p.name,
+                        description: p.description,
+                        price: p.price.toString(),
+                        duration_in_months: p.duration_in_months.toString(),
+                      });
+                      setEditPlan(p.id);
+                      setPlanModalOpen(true);
+                    }}
+                  >
+                    <Edit2 size={18} />
+                  </button>
+                  <button
+                    className="text-red-400 hover:text-red-300 transition-transform hover:scale-125"
+                    onClick={() => {
+                      setDeleteTarget({ type: "plan", id: p.id });
+                      setDeleteModalOpen(true);
+                    }}
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>,
+              ])}
+            />
+
+            {lastPage > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-6">
+                <button
+                  disabled={!plansMeta.has_previous}
+                  onClick={() => fetchPlans(plansMeta.page_no - 1)}
+                  className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-xs font-bold uppercase tracking-widest disabled:opacity-30"
+                >
+                  Prev
+                </button>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                  Page {plansMeta.page_no} of {lastPage}
+                </span>
+                <button
+                  disabled={!plansMeta.has_next}
+                  onClick={() => fetchPlans(plansMeta.page_no + 1)}
+                  className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-xs font-bold uppercase tracking-widest disabled:opacity-30"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <EmptyState
+            title="Protocol Vacuum"
+            hint={planSearch ? `No membership strategies found for "${planSearch}"` : "Initialize your first membership tier to start recruiting."}
+          />
+        )}
 
         {/* Plan Modal */}
         <Modal
           open={planModalOpen}
           onClose={() => setPlanModalOpen(false)}
-          title={editPlan ? "Edit Plan" : "Create Plan"}
+          title={editPlan ? "Edit Strategy" : "Define Strategy"}
           footer={
             <>
               <GlowButton
                 className="bg-gray-600"
                 onClick={() => setPlanModalOpen(false)}
               >
-                Cancel
+                Abort
               </GlowButton>
               <GlowButton
-                onClick={() => {
-                  const features = planForm.features
-                    .split(",")
-                    .map((x) => x.trim());
+                onClick={async () => {
+                  const payload = {
+                    name: planForm.name,
+                    description: planForm.description,
+                    price: Number(planForm.price),
+                    duration_in_months: Number(planForm.duration_in_months),
+                  };
+
                   if (editPlan) {
-                    updatePlan(editPlan, {
-                      name: planForm.name,
-                      price: Number(planForm.price),
-                      duration: planForm.duration,
-                      features,
-                    });
+                    await adminSubscriptionService.updatePlan(editPlan, payload);
                   } else {
-                    addPlan({
-                      name: planForm.name,
-                      price: Number(planForm.price),
-                      duration: planForm.duration,
-                      features,
-                    });
+                    await adminSubscriptionService.createPlan(payload);
                   }
+                  fetchPlans(1);
                   setPlanModalOpen(false);
                 }}
               >
-                Apply
+                Execute
               </GlowButton>
             </>
           }
         >
-          <div className="space-y-4">
-            <input
-              className="w-full rounded bg-white/10 p-2"
-              placeholder="Plan name"
-              value={planForm.name}
-              onChange={(e) =>
-                setPlanForm({ ...planForm, name: e.target.value })
-              }
-            />
-            <input
-              className="w-full rounded bg-white/10 p-2"
-              placeholder="Price"
-              type="number"
-              value={planForm.price}
-              onChange={(e) =>
-                setPlanForm({ ...planForm, price: e.target.value })
-              }
-            />
-            <input
-              className="w-full rounded bg-white/10 p-2"
-              placeholder="Duration"
-              value={planForm.duration}
-              onChange={(e) =>
-                setPlanForm({ ...planForm, duration: e.target.value })
-              }
-            />
-            <input
-              className="w-full rounded bg-white/10 p-2"
-              placeholder="Feature1, Feature2"
-              value={planForm.features}
-              onChange={(e) =>
-                setPlanForm({ ...planForm, features: e.target.value })
-              }
-            />
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Plan Designation</label>
+              <input
+                className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
+                placeholder="e.g. Hyper-Performance"
+                value={planForm.name}
+                onChange={(e) =>
+                  setPlanForm({ ...planForm, name: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Strategic Valuation ($)</label>
+                <input
+                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
+                  placeholder="0"
+                  type="number"
+                  value={planForm.price}
+                  onChange={(e) =>
+                    setPlanForm({ ...planForm, price: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Duration (Months)</label>
+                <input
+                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
+                  placeholder="1"
+                  type="number"
+                  value={planForm.duration_in_months}
+                  onChange={(e) =>
+                    setPlanForm({ ...planForm, duration_in_months: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Protocol Description</label>
+              <textarea
+                className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition resize-none h-32 font-medium"
+                placeholder="Detail the inclusions of this tier..."
+                value={planForm.description}
+                onChange={(e) =>
+                  setPlanForm({ ...planForm, description: e.target.value })
+                }
+              />
+            </div>
           </div>
         </Modal>
 
@@ -259,37 +375,41 @@ export function AdminPortalPages({ page }: { page: string }) {
         <Modal
           open={deleteModalOpen && deleteTarget?.type === "plan"}
           onClose={() => setDeleteModalOpen(false)}
-          title="Confirm Delete"
+          title="Confirm Strategic Deletion"
           footer={
             <>
               <GlowButton
                 className="bg-gray-600"
                 onClick={() => setDeleteModalOpen(false)}
               >
-                Cancel
+                Abort
               </GlowButton>
               <GlowButton
-                onClick={() => {
-                  if (deleteTarget && deleteTarget.type === "plan")
-                    deletePlan(deleteTarget.id);
+                onClick={async () => {
+                  if (deleteTarget && deleteTarget.type === "plan") {
+                    await adminSubscriptionService.deletePlan(deleteTarget.id);
+                    fetchPlans(plansMeta.page_no);
+                  }
                   setDeleteModalOpen(false);
                   setDeleteTarget(null);
                 }}
               >
-                Apply
+                Confirm Delete
               </GlowButton>
             </>
           }
         >
-          <div className="text-sm text-slate-300">
-            <p>
-              Are you sure you want to delete this plan? This action cannot be
-              undone.
-            </p>
+          <div className="text-sm text-slate-300 text-center py-4">
+            <div className="h-16 w-16 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mx-auto mb-4">
+              <Trash2 size={32} />
+            </div>
+            <p className="font-bold text-white mb-2">Are you sure you want to delete this plan?</p>
+            <p className="text-xs">This action will permanently terminate this membership strategy from the system.</p>
           </div>
         </Modal>
       </GlassCard>
     );
+  }
 
   if (page === "offers") {
     const filteredOffers = offers.filter(o =>
@@ -537,7 +657,7 @@ export function AdminPortalPages({ page }: { page: string }) {
     );
   }
 
-  if (page === "settings")
+  if (page === "settings") {
     return (
       <GlassCard>
         <SectionTitle
@@ -546,8 +666,8 @@ export function AdminPortalPages({ page }: { page: string }) {
         />
 
         {/* Tab Navigation */}
-        <div className="mb-6 border-b border-white/10">
-          <nav className="flex space-x-8">
+        <div className="mb-6 border-b border-white/10 overflow-x-auto no-scrollbar">
+          <nav className="flex space-x-8 min-w-max pb-px">
             {[
               { id: "app", label: "App Config", icon: "⚙️" },
               { id: "pages", label: "Public Pages", icon: "📄" },
@@ -557,8 +677,8 @@ export function AdminPortalPages({ page }: { page: string }) {
                 key={tab.id}
                 onClick={() => setSettingsTab(tab.id as any)}
                 className={`flex items-center gap-2 border-b-2 px-1 py-2 text-sm font-medium transition-colors ${settingsTab === tab.id
-                    ? "border-cyan-400 text-cyan-400"
-                    : "border-transparent text-slate-400 hover:text-white"
+                  ? "border-cyan-400 text-cyan-400"
+                  : "border-transparent text-slate-400 hover:text-white"
                   }`}
               >
                 <span>{tab.icon}</span>
@@ -650,121 +770,206 @@ export function AdminPortalPages({ page }: { page: string }) {
                 </div>
               </div>
 
-              {/* Contact Information */}
-              <div className="rounded-lg bg-white/5 p-4">
-                <h4 className="mb-3 text-lg font-semibold text-white">
-                  Contact Information
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Branding */}
+              <div className="rounded-lg bg-white/5 p-4 space-y-4">
+                <h4 className="text-lg font-semibold text-white">App Branding</h4>
+                <div className="grid gap-4 md:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">
-                      Email
+                      App Name
                     </label>
                     <input
-                      type="email"
-                      className="w-full rounded bg-white/10 p-2 text-white"
-                      value={configForm.contactEmail}
+                      className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
+                      value={configForm.name}
                       onChange={(e) =>
-                        setConfigForm({
-                          ...configForm,
-                          contactEmail: e.target.value,
-                        })
+                        setConfigForm({ ...configForm, name: e.target.value })
                       }
-                      placeholder="contact@example.com"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">
-                      Phone
+                      Logo URL
                     </label>
                     <input
-                      type="tel"
-                      className="w-full rounded bg-white/10 p-2 text-white"
-                      value={configForm.contactPhone}
+                      className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
+                      value={configForm.logo}
                       onChange={(e) =>
-                        setConfigForm({
-                          ...configForm,
-                          contactPhone: e.target.value,
-                        })
+                        setConfigForm({ ...configForm, logo: e.target.value })
                       }
-                      placeholder="+1 (555) 123-4567"
                     />
                   </div>
                 </div>
-                <div className="mt-4">
+                <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">
-                    Address
+                    Description
                   </label>
                   <textarea
-                    className="w-full rounded bg-white/10 p-2 text-white"
-                    rows={2}
-                    value={configForm.contactAddress}
+                    className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
+                    rows={3}
+                    value={configForm.description}
                     onChange={(e) =>
                       setConfigForm({
                         ...configForm,
-                        contactAddress: e.target.value,
+                        description: e.target.value,
                       })
                     }
-                    placeholder="Enter full address"
                   />
                 </div>
               </div>
 
-              {/* Social Links */}
-              <div className="rounded-lg bg-white/5 p-4">
-                <h4 className="mb-3 text-lg font-semibold text-white">
-                  Social Media Links
-                </h4>
+              {/* Regional Settings */}
+              <div className="rounded-lg bg-white/5 p-4 space-y-4">
+                <h4 className="text-lg font-semibold text-white">Regional Settings</h4>
                 <div className="grid gap-4 md:grid-cols-3">
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">
-                      Facebook
-                    </label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Timezone</label>
+                    <select
+                      className="w-full rounded bg-slate-800 p-2 text-white border border-white/10"
+                      value={configForm.timezone}
+                      onChange={(e) => setConfigForm({ ...configForm, timezone: e.target.value })}
+                    >
+                      <option>UTC+0</option>
+                      <option>UTC+1</option>
+                      <option>UTC-5</option>
+                      <option>UTC+5:30</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Currency</label>
+                    <select
+                      className="w-full rounded bg-slate-800 p-2 text-white border border-white/10"
+                      value={configForm.currency}
+                      onChange={(e) => setConfigForm({ ...configForm, currency: e.target.value })}
+                    >
+                      <option>USD</option>
+                      <option>EUR</option>
+                      <option>GBP</option>
+                      <option>INR</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Language</label>
+                    <select
+                      className="w-full rounded bg-slate-800 p-2 text-white border border-white/10"
+                      value={configForm.language}
+                      onChange={(e) => setConfigForm({ ...configForm, language: e.target.value })}
+                    >
+                      <option>English</option>
+                      <option>Spanish</option>
+                      <option>French</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Locations Management */}
+              <div className="rounded-lg bg-white/5 p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-lg font-semibold text-white">Locations Management</h4>
+                  <GlowButton
+                    className="px-3 py-1 text-xs"
+                    onClick={() => setConfigForm({
+                      ...configForm,
+                      locations: [...configForm.locations, { id: Date.now().toString(), name: "New Branch", address: "", phone: "" }]
+                    })}
+                  >
+                    + Add Location
+                  </GlowButton>
+                </div>
+                <div className="space-y-4">
+                  {configForm.locations.map((loc, idx) => (
+                    <div key={loc.id} className="p-3 border border-white/5 rounded-xl bg-white/5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <input
+                          className="bg-transparent border-none text-white font-bold focus:ring-0 w-full"
+                          value={loc.name}
+                          onChange={(e) => {
+                            const newLocs = [...configForm.locations];
+                            newLocs[idx].name = e.target.value;
+                            setConfigForm({ ...configForm, locations: newLocs });
+                          }}
+                        />
+                        <button
+                          className="text-red-400 hover:text-red-300"
+                          onClick={() => {
+                            const newLocs = configForm.locations.filter((_, i) => i !== idx);
+                            setConfigForm({ ...configForm, locations: newLocs });
+                          }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <input
+                          placeholder="Address"
+                          className="w-full rounded bg-white/5 p-2 text-sm text-white"
+                          value={loc.address}
+                          onChange={(e) => {
+                            const newLocs = [...configForm.locations];
+                            newLocs[idx].address = e.target.value;
+                            setConfigForm({ ...configForm, locations: newLocs });
+                          }}
+                        />
+                        <input
+                          placeholder="Phone"
+                          className="w-full rounded bg-white/5 p-2 text-sm text-white"
+                          value={loc.phone}
+                          onChange={(e) => {
+                            const newLocs = [...configForm.locations];
+                            newLocs[idx].phone = e.target.value;
+                            setConfigForm({ ...configForm, locations: newLocs });
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Social Links & Contact */}
+              <div className="rounded-lg bg-white/5 p-4 space-y-4">
+                <h4 className="text-lg font-semibold text-white">Contact & Social</h4>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
                     <input
-                      type="url"
-                      className="w-full rounded bg-white/10 p-2 text-white"
+                      className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
+                      value={configForm.contactEmail}
+                      onChange={(e) => setConfigForm({ ...configForm, contactEmail: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Phone</label>
+                    <input
+                      className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
+                      value={configForm.contactPhone}
+                      onChange={(e) => setConfigForm({ ...configForm, contactPhone: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Facebook</label>
+                    <input
+                      className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
                       value={configForm.facebook}
-                      onChange={(e) =>
-                        setConfigForm({
-                          ...configForm,
-                          facebook: e.target.value,
-                        })
-                      }
-                      placeholder="https://facebook.com/yourpage"
+                      onChange={(e) => setConfigForm({ ...configForm, facebook: e.target.value })}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">
-                      Instagram
-                    </label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Instagram</label>
                     <input
-                      type="url"
-                      className="w-full rounded bg-white/10 p-2 text-white"
+                      className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
                       value={configForm.instagram}
-                      onChange={(e) =>
-                        setConfigForm({
-                          ...configForm,
-                          instagram: e.target.value,
-                        })
-                      }
-                      placeholder="https://instagram.com/yourpage"
+                      onChange={(e) => setConfigForm({ ...configForm, instagram: e.target.value })}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">
-                      Twitter
-                    </label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Twitter</label>
                     <input
-                      type="url"
-                      className="w-full rounded bg-white/10 p-2 text-white"
+                      className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
                       value={configForm.twitter}
-                      onChange={(e) =>
-                        setConfigForm({
-                          ...configForm,
-                          twitter: e.target.value,
-                        })
-                      }
-                      placeholder="https://twitter.com/yourpage"
+                      onChange={(e) => setConfigForm({ ...configForm, twitter: e.target.value })}
                     />
                   </div>
                 </div>
@@ -781,15 +986,20 @@ export function AdminPortalPages({ page }: { page: string }) {
                       contactEmail: configForm.contactEmail,
                       contactPhone: configForm.contactPhone,
                       contactAddress: configForm.contactAddress,
+                      locations: configForm.locations,
+                      timezone: configForm.timezone,
+                      currency: configForm.currency,
+                      language: configForm.language,
                       socialLinks: {
                         facebook: configForm.facebook,
                         instagram: configForm.instagram,
                         twitter: configForm.twitter,
                       },
                     });
+                    toast.success("Global configuration synchronized!");
                   }}
                 >
-                  Save App Settings
+                  Save Global Settings
                 </GlowButton>
               </div>
             </>
@@ -797,73 +1007,30 @@ export function AdminPortalPages({ page }: { page: string }) {
 
           {/* Public Pages Config Tab */}
           {settingsTab === "pages" && (
-            <>
-              {/* Home Page */}
-              <div className="rounded-lg bg-white/5 p-4">
-                <h4 className="mb-3 text-lg font-semibold text-white">
-                  Home Page
-                </h4>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">
-                      Hero Title
-                    </label>
-                    <input
-                      className="w-full rounded bg-white/10 p-2 text-white"
-                      value={publicConfigForm.home.heroTitle}
-                      onChange={(e) =>
-                        setPublicConfigForm({
-                          ...publicConfigForm,
-                          home: {
-                            ...publicConfigForm.home,
-                            heroTitle: e.target.value,
-                          },
-                        })
-                      }
-                    />
+            <div className="space-y-8">
+              {/* --- HOME SECTION --- */}
+              <div className="rounded-2xl bg-white/5 p-6 border border-white/10 space-y-6">
+                <SectionTitle title="Home / Hero Section" subtitle="The first thing visitors see on your portal" />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Main Title</label>
+                      <input className="w-full rounded-xl bg-white/10 p-3 text-white border border-white/5" value={publicConfigForm.home.heroTitle} onChange={(e) => setPublicConfigForm({ ...publicConfigForm, home: { ...publicConfigForm.home, heroTitle: e.target.value } })} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Subtitle</label>
+                      <textarea rows={3} className="w-full rounded-xl bg-white/10 p-3 text-white border border-white/5" value={publicConfigForm.home.heroSubtitle} onChange={(e) => setPublicConfigForm({ ...publicConfigForm, home: { ...publicConfigForm.home, heroSubtitle: e.target.value } })} />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">
-                      Hero Subtitle
-                    </label>
-                    <textarea
-                      className="w-full rounded bg-white/10 p-2 text-white"
-                      rows={2}
-                      value={publicConfigForm.home.heroSubtitle}
-                      onChange={(e) =>
-                        setPublicConfigForm({
-                          ...publicConfigForm,
-                          home: {
-                            ...publicConfigForm.home,
-                            heroSubtitle: e.target.value,
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">
-                      Hero Image URL
-                    </label>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Hero Image URL</label>
                     <div className="space-y-2">
-                      <input
-                        className="w-full rounded bg-white/10 p-2 text-white"
-                        value={publicConfigForm.home.heroImage}
-                        onChange={(e) =>
-                          setPublicConfigForm({
-                            ...publicConfigForm,
-                            home: {
-                              ...publicConfigForm.home,
-                              heroImage: e.target.value,
-                            },
-                          })
-                        }
-                      />
+                      <input className="w-full rounded-xl bg-white/10 p-3 text-white border border-white/5" value={publicConfigForm.home.heroImage} onChange={(e) => setPublicConfigForm({ ...publicConfigForm, home: { ...publicConfigForm.home, heroImage: e.target.value } })} />
                       <div className="flex items-center gap-2">
                         <input
                           type="file"
                           accept="image/*"
-                          className="flex-1 text-sm text-slate-300 file:mr-2 file:rounded file:border-0 file:bg-cyan-600 file:px-2 file:py-1 file:text-white file:hover:bg-cyan-700"
+                          className="flex-1 text-sm text-slate-300 file:mr-2 file:rounded file:border-0 file:bg-indigo-600 file:px-2 file:py-1 file:text-white file:hover:bg-indigo-700"
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
@@ -881,164 +1048,228 @@ export function AdminPortalPages({ page }: { page: string }) {
                             }
                           }}
                         />
-                        <span className="text-xs text-slate-400">
-                          or choose file
-                        </span>
+                        <span className="text-xs text-slate-400">or upload file</span>
+                      </div>
+                    </div>
+                    <div className="aspect-video mt-3 rounded-xl bg-slate-900 overflow-hidden border border-white/5 relative group">
+                      <img src={publicConfigForm.home.heroImage} alt="Hero Preview" className="w-full h-full object-cover opacity-50 group-hover:opacity-70 transition-opacity" />
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="text-[10px] font-black uppercase text-white/40 tracking-tighter">Live Preview</span>
                       </div>
                     </div>
                   </div>
                 </div>
+
+                {/* Home Features Array */}
+                <div className="space-y-4 pt-4 border-t border-white/10">
+                  <div className="flex items-center justify-between">
+                    <h5 className="text-sm font-black text-indigo-400 uppercase tracking-wider">Floating Features</h5>
+                    <GlowButton className="px-3 py-1 text-[10px]" onClick={() => setPublicConfigForm({ ...publicConfigForm, home: { ...publicConfigForm.home, features: [...publicConfigForm.home.features, { title: "New Feature", description: "", image: "" }] } })}>
+                      + Add Feature
+                    </GlowButton>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {publicConfigForm.home.features.map((feat, idx) => (
+                      <div key={idx} className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <input className="bg-transparent border-none text-white font-bold text-xs focus:ring-0 w-full" value={feat.title} onChange={(e) => {
+                            const newFeats = [...publicConfigForm.home.features];
+                            newFeats[idx].title = e.target.value;
+                            setPublicConfigForm({ ...publicConfigForm, home: { ...publicConfigForm.home, features: newFeats } });
+                          }} />
+                          <button className="text-red-400/50 hover:text-red-400 shrink-0" onClick={() => {
+                            const newFeats = publicConfigForm.home.features.filter((_, i) => i !== idx);
+                            setPublicConfigForm({ ...publicConfigForm, home: { ...publicConfigForm.home, features: newFeats } });
+                          }}><Trash2 size={14} /></button>
+                        </div>
+                        <textarea className="w-full rounded-lg bg-black/20 p-2 text-[10px] text-slate-300 border-none" rows={2} placeholder="Feature description..." value={feat.description} onChange={(e) => {
+                          const newFeats = [...publicConfigForm.home.features];
+                          newFeats[idx].description = e.target.value;
+                          setPublicConfigForm({ ...publicConfigForm, home: { ...publicConfigForm.home, features: newFeats } });
+                        }} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              {/* About Page */}
-              <div className="rounded-lg bg-white/5 p-4">
-                <h4 className="mb-3 text-lg font-semibold text-white">
-                  About Page
-                </h4>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">
-                      Title
-                    </label>
-                    <input
-                      className="w-full rounded bg-white/10 p-2 text-white"
-                      value={publicConfigForm.about.title}
-                      onChange={(e) =>
-                        setPublicConfigForm({
-                          ...publicConfigForm,
-                          about: {
-                            ...publicConfigForm.about,
-                            title: e.target.value,
-                          },
-                        })
-                      }
-                    />
+              {/* --- ABOUT SECTION --- */}
+              <div className="rounded-2xl bg-white/5 p-6 border border-white/10 space-y-6">
+                <SectionTitle title="About Section" subtitle="Share your gym's story and achievements" />
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Main Heading</label>
+                      <input className="w-full rounded-xl bg-white/10 p-3 text-white border border-white/5" value={publicConfigForm.about.title} onChange={(e) => setPublicConfigForm({ ...publicConfigForm, about: { ...publicConfigForm.about, title: e.target.value } })} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Full Narrative</label>
+                      <textarea rows={5} className="w-full rounded-xl bg-white/10 p-3 text-white border border-white/5" value={publicConfigForm.about.description} onChange={(e) => setPublicConfigForm({ ...publicConfigForm, about: { ...publicConfigForm.about, description: e.target.value } })} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">About Image</label>
+                      <div className="space-y-2">
+                        <input className="w-full rounded-xl bg-white/10 p-2 text-xs text-white border border-white/5" value={publicConfigForm.about.image} onChange={(e) => setPublicConfigForm({ ...publicConfigForm, about: { ...publicConfigForm.about, image: e.target.value } })} />
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="flex-1 text-[10px] text-slate-300 file:mr-2 file:rounded file:border-0 file:bg-slate-700 file:px-2 file:py-1 file:text-white"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (e) => {
+                                  setPublicConfigForm({
+                                    ...publicConfigForm,
+                                    about: {
+                                      ...publicConfigForm.about,
+                                      image: e.target?.result as string,
+                                    },
+                                  });
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">
-                      Description
-                    </label>
-                    <textarea
-                      className="w-full rounded bg-white/10 p-2 text-white"
-                      rows={3}
-                      value={publicConfigForm.about.description}
-                      onChange={(e) =>
-                        setPublicConfigForm({
-                          ...publicConfigForm,
-                          about: {
-                            ...publicConfigForm.about,
-                            description: e.target.value,
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">
-                      Image URL
-                    </label>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Metric Counters (Stats)</h5>
+                      <button className="text-indigo-400 hover:text-indigo-300 text-[10px] font-black uppercase" onClick={() => setPublicConfigForm({ ...publicConfigForm, about: { ...publicConfigForm.about, stats: [...publicConfigForm.about.stats, { label: "Stat", value: "0" }] } })}>+ Add Stat</button>
+                    </div>
                     <div className="space-y-2">
-                      <input
-                        className="w-full rounded bg-white/10 p-2 text-white"
-                        value={publicConfigForm.about.image}
-                        onChange={(e) =>
-                          setPublicConfigForm({
-                            ...publicConfigForm,
-                            about: {
-                              ...publicConfigForm.about,
-                              image: e.target.value,
-                            },
-                          })
-                        }
-                      />
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="flex-1 text-sm text-slate-300 file:mr-2 file:rounded file:border-0 file:bg-cyan-600 file:px-2 file:py-1 file:text-white file:hover:bg-cyan-700"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onload = (e) => {
-                                setPublicConfigForm({
-                                  ...publicConfigForm,
-                                  about: {
-                                    ...publicConfigForm.about,
-                                    image: e.target?.result as string,
-                                  },
-                                });
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                        />
-                        <span className="text-xs text-slate-400">
-                          or choose file
-                        </span>
-                      </div>
+                      {publicConfigForm.about.stats.map((stat, idx) => (
+                        <div key={idx} className="flex gap-2 items-center">
+                          <input className="flex-1 rounded-lg bg-white/5 border border-white/5 p-2 text-xs text-white" value={stat.label} onChange={(e) => {
+                            const newStats = [...publicConfigForm.about.stats];
+                            newStats[idx].label = e.target.value;
+                            setPublicConfigForm({ ...publicConfigForm, about: { ...publicConfigForm.about, stats: newStats } });
+                          }} />
+                          <input className="w-24 rounded-lg bg-indigo-500/10 border border-indigo-500/20 p-2 text-xs text-indigo-400 font-bold" value={stat.value} onChange={(e) => {
+                            const newStats = [...publicConfigForm.about.stats];
+                            newStats[idx].value = e.target.value;
+                            setPublicConfigForm({ ...publicConfigForm, about: { ...publicConfigForm.about, stats: newStats } });
+                          }} />
+                          <button className="text-red-400/50" onClick={() => {
+                            const newStats = publicConfigForm.about.stats.filter((_, i) => i !== idx);
+                            setPublicConfigForm({ ...publicConfigForm, about: { ...publicConfigForm.about, stats: newStats } });
+                          }}><Trash2 size={14} /></button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Services Page */}
-              <div className="rounded-lg bg-white/5 p-4">
-                <h4 className="mb-3 text-lg font-semibold text-white">
-                  Services Page
-                </h4>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">
-                      Title
-                    </label>
-                    <input
-                      className="w-full rounded bg-white/10 p-2 text-white"
-                      value={publicConfigForm.services.title}
-                      onChange={(e) =>
-                        setPublicConfigForm({
-                          ...publicConfigForm,
-                          services: {
-                            ...publicConfigForm.services,
-                            title: e.target.value,
-                          },
-                        })
-                      }
-                    />
+              {/* --- SERVICES SECTION --- */}
+              <div className="rounded-2xl bg-white/5 p-6 border border-white/10 space-y-6">
+                <div className="flex items-center justify-between">
+                  <SectionTitle title="Services Offering" subtitle="Highlight your specialized fitness modules" />
+                  <GlowButton className="px-4 py-2 text-xs" onClick={() => setPublicConfigForm({ ...publicConfigForm, services: { ...publicConfigForm.services, services: [...publicConfigForm.services.services, { name: "New Service", description: "", image: "" }] } })}>
+                    + Define New Service
+                  </GlowButton>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {publicConfigForm.services.services.map((svc, idx) => (
+                    <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/5 group hover:bg-white/[0.08] transition-colors">
+                      <div className="flex items-center justify-between mb-3">
+                        <input className="bg-transparent border-none text-white font-black uppercase text-sm focus:ring-0 w-full" value={svc.name} onChange={(e) => {
+                          const newSvcs = [...publicConfigForm.services.services];
+                          newSvcs[idx].name = e.target.value;
+                          setPublicConfigForm({ ...publicConfigForm, services: { ...publicConfigForm.services, services: newSvcs } });
+                        }} />
+                        <button className="text-red-400 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
+                          const newSvcs = publicConfigForm.services.services.filter((_, i) => i !== idx);
+                          setPublicConfigForm({ ...publicConfigForm, services: { ...publicConfigForm.services, services: newSvcs } });
+                        }}><Trash2 size={16} /></button>
+                      </div>
+                      <textarea className="w-full rounded-xl bg-black/20 p-3 text-xs text-slate-400 border-none" rows={2} value={svc.description} onChange={(e) => {
+                        const newSvcs = [...publicConfigForm.services.services];
+                        newSvcs[idx].description = e.target.value;
+                        setPublicConfigForm({ ...publicConfigForm, services: { ...publicConfigForm.services, services: newSvcs } });
+                      }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* --- TESTIMONIALS & FAQS --- */}
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Testimonials */}
+                <div className="rounded-2xl bg-white/5 p-6 border border-white/10 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-lg font-black text-white uppercase tracking-tighter">Testimonials</h4>
+                    <button className="text-cyan-400 text-[10px] font-black uppercase hover:underline" onClick={() => setPublicConfigForm({ ...publicConfigForm, testimonials: { ...publicConfigForm.testimonials, testimonials: [...publicConfigForm.testimonials.testimonials, { name: "User", role: "Member", content: "", avatar: "" }] } })}>+ Add Story</button>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">
-                      Description
-                    </label>
-                    <textarea
-                      className="w-full rounded bg-white/10 p-2 text-white"
-                      rows={2}
-                      value={publicConfigForm.services.description}
-                      onChange={(e) =>
-                        setPublicConfigForm({
-                          ...publicConfigForm,
-                          services: {
-                            ...publicConfigForm.services,
-                            description: e.target.value,
-                          },
-                        })
-                      }
-                    />
+                  <div className="space-y-3 h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    {publicConfigForm.testimonials.testimonials.map((test, idx) => (
+                      <div key={idx} className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-2 group">
+                        <div className="flex items-center justify-between">
+                          <input className="bg-transparent border-none text-xs font-bold text-white p-0 focus:ring-0" value={test.name} onChange={(e) => {
+                            const newT = [...publicConfigForm.testimonials.testimonials];
+                            newT[idx].name = e.target.value;
+                            setPublicConfigForm({ ...publicConfigForm, testimonials: { ...publicConfigForm.testimonials, testimonials: newT } });
+                          }} />
+                          <button className="text-red-400/50 hover:text-red-400" onClick={() => {
+                            const newT = publicConfigForm.testimonials.testimonials.filter((_, i) => i !== idx);
+                            setPublicConfigForm({ ...publicConfigForm, testimonials: { ...publicConfigForm.testimonials, testimonials: newT } });
+                          }}><Trash2 size={12} /></button>
+                        </div>
+                        <textarea className="w-full bg-transparent border-none text-[10px] text-slate-400 p-0 focus:ring-0 italic" rows={2} value={test.content} onChange={(e) => {
+                          const newT = [...publicConfigForm.testimonials.testimonials];
+                          newT[idx].content = e.target.value;
+                          setPublicConfigForm({ ...publicConfigForm, testimonials: { ...publicConfigForm.testimonials, testimonials: newT } });
+                        }} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* FAQs */}
+                <div className="rounded-2xl bg-white/5 p-6 border border-white/10 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-lg font-black text-white uppercase tracking-tighter">Global FAQs</h4>
+                    <button className="text-cyan-400 text-[10px] font-black uppercase hover:underline" onClick={() => setPublicConfigForm({ ...publicConfigForm, faqs: [...publicConfigForm.faqs, { question: "New Question", answer: "" }] })}>+ Add FAQ</button>
+                  </div>
+                  <div className="space-y-3 h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    {publicConfigForm.faqs.map((faq, idx) => (
+                      <div key={idx} className="p-3 rounded-xl bg-slate-900 border border-white/5 space-y-2">
+                        <input className="w-full bg-transparent border-none text-xs font-black text-indigo-400 p-0 focus:ring-0" value={faq.question} onChange={(e) => {
+                          const newF = [...publicConfigForm.faqs];
+                          newF[idx].question = e.target.value;
+                          setPublicConfigForm({ ...publicConfigForm, faqs: newF });
+                        }} />
+                        <textarea className="w-full bg-transparent border-none text-[10px] text-slate-400 p-0 focus:ring-0 leading-relaxed" rows={2} value={faq.answer} onChange={(e) => {
+                          const newF = [...publicConfigForm.faqs];
+                          newF[idx].answer = e.target.value;
+                          setPublicConfigForm({ ...publicConfigForm, faqs: newF });
+                        }} />
+                        <div className="flex justify-end">
+                          <button className="text-red-400/30 hover:text-red-400 transition-colors" onClick={() => {
+                            const newF = publicConfigForm.faqs.filter((_, i) => i !== idx);
+                            setPublicConfigForm({ ...publicConfigForm, faqs: newF });
+                          }}><Trash2 size={12} /></button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              {/* Save Button */}
-              <div className="flex justify-end">
-                <GlowButton
-                  onClick={() => {
-                    updatePublicPageConfig(publicConfigForm);
-                  }}
-                >
-                  Save Page Settings
+              {/* Global Commit Button */}
+              <div className="flex justify-end pt-4">
+                <GlowButton className="px-12 py-3" onClick={() => {
+                  updatePublicPageConfig(publicConfigForm);
+                  toast.success("Public Portal synchronized successfully!");
+                }}>
+                  Sync Public Database
                 </GlowButton>
               </div>
-            </>
+            </div>
           )}
 
           {/* Design Themes Tab */}
@@ -1054,8 +1285,8 @@ export function AdminPortalPages({ page }: { page: string }) {
                   <div
                     key={theme.id}
                     className={`rounded-lg border-2 p-4 transition-all cursor-pointer ${currentDesignTheme === theme.id
-                        ? "border-cyan-400 bg-cyan-400/10"
-                        : "border-white/10 bg-white/5 hover:border-white/20"
+                      ? "border-cyan-400 bg-cyan-400/10"
+                      : "border-white/10 bg-white/5 hover:border-white/20"
                       }`}
                     onClick={() => setDesignTheme(theme.id)}
                   >
@@ -1164,8 +1395,9 @@ export function AdminPortalPages({ page }: { page: string }) {
         </div>
       </GlassCard>
     );
+  }
 
-  if (page === "notifications")
+  if (page === "notifications") {
     return (
       <GlassCard>
         <SectionTitle
@@ -1187,6 +1419,7 @@ export function AdminPortalPages({ page }: { page: string }) {
         ))}
       </GlassCard>
     );
+  }
 
   return <EmptyState title="Loading" hint="Select a section to continue." />;
 }

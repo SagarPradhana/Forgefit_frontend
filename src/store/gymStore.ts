@@ -34,6 +34,10 @@ type AppConfig = {
   contactEmail: string;
   contactPhone: string;
   contactAddress: string;
+  locations: Array<{ id: string; name: string; address: string; phone: string; mapUrl?: string }>;
+  timezone: string;
+  currency: string;
+  language: string;
   socialLinks: {
     facebook: string;
     instagram: string;
@@ -77,6 +81,7 @@ type PublicPageConfig = {
     subtitle: string;
     image: string;
   };
+  faqs: Array<{ question: string; answer: string }>;
 };
 
 type DesignTheme = {
@@ -137,6 +142,13 @@ export const useGymStore = create<GymState>((set) => ({
     contactEmail: "info@fithub.com",
     contactPhone: "+1 (555) 123-4567",
     contactAddress: "123 Fitness Street, Health City, HC 12345",
+    locations: [
+      { id: "1", name: "Main Branch - Downtown", address: "123 Fitness St, Downtown", phone: "+1 555-0101" },
+      { id: "2", name: "Westside Branch", address: "456 West Blvd, Westside", phone: "+1 555-0102" },
+    ],
+    timezone: "UTC+0",
+    currency: "USD",
+    language: "English",
     socialLinks: {
       facebook: "https://facebook.com/fithub",
       instagram: "https://instagram.com/fithub",
@@ -195,6 +207,11 @@ export const useGymStore = create<GymState>((set) => ({
       subtitle: "Ready to start your fitness journey? Contact us today!",
       image: "/contact-image.jpg",
     },
+    faqs: [
+      { question: "What are your operating hours?", answer: "We are open 24/7 for all premium and VIP members. Basic members have access from 5 AM to 11 PM." },
+      { question: "Do you offer personal training?", answer: "Yes, we have a team of certified personal trainers ready to help you reach your goals." },
+      { question: "Can I freeze my membership?", answer: "Members can freeze their accounts for up to 3 months per year for medical or travel reasons." },
+    ],
   },
   designThemes: [
     {

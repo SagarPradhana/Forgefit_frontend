@@ -17,7 +17,8 @@ export const API_ENDPOINTS = {
     USER_STATUS: (id: string) => `/api/admin/user_roles/users/${id}/status`,
     USER_DELETE: (id: string) => `/api/admin/user_roles/users/${id}`,
     ROLES: "/api/admin/user_roles/roles",
-    PLANS: "/api/admin/plans",
+    PLANS: "/api/admin/subscription/subscription-plans",
+    PLAN_DETAIL: (id: string) => `/api/admin/subscription/subscription-plans/${id}`,
     PAYMENTS: "/api/admin/payments",
   },
 } as const;
