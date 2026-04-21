@@ -19,32 +19,18 @@ export function SignInPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const decodeToken = (token: string) => {
-    try {
-      const base64Url = token.split(".")[1];
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split("")
-          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-          .join("")
-      );
-      return JSON.parse(jsonPayload);
-    } catch (e) {
-      return null;
-    }
-  };
-
   const { mutate: performLogin, loading } = useMutation("post", {
     onSuccess: (response) => {
-      const { access_token, refresh_token } = response.data;
-      const decoded = decodeToken(access_token);
-      const role = decoded?.role || "user";
-      const name = decoded?.name || decoded?.preferred_username || decoded?.username || "authenticated user";
-      const userEmail = decoded?.email || "";
-      const userPhone = decoded?.phone || decoded?.phone_number || "";
+      const { access_token, refresh_token } = response;
+      if (!access_token || !refresh_token) return;
+
+      login(access_token, refresh_token);
       
-      login(role, name, userEmail, userPhone, access_token, refresh_token);
+      // Get role from store after login or decode briefly to navigate
+      const base64Url = access_token.split(".")[1];
+      const decoded = JSON.parse(atob(base64Url.replace(/-/g, "+").replace(/_/g, "/")));
+      const role = decoded?.role || "user";
+      
       navigate(`/${role}/dashboard`);
     },
   });
