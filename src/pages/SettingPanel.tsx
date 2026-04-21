@@ -49,30 +49,32 @@ export function SettingsPanel() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* --- TAB NAVIGATION --- */}
-      <div className="flex p-1.5 bg-slate-900/50 backdrop-blur-md border border-white/5 rounded-2xl w-fit mx-auto sm:mx-0">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as TabType)}
-              className={`relative flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${
-                isActive ? "text-white" : "text-slate-500 hover:text-slate-300"
-              }`}
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="activeTabBg"
-                  className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-indigo-600/20 border border-indigo-500/30 rounded-xl"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                />
-              )}
-              <Icon size={14} className="relative z-10" />
-              <span className="relative z-10">{tab.label}</span>
-            </button>
-          );
-        })}
+      <div className="flex p-1.5 bg-slate-900/50 backdrop-blur-md border border-white/5 rounded-2xl w-full sm:w-fit mx-auto sm:mx-0 overflow-x-auto no-scrollbar">
+        <div className="flex min-w-max sm:min-w-0">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TabType)}
+                className={`relative flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all duration-300 ${
+                  isActive ? "text-white" : "text-slate-500 hover:text-slate-300"
+                }`}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="activeTabBg"
+                    className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-indigo-600/20 border border-indigo-500/30 rounded-xl"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+                <Icon size={14} className="relative z-10" />
+                <span className="relative z-10">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* --- CONTENT AREA --- */}

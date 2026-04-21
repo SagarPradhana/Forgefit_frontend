@@ -570,27 +570,27 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className={`relative z-[60] rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${currentTheme.cardBg} p-3 lg:p-4 ${currentTheme.shadowColor} backdrop-blur-xl`}
+            className={`relative z-[60] rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${currentTheme.cardBg} p-2 lg:p-4 ${currentTheme.shadowColor} backdrop-blur-xl`}
           >
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between gap-2 lg:gap-3">
+              <div className="flex items-center gap-2 lg:gap-3">
                 {/* HAMBURGER FOR MOBILE */}
                 <button
                   onClick={() => setSidebarOpen(true)}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 lg:hidden"
+                  className="flex h-9 w-9 lg:h-10 lg:w-10 items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 lg:hidden"
                 >
-                  <Menu size={20} />
+                  <Menu size={18} />
                 </button>
 
                 <div
-                  className={`flex items-center gap-2 lg:gap-3 rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-gray-100/70" : "bg-slate-950/70"} px-2 lg:px-3 py-1.5 lg:py-2 shadow-inner`}
+                  className={`flex items-center gap-1.5 lg:gap-3 rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-gray-100/70" : "bg-slate-950/70"} px-1.5 lg:px-3 py-1 lg:py-2 shadow-inner`}
                 >
                   <div
-                    className="relative cursor-pointer"
+                    className="relative cursor-pointer p-1"
                     onClick={() => setNotiModalOpen(true)}
                   >
                     <Bell
-                      size={18}
+                      size={isMobile ? 16 : 18}
                       className={
                         systemTheme === "light"
                           ? "text-orange-500"
@@ -598,7 +598,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                       }
                     />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 flex items-center justify-center bg-red-500 text-white text-[9px] font-black rounded-full animate-pulse">
+                      <span className="absolute top-0 right-0 h-3.5 min-w-[14px] px-0.5 flex items-center justify-center bg-red-500 text-white text-[8px] font-black rounded-full animate-pulse">
                         {unreadCount}
                       </span>
                     )}
@@ -612,36 +612,44 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                       }`}
                     title={`Switch theme`}
                   >
-                    <Palette size={isMobile ? 16 : 18} />
+                    <Palette size={isMobile ? 14 : 18} />
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 lg:gap-3">
-                <LanguageSwitcher />
+              <div className="flex items-center gap-1.5 lg:gap-3 overflow-hidden">
+                <div className={isMobile ? "scale-90 origin-right" : ""}>
+                   <LanguageSwitcher />
+                </div>
+                
                 <motion.div
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`group inline-flex items-center gap-3 rounded-2xl border ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-white shadow-sm" : "bg-white/5 shadow-2xl"} pl-2 pr-4 py-1.5 backdrop-blur-xl cursor-pointer transition-all duration-300 hover:border-indigo-500/50`}
+                  className={`group inline-flex items-center gap-2 lg:gap-3 rounded-2xl border ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-white shadow-sm" : "bg-white/5 shadow-2xl"} pl-1.5 pr-2.5 lg:pl-2 lg:pr-4 py-1.5 backdrop-blur-xl cursor-pointer transition-all duration-300 hover:border-indigo-500/50 max-w-[140px] sm:max-w-none`}
                 >
                   {/* Premium Avatar Circle */}
-                  <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-emerald-400 p-[2px] shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/40 transition-shadow">
+                  <div className="relative h-8 w-8 lg:h-9 lg:w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-emerald-400 p-[2px] shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/40 transition-shadow shrink-0">
                     <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-slate-950">
-                      <User size={16} className="text-white" />
+                      <User size={isMobile ? 14 : 16} className="text-white" />
                     </div>
                     {/* Online Status Dot */}
-                    <span className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-slate-950 bg-emerald-500 shadow-lg" />
+                    <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-slate-950 bg-emerald-500 shadow-lg px-0" />
                   </div>
 
-                  <div className="flex flex-col items-start leading-none gap-1">
+                  <div className="hidden sm:flex flex-col items-start leading-none gap-1 overflow-hidden">
                     <span
-                      className={`text-[11px] font-black uppercase tracking-tighter bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent group-hover:from-white group-hover:to-white transition-all duration-500`}
+                      className={`text-[10px] lg:text-[11px] font-black uppercase tracking-tighter bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent group-hover:from-white group-hover:to-white transition-all duration-500 truncate w-full`}
                     >
                       {name || role || "Account"}
                     </span>
-                    <span className="text-[8px] font-black uppercase tracking-widest text-slate-500 group-hover:text-amber-400 transition-colors">
+                    <span className="text-[8px] font-black uppercase tracking-widest text-slate-500 group-hover:text-amber-400 transition-colors whitespace-nowrap">
                       {role === "admin" ? "Master Admin" : "Active Member"}
                     </span>
+                  </div>
+
+                  {/* Mobile Identifier Overlay (Only when name is hidden) */}
+                  <div className="sm:hidden flex flex-col items-start leading-none">
+                     <span className="text-[10px] font-black text-indigo-400 uppercase tracking-tighter">ME</span>
                   </div>
 
                   {/* Subtle Glow Effect */}
