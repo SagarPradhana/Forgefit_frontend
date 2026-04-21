@@ -29,8 +29,7 @@ export function ToastContainer() {
                 <AlertCircle size={20} className="text-red-500" />
               )}
             </div>
-            <div className="flex-1 flex flex-col gap-0.5">
-              <p className="text-sm font-bold leading-tight">{toast.title}</p>
+            <div className="flex-1">
               <p className="text-[13px] font-medium opacity-90">{toast.message}</p>
             </div>
             <button

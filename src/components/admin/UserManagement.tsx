@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { GlassCard, SectionTitle, LoadingSpinner, CommonButton } from "../../components/ui/primitives";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { GlassCard, SectionTitle, CommonButton } from "../../components/ui/primitives";
 import {
   Search,
   Grid,
@@ -45,6 +45,7 @@ interface PersonalInfo {
   height: string;
   weight: string;
   fitnessGoal: string;
+  dob: string;
 }
 
 interface HealthInfo {
@@ -57,6 +58,10 @@ interface MembershipDetails {
   planType: string;
   joiningDate: string;
   trainerAssigned: string;
+  planId: string;
+  trainerId: string;
+  durationInMonths: number;
+  amount: number;
 }
 
 interface PreferencesInfo {
@@ -87,6 +92,7 @@ export function UserManagement() {
   const [modalStep, setModalStep] = useState<ModalStep>("role");
   const [photoPreview, setPhotoPreview] = useState<string>("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  console.log("photoPreview", photoPreview);
 
   // Document Modal State
   const [docModalOpen, setDocModalOpen] = useState(false);
@@ -126,6 +132,12 @@ export function UserManagement() {
   const { data: rolesData } = useGet(API_ENDPOINTS.ADMIN.ROLES);
   const roles = rolesData?.data || ["admin", "trainer", "user"];
 
+  const { data: plansData } = useGet(API_ENDPOINTS.ADMIN.PLANS);
+  const plans = plansData?.data || [];
+
+  const { data: trainersData } = useGet(`${API_ENDPOINTS.ADMIN.USERS}?role=trainer`);
+  const trainers = trainersData?.data || [];
+
   // --- Mutations ---
   const { mutate: createUser, loading: creating } = useMutation("post", {
     onSuccess: () => {
@@ -136,7 +148,7 @@ export function UserManagement() {
     }
   });
 
-  const { mutate: editUser } = useMutation("patch", {
+  const { mutate: editUser, loading: editing } = useMutation("patch", {
     onSuccess: () => {
       setModalOpen(false);
       setPage(1);
@@ -145,14 +157,14 @@ export function UserManagement() {
     }
   });
 
-  const { mutate: patchStatus } = useMutation("patch", {
+  const { mutate: patchStatus, loading: statusUpdating } = useMutation("patch", {
     onSuccess: () => {
       toast.success("User status updated successfully");
       refetchUsers();
     }
   });
 
-  const { mutate: deleteUserRecord } = useMutation("delete", {
+  const { mutate: deleteUserRecord, loading: deletingRecord } = useMutation("delete", {
     onSuccess: () => {
       toast.success("User deleted successfully from records");
       setDeleteModalOpen(false);
@@ -160,7 +172,7 @@ export function UserManagement() {
     }
   });
 
-  const { mutate: deleteDocument } = useMutation("delete", {
+  const { mutate: deleteDocument, loading: docDeleting } = useMutation("delete", {
     onSuccess: () => {
       toast.success("Document permanently removed");
       refetchUsers();
@@ -190,7 +202,7 @@ export function UserManagement() {
     phone: "",
     email: "",
     address: "",
-    role: "trainee",
+    role: roles?.[0]?.role,
     profilePhoto: "",
     personalInfo: {
       age: "",
@@ -198,6 +210,7 @@ export function UserManagement() {
       height: "",
       weight: "",
       fitnessGoal: "General Fitness",
+      dob: "",
     },
     healthInfo: {
       medicalConditions: "",
@@ -208,12 +221,21 @@ export function UserManagement() {
       planType: "",
       joiningDate: new Date().toISOString().split("T")[0],
       trainerAssigned: "",
+      planId: "",
+      trainerId: "",
+      durationInMonths: 12,
+      amount: 0,
     },
     preferences: {
       workoutTime: "Morning",
       notificationPreference: "Email",
     },
   });
+
+  const isAdmin = formData.role?.toLowerCase() === "admin";
+  const isFinalStep = (isAdmin && modalStep === "details") || modalStep === "preferences";
+
+  const isAnyLoading = creating || editing || statusUpdating || deletingRecord || docDeleting || !!docUploading;
 
   // Filter and search users
   const filteredUsers = allUsers;
@@ -224,7 +246,7 @@ export function UserManagement() {
       phone: "",
       email: "",
       address: "",
-      role: "trainee",
+      role: roles?.[0]?.role,
       profilePhoto: "",
       personalInfo: {
         age: "",
@@ -232,6 +254,7 @@ export function UserManagement() {
         height: "",
         weight: "",
         fitnessGoal: "General Fitness",
+        dob: "",
       },
       healthInfo: {
         medicalConditions: "",
@@ -242,6 +265,10 @@ export function UserManagement() {
         planType: "",
         joiningDate: new Date().toISOString().split("T")[0],
         trainerAssigned: "",
+        planId: "",
+        trainerId: "",
+        durationInMonths: 12,
+        amount: 0,
       },
       preferences: {
         workoutTime: "Morning",
@@ -260,7 +287,7 @@ export function UserManagement() {
       phone: user.phone || "",
       email: user.email,
       address: user.address || "",
-      role: user.role || "trainee",
+      role: user.role || roles?.[0]?.role,
       profilePhoto: user.profilePhoto || "",
       personalInfo: user.personalInfo || {
         age: "",
@@ -268,6 +295,7 @@ export function UserManagement() {
         height: "",
         weight: "",
         fitnessGoal: "General Fitness",
+        dob: user.metadata?.dob ? new Date(user.metadata.dob * 1000).toISOString().split('T')[0] : "",
       },
       healthInfo: user.healthInfo || {
         medicalConditions: "",
@@ -275,9 +303,13 @@ export function UserManagement() {
         allergies: "",
       },
       membershipDetails: user.membershipDetails || {
-        planType: "",
-        joiningDate: new Date().toISOString().split("T")[0],
-        trainerAssigned: "",
+        planType: user.plan_name || "",
+        joiningDate: user.joining_date ? new Date(user.joining_date * 1000).toISOString().split('T')[0] : new Date().toISOString().split("T")[0],
+        trainerAssigned: user.trainer_name || "",
+        planId: user.plan_id || "",
+        trainerId: user.trainer_id || "",
+        durationInMonths: user.duration_in_months || 12,
+        amount: user.amount || 0,
       },
       preferences: user.preferences || {
         workoutTime: "Morning",
@@ -286,29 +318,17 @@ export function UserManagement() {
     });
     setPhotoPreview(user.profilePhoto || "");
     setEditingUserId(user.id);
-    setModalStep("details");
+    setModalStep(user.role === "admin" ? "role" : "details");
     setModalOpen(true);
-  };
-
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64 = event.target?.result as string;
-        setPhotoPreview(base64);
-        setFormData({ ...formData, profilePhoto: base64 });
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   const handleNextStep = () => {
     if (modalStep === "role") {
-      if (!formData.name || !formData.phone || !formData.email || !formData.role) {
-        toast.error("Please fill in all required fields");
+      if (!formData.name || !formData.phone || !formData.role) {
+        toast.error("Please fill in all required fields (Name and Phone)");
         return;
       }
+
       setModalStep("details");
       return;
     }
@@ -367,15 +387,19 @@ export function UserManagement() {
     if (
       !formData.name ||
       !formData.phone ||
-      !formData.email ||
-      !formData.address
+      !formData.role
     ) {
-      alert("Please fill in all required fields");
+      toast.error("Please fill in required fields (Name and Phone)");
+      return;
+    }
+
+    if (!formData.address) {
+      toast.error("Please provide an address");
       return;
     }
 
     const payload = {
-      username: formData.email.split('@')[0],
+      username: formData.email ? formData.email.split('@')[0] : formData.phone,
       mobile: formData.phone,
       name: formData.name,
       email: formData.email,
@@ -385,16 +409,16 @@ export function UserManagement() {
         height: Number(formData.personalInfo?.height || 0),
         weight: Number(formData.personalInfo?.weight || 0),
         gender: formData.personalInfo?.gender || "Male",
-        dob: 0, // Placeholder
+        dob: formData.personalInfo?.dob ? Math.floor(new Date(formData.personalInfo.dob).getTime() / 1000) : 0,
         profile_image_path: "",
         identity_proof_image_path: "",
         other_docs_path: []
       },
       joining_date: Math.floor(new Date(formData.membershipDetails?.joiningDate || "").getTime() / 1000),
-      trainer_id: "00000000-0000-0000-0000-000000000000",
-      plan_id: "00000000-0000-0000-0000-000000000000",
-      duration_in_months: 12,
-      amount: 0
+      trainer_id: formData.membershipDetails?.trainerId || "00000000-0000-0000-0000-000000000000",
+      plan_id: formData.membershipDetails?.planId || "00000000-0000-0000-0000-000000000000",
+      duration_in_months: Number(formData.membershipDetails?.durationInMonths || 12),
+      amount: Number(formData.membershipDetails?.amount || 0)
     };
 
     if (editingUserId) {
@@ -402,8 +426,6 @@ export function UserManagement() {
     } else {
       createUser(API_ENDPOINTS.ADMIN.USER_CREATE, payload);
     }
-
-    setModalOpen(false);
   };
 
   const handleToggleStatus = (userId: string, currentStatus: boolean) => {
@@ -435,7 +457,8 @@ export function UserManagement() {
   };
 
   const getStepNumber = () => {
-    const totalSteps = formData.role === "admin" ? "2" : "6";
+    const isAdmin = formData.role?.toLowerCase() === "admin";
+    const totalSteps = isAdmin ? "2" : "6";
     switch (modalStep) {
       case "role": return `1/${totalSteps}`;
       case "details": return `2/${totalSteps}`;
@@ -593,27 +616,29 @@ export function UserManagement() {
                       </button>
                     </div>
                     <div className="flex gap-2">
-                       <button
-                         onClick={() => handleToggleStatus(user.id, user.is_active !== false)}
-                         className={`flex-1 flex items-center justify-center gap-1.5 h-10 px-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition ${user.is_active !== false
-                           ? "bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20"
-                           : "bg-slate-500/10 text-slate-400 border-slate-500/20 hover:bg-slate-500/20"
-                           }`}
-                         title={user.is_active !== false ? "Deactivate User" : "Activate User"}
-                       >
-                         {user.is_active !== false ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
-                         {user.is_active !== false ? "Active" : "Inactive"}
-                       </button>
-                       <button
-                         onClick={() => {
-                           setDeleteTarget(user.id);
-                           setDeleteModalOpen(true);
-                         }}
-                         className="h-10 w-10 flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition border border-red-500/20"
-                         title="Delete"
-                       >
-                         <Trash2 size={16} />
-                       </button>
+                      <button
+                        disabled={statusUpdating}
+                        onClick={() => handleToggleStatus(user.id, user.is_active !== false)}
+                        className={`flex-1 flex items-center justify-center gap-1.5 h-10 px-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition ${user.is_active !== false
+                          ? "bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20"
+                          : "bg-slate-500/10 text-slate-400 border-slate-500/20 hover:bg-slate-500/20"
+                          } ${statusUpdating ? "opacity-50 cursor-wait" : ""}`}
+                        title={user.is_active !== false ? "Deactivate User" : "Activate User"}
+                      >
+                        {statusUpdating ? <Loader2 size={14} className="animate-spin" /> : (user.is_active !== false ? <ToggleRight size={14} /> : <ToggleLeft size={14} />)}
+                        {user.is_active !== false ? "Active" : "Inactive"}
+                      </button>
+                      <button
+                        disabled={deletingRecord}
+                        onClick={() => {
+                          setDeleteTarget(user.id);
+                          setDeleteModalOpen(true);
+                        }}
+                        className={`h-10 w-10 flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition border border-red-500/20 ${deletingRecord ? "opacity-50 cursor-wait" : ""}`}
+                        title="Delete"
+                      >
+                        {deletingRecord ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -834,7 +859,7 @@ export function UserManagement() {
 
                   <div>
                     <label className="block text-sm font-semibold text-white mb-3">
-                      Email <span className="text-orange-400">*</span>
+                      Email
                     </label>
                     <input
                       type="email"
@@ -1024,6 +1049,26 @@ export function UserManagement() {
 
                   <div>
                     <label className="block text-sm font-semibold text-white mb-2">
+                      Date of Birth
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.personalInfo?.dob || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          personalInfo: {
+                            ...formData.personalInfo!,
+                            dob: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-2">
                       Fitness Goal
                     </label>
                     <select
@@ -1143,37 +1188,75 @@ export function UserManagement() {
                 >
                   <div>
                     <label className="block text-sm font-semibold text-white mb-2">
-                      Plan Type
+                      Plan Selection
                     </label>
                     <select
-                      value={formData.membershipDetails?.planType || ""}
-                      onChange={(e) =>
+                      value={formData.membershipDetails?.planId || ""}
+                      onChange={(e) => {
+                        const selectedPlan = plans.find((p: any) => p.id === e.target.value);
                         setFormData({
                           ...formData,
                           membershipDetails: {
                             ...formData.membershipDetails!,
-                            planType: e.target.value,
+                            planId: e.target.value,
+                            planType: selectedPlan?.name || "",
+                            amount: selectedPlan?.price || (formData.membershipDetails?.amount || 0),
+                            durationInMonths: selectedPlan?.duration || (formData.membershipDetails?.durationInMonths || 12)
                           },
                         })
-                      }
+                      }}
                       className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
                     >
                       <option value="" className="bg-slate-900 text-white">
                         Select Plan
                       </option>
-                      <option value="Starter" className="bg-slate-900 text-white">
-                        Starter
-                      </option>
-                      <option
-                        value="Performance"
-                        className="bg-slate-900 text-white"
-                      >
-                        Performance
-                      </option>
-                      <option value="Elite" className="bg-slate-900 text-white">
-                        Elite
-                      </option>
+                      {plans.map((p: any) => (
+                        <option key={p.id} value={p.id} className="bg-slate-900 text-white">
+                          {p.name} - ₹{p.price} ({p.duration} Mo)
+                        </option>
+                      ))}
                     </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">
+                        Duration (Months)
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.membershipDetails?.durationInMonths || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            membershipDetails: {
+                              ...formData.membershipDetails!,
+                              durationInMonths: Number(e.target.value),
+                            },
+                          })
+                        }
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">
+                        Amount (₹)
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.membershipDetails?.amount || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            membershipDetails: {
+                              ...formData.membershipDetails!,
+                              amount: Number(e.target.value),
+                            },
+                          })
+                        }
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -1200,21 +1283,30 @@ export function UserManagement() {
                     <label className="block text-sm font-semibold text-white mb-2">
                       Trainer Assigned
                     </label>
-                    <input
-                      type="text"
-                      placeholder="e.g., John Trainer"
-                      value={formData.membershipDetails?.trainerAssigned || ""}
-                      onChange={(e) =>
+                    <select
+                      value={formData.membershipDetails?.trainerId || ""}
+                      onChange={(e) => {
+                        const selectedTrainer = trainers.find((t: any) => t.id === e.target.value);
                         setFormData({
                           ...formData,
                           membershipDetails: {
                             ...formData.membershipDetails!,
-                            trainerAssigned: e.target.value,
+                            trainerId: e.target.value,
+                            trainerAssigned: selectedTrainer?.name || "",
                           },
                         })
-                      }
-                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
-                    />
+                      }}
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
+                    >
+                      <option value="" className="bg-slate-900 text-white">
+                        Select Trainer
+                      </option>
+                      {trainers.map((t: any) => (
+                        <option key={t.id} value={t.id} className="bg-slate-900 text-white">
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </motion.div>
               )}
@@ -1316,23 +1408,12 @@ export function UserManagement() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={
-                  modalStep === "preferences" ||
-                    (modalStep === "details" && formData.role === "admin")
-                    ? handleSaveUser
-                    : handleNextStep
-                }
-                className="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-orange-400 hover:from-indigo-600 hover:to-orange-500 text-white font-medium rounded-lg transition"
+                disabled={creating || editing || docDeleting}
+                onClick={isFinalStep ? handleSaveUser : handleNextStep}
+                className={`px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-orange-400 hover:from-indigo-600 hover:to-orange-500 text-white font-medium rounded-lg transition flex items-center gap-2 ${(creating || editing) ? "opacity-50 cursor-not-allowed" : ""}`}
               >
-                {modalStep === "preferences"
-                  ? editingUserId
-                    ? "Update User"
-                    : "Create User"
-                  : modalStep === "details" && formData.role === "admin"
-                    ? editingUserId
-                      ? "Update User"
-                      : "Create User"
-                    : "Next"}
+                {(creating || editing) && <Loader2 size={18} className="animate-spin" />}
+                {isFinalStep ? (editingUserId ? "Update User" : "Submit") : "Next"}
               </motion.button>
             </div>
           </motion.div>
@@ -1447,42 +1528,42 @@ export function UserManagement() {
             </div>
 
             <div className="flex items-center gap-6">               <div className="relative group">
-                <div className="h-20 w-20 rounded-full bg-slate-800 border-2 border-white/10 overflow-hidden shadow-2xl">
-                  {selectedUserForDocs?.profilePhoto ? (
-                    <img src={selectedUserForDocs.profilePhoto} className="h-full w-full object-cover" alt="Profile" />
-                  ) : (
-                    <div className="h-full w-full flex items-center justify-center text-slate-600 font-black text-2xl uppercase">
-                      {selectedUserForDocs?.name?.charAt(0)}
-                    </div>
-                  )}
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-full gap-2">
-                  <label className="cursor-pointer hover:text-indigo-400 text-white transition">
-                    <Upload size={18} />
-                    <input type="file" className="hidden" accept="image/*" onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setDocUploading('profile');
-                        const reader = new FileReader();
-                        reader.onload = (ev) => {
-                          // In real app, call uploadFile api here
-                          toast.success("Profile photo uploaded successfully");
-                          setDocUploading(null);
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }} />
-                  </label>
-                  {selectedUserForDocs?.profilePhoto && (
-                    <button 
-                      onClick={() => handleDocDelete('profile', selectedUserForDocs.profilePhoto)}
-                      className="text-red-400 hover:text-red-300 transition"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  )}
-                </div>
+              <div className="h-20 w-20 rounded-full bg-slate-800 border-2 border-white/10 overflow-hidden shadow-2xl">
+                {selectedUserForDocs?.profilePhoto ? (
+                  <img src={selectedUserForDocs.profilePhoto} className="h-full w-full object-cover" alt="Profile" />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-slate-600 font-black text-2xl uppercase">
+                    {selectedUserForDocs?.name?.charAt(0)}
+                  </div>
+                )}
               </div>
+              <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-full gap-2">
+                <label className="cursor-pointer hover:text-indigo-400 text-white transition">
+                  <Upload size={18} />
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setDocUploading('profile');
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        // In real app, call uploadFile api here
+                        toast.success("Profile photo uploaded successfully");
+                        setDocUploading(null);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }} />
+                </label>
+                {selectedUserForDocs?.profilePhoto && (
+                  <button
+                    onClick={() => handleDocDelete('profile', selectedUserForDocs.profilePhoto)}
+                    className="text-red-400 hover:text-red-300 transition"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                )}
+              </div>
+            </div>
 
               <div className="flex-1">
                 <p className="text-xs text-slate-400 leading-relaxed">
@@ -1522,7 +1603,7 @@ export function UserManagement() {
                 }} />
               </label>
               {selectedUserForDocs?.idProof && (
-                <button 
+                <button
                   onClick={() => handleDocDelete('identity_proof', selectedUserForDocs.idProof)}
                   className="absolute top-2 right-2 p-2 bg-red-500/20 text-red-400 rounded-lg opacity-0 group-hover:opacity-100 transition hover:bg-red-500/30"
                   title="Remove ID"
@@ -1559,6 +1640,25 @@ export function UserManagement() {
           </div>
         </div>
       </Modal>
+
+      {isAnyLoading && createPortal(
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-md">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="flex flex-col items-center gap-4"
+          >
+            <div className="relative">
+              <div className="h-16 w-16 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 animate-spin" />
+              <Loader2 className="absolute inset-0 m-auto animate-spin text-indigo-400" size={24} />
+            </div>
+            <span className="text-white font-black tracking-[0.2em] uppercase text-[10px] bg-indigo-500/20 px-4 py-1.5 rounded-full border border-indigo-500/30">
+              Processing Request
+            </span>
+          </motion.div>
+        </div>,
+        document.body
+      )}
     </GlassCard>
   );
 }

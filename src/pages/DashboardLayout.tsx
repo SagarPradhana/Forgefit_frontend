@@ -20,6 +20,8 @@ import { CommonButton } from "../components/ui/primitives";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "../components/ui/LanguageSwitcher";
+import { useNotificationStore } from "../store/notificationStore";
+import { NotificationModal } from "../components/ui/NotificationModal";
 
 // Custom hook to detect system theme preference
 function useSystemTheme() {
@@ -505,6 +507,9 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
     useState<keyof typeof themeStyles>("theme1");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [notiModalOpen, setNotiModalOpen] = useState(false);
+  const { notifications } = useNotificationStore();
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -581,14 +586,24 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <div
                   className={`flex items-center gap-2 lg:gap-3 rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-gray-100/70" : "bg-slate-950/70"} px-2 lg:px-3 py-1.5 lg:py-2 shadow-inner`}
                 >
-                  <Bell
-                    size={18}
-                    className={
-                      systemTheme === "light"
-                        ? "text-orange-500"
-                        : "text-orange-300"
-                    }
-                  />
+                  <div 
+                    className="relative cursor-pointer"
+                    onClick={() => setNotiModalOpen(true)}
+                  >
+                    <Bell
+                      size={18}
+                      className={
+                        systemTheme === "light"
+                          ? "text-orange-500"
+                          : "text-orange-300"
+                      }
+                    />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 flex items-center justify-center bg-red-500 text-white text-[9px] font-black rounded-full animate-pulse">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={nextColorTheme}
@@ -644,6 +659,11 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
           </motion.div>
         </motion.div>
       </div>
+
+      <NotificationModal 
+        isOpen={notiModalOpen} 
+        onClose={() => setNotiModalOpen(false)} 
+      />
     </div>
   );
 }
