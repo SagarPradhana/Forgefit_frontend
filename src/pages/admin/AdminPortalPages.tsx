@@ -17,6 +17,9 @@ import { UserManagement } from "../../components/admin/UserManagement";
 import { AttendanceManagement } from "../../components/admin/AttendanceManagement";
 import { adminSubscriptionService, type PlanResponse } from "../../services/adminSubscriptionService";
 import { toast } from "../../store/toastStore";
+import { InquiryCenter } from "../../components/admin/InquiryCenter";
+import { useAuthStore } from "../../store/authStore";
+import { Bell, Users, CheckCircle2 } from "lucide-react";
 
 export function AdminPortalPages({ page }: { page: string }) {
   const {
@@ -92,12 +95,6 @@ export function AdminPortalPages({ page }: { page: string }) {
     description: "",
     price: "",
     duration_in_months: "1",
-  });
-  const [offerForm, setOfferForm] = useState({
-    name: "",
-    description: "",
-    validFrom: "",
-    validTo: "",
   });
   const [offerSearch, setOfferSearch] = useState("");
 
@@ -428,198 +425,77 @@ export function AdminPortalPages({ page }: { page: string }) {
     );
   }
 
-  if (page === "offers") {
-    const filteredOffers = offers.filter(o =>
-      (o.name || o.code)?.toLowerCase().includes(offerSearch.toLowerCase()) ||
-      o.description?.toLowerCase().includes(offerSearch.toLowerCase())
-    );
-
+  if (page === "profile") {
+    const user = useAuthStore.getState();
+    
     return (
-      <GlassCard>
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-          <SectionTitle title="Offers Management" subtitle="Manage promo codes and seasonal discounts." />
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <div className="relative flex-1 md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input
-                type="text"
-                placeholder="Search offers..."
-                value={offerSearch}
-                onChange={(e) => setOfferSearch(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
-              />
-            </div>
-            <GlowButton
-              onClick={() => {
-                setOfferForm({ name: "", description: "", validFrom: "", validTo: "" });
-                setEditOffer(null);
-                setOfferModalOpen(true);
-              }}
-            >
-              Create Offer
-            </GlowButton>
-          </div>
+      <div className="space-y-6">
+        <GlassCard className="p-10 border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 to-transparent relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[100px]" />
+             <div className="flex flex-col md:flex-row items-center gap-10 relative z-10">
+                <div className="h-32 w-32 rounded-3xl bg-indigo-500 flex items-center justify-center text-5xl font-black text-white shadow-2xl shadow-indigo-500/40">
+                    {user.name?.[0] || "A"}
+                </div>
+                <div className="text-center md:text-left space-y-2">
+                    <div className="flex items-center gap-3 justify-center md:justify-start">
+                        <h2 className="text-4xl font-black text-white uppercase tracking-tighter italic">{user.name}</h2>
+                        <span className="px-3 py-1 rounded-lg bg-indigo-500 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20">{user.role}</span>
+                    </div>
+                    <p className="text-slate-400 font-medium tracking-wide">Strategic System Administrator • ForgeFit HQ</p>
+                    <div className="flex flex-wrap gap-4 pt-4 justify-center md:justify-start">
+                        <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
+                            <Bell size={14} className="text-indigo-400" />
+                            <span className="text-xs font-black text-white uppercase tracking-widest">12 Pending Inquiries</span>
+                        </div>
+                        <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
+                            <Users size={14} className="text-emerald-400" />
+                            <span className="text-xs font-black text-white uppercase tracking-widest">450 Total Members</span>
+                        </div>
+                    </div>
+                </div>
+             </div>
+        </GlassCard>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <GlassCard className="p-8 space-y-6">
+                <h3 className="text-xl font-black text-white uppercase tracking-wide border-b border-white/10 pb-4">Personal Credentials</h3>
+                <div className="space-y-6">
+                    <div className="grid gap-1">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Full Name</p>
+                        <p className="text-white font-bold tracking-tight">{user.name}</p>
+                    </div>
+                    <div className="grid gap-1">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Digital Mailbox</p>
+                        <p className="text-white font-bold tracking-tight">{user.email || "admin@forgefit.app"}</p>
+                    </div>
+                    <div className="grid gap-1">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Secure Mobile</p>
+                        <p className="text-white font-bold tracking-tight">{user.mobile || "+1 555-ADMIN-X"}</p>
+                    </div>
+                </div>
+            </GlassCard>
+
+            <GlassCard className="p-8 space-y-6">
+                <h3 className="text-xl font-black text-white uppercase tracking-wide border-b border-white/10 pb-4">System Privileges</h3>
+                <div className="space-y-4">
+                    {[
+                        "Database Migration Control",
+                        "User Liquidation Authority",
+                        "Strategic Pricing Override",
+                        "Inventory Management Access",
+                        "Security Protocol Execution"
+                    ].map(perm => (
+                        <div key={perm} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-indigo-500/30 transition-all group">
+                            <div className="h-6 w-6 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                                <CheckCircle2 size={14} />
+                            </div>
+                            <span className="text-sm font-bold text-slate-300 group-hover:text-white transition-colors">{perm}</span>
+                        </div>
+                    ))}
+                </div>
+            </GlassCard>
         </div>
-
-        <Table
-          headers={["Offer Name", "Description", "Valid From", "Valid To", "Action"]}
-          rows={filteredOffers.map((o) => [
-            <span className="font-bold text-white" key={o.id}>{o.name || o.code}</span>,
-            <span className="text-slate-400 max-w-xs truncate block" key={`${o.id}-desc`}>{o.description}</span>,
-            o.validFrom || o.validity,
-            o.validTo || "-",
-            <div key={`${o.id}-actions`} className="flex gap-4 justify-center">
-              <button
-                className="text-indigo-400 hover:text-indigo-300 transition-transform hover:scale-125"
-                onClick={() => {
-                  setOfferForm({
-                    name: o.name || o.code,
-                    description: o.description || "",
-                    validFrom: o.validFrom || o.validity,
-                    validTo: o.validTo || "",
-                  });
-                  setEditOffer(o.id);
-                  setOfferModalOpen(true);
-                }}
-              >
-                <Edit2 size={18} />
-              </button>
-              <button
-                className="text-red-400 hover:text-red-300 transition-transform hover:scale-125"
-                onClick={() => {
-                  setDeleteTarget({ type: "offer", id: o.id });
-                  setDeleteModalOpen(true);
-                }}
-              >
-                <Trash2 size={18} />
-              </button>
-            </div>,
-          ])}
-        />
-
-        {/* Offer Modal */}
-        <Modal
-          open={offerModalOpen}
-          onClose={() => setOfferModalOpen(false)}
-          title={editOffer ? "Edit Offer" : "Create Offer"}
-          footer={
-            <>
-              <GlowButton
-                className="bg-gray-600"
-                onClick={() => setOfferModalOpen(false)}
-              >
-                Cancel
-              </GlowButton>
-              <GlowButton
-                onClick={() => {
-                  if (editOffer) {
-                    updateOffer(editOffer, {
-                      name: offerForm.name,
-                      description: offerForm.description,
-                      validFrom: offerForm.validFrom,
-                      validTo: offerForm.validTo,
-                    });
-                  } else {
-                    addOffer({
-                      name: offerForm.name,
-                      description: offerForm.description,
-                      validFrom: offerForm.validFrom,
-                      validTo: offerForm.validTo,
-                    });
-                  }
-                  setOfferModalOpen(false);
-                }}
-              >
-                Apply
-              </GlowButton>
-            </>
-          }
-        >
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-400">Offer Name</label>
-              <input
-                className="w-full rounded-lg bg-white/10 border border-white/10 p-2 text-white focus:border-indigo-500 outline-none"
-                placeholder="e.g. Summer 50"
-                value={offerForm.name}
-                onChange={(e) =>
-                  setOfferForm({ ...offerForm, name: e.target.value })
-                }
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-400">Description</label>
-              <textarea
-                className="w-full rounded-lg bg-white/10 border border-white/10 p-2 text-white focus:border-indigo-500 outline-none resize-none"
-                placeholder="Describe the offer details..."
-                rows={3}
-                value={offerForm.description}
-                onChange={(e) =>
-                  setOfferForm({ ...offerForm, description: e.target.value })
-                }
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-400">Valid From</label>
-                <input
-                  className="w-full rounded-lg bg-white/10 border border-white/10 p-2 text-white focus:border-indigo-500 outline-none"
-                  type="date"
-                  value={offerForm.validFrom}
-                  onChange={(e) =>
-                    setOfferForm({ ...offerForm, validFrom: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-400">Valid To</label>
-                <input
-                  className="w-full rounded-lg bg-white/10 border border-white/10 p-2 text-white focus:border-indigo-500 outline-none"
-                  type="date"
-                  value={offerForm.validTo}
-                  onChange={(e) =>
-                    setOfferForm({ ...offerForm, validTo: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-          </div>
-        </Modal>
-
-        {/* Delete Modal for Offers */}
-        <Modal
-          open={deleteModalOpen && deleteTarget?.type === "offer"}
-          onClose={() => setDeleteModalOpen(false)}
-          title="Confirm Delete"
-          footer={
-            <>
-              <GlowButton
-                className="bg-gray-600"
-                onClick={() => setDeleteModalOpen(false)}
-              >
-                Cancel
-              </GlowButton>
-              <GlowButton
-                onClick={() => {
-                  if (deleteTarget && deleteTarget.type === "offer")
-                    deleteOffer(deleteTarget.id);
-                  setDeleteModalOpen(false);
-                  setDeleteTarget(null);
-                }}
-              >
-                Apply
-              </GlowButton>
-            </>
-          }
-        >
-          <div className="text-sm text-slate-300">
-            <p>
-              Are you sure you want to delete this offer? This action cannot be
-              undone.
-            </p>
-          </div>
-        </Modal>
-      </GlassCard>
+      </div>
     );
   }
 
@@ -1628,26 +1504,14 @@ export function AdminPortalPages({ page }: { page: string }) {
     );
   }
 
-  if (page === "notifications") {
+  if (page === "inquiries" || page === "notifications") {
     return (
       <GlassCard>
         <SectionTitle
-          title="Notifications"
-          subtitle="Expiring subscriptions and reminders."
+          title="Management Center"
+          subtitle="Review and process user bookings, plan upgrades, and inquiries."
         />
-        {expiringUsers.map((u) => (
-          <div
-            key={u.name}
-            className="mb-2 flex items-center justify-between rounded-lg bg-white/5 p-3"
-          >
-            <span>
-              {u.name} expires in {u.daysLeft} day(s)
-            </span>
-            <GlowButton className="px-3 py-1 text-xs">
-              Trigger Reminder
-            </GlowButton>
-          </div>
-        ))}
+        <InquiryCenter />
       </GlassCard>
     );
   }

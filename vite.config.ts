@@ -25,16 +25,6 @@ export default defineConfig({
       },
 
       manifest: {
-        // id: '/',
-        // name: 'ForgeFit Gym Management',
-        // short_name: 'ForgeFit',
-        // description: 'Premium Gym Management SaaS Solution',
-        // theme_color: '#6366f1',
-        // background_color: '#020617',
-        // display: 'standalone',
-        // start_url: '/',
-        // scope: '/',
-        // orientation: 'portrait',
         name: 'ForgeFit Gym Management',
         short_name: 'ForgeFit',
         start_url: '/',

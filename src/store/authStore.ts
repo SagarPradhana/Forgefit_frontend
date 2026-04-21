@@ -25,7 +25,7 @@ type AuthState = {
   role: Role | null;
   name: string | null;
   email: string | null;
-  phone: string | null;
+  mobile: string | null;
   isAuthenticated: boolean;
   token: string | null;
   refreshToken: string | null;
@@ -40,7 +40,7 @@ export const useAuthStore = create<AuthState>()(
       role: null,
       name: null,
       email: null,
-      phone: null,
+      mobile: null,
       isAuthenticated: false,
       token: null,
       refreshToken: null,
@@ -52,7 +52,7 @@ export const useAuthStore = create<AuthState>()(
           role: userData.role as Role,
           name: userData.name,
           email: userData.email,
-          phone: userData.mobile,
+          mobile: userData.mobile,
           isAuthenticated: true,
           token: accessToken,
           refreshToken: refreshToken,
@@ -64,7 +64,7 @@ export const useAuthStore = create<AuthState>()(
           role: null,
           name: null,
           email: null,
-          phone: null,
+          mobile: null,
           isAuthenticated: false,
           token: null,
           refreshToken: null,

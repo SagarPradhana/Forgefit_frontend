@@ -25,7 +25,7 @@ export function ProfileCard({ user: initialUser }: any) {
   const auth = useAuthStore();
   const userName = auth.name;
   const userEmail = auth.email || user.email;
-  const userPhone = auth.phone || user.phone;
+  const userPhone = auth.mobile || user.phone;
 
   return (
     <>

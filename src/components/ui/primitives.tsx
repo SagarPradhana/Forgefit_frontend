@@ -103,12 +103,14 @@ export function Modal({
   title,
   children,
   footer,
+  maxWidth = "max-w-lg",
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   children: ReactNode;
   footer?: ReactNode;
+  maxWidth?: string;
 }) {
   if (!open) return null;
 
@@ -117,7 +119,10 @@ export function Modal({
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full max-w-lg rounded-2xl border border-white/10 bg-slate-900 shadow-2xl relative"
+        className={clsx(
+          "w-full rounded-2xl border border-white/10 bg-slate-900 shadow-2xl relative",
+          maxWidth
+        )}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-6 py-4">

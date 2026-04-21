@@ -347,11 +347,11 @@ export function Sidebar({
         { name: "users", icon: Users, label: t("users") },
         { name: "attendance", icon: Bell, label: t("attendance") },
         { name: "subscriptions", icon: CreditCard, label: t("subscription") },
-        { name: "offers", icon: Box, label: t("offers") },
+        { name: "profile", icon: User, label: "Profile" },
         { name: "payments", icon: CreditCard, label: t("payments") },
         { name: "products", icon: Box, label: t("products") },
         { name: "settings", icon: Settings, label: t("settings") },
-        { name: "notifications", icon: Bell, label: t("notifications") },
+        { name: "inquiries", icon: Bell, label: "Inquiries" },
       ]
       : [
         { name: "dashboard", icon: LayoutDashboard, label: t("dashboard") },

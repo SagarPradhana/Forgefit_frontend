@@ -103,14 +103,31 @@ type DesignTheme = {
   };
 };
 
-type ProductEntity = {
+type InquiryStatus = "pending" | "resolved" | "rejected";
+
+type BaseRequest = {
   id: string;
-  name: string;
-  category: string;
-  price: number;
-  stock: number;
-  image: string;
-  description: string;
+  userId?: number;
+  userName: string;
+  email: string;
+  status: InquiryStatus;
+  date: string;
+};
+
+type SubscriptionRequest = BaseRequest & {
+  planId: string;
+  planName: string;
+};
+
+type ProductRequest = BaseRequest & {
+  productId: string;
+  productName: string;
+  quantity: number;
+};
+
+type ContactInquiry = BaseRequest & {
+  subject: string;
+  message: string;
 };
 
 type GymState = {
@@ -118,23 +135,33 @@ type GymState = {
   plans: PlanEntity[];
   offers: OfferEntity[];
   products: ProductEntity[];
+  subscriptionRequests: SubscriptionRequest[];
+  productRequests: ProductRequest[];
+  contactInquiries: ContactInquiry[];
   featureFlags: FeatureFlags;
   appConfig: AppConfig;
   publicPageConfig: PublicPageConfig;
   designThemes: DesignTheme[];
   currentDesignTheme: string;
-  addUser: (user: Omit<User, 'id'>) => void;
+  // Actions
+  addUser: (user: Omit<User, "id">) => void;
   updateUser: (id: number, user: Partial<User>) => void;
   deleteUser: (id: number) => void;
-  addPlan: (plan: Omit<PlanEntity, 'id'>) => void;
+  addPlan: (plan: Omit<PlanEntity, "id">) => void;
   updatePlan: (id: string, patch: Partial<PlanEntity>) => void;
   deletePlan: (id: string) => void;
-  addOffer: (offer: Omit<OfferEntity, 'id'>) => void;
+  addOffer: (offer: Omit<OfferEntity, "id">) => void;
   updateOffer: (id: number, patch: Partial<OfferEntity>) => void;
   deleteOffer: (id: number) => void;
-  addProduct: (product: Omit<ProductEntity, 'id'>) => void;
+  addProduct: (product: Omit<ProductEntity, "id">) => void;
   updateProduct: (id: string, patch: Partial<ProductEntity>) => void;
   deleteProduct: (id: string) => void;
+  updateSubscriptionRequest: (id: string, status: InquiryStatus) => void;
+  deleteSubscriptionRequest: (id: string) => void;
+  updateProductRequest: (id: string, status: InquiryStatus) => void;
+  deleteProductRequest: (id: string) => void;
+  updateContactInquiry: (id: string, status: InquiryStatus) => void;
+  deleteContactInquiry: (id: string) => void;
   toggleFlag: (userId: number, key: 'showProducts' | 'allowUpgrade' | 'showOffers') => void;
   updateAppConfig: (config: Partial<AppConfig>) => void;
   updatePublicPageConfig: (config: Partial<PublicPageConfig>) => void;
@@ -149,6 +176,16 @@ export const useGymStore = create<GymState>((set) => ({
     { id: "p1", name: "Whey Protein Isolated", category: "Supplements", price: 59.99, stock: 45, image: "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&q=80&w=400", description: "Premium quality whey protein for muscle recovery." },
     { id: "p2", name: "Gym Performance Tee", category: "Apparel", price: 24.99, stock: 120, image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=400", description: "Breathable moisture-wicking fabric for intense workouts." },
     { id: "p3", name: "Resistance Bands Set", category: "Equipment", price: 19.99, stock: 15, image: "https://images.unsplash.com/photo-1598289431512-b97b0917a63e?auto=format&fit=crop&q=80&w=400", description: "Complete set of 5 resistance levels for home or gym." },
+  ],
+  subscriptionRequests: [
+    { id: "sr-1", userName: "John Doe", email: "john@example.com", planId: "premium", planName: "Premium Membership", status: "pending", date: "2026-04-21" },
+    { id: "sr-2", userName: "Jane Smith", email: "jane@example.com", planId: "vip", planName: "VIP Training", status: "pending", date: "2026-04-20" },
+  ],
+  productRequests: [
+    { id: "pr-1", userName: "Mike Ross", email: "mike@example.com", productId: "p1", productName: "Whey Protein Isolated", quantity: 2, status: "pending", date: "2026-04-21" },
+  ],
+  contactInquiries: [
+    { id: "ci-1", userName: "Alice Wonder", email: "alice@example.com", subject: "Corporate Discount", message: "Hi, I'm interested in corporate membership for my team of 10. Can you share details?", status: "pending", date: "2026-04-19" },
   ],
   featureFlags: {
     1: { showProducts: true, allowUpgrade: true, showOffers: true },
@@ -304,6 +341,12 @@ export const useGymStore = create<GymState>((set) => ({
   addProduct: (product) => set((state) => ({ products: [...state.products, { ...product, id: `p-${Date.now()}` }] })),
   updateProduct: (id, patch) => set((state) => ({ products: state.products.map((p) => (p.id === id ? { ...p, ...patch } : p)) })),
   deleteProduct: (id) => set((state) => ({ products: state.products.filter((p) => p.id !== id) })),
+  updateSubscriptionRequest: (id, status) => set((state) => ({ subscriptionRequests: state.subscriptionRequests.map(r => r.id === id ? { ...r, status } : r) })),
+  deleteSubscriptionRequest: (id) => set((state) => ({ subscriptionRequests: state.subscriptionRequests.filter(r => r.id !== id) })),
+  updateProductRequest: (id, status) => set((state) => ({ productRequests: state.productRequests.map(r => r.id === id ? { ...r, status } : r) })),
+  deleteProductRequest: (id) => set((state) => ({ productRequests: state.productRequests.filter(r => r.id !== id) })),
+  updateContactInquiry: (id, status) => set((state) => ({ contactInquiries: state.contactInquiries.map(i => i.id === id ? { ...i, status } : i) })),
+  deleteContactInquiry: (id) => set((state) => ({ contactInquiries: state.contactInquiries.filter(i => i.id !== id) })),
   toggleFlag: (userId, key) =>
     set((state) => ({
       featureFlags: {

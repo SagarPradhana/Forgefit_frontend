@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Bar,
   BarChart,
@@ -15,6 +16,7 @@ import {
   NoDataFound,
   StatusBadge,
   Table,
+  Modal,
 } from "../components/ui/primitives";
 import {
   adminMetrics,
@@ -24,8 +26,24 @@ import {
   payments,
   services,
 } from "../data/mockData";
+import { InquiryCenter } from "../components/admin/InquiryCenter";
+import { useGymStore } from "../store/gymStore";
 
 function AdminDashboard() {
+  const { subscriptionRequests, productRequests, contactInquiries } = useGymStore();
+  const [mgmtModalOpen, setMgmtModalOpen] = useState(false);
+
+  useEffect(() => {
+    const hasPending = 
+      subscriptionRequests.some(r => r.status === 'pending') ||
+      productRequests.some(r => r.status === 'pending') ||
+      contactInquiries.some(r => r.status === 'pending');
+    
+    if (hasPending) {
+       setMgmtModalOpen(true);
+    }
+  }, []);
+
   const pendingPayments = payments.filter(
     (payment) => payment.status === "Pending",
   ).length;
@@ -35,6 +53,17 @@ function AdminDashboard() {
 
   return (
     <>
+      <Modal
+        open={mgmtModalOpen}
+        onClose={() => setMgmtModalOpen(false)}
+        title="Priority Management Center"
+        maxWidth="max-w-[95vw]"
+      >
+        <div className="py-2">
+           <InquiryCenter />
+        </div>
+      </Modal>
+
       <SectionTitle
         title="Admin Dashboard"
         subtitle="Monitor users, subscriptions, and revenue growth."
