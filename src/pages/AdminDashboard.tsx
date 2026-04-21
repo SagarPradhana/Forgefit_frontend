@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Bar,
   BarChart,
@@ -30,6 +31,7 @@ import { InquiryCenter } from "../components/admin/InquiryCenter";
 import { useGymStore } from "../store/gymStore";
 
 function AdminDashboard() {
+  const { t } = useTranslation();
   const { subscriptionRequests, productRequests, contactInquiries } = useGymStore();
   const [mgmtModalOpen, setMgmtModalOpen] = useState(false);
 
@@ -56,7 +58,7 @@ function AdminDashboard() {
       <Modal
         open={mgmtModalOpen}
         onClose={() => setMgmtModalOpen(false)}
-        title="Priority Management Center"
+        title={t("priorityCenter")}
         maxWidth="max-w-[95vw]"
       >
         <div className="py-2">
@@ -65,13 +67,13 @@ function AdminDashboard() {
       </Modal>
 
       <SectionTitle
-        title="Admin Dashboard"
+        title={t("dashboard")}
         subtitle="Monitor users, subscriptions, and revenue growth."
       />
 
       <div className="mb-4 grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         <GlassCard className="p-6">
-          <p className="text-sm text-slate-300">Total Users</p>
+          <p className="text-sm text-slate-300">{t("totalUsers")}</p>
           <p className="mt-3 text-3xl font-bold">{adminMetrics.users}</p>
         </GlassCard>
         <GlassCard className="p-6">
@@ -81,29 +83,29 @@ function AdminDashboard() {
           </p>
         </GlassCard>
         <GlassCard className="p-6">
-          <p className="text-sm text-slate-300">Revenue</p>
+          <p className="text-sm text-slate-300">{t("revenue")}</p>
           <p className="mt-3 text-3xl font-bold">{adminMetrics.revenue}</p>
         </GlassCard>
       </div>
 
       <div className="mb-6 grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         <GlassCard className="p-6">
-          <p className="text-sm text-slate-300">New Signups</p>
+          <p className="text-sm text-slate-300">{t("newSignups")}</p>
           <p className="mt-3 text-3xl font-bold">{newSignups}</p>
           <p className="mt-2 text-sm text-slate-400">
-            Registered in the last 30 days
+            {t("registeredLast30")}
           </p>
         </GlassCard>
         <GlassCard className="p-6">
-          <p className="text-sm text-slate-300">Pending Payments</p>
+          <p className="text-sm text-slate-300">{t("pendingPayments")}</p>
           <p className="mt-3 text-3xl font-bold">{pendingPayments}</p>
-          <p className="mt-2 text-sm text-slate-400">Awaiting follow-up</p>
+          <p className="mt-2 text-sm text-slate-400">{t("awaitingFollowup")}</p>
         </GlassCard>
         <GlassCard className="p-6">
-          <p className="text-sm text-slate-300">Upcoming Renewals</p>
+          <p className="text-sm text-slate-300">{t("upcomingRenewals")}</p>
           <p className="mt-3 text-3xl font-bold">{expiringUsers.length}</p>
           <p className="mt-2 text-sm text-slate-400">
-            Renewals due in the next 7 days
+            {t("renewalsDue7")}
           </p>
         </GlassCard>
       </div>

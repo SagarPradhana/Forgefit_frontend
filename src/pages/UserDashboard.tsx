@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   GlassCard,
   SectionTitle,
@@ -21,6 +22,7 @@ import confetti from "canvas-confetti";
 import { QRCodeSVG } from "qrcode.react";
 
 function UserDashboard() {
+  const { t } = useTranslation();
   const userName = useAuthStore((s) => s.name);
   const [workoutDone, setWorkoutDone] = useState(false);
   const [showExpiryModal, setShowExpiryModal] = useState(userProfile.daysLeft <= 5);
@@ -66,8 +68,8 @@ function UserDashboard() {
     <div className="space-y-8 max-w-5xl mx-auto pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <SectionTitle
-            title={`Welcome Back, ${userName?.split(' ')[0] || "Member"}`}
-            subtitle="Track your consistency and manage your membership cycle."
+            title={`${t("welcomeBack")}, ${userName?.split(' ')[0] || "Member"}`}
+            subtitle={t("trackConsistency")}
           />
           <GlowButton 
             onClick={() => setQrModalOpen(true)}
@@ -85,7 +87,7 @@ function UserDashboard() {
             <div className="h-10 w-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
               <Zap size={20} />
             </div>
-            <h3 className="text-xl font-black text-white uppercase tracking-tight">Active Plan Status</h3>
+            <h3 className="text-xl font-black text-white uppercase tracking-tight">{t("activePlan")}</h3>
           </div>
 
           <div className="space-y-6">
@@ -118,7 +120,7 @@ function UserDashboard() {
               {isPresentToday ? <CheckCircle2 size={48} /> : <XCircle size={48} />}
             </div>
             <h3 className="mt-6 text-3xl font-black text-white uppercase italic tracking-tighter">
-              {isPresentToday ? "Verified Present" : "Marked Absent"}
+              {isPresentToday ? t("verifiedPresent") : t("markedAbsent")}
             </h3>
             <p className="text-sm text-slate-400 mt-2 font-medium">Official Registry Status for Today</p>
           </div>
@@ -136,7 +138,7 @@ function UserDashboard() {
             <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400">
               <Calendar size={20} />
             </div>
-            <h3 className="text-xl font-black text-white uppercase tracking-tight">Consistency Tracker <span className="text-slate-600 ml-2">APRIL 2026</span></h3>
+            <h3 className="text-xl font-black text-white uppercase tracking-tight">{t("consistencyTracker")} <span className="text-slate-600 ml-2">APRIL 2026</span></h3>
           </div>
         </div>
 
@@ -173,13 +175,13 @@ function UserDashboard() {
 
         <div className="flex justify-between items-start mb-8 relative z-10">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
-              <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">Protocol in Progress</span>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
+                <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">{t("protocolInProgress")}</span>
+              </div>
+              <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">{t("todayWorkout")} <span className="text-indigo-400/50">CHEST & TRICEPS</span></h3>
             </div>
-            <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Today's Workout <span className="text-indigo-400/50">CHEST & TRICEPS</span></h3>
-          </div>
-          <div className="h-14 w-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+            <div className="h-14 w-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
             <Dumbbell size={28} />
           </div>
         </div>
