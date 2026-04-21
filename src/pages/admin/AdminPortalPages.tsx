@@ -20,6 +20,7 @@ import { toast } from "../../store/toastStore";
 import { InquiryCenter } from "../../components/admin/InquiryCenter";
 import { useAuthStore } from "../../store/authStore";
 import { Bell, Users, CheckCircle2 } from "lucide-react";
+import { ChangePassword } from "../../components/admin/ChangePassword";
 
 export function AdminPortalPages({ page }: { page: string }) {
   const {
@@ -1513,6 +1514,14 @@ export function AdminPortalPages({ page }: { page: string }) {
         />
         <InquiryCenter />
       </GlassCard>
+    );
+  }
+
+  if (page === "change-password") {
+    return (
+      <div className="py-10">
+        <ChangePassword />
+      </div>
     );
   }
 

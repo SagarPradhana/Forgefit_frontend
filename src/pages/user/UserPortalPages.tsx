@@ -26,6 +26,7 @@ import { ProductCard } from "../ProductCard";
 import { SettingsPanel } from "../SettingPanel";
 import { useAuthStore } from "../../store/authStore";
 import { toast } from "../../store/toastStore";
+import { ChangePassword } from "../../components/admin/ChangePassword";
 
 export function UserPortalPages({ page }: { page: string }) {
   const plans = useGymStore((s) => s.plans);
@@ -439,6 +440,14 @@ export function UserPortalPages({ page }: { page: string }) {
           subtitle="Manage your account and preferences"
         />
         <SettingsPanel />
+      </div>
+    );
+  }
+
+  if (page === "change-password") {
+    return (
+      <div className="py-10">
+        <ChangePassword />
       </div>
     );
   }
