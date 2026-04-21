@@ -16,7 +16,6 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { CommonButton } from "../components/ui/primitives";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "../components/ui/LanguageSwitcher";
@@ -586,7 +585,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <div
                   className={`flex items-center gap-2 lg:gap-3 rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-gray-100/70" : "bg-slate-950/70"} px-2 lg:px-3 py-1.5 lg:py-2 shadow-inner`}
                 >
-                  <div 
+                  <div
                     className="relative cursor-pointer"
                     onClick={() => setNotiModalOpen(true)}
                   >
@@ -619,11 +618,6 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
               </div>
 
               <div className="flex items-center gap-2 lg:gap-3">
-                <div
-                  className={`hidden md:block text-[10px] lg:text-xs uppercase tracking-[0.25em] ${systemTheme === "light" ? "text-gray-500" : "text-slate-400"}`}
-                >
-                  {themeStyles[colorTheme].label}
-                </div>
                 <LanguageSwitcher />
                 <div
                   className={`inline-flex items-center gap-2 rounded-full ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-gray-100/70" : "bg-slate-950/70"} px-2 lg:px-3 py-1.5 lg:py-2 shadow-inner`}
@@ -660,9 +654,9 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
         </motion.div>
       </div>
 
-      <NotificationModal 
-        isOpen={notiModalOpen} 
-        onClose={() => setNotiModalOpen(false)} 
+      <NotificationModal
+        isOpen={notiModalOpen}
+        onClose={() => setNotiModalOpen(false)}
       />
     </div>
   );
