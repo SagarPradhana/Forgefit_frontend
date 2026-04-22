@@ -50,15 +50,16 @@ export const UserListView = ({
               key={user.id || index}
               initial={{ opacity: 0, scale: 0.95, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ 
-                duration: 0.6, 
+              whileHover={{ y: -8, scale: 1.01 }}
+              transition={{
+                duration: 0.4,
                 delay: index * 0.05,
-                ease: [0.23, 1, 0.32, 1] 
+                ease: "easeOut"
               }}
-              className="group relative"
+              className="group relative transform-gpu will-change-transform"
               ref={index === users.length - 1 ? lastUserElementRef : null}
             >
-              <div className="relative h-full flex flex-col overflow-hidden rounded-[2.5rem] border border-white/10 bg-slate-950/40 backdrop-blur-3xl p-7 transition-all duration-700 hover:-translate-y-3 hover:border-indigo-500/50 hover:shadow-[0_40px_80px_-20px_rgba(79,70,229,0.3)] group/card">
+              <div className="relative h-full flex flex-col overflow-hidden rounded-[2.5rem] border border-white/10 bg-slate-950/40 backdrop-blur-3xl p-7 transition-colors duration-500 hover:border-indigo-500/50 hover:shadow-[0_40px_80px_-20px_rgba(79,70,229,0.3)] group/card">
                 {/* 🌈 Premium Mesh Gradient Background */}
                 <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-indigo-500/10 blur-[100px] group-hover/card:bg-indigo-500/20 transition-all duration-700" />
                 <div className="absolute -left-24 -bottom-24 h-64 w-64 rounded-full bg-emerald-500/5 blur-[100px] group-hover/card:bg-emerald-500/10 transition-all duration-700" />
@@ -69,19 +70,19 @@ export const UserListView = ({
                     <div className="relative flex-shrink-0 group/avatar">
                       {/* Rotating Gradient Border */}
                       <div className="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-emerald-400 opacity-40 group-hover/avatar:opacity-100 group-hover/avatar:rotate-180 transition-all duration-1000 blur-sm" />
-                      <div className="relative h-16 w-16 rounded-2xl bg-slate-950 p-[2px] shadow-2xl">
+                      <div className="relative h-16 w-16 rounded-2xl bg-slate-950 p-[2px] shadow-2xl overflow-hidden">
                         <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-slate-900 font-black text-2xl text-white uppercase tracking-tighter overflow-hidden">
                           {user.profilePhoto ? (
                             <img src={user.profilePhoto} alt={user.name} className="h-full w-full object-cover" />
                           ) : (
-                            user.name.charAt(0)
+                            user?.name?.charAt(0)
                           )}
                         </div>
                       </div>
                       <div className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-[3px] border-slate-950 ${user.is_active !== false ? 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.6)]' : 'bg-slate-500'}`} />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="truncate text-xl font-black tracking-tight text-white uppercase group-hover/card:text-indigo-300 transition-colors">
+                      <h3 className="truncate text-md font-black tracking-tight text-white uppercase group-hover/card:text-indigo-300 transition-colors">
                         {user.name}
                       </h3>
                       <div className="inline-flex items-center gap-2 mt-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
@@ -92,10 +93,10 @@ export const UserListView = ({
                       </div>
                     </div>
                   </div>
-                  
+
                   <button
                     onClick={() => onOpenDocs(user)}
-                    className="p-3 bg-white/5 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-300 rounded-2xl transition-all duration-300 border border-white/10 shadow-xl group/doc"
+                    className="p-3 bg-white/5 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-300 rounded-2xl transition-all duration-300 border border-white/10 shadow-xl group/doc transform-gpu"
                     title="Document Vault"
                   >
                     <FileText size={20} className="group-hover/doc:scale-110 transition-transform" />
@@ -130,35 +131,35 @@ export const UserListView = ({
                 <div className="pt-6 border-t border-white/10 grid grid-cols-5 gap-2">
                   <button
                     onClick={() => onEdit(user)}
-                    className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl bg-white/5 hover:bg-indigo-500/20 text-indigo-400 border border-white/5 hover:border-indigo-500/30 transition-all duration-300 group/btn"
+                    className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl bg-white/5 hover:bg-indigo-500/20 text-indigo-400 border border-white/5 hover:border-indigo-500/30 transition-all duration-300 group/btn transform-gpu"
                     title="Edit Profile"
                   >
-                    <Edit2 size={16} className="group-hover/btn:scale-110 transition-transform" />
+                    <Edit2 size={16} className="group-hover/btn:scale-110 transition-transform transform-gpu" />
                     <span className="text-[8px] font-black uppercase tracking-tighter opacity-60 group-hover/btn:opacity-100">Edit</span>
                   </button>
 
                   <button
                     onClick={() => onOpenAttendance(user)}
-                    className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-white/5 hover:border-emerald-500/30 transition-all duration-300 group/btn"
+                    className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl bg-white/5 hover:bg-emerald-500/20 text-emerald-300 border border-white/5 hover:border-emerald-500/30 transition-all duration-300 group/btn transform-gpu"
                     title="Record Attendance"
                   >
-                    <Calendar size={16} className="group-hover/btn:scale-110 transition-transform" />
+                    <Calendar size={16} className="group-hover/btn:scale-110 transition-transform transform-gpu" />
                     <span className="text-[8px] font-black uppercase tracking-tighter opacity-60 group-hover/btn:opacity-100">Log</span>
                   </button>
 
                   <button
                     onClick={() => onOpenSubscription(user)}
-                    className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl bg-white/5 hover:bg-purple-500/20 text-purple-400 border border-white/5 hover:border-purple-500/30 transition-all duration-300 group/btn"
+                    className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl bg-white/5 hover:bg-purple-500/20 text-purple-400 border border-white/5 hover:border-purple-500/30 transition-all duration-300 group/btn transform-gpu"
                     title="Manage Subscriptions"
                   >
-                    <CreditCard size={16} className="group-hover/btn:scale-110 transition-transform" />
+                    <CreditCard size={16} className="group-hover/btn:scale-110 transition-transform transform-gpu" />
                     <span className="text-[8px] font-black uppercase tracking-tighter opacity-60 group-hover/btn:opacity-100">Plans</span>
                   </button>
 
                   <button
                     disabled={statusUpdating && loadingStatusId === user.id}
                     onClick={() => onToggleStatus(user.id, user.is_active !== false)}
-                    className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl border transition-all duration-300 group/btn ${user.is_active !== false
+                    className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl border transition-all duration-300 group/btn transform-gpu ${user.is_active !== false
                       ? "bg-white/5 text-amber-400 border-white/5 hover:bg-amber-500/20 hover:border-amber-500/30"
                       : "bg-white/5 text-slate-500 border-white/5 hover:bg-slate-500/20"
                       } ${statusUpdating && loadingStatusId === user.id ? "opacity-50 cursor-wait" : ""}`}
@@ -168,7 +169,7 @@ export const UserListView = ({
                       <Loader2 size={16} className="animate-spin" />
                     ) : (
                       <>
-                        {user.is_active !== false ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+                        {user.is_active !== false ? <ToggleRight size={16} className="transform-gpu" /> : <ToggleLeft size={16} className="transform-gpu" />}
                         <span className="text-[8px] font-black uppercase tracking-tighter opacity-60 group-hover/btn:opacity-100">State</span>
                       </>
                     )}
@@ -177,14 +178,14 @@ export const UserListView = ({
                   <button
                     disabled={deletingRecord && loadingDeleteId === user.id}
                     onClick={() => onDelete(user.id)}
-                    className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl bg-white/5 hover:bg-red-500/20 text-red-500 border border-white/5 hover:border-red-500/30 transition-all duration-300 group/btn ${deletingRecord && loadingDeleteId === user.id ? "opacity-50 cursor-wait" : ""}`}
+                    className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl bg-white/5 hover:bg-red-500/20 text-red-500 border border-white/5 hover:border-red-500/30 transition-all duration-300 group/btn transform-gpu ${deletingRecord && loadingDeleteId === user.id ? "opacity-50 cursor-wait" : ""}`}
                     title="Delete Permanently"
                   >
                     {deletingRecord && loadingDeleteId === user.id ? (
                       <Loader2 size={16} className="animate-spin" />
                     ) : (
                       <>
-                        <Trash2 size={16} className="group-hover/btn:scale-110 transition-transform" />
+                        <Trash2 size={16} className="group-hover/btn:scale-110 transition-transform transform-gpu" />
                         <span className="text-[8px] font-black uppercase tracking-tighter opacity-60 group-hover/btn:opacity-100">Drop</span>
                       </>
                     )}
