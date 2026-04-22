@@ -23,6 +23,8 @@ import LanguageSwitcher from "../components/ui/LanguageSwitcher";
 import { useNotificationStore } from "../store/notificationStore";
 import { NotificationModal } from "../components/ui/NotificationModal";
 import { useGymStore } from "../store/gymStore";
+import { api } from "../utils/httputils";
+import { API_ENDPOINTS } from "../utils/url";
 
 // Custom hook to detect system theme preference
 function useSystemTheme() {
@@ -500,7 +502,7 @@ export function Sidebar({
 }
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { role, name: authName } = useAuthStore();
+  const { role, name: authName, id: userId, setUserData } = useAuthStore();
   const systemTheme = useSystemTheme();
   const { dashboardColorTheme: colorTheme, setDashboardColorTheme: setColorTheme } = useGymStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -513,6 +515,20 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const { logout } = useAuthStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (userId) {
+        try {
+          const res = await api.get(API_ENDPOINTS.USER.DETAIL(userId));
+          if (res?.data) setUserData(res.data);
+        } catch (err) {
+          console.error("Failed to sync user data", err);
+        }
+      }
+    };
+    fetchUserData();
+  }, [userId]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window?.innerWidth < 1024);

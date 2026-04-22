@@ -1,14 +1,17 @@
 import { useState } from "react";
-import { GlassCard, SectionTitle, GlowButton } from "../ui/primitives";
+import { GlassCard, GlowButton } from "../ui/primitives";
 import { Lock, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { toast } from "../../store/toastStore";
 import { motion } from "framer-motion";
+import { useMutation } from "../../hooks/useApi";
+import { API_ENDPOINTS } from "../../utils/url";
+import { useAuthStore } from "../../store/authStore";
 
 export function ChangePassword() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const userId = useAuthStore(s => s.id);
 
   const [formData, setFormData] = useState({
     currentPassword: "",
@@ -16,8 +19,19 @@ export function ChangePassword() {
     confirmPassword: "",
   });
 
+  const { mutate: resetPassword, loading } = useMutation("put", {
+    onSuccess: () => {
+      toast.success("Security Credentials Updated Successfully!");
+      setFormData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    }
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!userId) {
+      toast.error("User identity not verified. Please re-login.");
+      return;
+    }
     if (formData.newPassword !== formData.confirmPassword) {
       toast.error("New passwords do not match!");
       return;
@@ -27,17 +41,10 @@ export function ChangePassword() {
       return;
     }
 
-    setLoading(true);
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      toast.success("Security Credentials Updated Successfully!");
-      setFormData({ currentPassword: "", newPassword: "", confirmPassword: "" });
-    } catch (error) {
-      toast.error("Failed to update password. Please verify current credentials.");
-    } finally {
-      setLoading(false);
-    }
+    resetPassword(API_ENDPOINTS.USER.RESET_PASSWORD(userId), {
+      old_password: formData.currentPassword,
+      new_password: formData.newPassword
+    });
   };
 
   return (

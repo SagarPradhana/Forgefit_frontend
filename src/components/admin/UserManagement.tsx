@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useGet, useMutation } from "../../hooks/useApi";
 import { API_ENDPOINTS } from "../../utils/url";
 import { toast } from "../../store/toastStore";
+import { api } from "../../utils/httputils";
 
 // Sub-components
 import { UserModal } from "./users/UserModal";
@@ -13,6 +14,7 @@ import { DocumentModal } from "./users/DocumentModal";
 import { AttendanceModal } from "./users/AttendanceModal";
 import { DeleteUserModal } from "./users/DeleteUserModal";
 import { SubscriptionModal } from "./users/SubscriptionModal";
+import { PasswordResetModal } from "./users/PasswordResetModal";
 
 // Types
 import type { ViewType, ModalStep, UserFormData } from "./users/types";
@@ -43,6 +45,10 @@ export function UserManagement() {
   // Subscription Modal State
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [selectedUserForSubscription, setSelectedUserForSubscription] = useState<any>(null);
+
+  // Password Reset Modal State
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [selectedUserForReset, setSelectedUserForReset] = useState<any>(null);
 
   // Pagination & Search State
   const [page, setPage] = useState(1);
@@ -80,7 +86,7 @@ export function UserManagement() {
   const { data: plansData } = useGet(API_ENDPOINTS.ADMIN.PLANS);
   const plans = plansData?.data || [];
 
-  const { data: trainersData } = useGet(`${API_ENDPOINTS.ADMIN.USERS}?role=trainer`);
+  const { data: trainersData } = useGet(API_ENDPOINTS.ADMIN.TRAINER_LIST);
   const trainers = trainersData?.data || [];
 
   // --- Mutations ---
@@ -145,7 +151,7 @@ export function UserManagement() {
       language: "en",
       theme: "dark",
       fitness_goal: "fitness",
-      medical_condition: "",
+      medical_conditions: "",
       injuries: "",
       allergies: "",
       workout_time: "morning",
@@ -203,7 +209,7 @@ export function UserManagement() {
         language: "en",
         theme: "dark",
         fitness_goal: "fitness",
-        medical_condition: "",
+        medical_conditions: "",
         injuries: "",
         allergies: "",
         workout_time: "morning",
@@ -238,7 +244,7 @@ export function UserManagement() {
         language: user.metadata?.language || "en",
         theme: user.metadata?.theme || "dark",
         fitness_goal: user.metadata?.fitness_goal || "fitness",
-        medical_condition: user.metadata?.medical_condition || "",
+        medical_conditions: user.metadata?.medical_conditions || "",
         injuries: user.metadata?.injuries || "",
         allergies: user.metadata?.allergies || "",
         workout_time: user.metadata?.workout_time || "morning",
@@ -289,7 +295,7 @@ export function UserManagement() {
   const handleSaveUser = () => {
     // API Payload directly matches UserFormData interfaces now
     const { profilePhoto, ...payload } = formData;
-    
+
     if (editingUserId) editUser(API_ENDPOINTS.ADMIN.USER_EDIT(editingUserId), payload);
     else createUser(API_ENDPOINTS.ADMIN.USER_CREATE, payload);
   };
@@ -303,6 +309,17 @@ export function UserManagement() {
     if (!selectedUserForDocs) return;
     const url = `${API_ENDPOINTS.ADMIN.USER_DOC_DELETE(selectedUserForDocs.id)}?doc_type=${docType}&doc_full_url=${encodeURIComponent(docUrl)}`;
     deleteDocument(url);
+  };
+
+  const handleDownloadIDCard = async (user: any) => {
+    try {
+      const filename = `${user.name.replace(/\s+/g, "_")}_ID_Card.pdf`;
+      toast.info(`Generating ID Card for ${user.name}...`);
+      await api.download(API_ENDPOINTS.USER.DOWNLOAD_IDCARD(user.id), filename);
+      toast.success("ID Card downloaded successfully");
+    } catch (error) {
+      toast.error("Failed to download ID card");
+    }
   };
 
   const handleDeleteUser = (userId: string) => {
@@ -359,10 +376,10 @@ export function UserManagement() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
             <input
-              id="admin-user-search-input"
-              name="admin-user-search"
+              id="admin-master-user-search-query-field"
+              name="admin-master-user-search-query-field"
               type="text"
-              autoComplete="off"
+              autoComplete="new-password"
               placeholder="Search by name, email, or phone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -399,6 +416,8 @@ export function UserManagement() {
         onOpenDocs={(user) => { setSelectedUserForDocs(user); setDocModalOpen(true); }}
         onOpenAttendance={(user) => { setSelectedUserForAttendance(user); setAttendanceModalOpen(true); }}
         onOpenSubscription={(user) => { setSelectedUserForSubscription(user); setSubscriptionModalOpen(true); }}
+        onResetPassword={(user) => { setSelectedUserForReset(user); setResetModalOpen(true); }}
+        onDownloadIDCard={handleDownloadIDCard}
         lastUserElementRef={lastUserElementRef}
       />
 
@@ -450,6 +469,13 @@ export function UserManagement() {
         isOpen={subscriptionModalOpen}
         onClose={() => setSubscriptionModalOpen(false)}
         selectedUser={selectedUserForSubscription}
+      />
+
+      <PasswordResetModal
+        isOpen={resetModalOpen}
+        onClose={() => setResetModalOpen(false)}
+        userId={selectedUserForReset?.id}
+        userName={selectedUserForReset?.name}
       />
     </GlassCard>
   );

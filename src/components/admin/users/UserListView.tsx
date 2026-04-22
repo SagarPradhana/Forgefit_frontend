@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Grid, List as ListIcon, Edit2, Calendar, ToggleRight, ToggleLeft, Trash2, FileText, Mail, Phone, Users, Loader2, ChevronLeft, ChevronRight, CreditCard } from "lucide-react";
+import { Edit2, Calendar, ToggleRight, ToggleLeft, Trash2, FileText, Mail, Phone, Users, Loader2, ChevronLeft, ChevronRight, CreditCard, Key, Contact } from "lucide-react";
 import type { ViewType } from "./types";
 
 interface UserListViewProps {
@@ -19,6 +19,8 @@ interface UserListViewProps {
   onOpenDocs: (user: any) => void;
   onOpenAttendance: (user: any) => void;
   onOpenSubscription: (user: any) => void;
+  onResetPassword: (user: any) => void;
+  onDownloadIDCard: (user: any) => void;
   lastUserElementRef: (node: HTMLDivElement) => void;
 }
 
@@ -39,6 +41,8 @@ export const UserListView = ({
   onOpenDocs,
   onOpenAttendance,
   onOpenSubscription,
+  onResetPassword,
+  onDownloadIDCard,
   lastUserElementRef,
 }: UserListViewProps) => {
   if (viewType === "grid") {
@@ -58,14 +62,14 @@ export const UserListView = ({
               <div className="relative h-full flex flex-col overflow-hidden rounded-[2.5rem] border border-white/10 bg-slate-900/60 backdrop-blur-3xl p-6 transition-all duration-300 hover:border-indigo-500/50 hover:bg-slate-900/80">
                 {/* Visual Identity */}
                 <div className="flex items-center gap-4 mb-6">
-                    <div className="relative h-14 w-14 rounded-2xl bg-slate-800 border-2 border-white/10 overflow-hidden flex items-center justify-center">
-                      {(user.profile_image_path || user.metadata?.profile_image_path) ? (
-                        <img src={user.profile_image_path || user.metadata.profile_image_path} className="h-full w-full object-cover" alt="" />
-                      ) : (
-                        <span className="text-xl font-black text-slate-500 uppercase">{user.name?.charAt(0)}</span>
-                      )}
-                      <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-900 ${user.is_active !== false ? 'bg-emerald-500' : 'bg-slate-500'}`} />
-                    </div>
+                  <div className="relative h-14 w-14 rounded-2xl bg-slate-800 border-2 border-white/10 overflow-hidden flex items-center justify-center">
+                    {(user.profile_image_path || user.metadata?.profile_image_path) ? (
+                      <img src={user.profile_image_path || user.metadata.profile_image_path} className="h-full w-full object-cover" alt="" />
+                    ) : (
+                      <span className="text-xl font-black text-slate-500 uppercase">{user.name?.charAt(0)}</span>
+                    )}
+                    <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-900 ${user.is_active !== false ? 'bg-emerald-500' : 'bg-slate-500'}`} />
+                  </div>
                   <div className="min-w-0">
                     <h3 className="truncate text-sm font-black text-white uppercase tracking-tight">{user.name}</h3>
                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{user.role}</p>
@@ -138,6 +142,15 @@ export const UserListView = ({
                   </button>
 
                   <button
+                    onClick={() => onDownloadIDCard(user)}
+                    className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-white/5 hover:border-emerald-500/30 transition-all group"
+                    title="Generate & Download ID Card"
+                  >
+                    <Contact size={16} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Identity</span>
+                  </button>
+
+                  <button
                     disabled={deletingRecord && loadingDeleteId === user.id}
                     onClick={() => onDelete(user.id)}
                     className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-red-500/20 text-red-500 border border-white/5 hover:border-red-500/30 transition-all group"
@@ -151,6 +164,15 @@ export const UserListView = ({
                         <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Drop</span>
                       </>
                     )}
+                  </button>
+
+                  <button
+                    onClick={() => onResetPassword(user)}
+                    className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-slate-600/20 text-slate-400 border border-white/5 hover:border-slate-500/30 transition-all group"
+                    title="Security Override"
+                  >
+                    <Key size={16} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Reset</span>
                   </button>
                 </div>
               </div>
@@ -172,105 +194,186 @@ export const UserListView = ({
   }
 
   return (
-    <div className="mb-6">
+    <div className="mb-8">
       {users.length > 0 ? (
-        <div className="overflow-x-auto rounded-xl border border-white/10 bg-white/5">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left py-4 px-4 text-slate-300">Name</th>
-                <th className="text-left py-4 px-4 text-slate-300">Email</th>
-                <th className="text-left py-4 px-4 text-slate-300">Mobile</th>
-                <th className="text-left py-4 px-4 text-slate-300">Role</th>
-                <th className="text-center py-4 px-4 text-slate-300">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id} className="border-b border-white/5 hover:bg-white/5 transition">
-                  <td className="py-4 px-4 text-white font-medium">{user.name}</td>
-                  <td className="py-4 px-4 text-slate-300">{user.email}</td>
-                  <td className="py-4 px-4 text-slate-300">{user.mobile || user.phone}</td>
-                  <td className="py-4 px-4">
-                    <span className="capitalize bg-indigo-500/20 text-indigo-300 px-3 py-1 rounded-full text-xs">
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <div className="flex justify-center gap-3">
-                      <button
-                        onClick={() => onEdit(user)}
-                        className="text-indigo-400 hover:text-indigo-300 transition-transform hover:scale-110"
-                        title="Edit"
-                      >
-                        <Edit2 size={18} />
-                      </button>
-                      <button
-                        onClick={() => onOpenAttendance(user)}
-                        className="text-emerald-400 hover:text-emerald-300 transition-transform hover:scale-110"
-                        title="Attendance"
-                      >
-                        <Calendar size={18} />
-                      </button>
-                      <button
-                        onClick={() => onOpenSubscription(user)}
-                        className="text-indigo-400 hover:text-indigo-300 transition-transform hover:scale-110"
-                        title="Subscription"
-                      >
-                        <CreditCard size={18} />
-                      </button>
-                      <button
-                        disabled={statusUpdating && loadingStatusId === user.id}
-                        onClick={() => onToggleStatus(user.id, user.is_active !== false)}
-                        className={`${user.is_active !== false ? "text-amber-400" : "text-slate-500"} hover:scale-110 transition-transform ${statusUpdating && loadingStatusId === user.id ? "opacity-50" : ""}`}
-                        title={user.is_active !== false ? "Deactivate" : "Activate"}
-                      >
-                        {statusUpdating && loadingStatusId === user.id ? <Loader2 size={16} className="animate-spin" /> : (user.is_active !== false ? <ToggleRight size={20} /> : <ToggleLeft size={20} />)}
-                      </button>
-                      <button
-                        onClick={() => onOpenDocs(user)}
-                        className="text-slate-400 hover:text-indigo-400 transition-transform hover:scale-110"
-                        title="Documents"
-                      >
-                        <FileText size={18} />
-                      </button>
-                      <button
-                        disabled={deletingRecord && loadingDeleteId === user.id}
-                        onClick={() => onDelete(user.id)}
-                        className={`text-red-400 hover:text-red-300 transition-transform hover:scale-110 ${deletingRecord && loadingDeleteId === user.id ? "opacity-50" : ""}`}
-                        title="Delete"
-                      >
-                        {deletingRecord && loadingDeleteId === user.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={18} />}
-                      </button>
-                    </div>
-                  </td>
+        <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-slate-900/60 backdrop-blur-3xl shadow-2xl">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-sm border-separate border-spacing-0">
+              <thead>
+                <tr className="bg-white/10 border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
+                  <th className="text-left py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">Member Identity</th>
+                  <th className="text-left py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">Contact Matrix</th>
+                  <th className="text-center py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">Auth Status</th>
+                  <th className="text-right py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">Operations</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-white/10 bg-gradient-to-b from-transparent to-white/[0.02]">
+                {users.map((user, index) => (
+                  <motion.tr
+                    key={user.id || index}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.03 }}
+                    className="group hover:bg-white/[0.04] transition-all duration-300"
+                  >
+                    <td className="py-5 px-8">
+                      <div className="flex items-center gap-5">
+                        <div className="relative h-14 w-14 rounded-2xl bg-slate-800 border-2 border-white/15 overflow-hidden flex items-center justify-center shrink-0 shadow-2xl group-hover:border-indigo-500/50 transition-all duration-500">
+                          {(user.profile_image_path || user.metadata?.profile_image_path) ? (
+                            <img src={user.profile_image_path || user.metadata.profile_image_path} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
+                          ) : (
+                            <span className="text-lg font-black text-slate-500 group-hover:text-indigo-400 transition-colors">{user.name?.charAt(0)}</span>
+                          )}
+                          <div className={`absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-slate-900 shadow-lg ${user.is_active !== false ? 'bg-emerald-500' : 'bg-slate-500'} animate-pulse`} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-black text-white text-base uppercase tracking-tight truncate leading-tight mb-1 group-hover:text-indigo-200 transition-colors">{user.name}</p>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded-md bg-white/5 text-[9px] text-slate-500 font-bold uppercase tracking-widest border border-white/5 group-hover:text-slate-300 transition-colors">ID: {user.id?.slice(0, 8)}</span>
+                            <span className="text-[9px] font-black text-indigo-400/80 uppercase tracking-tighter italic">{user.role}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-5 px-8">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 text-slate-400 group-hover:text-slate-200 transition-colors">
+                          <div className="h-6 w-6 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
+                            <Mail size={12} className="text-indigo-400" />
+                          </div>
+                          <span className="text-xs font-medium truncate max-w-[200px]">{user.email}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-slate-400 group-hover:text-slate-200 transition-colors">
+                          <div className="h-6 w-6 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0">
+                            <Phone size={12} className="text-orange-400" />
+                          </div>
+                          <span className="text-xs font-bold tracking-tight">{user.mobile || user.phone || 'NO DATA'}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-5 px-8 text-center">
+                      <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] border transition-all duration-300 shadow-lg ${user.is_active !== false ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-700/20 text-slate-500 border-white/5'}`}>
+                        <div className={`h-1.5 w-1.5 rounded-full ${user.is_active !== false ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-slate-500'}`} />
+                        {user.is_active !== false ? 'Verified Active' : 'System Suspended'}
+                      </span>
+                    </td>
+                    <td className="py-5 px-8 text-right">
+                      <div className="flex items-center justify-end gap-2 group-hover:scale-105 transition-transform origin-right">
+                        <button
+                          onClick={() => onEdit(user)}
+                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-indigo-500 text-indigo-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-indigo-500/40 group/btn"
+                          title="Edit Operational Data"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => onOpenSubscription(user)}
+                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-purple-500 text-purple-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-purple-500/40"
+                          title="Membership Protocol"
+                        >
+                          <CreditCard size={16} />
+                        </button>
+                        <button
+                          onClick={() => onOpenAttendance(user)}
+                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-emerald-500 text-emerald-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-emerald-500/40"
+                          title="Registry Log"
+                        >
+                          <Calendar size={16} />
+                        </button>
+                        <button
+                          onClick={() => onOpenDocs(user)}
+                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-amber-500 text-amber-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-amber-500/40"
+                          title="Identity Vault"
+                        >
+                          <FileText size={16} />
+                        </button>
+                        <button
+                          onClick={() => onDownloadIDCard(user)}
+                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-emerald-500 text-emerald-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-emerald-500/40"
+                          title="Download ID Card Protocol"
+                        >
+                          <Contact size={16} />
+                        </button>
+                        <button
+                          onClick={() => onResetPassword(user)}
+                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-slate-600 text-slate-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-slate-500/40"
+                          title="Reset Security Protocol"
+                        >
+                          <Key size={16} />
+                        </button>
+                        <button
+                          disabled={statusUpdating && loadingStatusId === user.id}
+                          onClick={() => onToggleStatus(user.id, user.is_active !== false)}
+                          className={`h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] border border-white/5 transition-all shadow-xl ${user.is_active !== false ? 'text-amber-500 hover:bg-amber-500 hover:text-white shadow-amber-500/20' : 'text-slate-500 hover:bg-slate-500 hover:text-white'}`}
+                        >
+                          {statusUpdating && loadingStatusId === user.id ? <Loader2 size={16} className="animate-spin" /> : (user.is_active !== false ? <ToggleRight size={20} /> : <ToggleLeft size={20} />)}
+                        </button>
+                        <button
+                          disabled={deletingRecord && loadingDeleteId === user.id}
+                          onClick={() => onDelete(user.id)}
+                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-red-500 text-red-500 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-red-500/40"
+                          title="Terminate Access"
+                        >
+                          {deletingRecord && loadingDeleteId === user.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-          <div className="flex items-center justify-between p-4 border-t border-white/10">
-            <p className="text-sm text-slate-400">Page {page}</p>
-            <div className="flex gap-2">
-              <button
+          {/* ULTRA VISIBLE PAGINATION HUB */}
+          <div className="flex items-center justify-between p-8 bg-black/40 border-t border-white/10 backdrop-blur-2xl">
+            <div className="flex items-center gap-4">
+              <div className="px-4 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-3">
+                <div className="h-2 w-2 rounded-full bg-indigo-500 animate-ping" />
+                <p className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.2em]">Live Registry • Page {page}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <motion.button
+                whileHover={page !== 1 ? { scale: 1.05, x: -5 } : {}}
+                whileTap={page !== 1 ? { scale: 0.95 } : {}}
                 disabled={page === 1}
                 onClick={() => onPageChange(page - 1)}
-                className="p-2 rounded bg-white/10 disabled:opacity-50"
+                className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white/10 hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-[10px] border border-white/10 hover:border-indigo-400 transition-all shadow-2xl disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:bg-white/10"
               >
-                <ChevronLeft size={20} />
-              </button>
-              <button
+                <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                Previous Vision
+              </motion.button>
+
+              <div className="h-10 w-[1px] bg-white/10 mx-2" />
+
+              <motion.button
+                whileHover={hasMore ? { scale: 1.05, x: 5 } : {}}
+                whileTap={hasMore ? { scale: 0.95 } : {}}
                 disabled={!hasMore}
                 onClick={() => onPageChange(page + 1)}
-                className="p-2 rounded bg-white/10 disabled:opacity-50"
+                className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-widest text-[10px] border border-indigo-400 transition-all shadow-xl shadow-indigo-500/20 disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:bg-indigo-500"
               >
-                <ChevronRight size={20} />
-              </button>
+                Next Evolution
+                <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              </motion.button>
             </div>
           </div>
         </div>
+      ) : usersLoading ? (
+        <div className="text-center py-32 bg-slate-900/60 rounded-[3rem] border border-white/10 backdrop-blur-3xl shadow-2xl">
+          <Loader2 className="animate-spin text-indigo-500 mx-auto mb-4" size={48} />
+          <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Syncing Registry...</h3>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-2">Accessing central database signatures</p>
+        </div>
       ) : (
-        <div className="text-center py-12 text-slate-400">No users found</div>
+        <div className="text-center py-32 bg-slate-900/60 rounded-[3rem] border border-white/10 backdrop-blur-3xl shadow-2xl">
+          <div className="h-24 w-24 rounded-full bg-white/5 border border-white/5 flex items-center justify-center mx-auto mb-8 shadow-inner">
+            <Users size={48} className="text-slate-700" />
+          </div>
+          <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-3">Void Detected in Registry</h3>
+          <p className="text-sm text-slate-500 font-bold uppercase tracking-widest max-w-md mx-auto leading-relaxed">The central repository returned zero authenticated signatures. Adjust sensors or verify credentials.</p>
+        </div>
       )}
     </div>
   );

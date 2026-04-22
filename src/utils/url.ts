@@ -7,9 +7,13 @@ export const API_ENDPOINTS = {
   USER: {
     PROFILE: "/api/user/profile",
     UPDATE: "/api/user/update",
+    DETAIL: (id: string) => `/api/user/${id}`,
+    RESET_PASSWORD: (id: string) => `/api/user/${id}/reset-password`,
+    DOWNLOAD_IDCARD: (id: string) => `/api/user/${id}/download-idcard`,
   },
   ADMIN: {
     USERS: "/api/admin/user_roles/users",
+    TRAINER_LIST: "/api/admin/user_roles/trainer_list",
     USER_CREATE: "/api/admin/user_roles/users/create",
     USER_EDIT: (id: string) => `/api/admin/user_roles/users/${id}/edit`,
     USER_UPLOAD: (id: string) => `/api/admin/user_roles/users/${id}/upload_file`,

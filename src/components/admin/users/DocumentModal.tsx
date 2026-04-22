@@ -1,4 +1,4 @@
-import { UserCheck, FileText, Upload, Trash2, Loader2, HardDrive, File, Plus } from "lucide-react";
+import { UserCheck, FileText, Upload, Trash2, Loader2, HardDrive, Plus } from "lucide-react";
 import { Modal, CommonButton } from "../../ui/primitives";
 import { toast } from "../../../store/toastStore";
 import { useMutation } from "../../../hooks/useApi";
@@ -26,7 +26,7 @@ export const DocumentModal = ({
 }: DocumentModalProps) => {
   const [cacheBuster, setCacheBuster] = useState(Date.now());
 
-  const { mutate: upload, loading: uploading } = useMutation("upload", {
+  const { mutate: upload } = useMutation("upload", {
     onSuccess: () => {
       setDocUploading(null);
       setCacheBuster(Date.now());
@@ -108,7 +108,7 @@ export const DocumentModal = ({
               <h4 className="font-bold text-white uppercase text-sm mb-1 tracking-tight">Identity Proof</h4>
               <p className="text-[10px] text-slate-500 uppercase leading-none">Government ID, Passport or DL</p>
             </div>
-            
+
             {(selectedUser?.identity_proof_image_path || selectedUser?.metadata?.identity_proof_image_path) ? (
               <div className="mt-2 flex items-center justify-between p-3 rounded-2xl bg-orange-500/5 border border-orange-500/10">
                 <div className="flex items-center gap-2">

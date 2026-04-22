@@ -16,14 +16,19 @@ import {
   Dumbbell,
   AlertCircle,
   XCircle,
-  QrCode
+  QrCode,
+  Download
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { QRCodeSVG } from "qrcode.react";
+import { api } from "../utils/httputils";
+import { API_ENDPOINTS } from "../utils/url";
+import { toast } from "../store/toastStore";
 
 function UserDashboard() {
   const { t } = useTranslation();
   const userName = useAuthStore((s) => s.name);
+  const userId = useAuthStore((s) => s.id);
   const [workoutDone, setWorkoutDone] = useState(false);
   const [showExpiryModal, setShowExpiryModal] = useState(userProfile.daysLeft <= 5);
   const [qrModalOpen, setQrModalOpen] = useState(false);
@@ -62,6 +67,18 @@ function UserDashboard() {
       origin: { y: 0.6 },
       colors: ["#6366f1", "#f97316", "#10b981"]
     });
+  };
+
+  const handleDownloadIDCard = async () => {
+    if (!userId) return;
+    try {
+      const filename = `${userName?.replace(/\s+/g, "_") || "Member"}_ID_Card.pdf`;
+      toast.info("Generating physical ID card...");
+      await api.download(API_ENDPOINTS.USER.DOWNLOAD_IDCARD(userId), filename);
+      toast.success("Download complete");
+    } catch (error) {
+      toast.error("Generation failed. Please contact support.");
+    }
   };
 
   return (
@@ -278,11 +295,19 @@ function UserDashboard() {
             </div>
 
             <GlowButton
-                className="w-full h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest mt-4"
-                onClick={() => setQrModalOpen(false)}
+                className="w-full h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest mt-4 flex items-center justify-center gap-3"
+                onClick={handleDownloadIDCard}
             >
-                Protocol Secure
+                <Download size={18} />
+                Download Physical PDF
             </GlowButton>
+
+            <button 
+              onClick={() => setQrModalOpen(false)}
+              className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors"
+            >
+              Protocol Secure
+            </button>
         </div>
       </Modal>
     </div>

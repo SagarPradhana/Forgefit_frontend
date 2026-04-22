@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useGymStore } from "../../store/gymStore";
-import { expiringUsers, payments } from "../../data/mockData";
 import {
   EmptyState,
   GlassCard,
@@ -21,17 +20,14 @@ import { InquiryCenter } from "../../components/admin/InquiryCenter";
 import { useAuthStore } from "../../store/authStore";
 import { Bell, Users, CheckCircle2 } from "lucide-react";
 import { ChangePassword } from "../../components/admin/ChangePassword";
+import { payments } from "../../data/mockData";
 
 export function AdminPortalPages({ page }: { page: string }) {
   const {
-    offers,
     appConfig,
     publicPageConfig,
     designThemes,
     currentDesignTheme,
-    addOffer,
-    updateOffer,
-    deleteOffer,
     products,
     addProduct,
     updateProduct,
@@ -58,7 +54,6 @@ export function AdminPortalPages({ page }: { page: string }) {
   const [paymentUser, setPaymentUser] = useState("All");
   const [paymentDate, setPaymentDate] = useState("");
   const [editPlan, setEditPlan] = useState<string | null>(null);
-  const [editOffer, setEditOffer] = useState<number | null>(null);
 
   // Settings page state
   const [settingsTab, setSettingsTab] = useState<"app" | "pages" | "design">(
@@ -83,7 +78,6 @@ export function AdminPortalPages({ page }: { page: string }) {
 
   // Modal states
   const [planModalOpen, setPlanModalOpen] = useState(false);
-  const [offerModalOpen, setOfferModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
     type: string;
@@ -97,7 +91,6 @@ export function AdminPortalPages({ page }: { page: string }) {
     price: "",
     duration_in_months: "1",
   });
-  const [offerSearch, setOfferSearch] = useState("");
 
   // Product states
   const [productSearch, setProductSearch] = useState("");
@@ -319,13 +312,19 @@ export function AdminPortalPages({ page }: { page: string }) {
                     duration_in_months: Number(planForm.duration_in_months),
                   };
 
-                  if (editPlan) {
-                    await adminSubscriptionService.updatePlan(editPlan, payload);
-                  } else {
-                    await adminSubscriptionService.createPlan(payload);
+                  try {
+                    if (editPlan) {
+                      await adminSubscriptionService.updatePlan(editPlan, payload);
+                      toast.success("Strategic tier updated successfully");
+                    } else {
+                      await adminSubscriptionService.createPlan(payload);
+                      toast.success("New membership strategy deployed");
+                    }
+                    fetchPlans(1);
+                    setPlanModalOpen(false);
+                  } catch (err) {
+                    toast.error("Strategy modification failed. Verify parameters.");
                   }
-                  fetchPlans(1);
-                  setPlanModalOpen(false);
                 }}
               >
                 Execute
@@ -403,8 +402,13 @@ export function AdminPortalPages({ page }: { page: string }) {
               <GlowButton
                 onClick={async () => {
                   if (deleteTarget && deleteTarget.type === "plan") {
-                    await adminSubscriptionService.deletePlan(deleteTarget.id);
-                    fetchPlans(plansMeta.page_no);
+                    try {
+                      await adminSubscriptionService.deletePlan(deleteTarget.id);
+                      toast.success("Strategy terminated successfully");
+                      fetchPlans(plansMeta.page_no);
+                    } catch (err) {
+                      toast.error("Termination failed. Active dependencies detected.");
+                    }
                   }
                   setDeleteModalOpen(false);
                   setDeleteTarget(null);
@@ -429,73 +433,73 @@ export function AdminPortalPages({ page }: { page: string }) {
 
   if (page === "profile") {
     const user = useAuthStore.getState();
-    
+
     return (
       <div className="space-y-6">
         <GlassCard className="p-10 border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 to-transparent relative overflow-hidden">
-             <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[100px]" />
-             <div className="flex flex-col md:flex-row items-center gap-10 relative z-10">
-                <div className="h-32 w-32 rounded-3xl bg-indigo-500 flex items-center justify-center text-5xl font-black text-white shadow-2xl shadow-indigo-500/40">
-                    {user.name?.[0] || "A"}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[100px]" />
+          <div className="flex flex-col md:flex-row items-center gap-10 relative z-10">
+            <div className="h-32 w-32 rounded-3xl bg-indigo-500 flex items-center justify-center text-5xl font-black text-white shadow-2xl shadow-indigo-500/40">
+              {user.name?.[0] || "A"}
+            </div>
+            <div className="text-center md:text-left space-y-2">
+              <div className="flex items-center gap-3 justify-center md:justify-start">
+                <h2 className="text-4xl font-black text-white uppercase tracking-tighter italic">{user.name}</h2>
+                <span className="px-3 py-1 rounded-lg bg-indigo-500 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20">{user.role}</span>
+              </div>
+              <p className="text-slate-400 font-medium tracking-wide">Strategic System Administrator • ForgeFit HQ</p>
+              <div className="flex flex-wrap gap-4 pt-4 justify-center md:justify-start">
+                <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
+                  <Bell size={14} className="text-indigo-400" />
+                  <span className="text-xs font-black text-white uppercase tracking-widest">12 Pending Inquiries</span>
                 </div>
-                <div className="text-center md:text-left space-y-2">
-                    <div className="flex items-center gap-3 justify-center md:justify-start">
-                        <h2 className="text-4xl font-black text-white uppercase tracking-tighter italic">{user.name}</h2>
-                        <span className="px-3 py-1 rounded-lg bg-indigo-500 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20">{user.role}</span>
-                    </div>
-                    <p className="text-slate-400 font-medium tracking-wide">Strategic System Administrator • ForgeFit HQ</p>
-                    <div className="flex flex-wrap gap-4 pt-4 justify-center md:justify-start">
-                        <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
-                            <Bell size={14} className="text-indigo-400" />
-                            <span className="text-xs font-black text-white uppercase tracking-widest">12 Pending Inquiries</span>
-                        </div>
-                        <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
-                            <Users size={14} className="text-emerald-400" />
-                            <span className="text-xs font-black text-white uppercase tracking-widest">450 Total Members</span>
-                        </div>
-                    </div>
+                <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
+                  <Users size={14} className="text-emerald-400" />
+                  <span className="text-xs font-black text-white uppercase tracking-widest">450 Total Members</span>
                 </div>
-             </div>
+              </div>
+            </div>
+          </div>
         </GlassCard>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <GlassCard className="p-8 space-y-6">
-                <h3 className="text-xl font-black text-white uppercase tracking-wide border-b border-white/10 pb-4">Personal Credentials</h3>
-                <div className="space-y-6">
-                    <div className="grid gap-1">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Full Name</p>
-                        <p className="text-white font-bold tracking-tight">{user.name}</p>
-                    </div>
-                    <div className="grid gap-1">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Digital Mailbox</p>
-                        <p className="text-white font-bold tracking-tight">{user.email || "admin@forgefit.app"}</p>
-                    </div>
-                    <div className="grid gap-1">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Secure Mobile</p>
-                        <p className="text-white font-bold tracking-tight">{user.mobile || "+1 555-ADMIN-X"}</p>
-                    </div>
-                </div>
-            </GlassCard>
+          <GlassCard className="p-8 space-y-6">
+            <h3 className="text-xl font-black text-white uppercase tracking-wide border-b border-white/10 pb-4">Personal Credentials</h3>
+            <div className="space-y-6">
+              <div className="grid gap-1">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Full Name</p>
+                <p className="text-white font-bold tracking-tight">{user.name}</p>
+              </div>
+              <div className="grid gap-1">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Digital Mailbox</p>
+                <p className="text-white font-bold tracking-tight">{user.email || "admin@forgefit.app"}</p>
+              </div>
+              <div className="grid gap-1">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Secure Mobile</p>
+                <p className="text-white font-bold tracking-tight">{user.mobile || "+1 555-ADMIN-X"}</p>
+              </div>
+            </div>
+          </GlassCard>
 
-            <GlassCard className="p-8 space-y-6">
-                <h3 className="text-xl font-black text-white uppercase tracking-wide border-b border-white/10 pb-4">System Privileges</h3>
-                <div className="space-y-4">
-                    {[
-                        "Database Migration Control",
-                        "User Liquidation Authority",
-                        "Strategic Pricing Override",
-                        "Inventory Management Access",
-                        "Security Protocol Execution"
-                    ].map(perm => (
-                        <div key={perm} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-indigo-500/30 transition-all group">
-                            <div className="h-6 w-6 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
-                                <CheckCircle2 size={14} />
-                            </div>
-                            <span className="text-sm font-bold text-slate-300 group-hover:text-white transition-colors">{perm}</span>
-                        </div>
-                    ))}
+          <GlassCard className="p-8 space-y-6">
+            <h3 className="text-xl font-black text-white uppercase tracking-wide border-b border-white/10 pb-4">System Privileges</h3>
+            <div className="space-y-4">
+              {[
+                "Database Migration Control",
+                "User Liquidation Authority",
+                "Strategic Pricing Override",
+                "Inventory Management Access",
+                "Security Protocol Execution"
+              ].map(perm => (
+                <div key={perm} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-indigo-500/30 transition-all group">
+                  <div className="h-6 w-6 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                    <CheckCircle2 size={14} />
+                  </div>
+                  <span className="text-sm font-bold text-slate-300 group-hover:text-white transition-colors">{perm}</span>
                 </div>
-            </GlassCard>
+              ))}
+            </div>
+          </GlassCard>
         </div>
       </div>
     );

@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useToastStore } from "../../store/toastStore";
-import { CheckCircle, AlertCircle, X } from "lucide-react";
+import { CheckCircle, AlertCircle, Info, X } from "lucide-react";
 
 export function ToastContainer() {
   const { toasts, removeToast } = useToastStore();
@@ -17,14 +17,22 @@ export function ToastContainer() {
             className={`pointer-events-auto flex items-center gap-3 min-w-[320px] max-w-md p-4 rounded-xl border shadow-2xl backdrop-blur-md ${
               toast.type === "success"
                 ? "bg-white dark:bg-slate-900 border-emerald-500/50 text-emerald-900 dark:text-emerald-50"
+                : toast.type === "info"
+                ? "bg-white dark:bg-slate-900 border-indigo-500/50 text-indigo-900 dark:text-indigo-50"
                 : "bg-white dark:bg-slate-900 border-red-500/50 text-red-900 dark:text-red-50"
             }`}
           >
             <div className={`p-2 rounded-lg ${
-              toast.type === "success" ? "bg-emerald-500/20" : "bg-red-500/20"
+              toast.type === "success" 
+                ? "bg-emerald-500/20" 
+                : toast.type === "info"
+                ? "bg-indigo-500/20"
+                : "bg-red-500/20"
             }`}>
               {toast.type === "success" ? (
                 <CheckCircle size={20} className="text-emerald-500" />
+              ) : toast.type === "info" ? (
+                <Info size={20} className="text-indigo-500" />
               ) : (
                 <AlertCircle size={20} className="text-red-500" />
               )}

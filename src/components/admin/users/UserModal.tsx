@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { createPortal } from "react-dom";
-import { X, FileText, ChevronLeft, ChevronRight, Loader2, Eye, EyeOff } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Eye, EyeOff } from "lucide-react";
 import type { UserFormData, ModalStep, UserRole } from "./types";
 
 interface UserModalProps {
@@ -31,12 +31,10 @@ export const UserModal = ({
   formData,
   setFormData,
   modalStep,
-  setModalStep,
   editingUserId,
   onSave,
   onNext,
   onBack,
-  roles,
   plans,
   trainers,
   isAnyLoading,
@@ -104,8 +102,10 @@ export const UserModal = ({
               <div>
                 <label className="block text-sm font-semibold text-white mb-2">Username <span className="text-orange-400">*</span></label>
                 <input
-                  name="user_account_username"
+                  id="user_registration_username_field"
+                  name="user_registration_username_field"
                   type="text"
+                  autoComplete="new-password"
                   placeholder="Enter username"
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
@@ -116,8 +116,10 @@ export const UserModal = ({
               <div>
                 <label className="block text-sm font-semibold text-white mb-2">Full Name <span className="text-orange-400">*</span></label>
                 <input
-                  name="user_account_name"
+                  id="user_registration_full_name_field"
+                  name="user_registration_full_name_field"
                   type="text"
+                  autoComplete="new-password"
                   placeholder="Enter full name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -140,8 +142,10 @@ export const UserModal = ({
                 <div>
                   <label className="block text-sm font-semibold text-white mb-2">Email <span className="text-orange-400">*</span></label>
                   <input
-                    name="user_account_email"
+                    id="user_registration_email_field"
+                    name="user_registration_email_field"
                     type="email"
+                    autoComplete="new-password"
                     placeholder="Email address"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -229,7 +233,7 @@ export const UserModal = ({
                   <input
                     type="number"
                     value={formData.metadata.height}
-                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, height: Number(e.target.value) }})}
+                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, height: Number(e.target.value) } })}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-indigo-400"
                   />
                 </div>
@@ -238,7 +242,7 @@ export const UserModal = ({
                   <input
                     type="number"
                     value={formData.metadata.weight}
-                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, weight: Number(e.target.value) }})}
+                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, weight: Number(e.target.value) } })}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-indigo-400"
                   />
                 </div>
@@ -247,7 +251,7 @@ export const UserModal = ({
                   <input
                     type="date"
                     value={new Date(formData.metadata.dob * 1000).toISOString().split('T')[0]}
-                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, dob: Math.floor(new Date(e.target.value).getTime() / 1000) }})}
+                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, dob: Math.floor(new Date(e.target.value).getTime() / 1000) } })}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-indigo-400"
                   />
                 </div>
@@ -258,7 +262,7 @@ export const UserModal = ({
                   <label className="block text-xs font-semibold text-white mb-1">Gender</label>
                   <select
                     value={formData.metadata.gender}
-                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, gender: e.target.value }})}
+                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, gender: e.target.value } })}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs"
                   >
                     <option value="male" className="bg-slate-900">Male</option>
@@ -271,7 +275,7 @@ export const UserModal = ({
                   <input
                     type="tel"
                     value={formData.metadata.emergency_contact}
-                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, emergency_contact: e.target.value }})}
+                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, emergency_contact: e.target.value } })}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs"
                   />
                 </div>
@@ -282,7 +286,7 @@ export const UserModal = ({
                   <label className="block text-xs font-semibold text-white mb-1">Fitness Goal</label>
                   <select
                     value={formData.metadata.fitness_goal}
-                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, fitness_goal: e.target.value }})}
+                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, fitness_goal: e.target.value } })}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs"
                   >
                     <option value="fat_loss" className="bg-slate-900">Fat Loss</option>
@@ -294,7 +298,7 @@ export const UserModal = ({
                   <label className="block text-xs font-semibold text-white mb-1">Workout Time</label>
                   <select
                     value={formData.metadata.workout_time}
-                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, workout_time: e.target.value }})}
+                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, workout_time: e.target.value } })}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs"
                   >
                     <option value="morning" className="bg-slate-900">Morning</option>
@@ -307,15 +311,16 @@ export const UserModal = ({
                 <label className="block text-xs font-semibold text-white mb-1">Medical Conditions / Injuries / Allergies</label>
                 <textarea
                   placeholder="Notes..."
-                  value={`${formData.metadata.medical_condition}\n${formData.metadata.injuries}\n${formData.metadata.allergies}`.trim()}
+                  value={`${formData.metadata.medical_conditions}\n${formData.metadata.injuries}\n${formData.metadata.allergies}`.trim()}
                   onChange={(e) => {
-                    const lines = e.target.value.split('\n');
-                    setFormData({ ...formData, metadata: { 
-                      ...formData.metadata, 
-                      medical_condition: lines[0] || "",
-                      injuries: lines[1] || "",
-                      allergies: lines[2] || ""
-                    }});
+                    setFormData({
+                      ...formData, metadata: {
+                        ...formData.metadata,
+                        medical_conditions: e?.target?.value || "",
+                        injuries: e?.target?.value || "",
+                        allergies: e?.target?.value || ""
+                      }
+                    });
                   }}
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs resize-none"
                   rows={3}
@@ -347,15 +352,15 @@ export const UserModal = ({
               {!editingUserId && (
                 <div className="p-5 rounded-2xl bg-indigo-500/5 border border-indigo-500/20 space-y-4">
                   <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">Initial Membership Selection</p>
-                  
+
                   <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Select Plan</label>
                     <select
                       value={formData.subscription_id || ""}
                       onChange={(e) => {
                         const plan = plans.find(p => p.id === e.target.value);
-                        setFormData({ 
-                          ...formData, 
+                        setFormData({
+                          ...formData,
                           subscription_id: e.target.value,
                           duration_in_months: plan?.duration || 1,
                           amount: plan?.price || 0

@@ -22,14 +22,18 @@ function parseJwt(token: string) {
 }
 
 type AuthState = {
+  id: string | null;
   role: Role | null;
   name: string | null;
   email: string | null;
   mobile: string | null;
+  profile_image_path: string | null;
+  metadata: any | null;
   isAuthenticated: boolean;
   token: string | null;
   refreshToken: string | null;
   login: (accessToken: string, refreshToken: string) => void;
+  setUserData: (data: any) => void;
   updateTokens: (token: string, refreshToken: string) => void;
   logout: () => void;
 };
@@ -37,6 +41,7 @@ type AuthState = {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
+      id: null,
       role: null,
       name: null,
       email: null,
@@ -49,6 +54,7 @@ export const useAuthStore = create<AuthState>()(
         if (!userData) return;
 
         set({
+          id: userData.id || userData.sub,
           role: userData.role as Role,
           name: userData.name,
           email: userData.email,
@@ -58,13 +64,25 @@ export const useAuthStore = create<AuthState>()(
           refreshToken: refreshToken,
         });
       },
+      setUserData: (data) => {
+        set({
+          name: data.name,
+          email: data.email,
+          mobile: data.mobile,
+          profile_image_path: data.profile_image_path,
+          metadata: data.metadata,
+        });
+      },
       updateTokens: (token, refreshToken) => set({ token, refreshToken }),
       logout: () =>
         set({
+          id: null,
           role: null,
           name: null,
           email: null,
           mobile: null,
+          profile_image_path: null,
+          metadata: null,
           isAuthenticated: false,
           token: null,
           refreshToken: null,

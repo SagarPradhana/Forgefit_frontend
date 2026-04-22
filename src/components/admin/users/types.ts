@@ -14,7 +14,7 @@ export interface UserMetadata {
   language: string;
   theme: string;
   fitness_goal: string;
-  medical_condition: string;
+  medical_conditions: string;
   injuries: string;
   allergies: string;
   workout_time: string;

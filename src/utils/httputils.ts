@@ -95,4 +95,24 @@ export const api = {
     httpFetch(url, { ...options, method: "PATCH", body: JSON.stringify(body) }),
   upload: (url: string, formData: FormData, options?: RequestOptions) =>
     httpFetch(url, { ...options, method: "POST", body: formData }),
+  download: async (url: string, filename: string) => {
+    const { token } = useAuthStore.getState();
+    const headers = new Headers();
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+
+    const response = await fetch(`${BASE_URL}${url}`, { headers });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw errorData;
+    }
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode?.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+  },
 };
