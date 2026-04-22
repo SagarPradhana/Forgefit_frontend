@@ -14,7 +14,7 @@ interface UserModalProps {
   onSave: () => void;
   onNext: () => void;
   onBack: () => void;
-  roles: any[];
+  roles: string[];
   plans: any[];
   trainers: any[];
   isAnyLoading: boolean;
@@ -35,6 +35,7 @@ export const UserModal = ({
   onSave,
   onNext,
   onBack,
+  roles,
   plans,
   trainers,
   isAnyLoading,
@@ -189,12 +190,13 @@ export const UserModal = ({
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 transition"
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 transition capitalize"
                 >
-                  <option value="user" className="bg-slate-900">User</option>
-                  <option value="admin" className="bg-slate-900">Admin</option>
-                  <option value="trainee" className="bg-slate-900">Trainer</option>
-                  <option value="employee" className="bg-slate-900">Employee</option>
+                  {roles.map((role) => (
+                    <option key={role} value={role} className="bg-slate-900 capitalize">
+                      {role}
+                    </option>
+                  ))}
                 </select>
               </div>
 

@@ -81,7 +81,12 @@ export function UserManagement() {
   );
 
   const { data: rolesData } = useGet(API_ENDPOINTS.ADMIN.ROLES);
-  const roles = rolesData?.data || ["admin", "trainer", "user"];
+  const roles = useMemo<string[]>(() => {
+    if (!rolesData?.data) return ["admin", "trainer", "user"];
+    // Extract unique roles from data
+    const unique = Array.from(new Set(rolesData.data.map((r: any) => r.role))) as string[];
+    return unique.length > 0 ? unique : ["admin", "trainer", "user"];
+  }, [rolesData]);
 
   const { data: plansData } = useGet(API_ENDPOINTS.ADMIN.PLANS);
   const plans = plansData?.data || [];
@@ -293,8 +298,15 @@ export function UserManagement() {
   };
 
   const handleSaveUser = () => {
-    // API Payload directly matches UserFormData interfaces now
-    const { profilePhoto, ...payload } = formData;
+    // API Payload cleanup
+    const { profilePhoto, ...rawPayload } = formData;
+    
+    // Explicitly nullify empty UUID strings to prevent backend parsing errors
+    const payload = {
+      ...rawPayload,
+      trainer_id: rawPayload.trainer_id?.trim() === "" ? null : rawPayload.trainer_id,
+      subscription_id: rawPayload.subscription_id?.trim() === "" ? null : rawPayload.subscription_id,
+    };
 
     if (editingUserId) editUser(API_ENDPOINTS.ADMIN.USER_EDIT(editingUserId), payload);
     else createUser(API_ENDPOINTS.ADMIN.USER_CREATE, payload);
