@@ -17,7 +17,8 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser }: Subscriptio
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [joiningDate, setJoiningDate] = useState(new Date().toISOString().split("T")[0]);
   const [amount, setAmount] = useState<number>(0);
-  const [duration, setDuration] = useState<number>(12);
+  const [duration, setDuration] = useState<number>(1);
+  const [endDate, setEndDate] = useState("");
 
   const { data: plansData, loading: plansLoading } = useGet(API_ENDPOINTS.ADMIN.PLANS);
   const plans = plansData?.data || [];
@@ -35,10 +36,20 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser }: Subscriptio
     }
   });
 
+  // Real-time end date calculation
+  useEffect(() => {
+    const start = new Date(joiningDate);
+    if (!isNaN(start.getTime())) {
+      const end = new Date(start.setMonth(start.getMonth() + duration));
+      setEndDate(end.toISOString().split("T")[0]);
+    }
+  }, [joiningDate, duration]);
+
   useEffect(() => {
     if (isOpen) {
       setActiveTab("add");
       setSelectedPlanId("");
+      setJoiningDate(new Date().toISOString().split("T")[0]);
     }
   }, [isOpen]);
 
@@ -63,7 +74,11 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser }: Subscriptio
     if (plan) {
       setSelectedPlanId(planId);
       setAmount(plan.price);
-      setDuration(plan.duration);
+      setDuration(plan.duration || 1);
+    } else {
+      setSelectedPlanId("");
+      setAmount(0);
+      setDuration(1);
     }
   };
 
@@ -81,106 +96,85 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser }: Subscriptio
         animate={{ scale: 1, opacity: 1, y: 0 }}
         className="relative z-[101] w-full max-w-4xl bg-slate-950/95 border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden backdrop-blur-xl"
       >
-        {/* Header */}
         <div className="p-8 border-b border-white/10 flex items-center justify-between bg-white/5">
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 rounded-3xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
               <CreditCard size={28} />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-white uppercase tracking-tight">Subscription Management</h2>
+              <h2 className="text-2xl font-black text-white uppercase tracking-tight">Subscription Hub</h2>
               <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">{selectedUser.name}</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition text-slate-400"
-          >
+          <button onClick={onClose} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition text-slate-400 border border-white/10">
             <X size={20} />
           </button>
         </div>
 
-        {/* Tabs */}
         <div className="flex p-2 bg-white/5 border-b border-white/10 shrink-0">
-          <button
-            onClick={() => setActiveTab("add")}
-            className={`flex-1 py-3 rounded-2xl flex items-center justify-center gap-2 font-black uppercase tracking-widest text-xs transition-all ${activeTab === "add" ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" : "text-slate-400 hover:text-white"}`}
-          >
+          <button onClick={() => setActiveTab("add")} className={`flex-1 py-3 rounded-2xl flex items-center justify-center gap-2 font-black uppercase tracking-widest text-xs transition-all ${activeTab === "add" ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" : "text-slate-400 hover:text-white"}`}>
             <Plus size={16} /> New / Renew
           </button>
-          <button
-            onClick={() => setActiveTab("history")}
-            className={`flex-1 py-3 rounded-2xl flex items-center justify-center gap-2 font-black uppercase tracking-widest text-xs transition-all ${activeTab === "history" ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" : "text-slate-400 hover:text-white"}`}
-          >
-            <History size={16} /> Previous Subscriptions
+          <button onClick={() => setActiveTab("history")} className={`flex-1 py-3 rounded-2xl flex items-center justify-center gap-2 font-black uppercase tracking-widest text-xs transition-all ${activeTab === "history" ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" : "text-slate-400 hover:text-white"}`}>
+            <History size={16} /> History
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-8 overflow-y-auto max-h-[60vh] custom-scrollbar">
           {activeTab === "add" ? (
             <div className="grid lg:grid-cols-2 gap-8">
-              {/* Form Side */}
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">Select Membership Plan</label>
-                  {plansLoading ? (
-                    <div className="h-40 flex items-center justify-center border border-white/10 rounded-2xl bg-white/5">
-                      <Loader2 className="animate-spin text-indigo-400" size={32} />
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-3">
-                      {plans.map((plan: any) => (
-                        <button
-                          key={plan.id}
-                          onClick={() => handlePlanSelect(plan.id)}
-                          className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${selectedPlanId === plan.id ? "bg-indigo-500/20 border-indigo-500" : "bg-white/5 border-white/10 hover:border-white/20"}`}
-                        >
-                          <div className="text-left">
-                            <p className="font-black text-white uppercase tracking-tight">{plan.name}</p>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase">{plan.duration} Months Validity</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-black text-indigo-400 uppercase">₹{plan.price}</p>
-                            {selectedPlanId === plan.id && <CheckCircle2 size={16} className="text-indigo-400 mt-1 ml-auto" />}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Membership Plan</label>
+                  <select 
+                    value={selectedPlanId} 
+                    onChange={(e) => handlePlanSelect(e.target.value)}
+                    className="w-full bg-white/10 border border-white/20 rounded-2xl px-5 py-4 text-white font-bold appearance-none focus:outline-none focus:border-indigo-500 transition"
+                  >
+                    <option value="" className="bg-slate-900">Select a payment plan...</option>
+                    {plans.map((p: any) => (
+                      <option key={p.id} value={p.id} className="bg-slate-900">{p.name} (₹{p.price})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="p-6 rounded-3xl bg-indigo-500/5 border border-indigo-500/10 space-y-4">
+                   <div className="flex items-center justify-between">
+                     <span className="text-xs text-slate-400 font-bold uppercase">Plan Rate</span>
+                     <span className="text-lg font-black text-white">₹{amount}</span>
+                   </div>
+                   <div className="flex items-center justify-between">
+                     <span className="text-xs text-slate-400 font-bold uppercase">Months</span>
+                     <span className="text-sm font-bold text-slate-200">{duration} Months</span>
+                   </div>
+                   <div className="h-px bg-white/5" />
+                   <div className="flex items-center justify-between">
+                     <span className="text-xs text-indigo-400 font-black uppercase">Charge Amount</span>
+                     <input 
+                       type="number" 
+                       value={amount} 
+                       onChange={(e) => setAmount(Number(e.target.value))}
+                       className="w-24 bg-transparent text-right text-indigo-400 font-black text-lg focus:outline-none"
+                     />
+                   </div>
                 </div>
               </div>
 
-              {/* Details Side */}
-              <div className="space-y-6 bg-white/5 p-6 rounded-3xl border border-white/10">
+              <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Joining Date</label>
-                    <input
-                      type="date"
-                      value={joiningDate}
-                      onChange={(e) => setJoiningDate(e.target.value)}
-                      className="w-full bg-slate-900/50 border border-white/10 p-3 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                    />
+                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-2">Activation Date</label>
+                    <input type="date" value={joiningDate} onChange={(e) => setJoiningDate(e.target.value)} className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Duration (Months)</label>
-                    <input
-                      type="number"
-                      value={duration}
-                      onChange={(e) => setDuration(Number(e.target.value))}
-                      className="w-full bg-slate-900/50 border border-white/10 p-3 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
-                    />
+                    <label className="block text-[10px] font-black text-indigo-500/50 uppercase mb-2 text-right">Expiration Date</label>
+                    <p className="p-3 text-right text-indigo-400 font-bold text-sm bg-indigo-500/5 rounded-xl border border-indigo-500/20">{endDate}</p>
                   </div>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Subscription Amount (₹)</label>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(Number(e.target.value))}
-                    className="w-full bg-slate-900/50 border border-white/10 p-3 rounded-xl text-white text-lg font-black focus:outline-none focus:border-indigo-500"
-                  />
+
+                <div className="bg-orange-500/5 border border-orange-500/10 p-4 rounded-2xl flex items-start gap-3">
+                  <Calendar size={16} className="text-orange-400 shrink-0 mt-1" />
+                  <p className="text-[10px] text-slate-400 leading-relaxed uppercase font-medium">Automatic expiration calculated for <span className="text-white font-black">{endDate}</span>. Admin can override price if needed.</p>
                 </div>
 
                 <motion.button
@@ -188,39 +182,41 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser }: Subscriptio
                   whileTap={{ scale: 0.98 }}
                   disabled={subscribing || !selectedPlanId}
                   onClick={handleSubscribe}
-                  className="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white py-4 rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/20 disabled:opacity-50 flex items-center justify-center gap-3"
+                  className="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 py-4 rounded-2xl font-black uppercase text-white shadow-xl shadow-indigo-500/20 disabled:opacity-50 flex items-center justify-center gap-3"
                 >
-                  {subscribing ? <Loader2 className="animate-spin" size={20} /> : <><RefreshCw size={20} /> Update Subscription</>}
+                  {subscribing ? <Loader2 className="animate-spin" size={20} /> : <><RefreshCw size={20} /> Process Membership</>}
                 </motion.button>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
               {historyLoading ? (
-                <div className="py-20 flex justify-center">
-                  <Loader2 className="animate-spin text-indigo-500" size={40} />
-                </div>
+                <div className="py-20 flex justify-center"><Loader2 className="animate-spin text-indigo-500" size={40} /></div>
               ) : history.length > 0 ? (
                 <div className="overflow-hidden rounded-3xl border border-white/10">
                   <table className="w-full text-sm">
                     <thead className="bg-white/5 border-b border-white/10">
                       <tr>
-                        <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Plan Name</th>
-                        <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Start Date</th>
-                        <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Duration</th>
+                        <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Plan</th>
+                        <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Validity</th>
+                        <th className="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Charge</th>
                         <th className="px-6 py-4 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {history.map((sub: any, idx: number) => (
                         <tr key={idx} className="bg-slate-900/20">
-                          <td className="px-6 py-4 font-bold text-white tracking-tight">{sub.plan_name}</td>
-                          <td className="px-6 py-4 text-slate-400 font-mono tracking-tighter">
-                            {new Date(sub.start_date * 1000).toLocaleDateString()}
+                          <td className="px-6 py-4">
+                            <p className="font-bold text-white uppercase tracking-tight">{sub.plan_name}</p>
+                            <p className="text-[9px] text-slate-500 uppercase font-black">{sub.duration} Months</p>
                           </td>
-                          <td className="px-6 py-4 text-slate-400">{sub.duration} Mo</td>
+                          <td className="px-6 py-4">
+                            <p className="text-slate-300 font-mono text-[11px]">{new Date(sub.start_date * 1000).toLocaleDateString()}</p>
+                            <p className="text-[9px] text-indigo-400 font-black uppercase">Active Record</p>
+                          </td>
+                          <td className="px-6 py-4 text-slate-300 font-bold">₹{sub.amount}</td>
                           <td className="px-6 py-4 text-center">
-                            <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">Completed</span>
+                            <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">Active</span>
                           </td>
                         </tr>
                       ))}
@@ -229,11 +225,10 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser }: Subscriptio
                 </div>
               ) : (
                 <div className="py-20 text-center">
-                  <div className="h-20 w-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4">
+                   <div className="h-20 w-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4">
                     <History size={32} className="text-slate-600" />
                   </div>
-                  <h4 className="text-white font-bold">No history available</h4>
-                  <p className="text-slate-500 text-sm">This user hasn't had any previous subscriptions.</p>
+                  <p className="text-slate-500 font-bold uppercase tracking-widest text-sm">No History Records Found</p>
                 </div>
               )}
             </div>

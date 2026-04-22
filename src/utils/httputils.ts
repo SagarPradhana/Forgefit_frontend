@@ -8,14 +8,15 @@ interface RequestOptions extends RequestInit {
   showToast?: boolean;
 }
 
-export async function httpFetch(endpoint: string, options: RequestOptions = {}) {
+export async function httpFetch(endpoint: string | null | undefined, options: RequestOptions = {}) {
+  if (!endpoint) return null;
   const { showToast = true, ...fetchOptions } = options;
   const { token, refreshToken, updateTokens, logout } = useAuthStore.getState();
 
   const isFormData = fetchOptions.body instanceof FormData;
 
   const headers = new Headers(fetchOptions.headers);
-  if (token) {
+  if (token && endpoint !== API_ENDPOINTS.AUTH.LOGIN) {
     headers.set("Authorization", `Bearer ${token}`);
   }
   if (!headers.has("Content-Type") && !isFormData) {

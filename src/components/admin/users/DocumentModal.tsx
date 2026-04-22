@@ -3,6 +3,7 @@ import { Modal, CommonButton } from "../../ui/primitives";
 import { toast } from "../../../store/toastStore";
 import { useMutation } from "../../../hooks/useApi";
 import { API_ENDPOINTS } from "../../../utils/url";
+import { useState } from "react";
 
 interface DocumentModalProps {
   isOpen: boolean;
@@ -23,9 +24,12 @@ export const DocumentModal = ({
   onDeleteDoc,
   onRefresh,
 }: DocumentModalProps) => {
-  const { mutate: upload } = useMutation("upload", {
+  const [cacheBuster, setCacheBuster] = useState(Date.now());
+
+  const { mutate: upload, loading: uploading } = useMutation("upload", {
     onSuccess: () => {
       setDocUploading(null);
+      setCacheBuster(Date.now());
       if (onRefresh) onRefresh();
     },
     onError: () => {
@@ -35,38 +39,23 @@ export const DocumentModal = ({
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fileType: string) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !selectedUser) return;
 
-    // --- Validations ---
-    
-    // 1. ID Proof size limit: 150KB
-    if (fileType === "identity_proof") {
-      const maxSize = 150 * 1024; // 150KB
-      if (file.size > maxSize) {
-        toast.error("ID Proof file size must be less than 150KB");
-        return;
-      }
+    // Size limit: 2MB for general docs, 150KB for ID proofs specially if required by user
+    const maxSize = fileType === "identity_proof" ? 150 * 1024 : 2 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error(`File too large. Maximum allowed is ${fileType === "identity_proof" ? "150KB" : "2MB"}`);
+      return;
     }
 
-    // 2. Others count limit: max 3
-    if (fileType === "other") {
-      const currentOtherDocsCount = selectedUser?.metadata?.other_docs_path?.length || 0;
-      if (currentOtherDocsCount >= 3) {
-        toast.error("Maximum 3 other documents are allowed");
-        return;
-      }
-    }
-
-    setDocUploading(fileType === "identity_proof" ? "id" : fileType);
-    
+    setDocUploading(fileType);
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      const url = `${API_ENDPOINTS.ADMIN.USER_UPLOAD(selectedUser.id)}?file_type=${fileType}`;
-      await upload(url, formData);
+      await upload(`${API_ENDPOINTS.ADMIN.USER_UPLOAD(selectedUser.id)}?file_type=${fileType}`, formData);
     } catch (error) {
-      // Error handled by useMutation or toast
+      setDocUploading(null);
     }
   };
 
@@ -74,186 +63,99 @@ export const DocumentModal = ({
     <Modal
       open={isOpen}
       onClose={onClose}
-      title={`Document Vault - ${selectedUser?.name}`}
-      footer={<CommonButton onClick={onClose}>Finished</CommonButton>}
+      title="Secure Document Vault"
+      footer={
+        <div className="flex justify-end gap-3 p-4">
+          <CommonButton onClick={onClose} variant="secondary">Done</CommonButton>
+        </div>
+      }
     >
       <div className="space-y-6">
-        {/* Profile Picture Section */}
-        <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-                <UserCheck size={16} />
-              </div>
-              <h4 className="text-sm font-black text-white uppercase tracking-tight">Profile Photo</h4>
+        {/* User Identity Banner */}
+        <div className="p-5 rounded-3xl bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-5">
+          <div className="relative">
+            <div className="h-20 w-20 rounded-2xl bg-slate-800 border-2 border-white/10 overflow-hidden flex items-center justify-center shadow-2xl">
+              {docUploading === 'profile' ? (
+                <Loader2 className="animate-spin text-indigo-400" size={24} />
+              ) : (selectedUser?.profile_image_path || selectedUser?.metadata?.profile_image_path) ? (
+                <img src={`${selectedUser.profile_image_path || selectedUser.metadata.profile_image_path}?v=${cacheBuster}`} className="h-full w-full object-cover" alt="" />
+              ) : (
+                <span className="text-3xl font-black text-slate-700 uppercase">{selectedUser?.name?.charAt(0)}</span>
+              )}
             </div>
-            <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-bold uppercase">Required</span>
+            <label className="absolute -bottom-2 -right-2 h-10 w-10 bg-indigo-600 hover:bg-indigo-500 rounded-xl border-4 border-slate-950 flex items-center justify-center text-white cursor-pointer transition-transform hover:scale-110">
+              <Upload size={16} />
+              <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'profile')} />
+            </label>
           </div>
-
-          <div className="flex items-center gap-6">
-            <div className="relative group">
-              <div className="h-20 w-20 rounded-full bg-slate-800 border-2 border-white/10 overflow-hidden shadow-2xl flex items-center justify-center">
-                {docUploading === 'profile' ? (
-                  <Loader2 size={24} className="animate-spin text-indigo-400" />
-                ) : selectedUser?.metadata?.profile_image_path ? (
-                  <img src={selectedUser.metadata.profile_image_path} className="h-full w-full object-cover" alt="Profile" />
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center text-slate-600 font-black text-2xl uppercase">
-                    {selectedUser?.name?.charAt(0)}
-                  </div>
-                )}
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-full gap-2">
-                <label className="cursor-pointer hover:text-indigo-400 text-white transition">
-                  <Upload size={18} />
-                  <input 
-                    type="file" 
-                    className="hidden" 
-                    accept="image/*" 
-                    onChange={(e) => handleFileUpload(e, 'profile')} 
-                  />
-                </label>
-                {selectedUser?.metadata?.profile_image_path && (
-                  <button
-                    onClick={() => onDeleteDoc('profile', selectedUser.metadata.profile_image_path)}
-                    className="text-red-400 hover:text-red-300 transition"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="flex-1">
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Upload a clear, high-resolution portrait. Supports JPG, PNG. Max size 2MB.
-              </p>
-            </div>
+          <div>
+            <h3 className="text-xl font-black text-white uppercase tracking-tight">{selectedUser?.name}</h3>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Member Authentication Vault</p>
           </div>
         </div>
 
-        {/* Identity Proof Section */}
-        <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-orange-500/20 flex items-center justify-center text-orange-400">
-                <FileText size={16} />
+        {/* Categories */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* ID Proof Card */}
+          <div className="p-6 rounded-[2.5rem] bg-white/5 border border-white/10 flex flex-col gap-4 group hover:border-orange-500/30 transition-all">
+            <div className="flex items-center justify-between">
+              <div className="h-10 w-10 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-400">
+                <FileText size={20} />
               </div>
-              <h4 className="text-sm font-black text-white uppercase tracking-tight">Identity Proof</h4>
+              <span className="text-[10px] font-black text-orange-500/50 uppercase tracking-widest">ID Required</span>
             </div>
-            <span className="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full font-bold uppercase">ID/Passport</span>
-          </div>
-
-          {selectedUser?.metadata?.identity_proof_image_path ? (
-            <div className="relative group p-3 rounded-xl bg-white/5 border border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-400">
-                  <FileText size={20} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-bold text-white truncate uppercase tracking-tighter">Identity Proof Scan</p>
-                  <p className="text-[8px] text-orange-500/70 uppercase">Verified Document</p>
-                </div>
-                <div className="flex items-center gap-2">
-                   <a 
-                    href={selectedUser.metadata.identity_proof_image_path} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="p-2 text-slate-400 hover:text-white transition"
-                   >
-                     <Upload size={14} className="rotate-180" />
-                   </a>
-                   <button
-                    onClick={() => onDeleteDoc('identity_proof', selectedUser.metadata.identity_proof_image_path)}
-                    className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="relative group">
-              <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-white/10 hover:border-orange-500/50 rounded-2xl transition hover:bg-orange-500/5 cursor-pointer group">
-                <div className="text-center">
-                  <div className="mx-auto h-10 w-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-400 group-hover:scale-110 transition">
-                    {docUploading === 'id' ? <Loader2 size={24} className="animate-spin" /> : <Upload size={20} />}
-                  </div>
-                  <p className="mt-2 text-xs font-bold text-slate-300 uppercase tracking-widest">Click to upload ID scan</p>
-                  <p className="text-[10px] text-slate-500 mt-1">Images or PDF (Max 150KB)</p>
-                </div>
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  onChange={(e) => handleFileUpload(e, 'identity_proof')} 
-                />
-              </label>
-            </div>
-          )}
-        </div>
-
-        {/* Others / Attachments Section */}
-        <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                <HardDrive size={16} />
-              </div>
-              <h4 className="text-sm font-black text-white uppercase tracking-tight">Other Attachments</h4>
+            <div>
+              <h4 className="font-bold text-white uppercase text-sm mb-1 tracking-tight">Identity Proof</h4>
+              <p className="text-[10px] text-slate-500 uppercase leading-none">Government ID, Passport or DL</p>
             </div>
             
-            {(selectedUser?.metadata?.other_docs_path?.length || 0) < 3 && (
-              <label className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest hover:underline cursor-pointer transition">
-                {docUploading === 'other' ? (
-                  <Loader2 size={12} className="animate-spin inline mr-1" />
-                ) : (
-                  <Plus size={12} className="inline mr-1" />
-                )}
-                Add More
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  disabled={!!docUploading}
-                  onChange={(e) => handleFileUpload(e, 'other')} 
-                />
+            {(selectedUser?.identity_proof_image_path || selectedUser?.metadata?.identity_proof_image_path) ? (
+              <div className="mt-2 flex items-center justify-between p-3 rounded-2xl bg-orange-500/5 border border-orange-500/10">
+                <div className="flex items-center gap-2">
+                  <UserCheck size={14} className="text-emerald-400" />
+                  <span className="text-[10px] text-slate-300 font-black uppercase">Verified</span>
+                </div>
+                <div className="flex gap-1">
+                  <a href={selectedUser.identity_proof_image_path || selectedUser.metadata.identity_proof_image_path} target="_blank" rel="noreferrer" className="p-2 text-slate-500 hover:text-white transition"><Upload size={14} className="rotate-180" /></a>
+                  <button onClick={() => onDeleteDoc('identity_proof', selectedUser.identity_proof_image_path || selectedUser.metadata.identity_proof_image_path)} className="p-2 text-red-400/50 hover:text-red-400 transition"><Trash2 size={14} /></button>
+                </div>
+              </div>
+            ) : (
+              <label className="mt-2 flex flex-col items-center justify-center py-6 border-2 border-dashed border-white/10 rounded-3xl hover:bg-orange-500/5 hover:border-orange-500/30 cursor-pointer transition">
+                {docUploading === 'identity_proof' ? <Loader2 className="animate-spin text-orange-400" size={20} /> : <Plus className="text-slate-600" size={24} />}
+                <span className="text-[8px] font-black uppercase text-slate-500 mt-2 tracking-widest">Upload ID Scan</span>
+                <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'identity_proof')} />
               </label>
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            {selectedUser?.metadata?.other_docs_path?.length > 0 ? (
-              selectedUser.metadata.other_docs_path.map((doc: string, idx: number) => (
-                <div key={idx} className="group relative flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 transition">
-                  <div className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center text-slate-400">
-                    <File size={16} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-bold text-white truncate uppercase tracking-tighter">Document_{idx + 1}</p>
-                    <p className="text-[8px] text-slate-500 uppercase">Archive File</p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                     <a 
-                      href={doc} 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-white transition"
-                    >
-                      <Upload size={12} className="rotate-180" />
-                    </a>
-                    <button
-                      onClick={() => onDeleteDoc('other', doc)}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg transition"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-2 py-4 text-center border-2 border-dotted border-white/5 rounded-xl">
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">No additional archives</p>
+          {/* Health Records Placeholder Card */}
+          <div className="p-6 rounded-[2.5rem] bg-white/5 border border-white/10 flex flex-col gap-4 hover:border-emerald-500/30 transition-all">
+            <div className="flex items-center justify-between">
+              <div className="h-10 w-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                <HardDrive size={20} />
               </div>
-            )}
+              <span className="text-[10px] font-black text-emerald-500/50 uppercase tracking-widest">Additional</span>
+            </div>
+            <div>
+              <h4 className="font-bold text-white uppercase text-sm mb-1 tracking-tight">Archive Files</h4>
+              <p className="text-[10px] text-slate-500 uppercase leading-none">Medical certs, legal documents</p>
+            </div>
+
+            <div className="flex flex-col gap-2 mt-2">
+              {(selectedUser?.other_docs_path || selectedUser?.metadata?.other_docs_path)?.map((doc: string, i: number) => (
+                <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase truncate pr-4">Doc_{i + 1}</span>
+                  <button onClick={() => onDeleteDoc('other', doc)} className="text-red-400/30 hover:text-red-400"><Trash2 size={12} /></button>
+                </div>
+              ))}
+              {(selectedUser?.other_docs_path?.length || selectedUser?.metadata?.other_docs_path?.length || 0) < 3 && (
+                <label className="flex items-center justify-center p-3 border border-white/10 rounded-xl hover:bg-emerald-500/5 cursor-pointer text-emerald-400/50 hover:text-emerald-400 transition">
+                  <Plus size={16} />
+                  <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'other')} />
+                </label>
+              )}
+            </div>
           </div>
         </div>
       </div>

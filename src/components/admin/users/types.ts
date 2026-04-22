@@ -1,53 +1,39 @@
 export type ViewType = "grid" | "list";
-export type UserRole = "admin" | "trainee" | "employee";
+export type UserRole = "user" | "admin" | "trainee" | "employee";
 export type ModalStep =
   | "role"
   | "details"
-  | "personalInfo"
-  | "healthInfo"
-  | "membershipDetails"
-  | "preferences";
+  | "metadata"
+  | "membership";
 
-export interface PersonalInfo {
-  age: string;
+export interface UserMetadata {
+  height: number;
+  weight: number;
+  dob: number; // Unix timestamp
   gender: string;
-  height: string;
-  weight: string;
-  fitnessGoal: string;
-  dob: string;
-}
-
-export interface HealthInfo {
-  medicalConditions: string;
+  language: string;
+  theme: string;
+  fitness_goal: string;
+  medical_condition: string;
   injuries: string;
   allergies: string;
-}
-
-export interface MembershipDetails {
-  planType: string;
-  joiningDate: string;
-  trainerAssigned: string;
-  planId: string;
-  trainerId: string;
-  durationInMonths: number;
-  amount: number;
-}
-
-export interface PreferencesInfo {
-  workoutTime: string;
-  notificationPreference: string;
+  workout_time: string;
+  emergency_contact: string;
 }
 
 export interface UserFormData {
+  username: string;
+  mobile: string;
   name: string;
-  phone: string;
   email: string;
   address: string;
   role: UserRole;
-  profilePhoto?: string;
   password?: string;
-  personalInfo?: PersonalInfo;
-  healthInfo?: HealthInfo;
-  membershipDetails?: MembershipDetails;
-  preferences?: PreferencesInfo;
+  metadata: UserMetadata;
+  joining_date: number; // Unix timestamp
+  trainer_id?: string;
+  subscription_id?: string;
+  duration_in_months?: number;
+  amount?: number;
+  profilePhoto?: string; // For UI display
 }

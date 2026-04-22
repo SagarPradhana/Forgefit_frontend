@@ -7,7 +7,7 @@ interface UseGetOptions {
   onError?: (error: any) => void;
 }
 
-export function useGet<T = any>(url: string, options: UseGetOptions = {}) {
+export function useGet<T = any>(url: string | null | undefined, options: UseGetOptions = {}) {
   const { enabled = true } = options;
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(enabled);
@@ -33,10 +33,10 @@ export function useGet<T = any>(url: string, options: UseGetOptions = {}) {
   }, [url]);
 
   useEffect(() => {
-    if (enabled) {
+    if (enabled && url) {
       fetchData();
     }
-  }, [enabled, fetchData]);
+  }, [enabled, url, fetchData]);
 
   return { data, loading, error, refetch: fetchData };
 }

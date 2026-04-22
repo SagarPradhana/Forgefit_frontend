@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { GlassCard, SectionTitle } from "../../components/ui/primitives";
 import { Search, Grid, List, Plus } from "lucide-react";
 import { motion } from "framer-motion";
@@ -48,18 +48,22 @@ export function UserManagement() {
   const [page, setPage] = useState(1);
   const [perPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
 
   // --- API Fetching ---
-  const queryParams = new URLSearchParams({
-    offset: String((page - 1) * perPage),
-    count: String(perPage),
-  });
-  if (searchQuery.trim()) queryParams.append("search", searchQuery.trim());
+  const usersApiUrl = useMemo(() => {
+    const params = new URLSearchParams({
+      offset: String((page - 1) * perPage),
+      count: String(perPage),
+    });
+    if (debouncedSearch.trim()) params.append("search", debouncedSearch.trim());
+    return `${API_ENDPOINTS.ADMIN.USERS}?${params.toString()}`;
+  }, [page, perPage, debouncedSearch]);
 
   const { loading: usersLoading, refetch: refetchUsers } = useGet(
-    `${API_ENDPOINTS.ADMIN.USERS}?${queryParams.toString()}`,
+    usersApiUrl,
     {
       onSuccess: (res) => {
         const newUsers = res.data || [];
@@ -126,30 +130,40 @@ export function UserManagement() {
 
   // --- Logic ---
   const [formData, setFormData] = useState<UserFormData>({
+    username: "",
+    mobile: "",
     name: "",
-    phone: "",
     email: "",
     address: "",
-    role: roles?.[0]?.role,
-    profilePhoto: "",
-    password: "",
-    personalInfo: {
-      age: "", gender: "", height: "", weight: "", fitnessGoal: "General Fitness", dob: "",
+    role: "user",
+    joining_date: Math.floor(Date.now() / 1000),
+    metadata: {
+      height: 0,
+      weight: 0,
+      dob: Math.floor(Date.now() / 1000),
+      gender: "male",
+      language: "en",
+      theme: "dark",
+      fitness_goal: "fitness",
+      medical_condition: "",
+      injuries: "",
+      allergies: "",
+      workout_time: "morning",
+      emergency_contact: "",
     },
-    healthInfo: {
-      medicalConditions: "", injuries: "", allergies: "",
-    },
-    membershipDetails: {
-      planType: "", joiningDate: new Date().toISOString().split("T")[0], trainerAssigned: "",
-      planId: "", trainerId: "", durationInMonths: 12, amount: 0,
-    },
-    preferences: {
-      workoutTime: "Morning", notificationPreference: "Email",
-    },
+    trainer_id: "",
+    subscription_id: "",
+    duration_in_months: 1,
+    amount: 0,
+    profilePhoto: ""
   });
 
   useEffect(() => {
-    setPage(1);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
   }, [searchQuery]);
 
   // Sync selected user when data refreshes
@@ -174,14 +188,32 @@ export function UserManagement() {
 
   const handleAddNew = () => {
     setFormData({
-      name: "", phone: "", email: "", address: "", role: roles?.[0]?.role, profilePhoto: "", password: "",
-      personalInfo: { age: "", gender: "", height: "", weight: "", fitnessGoal: "General Fitness", dob: "" },
-      healthInfo: { medicalConditions: "", injuries: "", allergies: "" },
-      membershipDetails: {
-        planType: "", joiningDate: new Date().toISOString().split("T")[0], trainerAssigned: "",
-        planId: "", trainerId: "", durationInMonths: 12, amount: 0,
+      username: "",
+      mobile: "",
+      name: "",
+      email: "",
+      address: "",
+      role: "user",
+      joining_date: Math.floor(Date.now() / 1000),
+      metadata: {
+        height: 0,
+        weight: 0,
+        dob: Math.floor(Date.now() / 1000),
+        gender: "male",
+        language: "en",
+        theme: "dark",
+        fitness_goal: "fitness",
+        medical_condition: "",
+        injuries: "",
+        allergies: "",
+        workout_time: "morning",
+        emergency_contact: "",
       },
-      preferences: { workoutTime: "Morning", notificationPreference: "Email" },
+      trainer_id: "",
+      subscription_id: "",
+      duration_in_months: 1,
+      amount: 0,
+      profilePhoto: ""
     });
     setPhotoPreview("");
     setEditingUserId(null);
@@ -191,40 +223,44 @@ export function UserManagement() {
 
   const handleEdit = (user: any) => {
     setFormData({
+      username: user.username || "",
+      mobile: user.mobile || user.phone || "",
       name: user.name,
-      phone: user.phone || "",
       email: user.email,
       address: user.address || "",
-      role: user.role || roles?.[0]?.role,
-      profilePhoto: user.profilePhoto || "",
-      password: "",
-      personalInfo: user.personalInfo || {
-        age: "", gender: "", height: "", weight: "", fitnessGoal: "General Fitness",
-        dob: user.metadata?.dob ? new Date(user.metadata.dob * 1000).toISOString().split('T')[0] : "",
+      role: user.role || "user",
+      joining_date: user.joining_date || Math.floor(Date.now() / 1000),
+      metadata: {
+        height: user.metadata?.height || 0,
+        weight: user.metadata?.weight || 0,
+        dob: user.metadata?.dob || Math.floor(Date.now() / 1000),
+        gender: user.metadata?.gender || "male",
+        language: user.metadata?.language || "en",
+        theme: user.metadata?.theme || "dark",
+        fitness_goal: user.metadata?.fitness_goal || "fitness",
+        medical_condition: user.metadata?.medical_condition || "",
+        injuries: user.metadata?.injuries || "",
+        allergies: user.metadata?.allergies || "",
+        workout_time: user.metadata?.workout_time || "morning",
+        emergency_contact: user.metadata?.emergency_contact || "",
       },
-      healthInfo: user.healthInfo || { medicalConditions: "", injuries: "", allergies: "" },
-      membershipDetails: user.membershipDetails || {
-        planType: user.plan_name || "",
-        joiningDate: user.joining_date ? new Date(user.joining_date * 1000).toISOString().split('T')[0] : new Date().toISOString().split("T")[0],
-        trainerAssigned: user.trainer_name || "",
-        planId: user.plan_id || "",
-        trainerId: user.trainer_id || "",
-        durationInMonths: user.duration_in_months || 12,
-        amount: user.amount || 0,
-      },
-      preferences: user.preferences || { workoutTime: "Morning", notificationPreference: "Email" },
+      trainer_id: user.trainer_id || "",
+      subscription_id: user.subscription_id || "",
+      duration_in_months: user.duration_in_months || 1,
+      amount: user.amount || 0,
+      profilePhoto: user.profile_image_path || user.metadata?.profile_image_path || "",
     });
-    setPhotoPreview(user.profilePhoto || "");
+    setPhotoPreview(user.profile_image_path || user.metadata?.profile_image_path || "");
     setEditingUserId(user.id);
-    setModalStep(user.role === "admin" ? "role" : "details");
+    setModalStep("role");
     setModalOpen(true);
     setShowPassword(false);
   };
 
   const handleNextStep = () => {
     if (modalStep === "role") {
-      if (!formData.name || !formData.phone || !formData.role) {
-        toast.error("Please fill in all required fields (Name and Phone)");
+      if (!formData.username || !formData.name || !formData.mobile || !formData.email) {
+        toast.error("Please fill in all mandatory account details");
         return;
       }
       setModalStep("details");
@@ -232,53 +268,28 @@ export function UserManagement() {
     }
     if (modalStep === "details") {
       if (!formData.address) {
-        toast.error("Please provide an address");
+        toast.error("Address is required");
         return;
       }
-      if (formData.role === "admin") handleSaveUser();
-      else setModalStep("personalInfo");
+      setModalStep("metadata");
       return;
     }
-    if (modalStep === "personalInfo") setModalStep("healthInfo");
-    else if (modalStep === "healthInfo") setModalStep("preferences");
+    if (modalStep === "metadata") {
+      setModalStep("membership");
+      return;
+    }
   };
 
   const handleBackStep = () => {
-    const steps: ModalStep[] = ["role", "details", "personalInfo", "healthInfo", "preferences"];
+    const steps: ModalStep[] = ["role", "details", "metadata", "membership"];
     const currentIndex = steps.indexOf(modalStep);
     if (currentIndex > 0) setModalStep(steps[currentIndex - 1]);
   };
 
   const handleSaveUser = () => {
-    if (!formData.name || !formData.phone || !formData.role || !formData.address) {
-      toast.error("Please fill in all mandatory fields");
-      return;
-    }
-
-    const payload = {
-      username: formData.email ? formData.email.split('@')[0] : formData.phone,
-      mobile: formData.phone,
-      name: formData.name,
-      email: formData.email,
-      password: formData.password || undefined,
-      address: formData.address,
-      role: formData.role,
-      metadata: {
-        height: Number(formData.personalInfo?.height || 0),
-        weight: Number(formData.personalInfo?.weight || 0),
-        gender: formData.personalInfo?.gender || "Male",
-        dob: formData.personalInfo?.dob ? Math.floor(new Date(formData.personalInfo.dob).getTime() / 1000) : 0,
-        profile_image_path: "",
-        identity_proof_image_path: "",
-        other_docs_path: []
-      },
-      joining_date: Math.floor(new Date(formData.membershipDetails?.joiningDate || "").getTime() / 1000),
-      trainer_id: formData.membershipDetails?.trainerId || "00000000-0000-0000-0000-000000000000",
-      plan_id: formData.membershipDetails?.planId || "00000000-0000-0000-0000-000000000000",
-      duration_in_months: Number(formData.membershipDetails?.durationInMonths || 12),
-      amount: Number(formData.membershipDetails?.amount || 0)
-    };
-
+    // API Payload directly matches UserFormData interfaces now
+    const { profilePhoto, ...payload } = formData;
+    
     if (editingUserId) editUser(API_ENDPOINTS.ADMIN.USER_EDIT(editingUserId), payload);
     else createUser(API_ENDPOINTS.ADMIN.USER_CREATE, payload);
   };
@@ -298,28 +309,23 @@ export function UserManagement() {
     setLoadingDeleteId(userId);
     deleteUserRecord(API_ENDPOINTS.ADMIN.USER_DELETE(userId));
     setDeleteTarget(null);
-    // Modal closes on success
   };
 
   const getModalTitle = () => {
-    if (modalStep === "personalInfo") return "Personal Information";
-    if (modalStep === "healthInfo") return "Health Information";
-    if (modalStep === "membershipDetails") return "Membership Details";
-    if (modalStep === "preferences") return "Preferences";
-    if (modalStep === "details") return "Personal Details";
-    return editingUserId ? "Edit User" : "Add User";
+    if (modalStep === "metadata") return "Health & Vitals";
+    if (modalStep === "membership") return "Plan Selection";
+    if (modalStep === "details") return "Assignment Details";
+    return editingUserId ? "Update User Profile" : "Create New User";
   };
 
   const getStepNumber = () => {
-    const isAdmin = formData.role?.toLowerCase() === "admin";
-    const totalSteps = isAdmin ? "2" : "5";
     const stepMap: Record<ModalStep, string> = {
-      role: "1", details: "2", personalInfo: "3", healthInfo: "4", membershipDetails: "5", preferences: "5"
+      role: "1", details: "2", metadata: "3", membership: "4"
     };
-    return `${stepMap[modalStep]}/${totalSteps}`;
+    return `${stepMap[modalStep]}/4`;
   };
 
-  const isFinalStep = (formData.role === "admin" && modalStep === "details") || modalStep === "preferences";
+  const isFinalStep = modalStep === "membership";
   const isAnyLoading = creating || editing || statusUpdating || deletingRecord || docDeleting || !!docUploading;
 
   return (
@@ -353,7 +359,10 @@ export function UserManagement() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
             <input
+              id="admin-user-search-input"
+              name="admin-user-search"
               type="text"
+              autoComplete="off"
               placeholder="Search by name, email, or phone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

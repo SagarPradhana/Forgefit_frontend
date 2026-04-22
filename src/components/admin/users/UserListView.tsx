@@ -48,129 +48,91 @@ export const UserListView = ({
           users.map((user: any, index) => (
             <motion.div
               key={user.id || index}
-              initial={{ opacity: 0, scale: 0.95, y: 30 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              whileHover={{ y: -8, scale: 1.01 }}
-              transition={{
-                duration: 0.4,
-                delay: index * 0.05,
-                ease: "easeOut"
-              }}
-              className="group relative transform-gpu will-change-transform"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ y: -5 }}
+              transition={{ delay: index * 0.05 }}
+              className="group relative"
               ref={index === users.length - 1 ? lastUserElementRef : null}
             >
-              <div className="relative h-full flex flex-col overflow-hidden rounded-[2.5rem] border border-white/10 bg-slate-950/40 backdrop-blur-3xl p-7 transition-colors duration-500 hover:border-indigo-500/50 hover:shadow-[0_40px_80px_-20px_rgba(79,70,229,0.3)] group/card">
-                {/* 🌈 Premium Mesh Gradient Background */}
-                <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-indigo-500/10 blur-[100px] group-hover/card:bg-indigo-500/20 transition-all duration-700" />
-                <div className="absolute -left-24 -bottom-24 h-64 w-64 rounded-full bg-emerald-500/5 blur-[100px] group-hover/card:bg-emerald-500/10 transition-all duration-700" />
-
-                {/* Header: Ultimate Identity */}
-                <div className="relative mb-8 flex items-start justify-between">
-                  <div className="flex items-center gap-5">
-                    <div className="relative flex-shrink-0 group/avatar">
-                      {/* Rotating Gradient Border */}
-                      <div className="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-emerald-400 opacity-40 group-hover/avatar:opacity-100 group-hover/avatar:rotate-180 transition-all duration-1000 blur-sm" />
-                      <div className="relative h-16 w-16 rounded-2xl bg-slate-950 p-[2px] shadow-2xl overflow-hidden">
-                        <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-slate-900 font-black text-2xl text-white uppercase tracking-tighter overflow-hidden">
-                          {user.profilePhoto ? (
-                            <img src={user.profilePhoto} alt={user.name} className="h-full w-full object-cover" />
-                          ) : (
-                            user?.name?.charAt(0)
-                          )}
-                        </div>
-                      </div>
-                      <div className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-[3px] border-slate-950 ${user.is_active !== false ? 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.6)]' : 'bg-slate-500'}`} />
+              <div className="relative h-full flex flex-col overflow-hidden rounded-[2.5rem] border border-white/10 bg-slate-900/60 backdrop-blur-3xl p-6 transition-all duration-300 hover:border-indigo-500/50 hover:bg-slate-900/80">
+                {/* Visual Identity */}
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="relative h-14 w-14 rounded-2xl bg-slate-800 border-2 border-white/10 overflow-hidden flex items-center justify-center">
+                      {(user.profile_image_path || user.metadata?.profile_image_path) ? (
+                        <img src={user.profile_image_path || user.metadata.profile_image_path} className="h-full w-full object-cover" alt="" />
+                      ) : (
+                        <span className="text-xl font-black text-slate-500 uppercase">{user.name?.charAt(0)}</span>
+                      )}
+                      <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-900 ${user.is_active !== false ? 'bg-emerald-500' : 'bg-slate-500'}`} />
                     </div>
-                    <div className="min-w-0">
-                      <h3 className="truncate text-md font-black tracking-tight text-white uppercase group-hover/card:text-indigo-300 transition-colors">
-                        {user.name}
-                      </h3>
-                      <div className="inline-flex items-center gap-2 mt-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
-                        <Users size={10} className="text-slate-500" />
-                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
-                          {user.role || 'Member'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => onOpenDocs(user)}
-                    className="p-3 bg-white/5 hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-300 rounded-2xl transition-all duration-300 border border-white/10 shadow-xl group/doc transform-gpu"
-                    title="Document Vault"
-                  >
-                    <FileText size={20} className="group-hover/doc:scale-110 transition-transform" />
-                  </button>
-                </div>
-
-                {/* Body: High-Density Data rows */}
-                <div className="flex-1 space-y-4 mb-8">
-                  <div className="flex items-center gap-4 p-3 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/5 hover:border-white/10 transition-all duration-300">
-                    <div className="h-10 w-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
-                      <Mail size={16} className="text-indigo-400" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Email Address</p>
-                      <p className="text-xs font-bold text-slate-300 truncate">{user.email}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4 p-3 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/5 hover:border-white/10 transition-all duration-300">
-                    <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                      <Phone size={16} className="text-emerald-400" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Contact Number</p>
-                      <p className="text-xs font-bold text-slate-300 tracking-wider">
-                        {user.mobile || user.phone || 'N/A'}
-                      </p>
-                    </div>
+                  <div className="min-w-0">
+                    <h3 className="truncate text-sm font-black text-white uppercase tracking-tight">{user.name}</h3>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{user.role}</p>
                   </div>
                 </div>
 
-                {/* Footer: Ultimate Action Zone */}
-                <div className="pt-6 border-t border-white/10 grid grid-cols-5 gap-2">
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center gap-3 text-slate-400">
+                    <Mail size={12} className="shrink-0" />
+                    <span className="text-xs truncate">{user.email}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-slate-400">
+                    <Phone size={12} className="shrink-0" />
+                    <span className="text-xs">{user.mobile || user.phone || 'N/A'}</span>
+                  </div>
+                </div>
+
+                {/* Unified Premium Action Zone */}
+                <div className="mt-auto pt-5 border-t border-white/5 grid grid-cols-3 gap-2">
                   <button
                     onClick={() => onEdit(user)}
-                    className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl bg-white/5 hover:bg-indigo-500/20 text-indigo-400 border border-white/5 hover:border-indigo-500/30 transition-all duration-300 group/btn transform-gpu"
-                    title="Edit Profile"
+                    className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-indigo-500/20 text-indigo-400 border border-white/5 hover:border-indigo-500/30 transition-all group"
+                    title="Edit Member Information"
                   >
-                    <Edit2 size={16} className="group-hover/btn:scale-110 transition-transform transform-gpu" />
-                    <span className="text-[8px] font-black uppercase tracking-tighter opacity-60 group-hover/btn:opacity-100">Edit</span>
-                  </button>
-
-                  <button
-                    onClick={() => onOpenAttendance(user)}
-                    className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl bg-white/5 hover:bg-emerald-500/20 text-emerald-300 border border-white/5 hover:border-emerald-500/30 transition-all duration-300 group/btn transform-gpu"
-                    title="Record Attendance"
-                  >
-                    <Calendar size={16} className="group-hover/btn:scale-110 transition-transform transform-gpu" />
-                    <span className="text-[8px] font-black uppercase tracking-tighter opacity-60 group-hover/btn:opacity-100">Log</span>
+                    <Edit2 size={16} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Edit</span>
                   </button>
 
                   <button
                     onClick={() => onOpenSubscription(user)}
-                    className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl bg-white/5 hover:bg-purple-500/20 text-purple-400 border border-white/5 hover:border-purple-500/30 transition-all duration-300 group/btn transform-gpu"
-                    title="Manage Subscriptions"
+                    className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-purple-500/20 text-purple-400 border border-white/5 hover:border-purple-500/30 transition-all group"
+                    title="Manage Membership Plans"
                   >
-                    <CreditCard size={16} className="group-hover/btn:scale-110 transition-transform transform-gpu" />
-                    <span className="text-[8px] font-black uppercase tracking-tighter opacity-60 group-hover/btn:opacity-100">Plans</span>
+                    <CreditCard size={16} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Plans</span>
+                  </button>
+
+                  <button
+                    onClick={() => onOpenAttendance(user)}
+                    className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-white/5 hover:border-emerald-500/30 transition-all group"
+                    title="Attendance Log"
+                  >
+                    <Calendar size={16} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Log</span>
+                  </button>
+
+                  <button
+                    onClick={() => onOpenDocs(user)}
+                    className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-amber-500/20 text-amber-400 border border-white/5 hover:border-amber-500/30 transition-all group"
+                    title="Document Vault"
+                  >
+                    <FileText size={16} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Docs</span>
                   </button>
 
                   <button
                     disabled={statusUpdating && loadingStatusId === user.id}
                     onClick={() => onToggleStatus(user.id, user.is_active !== false)}
-                    className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl border transition-all duration-300 group/btn transform-gpu ${user.is_active !== false
-                      ? "bg-white/5 text-amber-400 border-white/5 hover:bg-amber-500/20 hover:border-amber-500/30"
-                      : "bg-white/5 text-slate-500 border-white/5 hover:bg-slate-500/20"
-                      } ${statusUpdating && loadingStatusId === user.id ? "opacity-50 cursor-wait" : ""}`}
+                    className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 border border-white/5 transition-all group ${user.is_active !== false ? 'text-amber-500 hover:bg-amber-500/10' : 'text-slate-500'}`}
                     title={user.is_active !== false ? "Suspend User" : "Reactivate User"}
                   >
                     {statusUpdating && loadingStatusId === user.id ? (
                       <Loader2 size={16} className="animate-spin" />
                     ) : (
                       <>
-                        {user.is_active !== false ? <ToggleRight size={16} className="transform-gpu" /> : <ToggleLeft size={16} className="transform-gpu" />}
-                        <span className="text-[8px] font-black uppercase tracking-tighter opacity-60 group-hover/btn:opacity-100">State</span>
+                        {user.is_active !== false ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+                        <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Status</span>
                       </>
                     )}
                   </button>
@@ -178,15 +140,15 @@ export const UserListView = ({
                   <button
                     disabled={deletingRecord && loadingDeleteId === user.id}
                     onClick={() => onDelete(user.id)}
-                    className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl bg-white/5 hover:bg-red-500/20 text-red-500 border border-white/5 hover:border-red-500/30 transition-all duration-300 group/btn transform-gpu ${deletingRecord && loadingDeleteId === user.id ? "opacity-50 cursor-wait" : ""}`}
-                    title="Delete Permanently"
+                    className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-red-500/20 text-red-500 border border-white/5 hover:border-red-500/30 transition-all group"
+                    title="Permanently Remove"
                   >
                     {deletingRecord && loadingDeleteId === user.id ? (
                       <Loader2 size={16} className="animate-spin" />
                     ) : (
                       <>
-                        <Trash2 size={16} className="group-hover/btn:scale-110 transition-transform transform-gpu" />
-                        <span className="text-[8px] font-black uppercase tracking-tighter opacity-60 group-hover/btn:opacity-100">Drop</span>
+                        <Trash2 size={16} className="group-hover:scale-110 transition-transform" />
+                        <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Drop</span>
                       </>
                     )}
                   </button>
@@ -196,11 +158,8 @@ export const UserListView = ({
           ))
         ) : !usersLoading && (
           <div className="col-span-full py-20 text-center">
-            <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-white/5 border border-white/10 mb-4">
-              <Users size={32} className="text-slate-600" />
-            </div>
-            <h4 className="text-xl font-bold text-white mb-1">No users found</h4>
-            <p className="text-slate-400">Try adjusting your search or filters</p>
+            <Users size={40} className="mx-auto text-slate-700 mb-4" />
+            <p className="text-slate-500 font-bold uppercase tracking-widest">No users listed in this vision</p>
           </div>
         )}
         {usersLoading && (
