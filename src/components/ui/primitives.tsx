@@ -14,7 +14,7 @@ export function GlassCard({
   return (
     <motion.div
       className={clsx(
-        "rounded-2xl border p-5 shadow-2xl backdrop-blur-xl transition-all duration-300 transform",
+        "rounded-xl md:rounded-2xl border p-3 md:p-5 shadow-2xl backdrop-blur-xl transition-all duration-300 transform",
         "dark:border-white/15 dark:bg-white/10 dark:shadow-slate-900/50",
         "[.light_&]:border-slate-200 [.light_&]:bg-white/95 [.light_&]:shadow-slate-300/30",
         className,
@@ -125,24 +125,24 @@ export function Modal({
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b dark:border-white/10 dark:bg-white/5 [.light_&]:border-slate-200 [.light_&]:bg-slate-50 px-6 py-4">
-          <h3 className="text-xl font-bold dark:text-white [.light_&]:text-slate-900">{title}</h3>
+        <div className="flex items-center justify-between border-b dark:border-white/10 dark:bg-white/5 [.light_&]:border-slate-200 [.light_&]:bg-slate-50 px-4 md:px-6 py-4">
+          <h3 className="text-lg md:text-xl font-bold dark:text-white [.light_&]:text-slate-900">{title}</h3>
           <button
             onClick={onClose}
             className="rounded-full p-2 text-slate-400 transition hover:bg-white/10 hover:text-white"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-5 dark:text-slate-200 [.light_&]:text-slate-700 custom-scrollbar">
+        <div className="max-h-[70vh] overflow-y-auto px-4 md:px-6 py-5 dark:text-slate-200 [.light_&]:text-slate-700 custom-scrollbar">
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="flex justify-end gap-3 border-t border-white/10 bg-white/5 px-6 py-4">
+          <div className="flex justify-end gap-2 md:gap-3 border-t border-white/10 bg-white/5 px-4 md:px-6 py-4">
             {footer}
           </div>
         )}
@@ -195,8 +195,8 @@ export function SectionTitle({
 }) {
   return (
     <div className={clsx("mb-4", className)}>
-      <h2 className="text-2xl font-semibold dark:text-white [.light_&]:text-slate-900">{title}</h2>
-      {subtitle ? <p className="text-sm dark:text-slate-300 [.light_&]:text-slate-600">{subtitle}</p> : null}
+      <h2 className="text-xl md:text-2xl font-semibold dark:text-white [.light_&]:text-slate-900 leading-tight">{title}</h2>
+      {subtitle ? <p className="text-xs md:text-sm dark:text-slate-300 [.light_&]:text-slate-600 mt-0.5">{subtitle}</p> : null}
     </div>
   );
 }
@@ -209,12 +209,12 @@ export function Table({
   rows: (string | ReactNode)[][];
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border dark:border-white/10 [.light_&]:border-slate-200">
-      <table className="min-w-full text-sm">
+    <div className="overflow-x-auto rounded-xl border dark:border-white/10 [.light_&]:border-slate-200 custom-scrollbar">
+      <table className="min-w-full text-xs md:text-sm border-separate border-spacing-0">
         <thead className="dark:bg-white/10 [.light_&]:bg-slate-100 dark:text-slate-200 [.light_&]:text-slate-700 text-left">
           <tr>
             {headers.map((header) => (
-              <th key={header} className="px-4 py-3">
+              <th key={header} className="px-3 md:px-4 py-2 md:py-3 whitespace-nowrap">
                 {header}
               </th>
             ))}
@@ -222,9 +222,9 @@ export function Table({
         </thead>
         <tbody>
           {rows.map((row, idx) => (
-            <tr key={idx} className="border-t dark:border-white/10 [.light_&]:border-slate-200 dark:text-slate-100 [.light_&]:text-slate-600">
+            <tr key={idx} className="border-t dark:border-white/10 [.light_&]:border-slate-200 dark:text-slate-100 [.light_&]:text-slate-600 hover:bg-white/[0.03] transition-colors">
               {row.map((cell, cellIdx) => (
-                <td key={cellIdx} className="px-4 py-3">
+                <td key={cellIdx} className="px-3 md:px-4 py-2 md:py-3 align-middle">
                   {cell}
                 </td>
               ))}

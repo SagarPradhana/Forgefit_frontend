@@ -194,18 +194,19 @@ export function AdminPortalPages({ page }: { page: string }) {
             title="Subscription Management"
             subtitle="Manage gym membership plans and pricing strategies."
           />
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 w-full md:w-auto">
             <div className="relative flex-1 md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input
                 type="text"
                 placeholder="Search plans..."
                 value={planSearch}
                 onChange={(e) => setPlanSearch(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-white outline-none focus:border-indigo-500 transition"
+                className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white outline-none focus:border-indigo-500 transition"
               />
             </div>
             <GlowButton
+              className="w-full md:w-auto justify-center"
               onClick={() => {
                 setPlanForm({ name: "", description: "", price: "", duration_in_months: "1" });
                 setEditPlan(null);
@@ -435,27 +436,27 @@ export function AdminPortalPages({ page }: { page: string }) {
     const user = useAuthStore.getState();
 
     return (
-      <div className="space-y-6">
-        <GlassCard className="p-10 border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 to-transparent relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[100px]" />
-          <div className="flex flex-col md:flex-row items-center gap-10 relative z-10">
-            <div className="h-32 w-32 rounded-3xl bg-indigo-500 flex items-center justify-center text-5xl font-black text-white shadow-2xl shadow-indigo-500/40">
+      <div className="space-y-4 md:space-y-6">
+        <GlassCard className="p-4 md:p-10 border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 to-transparent relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 md:w-64 md:h-64 bg-indigo-500/10 blur-[60px] md:blur-[100px]" />
+          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 relative z-10 text-center md:text-left">
+            <div className="h-20 w-20 md:h-32 md:w-32 rounded-2xl md:rounded-3xl bg-indigo-500 flex items-center justify-center text-3xl md:text-5xl font-black text-white shadow-2xl shadow-indigo-500/40 shrink-0">
               {user.name?.[0] || "A"}
             </div>
-            <div className="text-center md:text-left space-y-2">
-              <div className="flex items-center gap-3 justify-center md:justify-start">
-                <h2 className="text-4xl font-black text-white uppercase tracking-tighter italic">{user.name}</h2>
-                <span className="px-3 py-1 rounded-lg bg-indigo-500 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20">{user.role}</span>
+            <div className="space-y-1.5 md:space-y-2">
+              <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3">
+                <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tighter italic leading-none">{user.name}</h2>
+                <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-lg bg-indigo-500 text-[8px] md:text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20">{user.role}</span>
               </div>
-              <p className="text-slate-400 font-medium tracking-wide">Strategic System Administrator • ForgeFit HQ</p>
-              <div className="flex flex-wrap gap-4 pt-4 justify-center md:justify-start">
-                <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
-                  <Bell size={14} className="text-indigo-400" />
-                  <span className="text-xs font-black text-white uppercase tracking-widest">12 Pending Inquiries</span>
+              <p className="text-[10px] md:text-sm text-slate-400 font-medium tracking-wide uppercase">Strategic System Administrator</p>
+              <div className="flex flex-wrap gap-2 md:gap-4 pt-2 md:pt-4 justify-center md:justify-start">
+                <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2">
+                  <Bell size={12} className="text-indigo-400" />
+                  <span className="text-[9px] font-black text-white uppercase tracking-widest">Inquiries</span>
                 </div>
-                <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
-                  <Users size={14} className="text-emerald-400" />
-                  <span className="text-xs font-black text-white uppercase tracking-widest">450 Total Members</span>
+                <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2">
+                  <Users size={12} className="text-emerald-400" />
+                  <span className="text-[9px] font-black text-white uppercase tracking-widest">Registry</span>
                 </div>
               </div>
             </div>
@@ -518,18 +519,19 @@ export function AdminPortalPages({ page }: { page: string }) {
             title="Inventory Management"
             subtitle="Manage gym merchandise, supplements, and equipment stock."
           />
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 w-full md:w-auto">
             <div className="relative flex-1 md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input
                 type="text"
                 placeholder="Search products..."
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-white outline-none focus:border-indigo-500 transition"
+                className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white outline-none focus:border-indigo-500 transition"
               />
             </div>
             <GlowButton
+              className="w-full md:w-auto justify-center"
               onClick={() => {
                 setProductForm({ name: "", category: "Supplements", price: "", stock: "", image: "", description: "" });
                 setEditProduct(null);
@@ -726,30 +728,30 @@ export function AdminPortalPages({ page }: { page: string }) {
           title="Payments"
           subtitle="Transaction history with date, status, and user filters."
         />
-        <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <select
-            className="rounded bg-white/10 p-2"
+            className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs md:text-sm text-white outline-none focus:border-indigo-500 transition"
             value={paymentStatus}
             onChange={(e) =>
               setPaymentStatus(e.target.value as "All" | "Paid" | "Pending")
             }
           >
-            <option>All</option>
-            <option>Paid</option>
-            <option>Pending</option>
+            <option className="bg-slate-900">All Status</option>
+            <option className="bg-slate-900">Paid</option>
+            <option className="bg-slate-900">Pending</option>
           </select>
           <select
-            className="rounded bg-white/10 p-2"
+            className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs md:text-sm text-white outline-none focus:border-indigo-500 transition"
             value={paymentUser}
             onChange={(e) => setPaymentUser(e.target.value)}
           >
-            <option>All</option>
+            <option className="bg-slate-900">All Users</option>
             {[...new Set(payments.map((p) => p.user))].map((name) => (
-              <option key={name}>{name}</option>
+              <option key={name} className="bg-slate-900">{name}</option>
             ))}
           </select>
           <input
-            className="rounded bg-white/10 p-2"
+            className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs md:text-sm text-white outline-none focus:border-indigo-500 transition"
             type="date"
             value={paymentDate}
             onChange={(e) => setPaymentDate(e.target.value)}

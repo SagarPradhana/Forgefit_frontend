@@ -576,11 +576,11 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      <div className="flex h-full gap-0 lg:gap-6 p-2 md:p-4 lg:p-6">
+      <div className="flex h-full gap-0 lg:gap-6 p-1.5 md:p-3 lg:p-6">
         <div
-          className={`fixed inset-y-0 left-0 z-[100] w-[280px] transform transition-transform duration-300 lg:relative lg:w-auto lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+          className={`fixed inset-y-0 left-0 z-[100] w-[260px] md:w-[280px] transform transition-transform duration-300 lg:relative lg:w-auto lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
         >
-          <div className="h-full p-4 lg:p-0">
+          <div className="h-full p-2 md:p-4 lg:p-0">
             <Sidebar
               colorTheme={colorTheme}
               systemTheme={systemTheme}
@@ -602,51 +602,51 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className={`relative z-[60] rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${currentTheme.cardBg} p-2.5 lg:p-4 ${currentTheme.shadowColor} backdrop-blur-xl mx-0 mt-2 lg:mx-0 lg:mt-0`}
+            className={`relative z-[60] rounded-xl lg:rounded-3xl ${currentTheme.borderColor} ${currentTheme.cardBg} p-1.5 md:p-2.5 lg:p-4 ${currentTheme.shadowColor} backdrop-blur-xl mx-0 mt-1 lg:mx-0 lg:mt-0`}
           >
             <div className="flex items-center justify-between gap-2 lg:gap-3">
               <div className="flex items-center gap-2 lg:gap-3">
                 {/* HAMBURGER FOR MOBILE */}
                 <button
                   onClick={() => setSidebarOpen(true)}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 lg:hidden shrink-0 transition-colors"
+                  className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 lg:hidden shrink-0 transition-colors"
                 >
-                  <Menu size={20} />
+                  <Menu size={18} />
                 </button>
 
                 <div
                   className={`flex items-center gap-1.5 lg:gap-3 rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-gray-100/70" : "bg-slate-950/70"} px-2 lg:px-3 py-1.5 lg:py-2 shadow-inner`}
                 >
-                  <div
-                    className="relative cursor-pointer p-1.5 hover:bg-white/5 rounded-lg transition-colors"
-                    onClick={() => setNotiModalOpen(true)}
-                  >
-                    <Bell
-                      size={isMobile ? 18 : 18}
-                      className={
-                        systemTheme === "light"
-                          ? "text-orange-500"
-                          : "text-orange-300"
-                      }
-                    />
-                    {unreadCount > 0 && (
-                      <span className="absolute top-1 right-1 h-3.5 min-w-[14px] px-0.5 flex items-center justify-center bg-red-500 text-white text-[8px] font-black rounded-full animate-pulse">
-                        {unreadCount}
-                      </span>
-                    )}
+                    <div
+                      className="relative cursor-pointer p-1 lg:p-1.5 hover:bg-white/5 rounded-lg transition-colors"
+                      onClick={() => setNotiModalOpen(true)}
+                    >
+                      <Bell
+                        size={isMobile ? 16 : 18}
+                        className={
+                          systemTheme === "light"
+                            ? "text-orange-500"
+                            : "text-orange-300"
+                        }
+                      />
+                      {unreadCount > 0 && (
+                        <span className="absolute top-1 right-1 h-3 min-w-[12px] px-0.5 flex items-center justify-center bg-red-500 text-white text-[7px] font-black rounded-full animate-pulse">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={nextColorTheme}
+                      className={`inline-flex h-8 w-8 md:h-9 md:w-9 lg:h-10 lg:w-10 items-center justify-center rounded-full border transition-all hover:scale-105 ${systemTheme === "light"
+                        ? "border-gray-300/50 bg-gray-200/30 text-gray-600 hover:bg-gray-300/50"
+                        : "border-white/15 bg-white/5 text-slate-100 hover:bg-white/10"
+                        }`}
+                      title={`Switch theme`}
+                    >
+                      <Palette size={isMobile ? 14 : 18} />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={nextColorTheme}
-                    className={`inline-flex h-9 w-9 lg:h-10 lg:w-10 items-center justify-center rounded-full border transition-all hover:scale-105 ${systemTheme === "light"
-                      ? "border-gray-300/50 bg-gray-200/30 text-gray-600 hover:bg-gray-300/50"
-                      : "border-white/15 bg-white/5 text-slate-100 hover:bg-white/10"
-                      }`}
-                    title={`Switch theme`}
-                  >
-                    <Palette size={isMobile ? 16 : 18} />
-                  </button>
-                </div>
               </div>
 
               <div className="flex items-center gap-2 lg:gap-4 overflow-visible shrink-0 relative">
@@ -662,25 +662,25 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                     }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`group relative inline-flex items-center gap-2 lg:gap-3 rounded-2xl border ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-white shadow-sm" : "bg-slate-900 border-white/5 shadow-2xl"} pl-2 pr-3 lg:pl-2 lg:pr-4 py-1.5 backdrop-blur-xl cursor-pointer transition-all duration-300 hover:border-indigo-500/50`}
+                    className={`group relative inline-flex items-center gap-1.5 md:gap-2 lg:gap-3 rounded-xl lg:rounded-2xl border ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-white shadow-sm" : "bg-slate-900 border-white/5 shadow-2xl"} pl-1.5 pr-2 md:pl-2 md:pr-3 lg:pl-2 lg:pr-4 py-1 backdrop-blur-xl cursor-pointer transition-all duration-300 hover:border-indigo-500/50`}
                   >
                     {/* Premium Avatar Circle */}
-                    <div className="relative h-8 w-8 lg:h-9 lg:w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-emerald-400 p-[2px] shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/40 transition-shadow">
-                      <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-slate-950">
-                        <User size={isMobile ? 16 : 16} className="text-white" />
+                    <div className="relative h-7 w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 rounded-lg lg:rounded-xl bg-gradient-to-br from-indigo-500 to-emerald-400 p-[1px] md:p-[2px] shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/40 transition-shadow">
+                      <div className="flex h-full w-full items-center justify-center rounded-[7px] md:rounded-[10px] bg-slate-950">
+                        <User size={isMobile ? 14 : 16} className="text-white" />
                       </div>
                       {/* Online Status Dot */}
-                      <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-slate-950 bg-emerald-500 shadow-lg" />
+                      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-slate-950 bg-emerald-500 shadow-lg" />
                     </div>
 
                     <div className="flex flex-col items-start leading-none gap-0.5 overflow-hidden">
                       <span
-                        className={`text-[10px] lg:text-[11px] font-black uppercase tracking-tighter bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent group-hover:from-white group-hover:to-white transition-all duration-500 truncate max-w-[60px] md:max-w-[120px]`}
+                        className={`text-[9px] md:text-[10px] lg:text-[11px] font-black uppercase tracking-tighter bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent group-hover:from-white group-hover:to-white transition-all duration-500 truncate max-w-[40px] xs:max-w-[80px] sm:max-w-[120px]`}
                       >
                         {authName || role || "Account"}
                       </span>
-                      <span className="text-[7px] font-black uppercase tracking-[0.1em] lg:tracking-[0.2em] text-slate-500 group-hover:text-amber-400 transition-colors whitespace-nowrap">
-                        {role === "admin" ? "Master Admin" : "Active Member"}
+                      <span className="text-[6px] md:text-[7px] font-black uppercase tracking-tight md:tracking-[0.2em] text-slate-500 group-hover:text-amber-400 transition-colors whitespace-nowrap">
+                        {role === "admin" ? "Master" : "Active"}
                       </span>
                     </div>
 

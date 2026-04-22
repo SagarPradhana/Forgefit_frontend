@@ -25,12 +25,12 @@ export function SignInPage() {
       if (!access_token || !refresh_token) return;
 
       login(access_token, refresh_token);
-      
+
       // Get role from store after login or decode briefly to navigate
       const base64Url = access_token.split(".")[1];
       const decoded = JSON.parse(atob(base64Url.replace(/-/g, "+").replace(/_/g, "/")));
       const role = decoded?.role || "user";
-      
+
       navigate(`/${role}/dashboard`);
     },
   });
@@ -99,7 +99,7 @@ export function SignInPage() {
 
         {/* 💎 RIGHT SIDE (FORM) */}
         <div className="w-full max-w-md mx-auto">
-          <CommonCard className="p-8 backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl">
+          <CommonCard className="p-6 md:p-8 backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl">
             {/* TITLE */}
             <h2 className="text-2xl font-bold mb-2">Welcome Back 👋</h2>
             <p className="text-slate-400 mb-6">
@@ -140,7 +140,6 @@ export function SignInPage() {
                 </Link>
               </div>
 
-              {/* BUTTON */}
               <CommonButton
                 className="w-full h-11 text-base"
                 disabled={loading}
@@ -152,6 +151,7 @@ export function SignInPage() {
                   "Sign In"
                 )}
               </CommonButton>
+
             </div>
           </CommonCard>
         </div>

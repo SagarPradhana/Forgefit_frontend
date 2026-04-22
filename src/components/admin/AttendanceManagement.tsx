@@ -97,13 +97,13 @@ export function AttendanceManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <SectionTitle
           title="Attendance Management"
           subtitle="Precision control over member gym access and history"
         />
 
-        <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl">
+        <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl self-end md:self-auto">
           {(["grid", "list"] as AttendanceView[]).map((type) => (
             <button
               key={type}
@@ -129,18 +129,18 @@ export function AttendanceManagement() {
         {/* Controls */}
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input
-              className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white outline-none focus:border-indigo-500 transition"
+              className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white outline-none focus:border-indigo-500 transition"
               placeholder="Search member by name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <input
               type="date"
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-indigo-500"
+              className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-indigo-500 cursor-pointer"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
             />
@@ -150,7 +150,7 @@ export function AttendanceManagement() {
                 setForm({ userName: "", date: selectedDate, checkIn: "09:00", checkOut: "", status: "Present" });
                 setModalOpen(true);
               }}
-              className="whitespace-nowrap flex gap-2 items-center"
+              className="whitespace-nowrap flex gap-2 items-center justify-center p-3 sm:p-auto"
             >
               <Plus size={18} /> Mark Attendance
             </CommonButton>

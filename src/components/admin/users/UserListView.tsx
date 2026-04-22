@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Edit2, Calendar, ToggleRight, ToggleLeft, Trash2, FileText, Mail, Phone, Users, Loader2, ChevronLeft, ChevronRight, CreditCard, Key, Contact } from "lucide-react";
 import type { ViewType } from "./types";
+import { useState, useEffect } from "react";
 
 interface UserListViewProps {
   viewType: ViewType;
@@ -45,6 +46,13 @@ export const UserListView = ({
   onDownloadIDCard,
   lastUserElementRef,
 }: UserListViewProps) => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   if (viewType === "grid") {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-8">
@@ -59,7 +67,7 @@ export const UserListView = ({
               className="group relative"
               ref={index === users.length - 1 ? lastUserElementRef : null}
             >
-              <div className="relative h-full flex flex-col overflow-hidden rounded-[2.5rem] border border-white/10 bg-slate-900/60 backdrop-blur-3xl p-6 transition-all duration-300 hover:border-indigo-500/50 hover:bg-slate-900/80">
+              <div className="relative h-full flex flex-col overflow-hidden rounded-[1.5rem] md:rounded-[2.5rem] border border-white/10 bg-slate-900/60 backdrop-blur-3xl p-4 md:p-6 transition-all duration-300 hover:border-indigo-500/50 hover:bg-slate-900/80">
                 {/* Visual Identity */}
                 <div className="flex items-center gap-4 mb-6">
                   <div className="relative h-14 w-14 rounded-2xl bg-slate-800 border-2 border-white/10 overflow-hidden flex items-center justify-center">
@@ -71,8 +79,8 @@ export const UserListView = ({
                     <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-900 ${user.is_active !== false ? 'bg-emerald-500' : 'bg-slate-500'}`} />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="truncate text-sm font-black text-white uppercase tracking-tight">{user.name}</h3>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{user.role}</p>
+                    <h3 className="truncate text-xs md:text-sm font-black text-white uppercase tracking-tight">{user.name}</h3>
+                    <p className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest">{user.role}</p>
                   </div>
                 </div>
 
@@ -88,91 +96,84 @@ export const UserListView = ({
                 </div>
 
                 {/* Unified Premium Action Zone */}
-                <div className="mt-auto pt-5 border-t border-white/5 grid grid-cols-3 gap-2">
+                <div className="mt-auto pt-4 md:pt-5 border-t border-white/5 grid grid-cols-4 gap-1.5 md:gap-2">
                   <button
                     onClick={() => onEdit(user)}
-                    className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-indigo-500/20 text-indigo-400 border border-white/5 hover:border-indigo-500/30 transition-all group"
+                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-indigo-500/20 text-indigo-400 border border-white/5 hover:border-indigo-500/30 transition-all group"
                     title="Edit Member Information"
                   >
-                    <Edit2 size={16} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Edit</span>
+                    <Edit2 size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Edit</span>
                   </button>
-
                   <button
                     onClick={() => onOpenSubscription(user)}
-                    className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-purple-500/20 text-purple-400 border border-white/5 hover:border-purple-500/30 transition-all group"
+                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-purple-500/20 text-purple-400 border border-white/5 hover:border-purple-500/30 transition-all group"
                     title="Manage Membership Plans"
                   >
-                    <CreditCard size={16} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Plans</span>
+                    <CreditCard size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Plans</span>
                   </button>
-
                   <button
                     onClick={() => onOpenAttendance(user)}
-                    className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-white/5 hover:border-emerald-500/30 transition-all group"
+                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-white/5 hover:border-emerald-500/30 transition-all group"
                     title="Attendance Log"
                   >
-                    <Calendar size={16} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Log</span>
+                    <Calendar size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Log</span>
                   </button>
-
                   <button
                     onClick={() => onOpenDocs(user)}
-                    className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-amber-500/20 text-amber-400 border border-white/5 hover:border-amber-500/30 transition-all group"
+                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-amber-500/20 text-amber-400 border border-white/5 hover:border-amber-500/30 transition-all group"
                     title="Document Vault"
                   >
-                    <FileText size={16} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Docs</span>
+                    <FileText size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Docs</span>
                   </button>
-
                   <button
                     disabled={statusUpdating && loadingStatusId === user.id}
                     onClick={() => onToggleStatus(user.id, user.is_active !== false)}
-                    className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 border border-white/5 transition-all group ${user.is_active !== false ? 'text-amber-500 hover:bg-amber-500/10' : 'text-slate-500'}`}
+                    className={`flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 transition-all group ${user.is_active !== false ? 'text-amber-500 hover:bg-amber-500/10' : 'text-slate-500'}`}
                     title={user.is_active !== false ? "Suspend User" : "Reactivate User"}
                   >
                     {statusUpdating && loadingStatusId === user.id ? (
-                      <Loader2 size={16} className="animate-spin" />
+                      <Loader2 size={isMobile ? 14 : 16} className="animate-spin" />
                     ) : (
                       <>
-                        {user.is_active !== false ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
-                        <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Status</span>
+                        {user.is_active !== false ? <ToggleRight size={isMobile ? 14 : 16} /> : <ToggleLeft size={isMobile ? 14 : 16} />}
+                        <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Status</span>
                       </>
                     )}
                   </button>
-
                   <button
                     onClick={() => onDownloadIDCard(user)}
-                    className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-white/5 hover:border-emerald-500/30 transition-all group"
+                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-white/5 hover:border-emerald-500/30 transition-all group"
                     title="Generate & Download ID Card"
                   >
-                    <Contact size={16} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Identity</span>
+                    <Contact size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">ID Card</span>
                   </button>
-
+                  <button
+                    onClick={() => onResetPassword(user)}
+                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-slate-600/20 text-slate-400 border border-white/5 hover:border-slate-500/30 transition-all group"
+                    title="Security Override"
+                  >
+                    <Key size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Reset</span>
+                  </button>
                   <button
                     disabled={deletingRecord && loadingDeleteId === user.id}
                     onClick={() => onDelete(user.id)}
-                    className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-red-500/20 text-red-500 border border-white/5 hover:border-red-500/30 transition-all group"
+                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-red-500/20 text-red-500 border border-white/5 hover:border-red-500/30 transition-all group"
                     title="Permanently Remove"
                   >
                     {deletingRecord && loadingDeleteId === user.id ? (
-                      <Loader2 size={16} className="animate-spin" />
+                      <Loader2 size={isMobile ? 14 : 16} className="animate-spin" />
                     ) : (
                       <>
-                        <Trash2 size={16} className="group-hover:scale-110 transition-transform" />
-                        <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Drop</span>
+                        <Trash2 size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
+                        <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Drop</span>
                       </>
                     )}
-                  </button>
-
-                  <button
-                    onClick={() => onResetPassword(user)}
-                    className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-slate-600/20 text-slate-400 border border-white/5 hover:border-slate-500/30 transition-all group"
-                    title="Security Override"
-                  >
-                    <Key size={16} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Reset</span>
                   </button>
                 </div>
               </div>
@@ -196,8 +197,8 @@ export const UserListView = ({
   return (
     <div className="mb-8">
       {users.length > 0 ? (
-        <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-slate-900/60 backdrop-blur-3xl shadow-2xl">
-          <div className="overflow-x-auto custom-scrollbar">
+        <div className="relative overflow-hidden rounded-xl md:rounded-[2.5rem] border border-white/10 bg-slate-900/60 backdrop-blur-3xl shadow-2xl">
+          <div className="hidden lg:block overflow-x-auto custom-scrollbar">
             <table className="w-full text-sm border-separate border-spacing-0">
               <thead>
                 <tr className="bg-white/10 border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
@@ -324,38 +325,81 @@ export const UserListView = ({
             </table>
           </div>
 
+          {/* MOBILE LIST VIEW (Responsive Cards) */}
+          <div className="lg:hidden divide-y divide-white/5">
+            {users.map((user, index) => (
+              <div key={user.id || index} className="p-4 bg-white/[0.02] hover:bg-white/[0.05] transition-all">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="relative h-12 w-12 rounded-xl bg-slate-800 border-2 border-white/10 overflow-hidden flex items-center justify-center shrink-0">
+                    {(user.profile_image_path || user.metadata?.profile_image_path) ? (
+                      <img src={user.profile_image_path || user.metadata.profile_image_path} className="h-full w-full object-cover" alt="" />
+                    ) : (
+                      <span className="text-lg font-black text-slate-500">{user.name?.charAt(0)}</span>
+                    )}
+                    <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-900 ${user.is_active !== false ? 'bg-emerald-500' : 'bg-slate-500'}`} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-black text-white text-sm uppercase tracking-tight truncate">{user.name}</p>
+                    <p className="text-[9px] text-indigo-400 font-black uppercase tracking-widest">{user.role}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="px-3 py-1 rounded-lg bg-white/5 border border-white/5 flex items-center gap-2">
+                    <Mail size={10} className="text-slate-400" />
+                    <span className="text-[10px] text-slate-400 truncate max-w-[120px]">{user.email}</span>
+                  </div>
+                  <div className="px-3 py-1 rounded-lg bg-white/5 border border-white/5 flex items-center gap-2">
+                    <Phone size={10} className="text-slate-400" />
+                    <span className="text-[10px] text-slate-400">{user.mobile || user.phone || 'N/A'}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${user.is_active !== false ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700/20 text-slate-500'}`}>
+                    {user.is_active !== false ? 'Active' : 'Suspended'}
+                  </span>
+                  <div className="flex gap-1.5">
+                    <button onClick={() => onEdit(user)} className="h-8 w-8 flex items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-400"><Edit2 size={14}/></button>
+                    <button onClick={() => onOpenSubscription(user)} className="h-8 w-8 flex items-center justify-center rounded-lg bg-purple-500/20 text-purple-400"><CreditCard size={14}/></button>
+                    <button onClick={() => onOpenAttendance(user)} className="h-8 w-8 flex items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400"><Calendar size={14}/></button>
+                    <button onClick={() => onDelete(user.id)} className="h-8 w-8 flex items-center justify-center rounded-lg bg-red-500/20 text-red-500"><Trash2 size={14}/></button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
           {/* ULTRA VISIBLE PAGINATION HUB */}
-          <div className="flex items-center justify-between p-8 bg-black/40 border-t border-white/10 backdrop-blur-2xl">
+          <div className="flex flex-col sm:flex-row items-center justify-between p-4 md:p-8 bg-black/40 border-t border-white/10 backdrop-blur-2xl gap-4">
             <div className="flex items-center gap-4">
               <div className="px-4 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-indigo-500 animate-ping" />
-                <p className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.2em]">Live Registry • Page {page}</p>
+                <p className="text-[10px] md:text-[11px] font-black text-indigo-400 uppercase tracking-[0.2em]">Live Registry • Page {page}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4 w-full sm:w-auto">
               <motion.button
                 whileHover={page !== 1 ? { scale: 1.05, x: -5 } : {}}
                 whileTap={page !== 1 ? { scale: 0.95 } : {}}
                 disabled={page === 1}
                 onClick={() => onPageChange(page - 1)}
-                className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white/10 hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-[10px] border border-white/10 hover:border-indigo-400 transition-all shadow-2xl disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:bg-white/10"
+                className="flex-1 sm:flex-none group flex items-center justify-center gap-2 md:gap-3 px-4 md:px-6 py-3 rounded-xl md:rounded-2xl bg-white/10 hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-[9px] md:text-[10px] border border-white/10 hover:border-indigo-400 transition-all shadow-2xl disabled:opacity-20 disabled:cursor-not-allowed"
               >
-                <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-                Previous Vision
+                <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                Prev
               </motion.button>
 
-              <div className="h-10 w-[1px] bg-white/10 mx-2" />
+              <div className="hidden sm:block h-10 w-[1px] bg-white/10 mx-2" />
 
               <motion.button
                 whileHover={hasMore ? { scale: 1.05, x: 5 } : {}}
                 whileTap={hasMore ? { scale: 0.95 } : {}}
                 disabled={!hasMore}
                 onClick={() => onPageChange(page + 1)}
-                className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-widest text-[10px] border border-indigo-400 transition-all shadow-xl shadow-indigo-500/20 disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:bg-indigo-500"
+                className="flex-1 sm:flex-none group flex items-center justify-center gap-2 md:gap-3 px-4 md:px-6 py-3 rounded-xl md:rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-widest text-[9px] md:text-[10px] border border-indigo-400 transition-all shadow-xl shadow-indigo-500/20 disabled:opacity-20 disabled:cursor-not-allowed"
               >
-                Next Evolution
-                <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                Next
+                <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </motion.button>
             </div>
           </div>
