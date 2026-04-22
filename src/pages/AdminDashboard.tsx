@@ -30,10 +30,23 @@ import {
 import { InquiryCenter } from "../components/admin/InquiryCenter";
 import { useGymStore } from "../store/gymStore";
 
+import { Users, Activity, DollarSign, UserPlus, Clock, AlertTriangle } from "lucide-react";
+
 function AdminDashboard() {
   const { t } = useTranslation();
-  const { subscriptionRequests, productRequests, contactInquiries } = useGymStore();
+  const { subscriptionRequests, productRequests, contactInquiries, dashboardColorTheme } = useGymStore();
   const [mgmtModalOpen, setMgmtModalOpen] = useState(false);
+
+  // Gradient mapping based on DashboardLayout themes
+  const themeGradients: Record<string, string> = {
+    theme1: "from-blue-500/20 to-emerald-500/20",
+    theme2: "from-purple-500/20 to-pink-500/20",
+    theme3: "from-emerald-500/20 to-cyan-500/20",
+    theme4: "from-orange-500/20 to-blue-500/20",
+    theme5: "from-amber-500/20 to-sky-500/20",
+  };
+
+  const activeGradient = themeGradients[dashboardColorTheme] || themeGradients.theme1;
 
   useEffect(() => {
     const hasPending = 
@@ -44,7 +57,7 @@ function AdminDashboard() {
     if (hasPending) {
        setMgmtModalOpen(true);
     }
-  }, []);
+  }, [subscriptionRequests, productRequests, contactInquiries]);
 
   const pendingPayments = payments.filter(
     (payment) => payment.status === "Pending",
@@ -52,6 +65,15 @@ function AdminDashboard() {
   const newSignups = 78;
   const serviceHighlights = services.slice(0, 3);
   const recentPayments = payments.slice(-4).reverse();
+
+  const metrics = [
+    { label: t("totalUsers"), value: adminMetrics.users, icon: Users, color: "text-blue-400" },
+    { label: "Active Subs", value: adminMetrics.subscriptions, icon: Activity, color: "text-emerald-400" },
+    { label: t("revenue"), value: adminMetrics.revenue, icon: DollarSign, color: "text-emerald-400" },
+    { label: t("newSignups"), value: newSignups, icon: UserPlus, color: "text-indigo-400" },
+    { label: t("pendingPayments"), value: pendingPayments, icon: Clock, color: "text-red-400" },
+    { label: t("upcomingRenewals"), value: expiringUsers.length, icon: AlertTriangle, color: "text-orange-400" },
+  ];
 
   return (
     <>
@@ -71,43 +93,22 @@ function AdminDashboard() {
         subtitle="Monitor users, subscriptions, and revenue growth."
       />
 
-      <div className="mb-4 grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-        <GlassCard className="p-6">
-          <p className="text-sm text-slate-300">{t("totalUsers")}</p>
-          <p className="mt-3 text-3xl font-bold">{adminMetrics.users}</p>
-        </GlassCard>
-        <GlassCard className="p-6">
-          <p className="text-sm text-slate-300">Active Subscriptions</p>
-          <p className="mt-3 text-3xl font-bold">
-            {adminMetrics.subscriptions}
-          </p>
-        </GlassCard>
-        <GlassCard className="p-6">
-          <p className="text-sm text-slate-300">{t("revenue")}</p>
-          <p className="mt-3 text-3xl font-bold">{adminMetrics.revenue}</p>
-        </GlassCard>
-      </div>
-
-      <div className="mb-6 grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-        <GlassCard className="p-6">
-          <p className="text-sm text-slate-300">{t("newSignups")}</p>
-          <p className="mt-3 text-3xl font-bold">{newSignups}</p>
-          <p className="mt-2 text-sm text-slate-400">
-            {t("registeredLast30")}
-          </p>
-        </GlassCard>
-        <GlassCard className="p-6">
-          <p className="text-sm text-slate-300">{t("pendingPayments")}</p>
-          <p className="mt-3 text-3xl font-bold">{pendingPayments}</p>
-          <p className="mt-2 text-sm text-slate-400">{t("awaitingFollowup")}</p>
-        </GlassCard>
-        <GlassCard className="p-6">
-          <p className="text-sm text-slate-300">{t("upcomingRenewals")}</p>
-          <p className="mt-3 text-3xl font-bold">{expiringUsers.length}</p>
-          <p className="mt-2 text-sm text-slate-400">
-            {t("renewalsDue7")}
-          </p>
-        </GlassCard>
+      <div className="mb-6 grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {metrics.map((m, i) => (
+          <GlassCard key={i} className={`p-4 bg-gradient-to-br ${activeGradient} border-white/10 hover:border-white/20 transition-all group relative overflow-hidden`}>
+            <div className="flex flex-col h-full justify-between">
+              <div className="flex items-center justify-between mb-2">
+                <div className={`p-2 rounded-xl bg-white/10 ${m.color} group-hover:scale-110 transition-transform`}>
+                  <m.icon size={18} />
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 leading-tight">{m.label}</p>
+                <p className="text-xl font-black text-white tracking-tighter">{m.value}</p>
+              </div>
+            </div>
+          </GlassCard>
+        ))}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

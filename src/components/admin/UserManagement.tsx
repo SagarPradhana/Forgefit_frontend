@@ -12,6 +12,7 @@ import { UserListView } from "./users/UserListView";
 import { DocumentModal } from "./users/DocumentModal";
 import { AttendanceModal } from "./users/AttendanceModal";
 import { DeleteUserModal } from "./users/DeleteUserModal";
+import { SubscriptionModal } from "./users/SubscriptionModal";
 
 // Types
 import type { ViewType, ModalStep, UserFormData } from "./users/types";
@@ -36,9 +37,12 @@ export function UserManagement() {
   const [selectedUserForDocs, setSelectedUserForDocs] = useState<any>(null);
   const [docUploading, setDocUploading] = useState<string | null>(null);
 
-  // Attendance Modal State
   const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
   const [selectedUserForAttendance, setSelectedUserForAttendance] = useState<any>(null);
+
+  // Subscription Modal State
+  const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
+  const [selectedUserForSubscription, setSelectedUserForSubscription] = useState<any>(null);
 
   // Pagination & Search State
   const [page, setPage] = useState(1);
@@ -148,6 +152,14 @@ export function UserManagement() {
     setPage(1);
   }, [searchQuery]);
 
+  // Sync selected user when data refreshes
+  useEffect(() => {
+    if (selectedUserForDocs) {
+      const updatedUser = allUsers.find((u) => u.id === selectedUserForDocs.id);
+      if (updatedUser) setSelectedUserForDocs(updatedUser);
+    }
+  }, [allUsers, selectedUserForDocs?.id]);
+
   const observer = useRef<IntersectionObserver | null>(null);
   const lastUserElementRef = useCallback((node: HTMLDivElement) => {
     if (usersLoading) return;
@@ -228,12 +240,11 @@ export function UserManagement() {
       return;
     }
     if (modalStep === "personalInfo") setModalStep("healthInfo");
-    else if (modalStep === "healthInfo") setModalStep("membershipDetails");
-    else if (modalStep === "membershipDetails") setModalStep("preferences");
+    else if (modalStep === "healthInfo") setModalStep("preferences");
   };
 
   const handleBackStep = () => {
-    const steps: ModalStep[] = ["role", "details", "personalInfo", "healthInfo", "membershipDetails", "preferences"];
+    const steps: ModalStep[] = ["role", "details", "personalInfo", "healthInfo", "preferences"];
     const currentIndex = steps.indexOf(modalStep);
     if (currentIndex > 0) setModalStep(steps[currentIndex - 1]);
   };
@@ -301,9 +312,9 @@ export function UserManagement() {
 
   const getStepNumber = () => {
     const isAdmin = formData.role?.toLowerCase() === "admin";
-    const totalSteps = isAdmin ? "2" : "6";
+    const totalSteps = isAdmin ? "2" : "5";
     const stepMap: Record<ModalStep, string> = {
-      role: "1", details: "2", personalInfo: "3", healthInfo: "4", membershipDetails: "5", preferences: "6"
+      role: "1", details: "2", personalInfo: "3", healthInfo: "4", membershipDetails: "5", preferences: "5"
     };
     return `${stepMap[modalStep]}/${totalSteps}`;
   };
@@ -378,6 +389,7 @@ export function UserManagement() {
         onToggleStatus={handleToggleStatus}
         onOpenDocs={(user) => { setSelectedUserForDocs(user); setDocModalOpen(true); }}
         onOpenAttendance={(user) => { setSelectedUserForAttendance(user); setAttendanceModalOpen(true); }}
+        onOpenSubscription={(user) => { setSelectedUserForSubscription(user); setSubscriptionModalOpen(true); }}
         lastUserElementRef={lastUserElementRef}
       />
 
@@ -410,6 +422,7 @@ export function UserManagement() {
         docUploading={docUploading}
         setDocUploading={setDocUploading}
         onDeleteDoc={handleDocDelete}
+        onRefresh={refetchUsers}
       />
 
       <AttendanceModal
@@ -422,6 +435,12 @@ export function UserManagement() {
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={() => deleteTarget && handleDeleteUser(deleteTarget)}
+      />
+
+      <SubscriptionModal
+        isOpen={subscriptionModalOpen}
+        onClose={() => setSubscriptionModalOpen(false)}
+        selectedUser={selectedUserForSubscription}
       />
     </GlassCard>
   );

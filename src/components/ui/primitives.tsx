@@ -13,10 +13,10 @@ export function GlassCard({
 }) {
   return (
     <motion.div
-      whileHover={{ y: -3, scale: 1.01 }}
-      transition={{ duration: 0.2 }}
       className={clsx(
-        "rounded-2xl border border-white/15 bg-white/10 p-5 shadow-2xl backdrop-blur-xl",
+        "rounded-2xl border p-5 shadow-2xl backdrop-blur-xl transition-all duration-300 transform",
+        "dark:border-white/15 dark:bg-white/10 dark:shadow-slate-900/50",
+        "[.light_&]:border-slate-200 [.light_&]:bg-white/95 [.light_&]:shadow-slate-300/30",
         className,
       )}
     >
@@ -125,8 +125,8 @@ export function Modal({
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-6 py-4">
-          <h3 className="text-xl font-bold text-white">{title}</h3>
+        <div className="flex items-center justify-between border-b dark:border-white/10 dark:bg-white/5 [.light_&]:border-slate-200 [.light_&]:bg-slate-50 px-6 py-4">
+          <h3 className="text-xl font-bold dark:text-white [.light_&]:text-slate-900">{title}</h3>
           <button
             onClick={onClose}
             className="rounded-full p-2 text-slate-400 transition hover:bg-white/10 hover:text-white"
@@ -136,7 +136,7 @@ export function Modal({
         </div>
 
         {/* Body */}
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-5 text-slate-200 custom-scrollbar">
+        <div className="max-h-[70vh] overflow-y-auto px-6 py-5 dark:text-slate-200 [.light_&]:text-slate-700 custom-scrollbar">
           {children}
         </div>
 
@@ -168,9 +168,9 @@ export function ConfirmationModal({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
-      <GlassCard className="w-full max-w-md border-amber-300/25 bg-slate-900/70">
-        <h3 className="mb-2 text-lg font-semibold text-white">{title}</h3>
-        <p className="mb-5 text-sm text-slate-300">{description}</p>
+      <GlassCard className="w-full max-w-md dark:border-amber-300/25 dark:bg-slate-900/70 [.light_&]:border-amber-500/30 [.light_&]:bg-white">
+        <h3 className="mb-2 text-lg font-semibold dark:text-white [.light_&]:text-slate-900">{title}</h3>
+        <p className="mb-5 text-sm dark:text-slate-300 [.light_&]:text-slate-600">{description}</p>
         <div className="flex justify-end gap-2">
           <CommonButton variant="ghost" onClick={onCancel}>
             Cancel
@@ -195,8 +195,8 @@ export function SectionTitle({
 }) {
   return (
     <div className={clsx("mb-4", className)}>
-      <h2 className="text-2xl font-semibold text-white">{title}</h2>
-      {subtitle ? <p className="text-sm text-slate-300">{subtitle}</p> : null}
+      <h2 className="text-2xl font-semibold dark:text-white [.light_&]:text-slate-900">{title}</h2>
+      {subtitle ? <p className="text-sm dark:text-slate-300 [.light_&]:text-slate-600">{subtitle}</p> : null}
     </div>
   );
 }
@@ -209,9 +209,9 @@ export function Table({
   rows: (string | ReactNode)[][];
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-white/10">
+    <div className="overflow-x-auto rounded-xl border dark:border-white/10 [.light_&]:border-slate-200">
       <table className="min-w-full text-sm">
-        <thead className="bg-white/10 text-left text-slate-200">
+        <thead className="dark:bg-white/10 [.light_&]:bg-slate-100 dark:text-slate-200 [.light_&]:text-slate-700 text-left">
           <tr>
             {headers.map((header) => (
               <th key={header} className="px-4 py-3">
@@ -222,7 +222,7 @@ export function Table({
         </thead>
         <tbody>
           {rows.map((row, idx) => (
-            <tr key={idx} className="border-t border-white/10 text-slate-100">
+            <tr key={idx} className="border-t dark:border-white/10 [.light_&]:border-slate-200 dark:text-slate-100 [.light_&]:text-slate-600">
               {row.map((cell, cellIdx) => (
                 <td key={cellIdx} className="px-4 py-3">
                   {cell}
@@ -253,7 +253,9 @@ export function CommonCard({
     <motion.div
       whileHover={{ y: -4 }}
       className={clsx(
-        "rounded-2xl border border-white/15 bg-gradient-to-b from-white/10 to-white/5 p-5 shadow-xl backdrop-blur-xl transition-all duration-300",
+        "rounded-2xl border p-5 shadow-xl backdrop-blur-xl transition-all duration-300",
+        "dark:border-white/15 dark:bg-gradient-to-b dark:from-white/10 dark:to-white/5",
+        "[.light_&]:border-slate-200 [.light_&]:bg-white [.light_&]:shadow-slate-200/50",
         className,
       )}
     >
@@ -276,7 +278,9 @@ export function SearchField({
   return (
     <div
       className={clsx(
-        "group flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2 backdrop-blur transition-all duration-300 focus-within:border-indigo-300/50 focus-within:shadow-[0_0_20px_rgba(99,102,241,0.25)]",
+        "group flex items-center gap-2 rounded-xl border transition-all duration-300 focus-within:border-indigo-300/50 focus-within:shadow-[0_0_20px_rgba(99,102,241,0.25)]",
+        "dark:border-white/15 dark:bg-white/5 dark:backdrop-blur",
+        "[.light_&]:border-slate-200 [.light_&]:bg-slate-50 [.light_&]:shadow-inner",
         className,
       )}
     >
@@ -287,7 +291,7 @@ export function SearchField({
       <input
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
-        className="w-full bg-transparent text-sm outline-none placeholder:text-slate-500"
+        className="w-full bg-transparent text-sm outline-none dark:text-white [.light_&]:text-slate-900 placeholder:text-slate-500"
         placeholder={placeholder}
       />
     </div>
@@ -310,10 +314,10 @@ export function CommonDropdown({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-3 py-2 pr-9 text-sm text-slate-100 outline-none transition-all duration-300 focus:border-indigo-300/50 focus:shadow-[0_0_20px_rgba(99,102,241,0.2)]"
+        className="w-full appearance-none rounded-xl border px-3 py-2 pr-9 text-sm outline-none transition-all duration-300 focus:border-indigo-300/50 focus:shadow-[0_0_20px_rgba(99,102,241,0.2)] dark:border-white/15 dark:bg-white/5 dark:text-slate-100 [.light_&]:border-slate-200 [.light_&]:bg-slate-50 [.light_&]:text-slate-900"
       >
         {options.map((option) => (
-          <option key={option} value={option} className="bg-slate-900">
+          <option key={option} value={option} className="dark:bg-slate-900 [.light_&]:bg-white">
             {option}
           </option>
         ))}
@@ -346,7 +350,9 @@ export function InputField({
       onChange={(e) => onChange?.(e.target.value)}
       placeholder={placeholder}
       className={clsx(
-        "w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-100 outline-none transition-all duration-300 placeholder:text-slate-500 focus:border-indigo-300/50 focus:shadow-[0_0_20px_rgba(99,102,241,0.2)]",
+        "w-full rounded-xl border px-3 py-2 text-sm outline-none transition-all duration-300 placeholder:text-slate-500 focus:border-indigo-300/50 focus:shadow-[0_0_20px_rgba(99,102,241,0.2)]",
+        "dark:border-white/15 dark:bg-white/5 dark:text-slate-100",
+        "[.light_&]:border-slate-200 [.light_&]:bg-slate-50 [.light_&]:text-slate-900",
         className,
       )}
     />
@@ -375,9 +381,9 @@ export function AnimatedCounter({ value }: { value: number }) {
 
 export function EmptyState({ title, hint }: { title: string; hint: string }) {
   return (
-    <div className="rounded-xl border border-dashed border-white/20 bg-white/5 p-6 text-center">
-      <p className="text-lg text-white">{title}</p>
-      <p className="text-sm text-slate-300">{hint}</p>
+    <div className="rounded-xl border border-dashed p-6 text-center dark:border-white/20 dark:bg-white/5 [.light_&]:border-slate-300 [.light_&]:bg-slate-50">
+      <p className="text-lg dark:text-white [.light_&]:text-slate-900">{title}</p>
+      <p className="text-sm dark:text-slate-300 [.light_&]:text-slate-600">{hint}</p>
     </div>
   );
 }

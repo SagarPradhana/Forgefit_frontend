@@ -22,6 +22,7 @@ import { Helmet } from "react-helmet-async";
 import LanguageSwitcher from "../components/ui/LanguageSwitcher";
 import { useNotificationStore } from "../store/notificationStore";
 import { NotificationModal } from "../components/ui/NotificationModal";
+import { useGymStore } from "../store/gymStore";
 
 // Custom hook to detect system theme preference
 function useSystemTheme() {
@@ -51,16 +52,16 @@ const themeStyles = {
     light: {
       background:
         "radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.15), transparent 50%), radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.12), transparent 50%)",
-      accent: "from-blue-500 to-emerald-400",
+      accent: "from-blue-600 to-emerald-500",
       navGradient:
-        "linear-gradient(135deg, rgba(59,130,246,0.25), rgba(16,185,129,0.2))",
-      textColor: "text-gray-900",
-      bgColor: "bg-white",
-      cardBg: "bg-white",
-      sidebarBg: "bg-white",
-      borderColor: "border-gray-200",
-      shadowColor: "shadow-gray-200",
-      particleColor: "bg-gray-400/40",
+        "linear-gradient(135deg, rgba(59,130,246,0.3), rgba(16,185,129,0.25))",
+      textColor: "text-slate-900",
+      bgColor: "bg-slate-50",
+      cardBg: "bg-white/90",
+      sidebarBg: "bg-white/80",
+      borderColor: "border-slate-200/60",
+      shadowColor: "shadow-slate-200/50",
+      particleColor: "bg-slate-400/30",
     },
     dark: {
       background:
@@ -81,17 +82,17 @@ const themeStyles = {
     label: "Theme 2 - Purple & Pink",
     light: {
       background:
-        "radial-gradient(circle at 20% 30%, rgba(168, 85, 247, 0.15), transparent 50%), radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.12), transparent 50%)",
-      accent: "from-purple-500 to-pink-400",
+        "radial-gradient(circle at 20% 30%, rgba(168, 85, 247, 0.12), transparent 50%), radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.1), transparent 50%)",
+      accent: "from-purple-600 to-pink-500",
       navGradient:
-        "linear-gradient(135deg, rgba(168,85,247,0.25), rgba(236,72,153,0.2))",
-      textColor: "text-gray-900",
-      bgColor: "bg-white",
-      cardBg: "bg-white",
-      sidebarBg: "bg-white",
-      borderColor: "border-gray-200",
-      shadowColor: "shadow-gray-200",
-      particleColor: "bg-gray-400/40",
+        "linear-gradient(135deg, rgba(168,85,247,0.3), rgba(236,72,153,0.25))",
+      textColor: "text-slate-900",
+      bgColor: "bg-slate-50",
+      cardBg: "bg-white/90",
+      sidebarBg: "bg-white/80",
+      borderColor: "border-slate-200/60",
+      shadowColor: "shadow-slate-200/50",
+      particleColor: "bg-slate-400/30",
     },
     dark: {
       background:
@@ -112,17 +113,17 @@ const themeStyles = {
     label: "Theme 3 - Green & Cyan",
     light: {
       background:
-        "radial-gradient(circle at 20% 30%, rgba(16, 185, 129, 0.15), transparent 50%), radial-gradient(circle at 80% 70%, rgba(34, 211, 238, 0.12), transparent 50%)",
-      accent: "from-emerald-500 to-cyan-400",
+        "radial-gradient(circle at 20% 30%, rgba(16, 185, 129, 0.12), transparent 50%), radial-gradient(circle at 80% 70%, rgba(34, 211, 238, 0.1), transparent 50%)",
+      accent: "from-emerald-600 to-cyan-500",
       navGradient:
-        "linear-gradient(135deg, rgba(16,185,129,0.25), rgba(34,211,238,0.2))",
-      textColor: "text-gray-900",
-      bgColor: "bg-white",
-      cardBg: "bg-white",
-      sidebarBg: "bg-white",
-      borderColor: "border-gray-200",
-      shadowColor: "shadow-gray-200",
-      particleColor: "bg-gray-400/40",
+        "linear-gradient(135deg, rgba(16,185,129,0.3), rgba(34,211,238,0.25))",
+      textColor: "text-slate-900",
+      bgColor: "bg-slate-50",
+      cardBg: "bg-white/90",
+      sidebarBg: "bg-white/80",
+      borderColor: "border-slate-200/60",
+      shadowColor: "shadow-slate-200/50",
+      particleColor: "bg-slate-400/30",
     },
     dark: {
       background:
@@ -143,17 +144,17 @@ const themeStyles = {
     label: "Theme 4 - Orange & Blue",
     light: {
       background:
-        "radial-gradient(circle at 20% 30%, rgba(249, 115, 22, 0.15), transparent 50%), radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.12), transparent 50%)",
-      accent: "from-orange-500 to-blue-400",
+        "radial-gradient(circle at 20% 30%, rgba(249, 115, 22, 0.12), transparent 50%), radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.1), transparent 50%)",
+      accent: "from-orange-600 to-blue-500",
       navGradient:
-        "linear-gradient(135deg, rgba(249,115,22,0.25), rgba(59,130,246,0.2))",
-      textColor: "text-gray-900",
-      bgColor: "bg-white",
-      cardBg: "bg-white",
-      sidebarBg: "bg-white",
-      borderColor: "border-gray-200",
-      shadowColor: "shadow-gray-200",
-      particleColor: "bg-gray-400/40",
+        "linear-gradient(135deg, rgba(249,115,22,0.3), rgba(59,130,246,0.25))",
+      textColor: "text-slate-900",
+      bgColor: "bg-slate-50",
+      cardBg: "bg-white/90",
+      sidebarBg: "bg-white/80",
+      borderColor: "border-slate-200/60",
+      shadowColor: "shadow-slate-200/50",
+      particleColor: "bg-slate-400/30",
     },
     dark: {
       background:
@@ -174,17 +175,17 @@ const themeStyles = {
     label: "Theme 5 - Amber & Sky",
     light: {
       background:
-        "radial-gradient(circle at 20% 30%, rgba(245, 158, 11, 0.15), transparent 50%), radial-gradient(circle at 80% 70%, rgba(34, 211, 238, 0.12), transparent 50%)",
-      accent: "from-amber-500 to-sky-400",
+        "radial-gradient(circle at 20% 30%, rgba(245, 158, 11, 0.12), transparent 50%), radial-gradient(circle at 80% 70%, rgba(34, 211, 238, 0.1), transparent 50%)",
+      accent: "from-amber-600 to-sky-500",
       navGradient:
-        "linear-gradient(135deg, rgba(245,158,11,0.25), rgba(34,211,238,0.2))",
-      textColor: "text-gray-900",
-      bgColor: "bg-white",
-      cardBg: "bg-white",
-      sidebarBg: "bg-white",
-      borderColor: "border-gray-200",
-      shadowColor: "shadow-gray-200",
-      particleColor: "bg-gray-400/40",
+        "linear-gradient(135deg, rgba(245,158,11,0.3), rgba(34,211,238,0.25))",
+      textColor: "text-slate-900",
+      bgColor: "bg-slate-50",
+      cardBg: "bg-white/90",
+      sidebarBg: "bg-white/80",
+      borderColor: "border-slate-200/60",
+      shadowColor: "shadow-slate-200/50",
+      particleColor: "bg-slate-400/30",
     },
     dark: {
       background:
@@ -501,8 +502,7 @@ export function Sidebar({
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { role, name: authName } = useAuthStore();
   const systemTheme = useSystemTheme();
-  const [colorTheme, setColorTheme] =
-    useState<keyof typeof themeStyles>("theme1");
+  const { dashboardColorTheme: colorTheme, setDashboardColorTheme: setColorTheme } = useGymStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [notiModalOpen, setNotiModalOpen] = useState(false);
@@ -541,7 +541,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className={`relative h-screen min-h-screen overflow-hidden ${systemTheme === "light" ? "text-gray-900" : "text-white"}`}
+      className={`relative h-screen min-h-screen overflow-hidden overflow-x-hidden ${systemTheme} ${systemTheme === "light" ? "text-slate-900" : "text-white"}`}
     >
       <Helmet>
         <title>{`${role === 'admin' ? 'Admin' : 'Member'} Portal | ${authName || 'ForgeFit'}`}</title>
@@ -579,14 +579,14 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-1 flex-col gap-4 min-w-0"
+          className="flex flex-1 flex-col gap-4 min-w-0 overflow-hidden"
         >
           {/* 🔝 TOP BAR */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className={`relative z-[60] rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${currentTheme.cardBg} p-2.5 lg:p-4 ${currentTheme.shadowColor} backdrop-blur-xl mx-2 mt-2 lg:mx-0 lg:mt-0`}
+            className={`relative z-[60] rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${currentTheme.cardBg} p-2.5 lg:p-4 ${currentTheme.shadowColor} backdrop-blur-xl mx-0 mt-2 lg:mx-0 lg:mt-0`}
           >
             <div className="flex items-center justify-between gap-2 lg:gap-3">
               <div className="flex items-center gap-2 lg:gap-3">
@@ -663,7 +663,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                       >
                         {authName || role || "Account"}
                       </span>
-                      <span className="text-[7px] font-black uppercase tracking-[0.2em] text-slate-500 group-hover:text-amber-400 transition-colors whitespace-nowrap">
+                      <span className="text-[7px] font-black uppercase tracking-[0.1em] lg:tracking-[0.2em] text-slate-500 group-hover:text-amber-400 transition-colors whitespace-nowrap">
                         {role === "admin" ? "Master Admin" : "Active Member"}
                       </span>
                     </div>

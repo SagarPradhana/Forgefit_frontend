@@ -16,6 +16,8 @@ export const API_ENDPOINTS = {
     USER_DOC_DELETE: (id: string) => `/api/admin/user_roles/users/${id}/docs`,
     USER_STATUS: (id: string) => `/api/admin/user_roles/users/${id}/status`,
     USER_DELETE: (id: string) => `/api/admin/user_roles/users/${id}`,
+    USER_SUBSCRIPTIONS: (id: string) => `/api/admin/subscription/users/${id}/subscriptions`,
+    USER_SUBSCRIBE: (id: string) => `/api/admin/subscription/users/${id}/subscribe`,
     ROLES: "/api/admin/user_roles/roles",
     PLANS: "/api/admin/subscription/subscription-plans",
     PLAN_DETAIL: (id: string) => `/api/admin/subscription/subscription-plans/${id}`,
