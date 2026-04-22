@@ -116,7 +116,8 @@ export function AdminPortalPages({ page }: { page: string }) {
   const fetchPlans = async (p = plansMeta.page_no, search = planSearch) => {
     setPlansLoading(true);
     try {
-      const res = await adminSubscriptionService.getPlans({ page: p, search });
+      const offset = (p - 1) * plansMeta.page_size;
+      const res = await adminSubscriptionService.getPlans({ count: plansMeta.page_size, offset, search });
       if (res && res.data) {
         setPlans(res.data);
         setPlansMeta({

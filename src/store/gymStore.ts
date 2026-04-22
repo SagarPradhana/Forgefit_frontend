@@ -25,6 +25,16 @@ type OfferEntity = {
   validity?: string;
 };
 
+type ProductEntity = {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  stock: number;
+  image: string;
+  description: string;
+};
+
 type FeatureFlags = Record<number, { showProducts: boolean; allowUpgrade: boolean; showOffers: boolean }>;
 
 type AppConfig = {

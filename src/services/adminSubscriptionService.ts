@@ -27,10 +27,10 @@ export interface PaginatedResponse<T> {
 }
 
 export const adminSubscriptionService = {
-  getPlans: async (params: { page?: number; per_page?: number; search?: string }) => {
+  getPlans: async (params: { count?: number; offset?: number; search?: string }) => {
     const query = new URLSearchParams();
-    if (params.page) query.append("page", params.page.toString());
-    if (params.per_page) query.append("per_page", params.per_page.toString());
+    if (params.count) query.append("count", params.count.toString());
+    if (params.offset !== undefined) query.append("offset", params.offset.toString());
     if (params.search) query.append("search", params.search);
 
     const url = `${API_ENDPOINTS.ADMIN.PLANS}?${query.toString()}`;

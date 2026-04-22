@@ -49,8 +49,8 @@ export function UserManagement() {
 
   // --- API Fetching ---
   const queryParams = new URLSearchParams({
-    page: String(page),
-    per_page: String(perPage),
+    offset: String((page - 1) * perPage),
+    count: String(perPage),
   });
   if (searchQuery.trim()) queryParams.append("search", searchQuery.trim());
 
