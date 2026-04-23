@@ -49,6 +49,8 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       token: null,
       refreshToken: null,
+      profile_image_path: null,
+      metadata: null,
       login: (accessToken, refreshToken) => {
         const userData = parseJwt(accessToken);
         if (!userData) return;
@@ -62,6 +64,8 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
           token: accessToken,
           refreshToken: refreshToken,
+          profile_image_path: userData.profile_image_path || null,
+          metadata: userData.metadata || null,
         });
       },
       setUserData: (data) => {
