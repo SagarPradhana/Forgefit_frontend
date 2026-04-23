@@ -19,6 +19,7 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser }: Subscriptio
   const [amount, setAmount] = useState<number>(0);
   const [duration, setDuration] = useState<number>(1);
   const [endDate, setEndDate] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
 
   const { data: plansData, loading: plansLoading } = useGet(API_ENDPOINTS.ADMIN.PLANS);
   const plans = plansData?.data || [];
@@ -66,6 +67,7 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser }: Subscriptio
       subscription_plan_id: selectedPlanId,
       duration_in_months: Number(duration),
       amount: Number(amount),
+      payment_method: paymentMethod,
     };
     subscribe(API_ENDPOINTS.ADMIN.SUBSCRIPTION_CREATE, payload);
   };
@@ -143,6 +145,25 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser }: Subscriptio
                     </select>
                     <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 group-hover:text-indigo-400 transition-colors">
                       <Plus size={16} />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 ml-1">Payment Mode</label>
+                  <div className="relative group">
+                    <select 
+                      value={paymentMethod} 
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="w-full bg-slate-900/50 border border-white/10 rounded-2xl px-6 py-5 text-indigo-400 font-black text-sm appearance-none focus:outline-none focus:border-indigo-500/20 transition-all hover:bg-slate-900"
+                    >
+                      <option value="cash" className="bg-slate-900">Cash Settlement</option>
+                      <option value="card" className="bg-slate-900">Bank Card</option>
+                      <option value="upi" className="bg-slate-900">UPI Interface</option>
+                      <option value="other" className="bg-slate-900">Other Channels</option>
+                    </select>
+                    <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 group-hover:text-indigo-400 transition-colors">
+                      <CreditCard size={16} />
                     </div>
                   </div>
                 </div>
