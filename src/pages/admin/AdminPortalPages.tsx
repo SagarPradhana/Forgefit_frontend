@@ -88,6 +88,7 @@ export function AdminPortalPages({ page }: { page: string }) {
   const [planForm, setPlanForm] = useState({
     name: "",
     description: "",
+    actual_price: "",
     price: "",
     duration_in_months: "1",
   });
@@ -106,17 +107,19 @@ export function AdminPortalPages({ page }: { page: string }) {
   });
 
   // Plan Fetching
-  const fetchPlans = async (p = plansMeta.page_no, search = planSearch) => {
+  const fetchPlans = async (p = plansMeta.page_no || 1, search = planSearch) => {
     setPlansLoading(true);
     try {
-      const offset = (p - 1) * plansMeta.page_size;
-      const res = await adminSubscriptionService.getPlans({ count: plansMeta.page_size, offset, search });
+      const currentPage = Number(p) || 1;
+      const pageSize = Number(plansMeta.page_size) || 10;
+      const offset = (currentPage - 1) * pageSize;
+      const res = await adminSubscriptionService.getPlans({ count: pageSize, offset, search });
       if (res && res.data) {
         setPlans(res.data);
         setPlansMeta({
-          page_no: res.page_no,
-          total_count: res.total_count,
-          page_size: res.page_size,
+          page_no: res.page_no || 1,
+          total_count: res.total_count || 0,
+          page_size: res.page_size || 10,
           has_next: res.has_next,
           has_previous: res.has_previous
         });
@@ -208,7 +211,7 @@ export function AdminPortalPages({ page }: { page: string }) {
             <GlowButton
               className="w-full md:w-auto justify-center"
               onClick={() => {
-                setPlanForm({ name: "", description: "", price: "", duration_in_months: "1" });
+                setPlanForm({ name: "", description: "", actual_price: "", price: "", duration_in_months: "1" });
                 setEditPlan(null);
                 setPlanModalOpen(true);
               }}
@@ -227,9 +230,10 @@ export function AdminPortalPages({ page }: { page: string }) {
         ) : plans.length > 0 ? (
           <>
             <Table
-              headers={["Plan Details", "Pricing", "Duration", "Description", "Actions"]}
+              headers={["Plan Details", "Actual Price", "Valuation", "Duration", "Description", "Actions"]}
               rows={plans.map((p) => [
                 <span className="font-bold text-white uppercase tracking-tight" key={p.id}>{p.name}</span>,
+                <span className="text-slate-400 line-through text-xs" key={`${p.id}-actual`}>${p.actual_price}</span>,
                 <span className="text-emerald-400 font-black" key={`${p.id}-price`}>${p.price}</span>,
                 <span className="text-indigo-300 font-bold" key={`${p.id}-dur`}>{p.duration_in_months} Months</span>,
                 <span className="text-slate-400 text-xs truncate max-w-xs block" key={`${p.id}-desc`}>{p.description}</span>,
@@ -240,6 +244,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                       setPlanForm({
                         name: p.name,
                         description: p.description,
+                        actual_price: p.actual_price?.toString() || "",
                         price: p.price.toString(),
                         duration_in_months: p.duration_in_months.toString(),
                       });
@@ -309,6 +314,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                   const payload = {
                     name: planForm.name,
                     description: planForm.description,
+                    actual_price: Number(planForm.actual_price),
                     price: Number(planForm.price),
                     duration_in_months: Number(planForm.duration_in_months),
                   };
@@ -346,7 +352,19 @@ export function AdminPortalPages({ page }: { page: string }) {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Actual Price ($)</label>
+                <input
+                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
+                  placeholder="0"
+                  type="number"
+                  value={planForm.actual_price}
+                  onChange={(e) =>
+                    setPlanForm({ ...planForm, actual_price: e.target.value })
+                  }
+                />
+              </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Strategic Valuation ($)</label>
                 <input

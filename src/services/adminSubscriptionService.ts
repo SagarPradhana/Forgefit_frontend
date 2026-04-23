@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from "../utils/url";
 export interface PlanRequest {
   name: string;
   description: string;
+  actual_price: number;
   price: number;
   duration_in_months: number;
 }

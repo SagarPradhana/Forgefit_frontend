@@ -60,9 +60,11 @@ export function UserManagement() {
 
   // --- API Fetching ---
   const usersApiUrl = useMemo(() => {
+    const currentPage = Number(page) || 1;
+    const currentCount = Number(perPage) || 10;
     const params = new URLSearchParams({
-      offset: String((page - 1) * perPage),
-      count: String(perPage),
+      offset: String((currentPage - 1) * currentCount),
+      count: String(currentCount),
     });
     if (debouncedSearch.trim()) params.append("search", debouncedSearch.trim());
     return `${API_ENDPOINTS.ADMIN.USERS}?${params.toString()}`;
