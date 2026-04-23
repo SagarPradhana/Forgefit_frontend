@@ -25,7 +25,15 @@ export const API_ENDPOINTS = {
     PLAN_DETAIL: (id: string) => `/api/admin/subscription/subscription-plans/${id}`,
     SUBSCRIPTION_HISTORY: "/api/admin/subscription/subscription-history",
     SUBSCRIPTION_CREATE: "/api/admin/user_roles/subscription-plan-create",
-    PAYMENTS: "/api/admin/payments",
+    PRODUCTS: "/api/admin/product/",
+    PRODUCT_DETAIL: (id: string) => `/api/admin/product/${id}`,
+    PAYMENTS: "/api/admin/payment/",
+    PAYMENT_DETAIL: (id: string) => `/api/admin/payment/${id}`,
+    SYNC_SUBSCRIPTIONS: "/api/admin/user_roles/sync-users-subscription-plans",
+    ATTENDANCE: "/api/admin/attendance/",
+    ATTENDANCE_STATS: "/api/admin/attendance/attendance-stats",
+    ATTENDANCE_USER: (userId: string) => `/api/admin/attendance/${userId}`,
+    ATTENDANCE_DETAIL: (id: string) => `/api/admin/attendance/${id}`,
   }
 } as const;
 

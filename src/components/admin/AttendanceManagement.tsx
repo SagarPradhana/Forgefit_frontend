@@ -13,26 +13,20 @@ import {
   Plus
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { adminAttendanceService, type AttendanceResponse, type AttendanceRequest } from "../../services/adminAttendanceService";
+import { useEffect, useCallback } from "react";
+import { Skeleton } from "../ui/primitives";
+import { toast } from "../../store/toastStore";
 
 type AttendanceView = "grid" | "list";
 
-interface AttendanceRecord {
-  id: string;
-  userId: string;
-  userName: string;
-  userRole: string;
-  checkIn: string;
-  checkOut?: string;
-  status: "Present" | "Absent" | "Late";
-  date: string;
-}
 
 export function AttendanceManagement() {
   const [viewType, setViewType] = useState<AttendanceView>("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
+  const [editingRecord, setEditingRecord] = useState<AttendanceResponse | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -44,54 +38,105 @@ export function AttendanceManagement() {
     status: "Present" as "Present" | "Absent" | "Late"
   });
 
-  // Mock data for attendance
-  const [records, setRecords] = useState<AttendanceRecord[]>([
-    { id: "1", userId: "u1", userName: "Sophia Carter", userRole: "Member", checkIn: "07:15 AM", checkOut: "08:45 AM", status: "Present", date: "2026-04-20" },
-    { id: "2", userId: "u2", userName: "Noah Kent", userRole: "Member", checkIn: "08:30 AM", status: "Present", date: "2026-04-20" },
-    { id: "3", userId: "u3", userName: "Amira Lopez", userRole: "Member", checkIn: "09:00 AM", checkOut: "10:30 AM", status: "Late", date: "2026-04-20" },
-  ]);
+  const [records, setRecords] = useState<AttendanceResponse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState({ total_present: 0, total_absent: 0, attendance_rate: 0 });
 
-  const filteredData = useMemo(() => {
-    return records.filter(a =>
-      (a.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        a.userId.toLowerCase().includes(searchQuery.toLowerCase())) &&
-      a.date === selectedDate
-    );
-  }, [searchQuery, records, selectedDate]);
-
-  const handleSave = () => {
-    if (editingRecord) {
-      setRecords(records.map(r => r.id === editingRecord.id ? { ...r, ...form } : r));
-    } else {
-      const newRecord: AttendanceRecord = {
-        id: Math.random().toString(36).substr(2, 9),
-        userId: "manual",
-        userRole: "Member",
-        ...form
-      };
-      setRecords([newRecord, ...records]);
+  const fetchRecords = useCallback(async () => {
+    setLoading(true);
+    try {
+      const from_date = Math.floor(new Date(selectedDate).setHours(0, 0, 0, 0) / 1000);
+      const to_date = Math.floor(new Date(selectedDate).setHours(23, 59, 59, 999) / 1000);
+      
+      const res = await adminAttendanceService.getAttendance({
+        search: searchQuery || undefined,
+        from_date,
+        to_date,
+        count: 50 // Fixed count for now
+      });
+      if (res && res.data) {
+        setRecords(res.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-    setModalOpen(false);
-    setEditingRecord(null);
+  }, [searchQuery, selectedDate]);
+
+  const fetchStats = async () => {
+    try {
+      const res = await adminAttendanceService.getStats();
+      if (res && res.data) {
+        setStats(res.data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleEdit = (r: AttendanceRecord) => {
+  useEffect(() => {
+    fetchRecords();
+    fetchStats();
+  }, [fetchRecords]);
+
+  const handleSave = async () => {
+    try {
+      // Use epoch conversion
+      const dateTimestamp = Math.floor(new Date(form.date).getTime() / 1000);
+      
+      const checkInTime = new Date(form.date + 'T' + form.checkIn);
+      const checkOutTime = form.checkOut ? new Date(form.date + 'T' + form.checkOut) : undefined;
+
+      const payload: AttendanceRequest = {
+        user_id: editingRecord?.user_id || "7593c617-e21e-450f-8704-5f50f28328c6", // Default for now if creating manual
+        status: form.status,
+        date: dateTimestamp,
+        check_in: Math.floor(checkInTime.getTime() / 1000),
+        check_out: checkOutTime ? Math.floor(checkOutTime.getTime() / 1000) : undefined,
+        description: ""
+      };
+
+      if (editingRecord) {
+        await adminAttendanceService.updateAttendance(editingRecord.id, payload);
+        toast.success("Attendance record updated");
+      } else {
+        await adminAttendanceService.createAttendance(payload);
+        toast.success("New attendance logged");
+      }
+      setModalOpen(false);
+      setEditingRecord(null);
+      fetchRecords();
+      fetchStats();
+    } catch (err) {
+      toast.error("Failed to save record");
+    }
+  };
+
+  const handleEdit = (r: AttendanceResponse) => {
     setEditingRecord(r);
     setForm({
-      userName: r.userName,
-      date: r.date,
-      checkIn: r.checkIn,
-      checkOut: r.checkOut || "",
-      status: r.status
+      userName: r.user_id, // We'd ideally have user object here
+      date: new Date(r.date * 1000).toISOString().split('T')[0],
+      checkIn: new Date(r.check_in * 1000).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' }),
+      checkOut: r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' }) : "",
+      status: r.status as any
     });
     setModalOpen(true);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deleteId) {
-      setRecords(records.filter(r => r.id !== deleteId));
-      setDeleteModalOpen(false);
-      setDeleteId(null);
+      try {
+        await adminAttendanceService.deleteAttendance(deleteId);
+        toast.success("Record purged from registry");
+        setDeleteModalOpen(false);
+        setDeleteId(null);
+        fetchRecords();
+        fetchStats();
+      } catch (err) {
+        toast.error("Process failure");
+      }
     }
   };
 
@@ -117,12 +162,11 @@ export function AttendanceManagement() {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Check-ins" value={`${records.length}`} icon={<UserCheck className="text-emerald-400" />} />
-        <StatCard title="Present Today" value={`${records.filter(r => r.date === selectedDate).length}`} icon={<CheckCircle2 className="text-blue-400" />} />
-        <StatCard title="Lates Reported" value={`${records.filter(r => r.status === "Late").length}`} icon={<Clock className="text-amber-400" />} />
-        <StatCard title="Avg. Time" value="1.2h" icon={<Filter className="text-purple-400" />} />
+        <StatCard title="Total Registry" value={`${stats.total_present + stats.total_absent}`} icon={<UserCheck className="text-emerald-400" />} />
+        <StatCard title="Active Present" value={`${stats.total_present}`} icon={<CheckCircle2 className="text-blue-400" />} />
+        <StatCard title="Absentees" value={`${stats.total_absent}`} icon={<Clock className="text-amber-400" />} />
+        <StatCard title="Yield Rate" value={`${stats.attendance_rate}%`} icon={<Filter className="text-purple-400" />} />
       </div>
 
       <GlassCard>
@@ -158,7 +202,11 @@ export function AttendanceManagement() {
         </div>
 
         <AnimatePresence mode="wait">
-          {viewType === "grid" && (
+          {loading ? (
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+               {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-2xl" />)}
+             </div>
+          ) : viewType === "grid" && (
             <motion.div
               key="grid"
               initial={{ opacity: 0, x: -20 }}
@@ -166,7 +214,7 @@ export function AttendanceManagement() {
               exit={{ opacity: 0, x: 20 }}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
             >
-              {filteredData.map(record => (
+              {records.map(record => (
                 <AttendanceGridCard
                   key={record.id}
                   record={record}
@@ -174,7 +222,7 @@ export function AttendanceManagement() {
                   onDelete={() => { setDeleteId(record.id); setDeleteModalOpen(true); }}
                 />
               ))}
-              {filteredData.length === 0 && (
+              {records.length === 0 && (
                 <div className="col-span-full py-20 text-center border border-dashed border-white/10 rounded-2xl">
                   <p className="text-slate-500">No attendance records found for this date.</p>
                 </div>
@@ -182,7 +230,7 @@ export function AttendanceManagement() {
             </motion.div>
           )}
 
-          {viewType === "list" && (
+          {viewType === "list" && !loading && (
             <motion.div
               key="list"
               initial={{ opacity: 0, x: -20 }}
@@ -190,25 +238,20 @@ export function AttendanceManagement() {
               exit={{ opacity: 0, x: 20 }}
             >
               <Table
-                headers={["Member", "Check In", "Check Out", "Status", "Actions"]}
-                rows={filteredData.map(r => [
-                  <div key={r.id} className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-xs font-bold text-indigo-300">
-                      {r.userName.charAt(0)}
-                    </div>
-                    <span className="font-medium text-white">{r.userName}</span>
-                  </div>,
-                  r.checkIn,
-                  r.checkOut || "Active",
-                  <span key={`${r.id}-status`} className={`px-3 py-1 rounded-full text-xs font-semibold ${r.status === "Present" ? "bg-emerald-500/20 text-emerald-400" :
+                headers={["ID", "Check In", "Check Out", "Status", "Actions"]}
+                rows={records.map(r => [
+                  <span key={r.id} className="text-xs font-mono text-slate-500">{r.id.substring(0, 8)}...</span>,
+                  new Date(r.check_in * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                  r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Active",
+                  <span key={`${r.id}-status`} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${r.status === "Present" ? "bg-emerald-500/20 text-emerald-400" :
                     r.status === "Late" ? "bg-amber-500/20 text-amber-400" :
                       "bg-red-500/20 text-red-400"
                     }`}>
                     {r.status}
                   </span>,
                   <div key={`${r.id}-act`} className="flex gap-3 justify-center">
-                    <button onClick={() => handleEdit(r)} className="text-indigo-400 hover:text-indigo-300"><Edit2 size={16} /></button>
-                    <button onClick={() => { setDeleteId(r.id); setDeleteModalOpen(true); }} className="text-red-400 hover:text-red-300"><Trash2 size={16} /></button>
+                    <button onClick={() => handleEdit(r)} className="text-indigo-400 hover:text-indigo-300 transition-transform hover:scale-125"><Edit2 size={16} /></button>
+                    <button onClick={() => { setDeleteId(r.id); setDeleteModalOpen(true); }} className="text-red-400 hover:text-red-300 transition-transform hover:scale-125"><Trash2 size={16} /></button>
                   </div>
                 ])}
               />
@@ -320,15 +363,15 @@ function StatCard({ title, value, icon }: { title: string; value: string; icon: 
   );
 }
 
-function AttendanceGridCard({ record, onEdit, onDelete }: { record: AttendanceRecord, onEdit: () => void, onDelete: () => void }) {
+function AttendanceGridCard({ record, onEdit, onDelete }: { record: AttendanceResponse, onEdit: () => void, onDelete: () => void }) {
   return (
     <div className="group bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-indigo-500/50 transition-all hover:bg-white/[0.08] relative overflow-hidden">
       <div className="flex items-center gap-4 mb-4 relative z-10">
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-emerald-400 flex items-center justify-center text-white font-black text-xl shadow-[0_8px_16px_rgba(99,102,241,0.3)]">
-          {record.userName.charAt(0)}
+          {record.status.charAt(0)}
         </div>
         <div className="flex-1">
-          <h4 className="font-bold text-white group-hover:text-indigo-300 transition-colors">{record.userName}</h4>
+          <h4 className="font-bold text-white group-hover:text-indigo-300 transition-colors uppercase tracking-tight text-xs">ID: {record.id.substring(0, 8)}...</h4>
           <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-tighter ${record.status === "Present" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
             }`}>
             {record.status}
@@ -343,11 +386,11 @@ function AttendanceGridCard({ record, onEdit, onDelete }: { record: AttendanceRe
       <div className="grid grid-cols-2 gap-3 p-3 bg-black/20 rounded-xl relative z-10">
         <div className="space-y-1">
           <span className="text-[10px] text-slate-500 uppercase font-black">In</span>
-          <p className="text-white font-bold text-sm flex items-center gap-2"><Clock size={12} /> {record.checkIn}</p>
+          <p className="text-white font-bold text-sm flex items-center gap-2"><Clock size={12} /> {new Date(record.check_in * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
         </div>
         <div className="space-y-1 border-l border-white/10 pl-3">
           <span className="text-[10px] text-slate-500 uppercase font-black">Out</span>
-          <p className="text-white font-bold text-sm flex items-center gap-2"><Clock size={12} /> {record.checkOut || "Active"}</p>
+          <p className="text-white font-bold text-sm flex items-center gap-2"><Clock size={12} /> {record.check_out ? new Date(record.check_out * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Active"}</p>
         </div>
       </div>
 

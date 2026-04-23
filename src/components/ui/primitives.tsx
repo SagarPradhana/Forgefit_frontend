@@ -104,6 +104,8 @@ export function Modal({
   children,
   footer,
   maxWidth = "max-w-lg",
+  hideTitle = false,
+  className = "",
 }: {
   open: boolean;
   onClose: () => void;
@@ -111,6 +113,8 @@ export function Modal({
   children: ReactNode;
   footer?: ReactNode;
   maxWidth?: string;
+  hideTitle?: boolean;
+  className?: string;
 }) {
   if (!open) return null;
 
@@ -121,22 +125,36 @@ export function Modal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         className={clsx(
           "w-full rounded-2xl border border-white/10 bg-slate-900 shadow-2xl relative",
-          maxWidth
+          maxWidth,
+          className
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b dark:border-white/10 dark:bg-white/5 [.light_&]:border-slate-200 [.light_&]:bg-slate-50 px-4 md:px-6 py-4">
-          <h3 className="text-lg md:text-xl font-bold dark:text-white [.light_&]:text-slate-900">{title}</h3>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-slate-400 transition hover:bg-white/10 hover:text-white"
-          >
-            <X size={18} />
-          </button>
-        </div>
+        {!hideTitle && (
+          <div className="flex items-center justify-between border-b dark:border-white/10 dark:bg-white/5 [.light_&]:border-slate-200 [.light_&]:bg-slate-50 px-4 md:px-6 py-4">
+            <h3 className="text-lg md:text-xl font-bold dark:text-white [.light_&]:text-slate-900">{title}</h3>
+            <button
+              onClick={onClose}
+              className="rounded-full p-2 text-slate-400 transition hover:bg-white/10 hover:text-white"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        )}
 
         {/* Body */}
-        <div className="max-h-[70vh] overflow-y-auto px-4 md:px-6 py-5 dark:text-slate-200 [.light_&]:text-slate-700 custom-scrollbar">
+        <div className={clsx(
+          "max-h-[85vh] overflow-y-auto px-4 md:px-6 py-5 dark:text-slate-200 [.light_&]:text-slate-700 custom-scrollbar",
+          hideTitle && "pt-0"
+        )}>
+          {hideTitle && (
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 z-50 rounded-full bg-black/20 p-2 text-white/50 backdrop-blur-md transition hover:bg-black/40 hover:text-white"
+            >
+              <X size={18} />
+            </button>
+          )}
           {children}
         </div>
 

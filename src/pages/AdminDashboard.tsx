@@ -18,6 +18,7 @@ import {
   StatusBadge,
   Table,
   Modal,
+  GlowButton,
 } from "../components/ui/primitives";
 import {
   adminMetrics,
@@ -30,12 +31,33 @@ import {
 import { InquiryCenter } from "../components/admin/InquiryCenter";
 import { useGymStore } from "../store/gymStore";
 
-import { Users, Activity, DollarSign, UserPlus, Clock, AlertTriangle } from "lucide-react";
+import { Users, Activity, DollarSign, UserPlus, Clock, AlertTriangle, RefreshCw } from "lucide-react";
+import { useGet } from "../hooks/useApi";
+import { API_ENDPOINTS } from "../utils/url";
+import { toast } from "../store/toastStore";
 
 function AdminDashboard() {
   const { t } = useTranslation();
   const { subscriptionRequests, productRequests, contactInquiries, dashboardColorTheme } = useGymStore();
   const [mgmtModalOpen, setMgmtModalOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const { refetch: syncAllSubscriptions } = useGet(API_ENDPOINTS.ADMIN.SYNC_SUBSCRIPTIONS, {
+    enabled: false,
+    onSuccess: () => {
+      toast.success("All user subscription plans synchronized successfully.");
+      setIsSyncing(false);
+    },
+    onError: () => {
+      toast.error("Failed to sync subscription plans.");
+      setIsSyncing(false);
+    },
+  });
+
+  const handleSync = () => {
+    setIsSyncing(true);
+    syncAllSubscriptions();
+  };
 
   // Gradient mapping based on DashboardLayout themes
   const themeGradients: Record<string, string> = {
@@ -49,13 +71,13 @@ function AdminDashboard() {
   const activeGradient = themeGradients[dashboardColorTheme] || themeGradients.theme1;
 
   useEffect(() => {
-    const hasPending = 
+    const hasPending =
       subscriptionRequests.some(r => r.status === 'pending') ||
       productRequests.some(r => r.status === 'pending') ||
       contactInquiries.some(r => r.status === 'pending');
-    
+
     if (hasPending) {
-       setMgmtModalOpen(true);
+      setMgmtModalOpen(true);
     }
   }, [subscriptionRequests, productRequests, contactInquiries]);
 
@@ -84,14 +106,24 @@ function AdminDashboard() {
         maxWidth="max-w-[95vw]"
       >
         <div className="py-2">
-           <InquiryCenter />
+          <InquiryCenter />
         </div>
       </Modal>
 
-      <SectionTitle
-        title={t("dashboard")}
-        subtitle="Monitor users, subscriptions, and revenue growth."
-      />
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+        <SectionTitle
+          title={t("dashboard")}
+          subtitle="Monitor users, subscriptions, and revenue growth."
+        />
+        <GlowButton
+          onClick={handleSync}
+          disabled={isSyncing}
+          className="h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all shadow-lg shadow-emerald-500/10"
+        >
+          <RefreshCw size={18} className={isSyncing ? "animate-spin" : ""} />
+          {isSyncing ? "Syncing..." : "Sync Subscriptions"}
+        </GlowButton>
+      </div>
 
       <div className="mb-6 grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {metrics.map((m, i) => (

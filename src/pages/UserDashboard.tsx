@@ -17,13 +17,14 @@ import {
   AlertCircle,
   XCircle,
   QrCode,
-  Download
+  RefreshCw
 } from "lucide-react";
+import { useGet } from "../hooks/useApi";
 import confetti from "canvas-confetti";
-import { QRCodeSVG } from "qrcode.react";
 import { api } from "../utils/httputils";
 import { API_ENDPOINTS } from "../utils/url";
 import { toast } from "../store/toastStore";
+import { IdCardModal } from "../components/common/IdCardModal";
 
 function UserDashboard() {
   const { t } = useTranslation();
@@ -31,7 +32,27 @@ function UserDashboard() {
   const userId = useAuthStore((s) => s.id);
   const [workoutDone, setWorkoutDone] = useState(false);
   const [showExpiryModal, setShowExpiryModal] = useState(userProfile.daysLeft <= 5);
-  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [idCardOpen, setIdCardOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  // Auto-sync plan on home mount
+  const { refetch: syncUserPlan } = useGet(
+    userId ? `${API_ENDPOINTS.ADMIN.SYNC_SUBSCRIPTIONS}?user_id=${userId}` : null,
+    {
+      onSuccess: () => {
+        toast.success("Subscription plan synchronized.");
+        setIsSyncing(false);
+      },
+      onError: () => {
+        setIsSyncing(false);
+      }
+    }
+  );
+
+  const handleManualSync = () => {
+    setIsSyncing(true);
+    syncUserPlan();
+  };
 
   // Mock Admin-Driven Attendance Status
   const isPresentToday = true; // This would come from backend/admin state
@@ -69,32 +90,30 @@ function UserDashboard() {
     });
   };
 
-  const handleDownloadIDCard = async () => {
-    if (!userId) return;
-    try {
-      const filename = `${userName?.replace(/\s+/g, "_") || "Member"}_ID_Card.pdf`;
-      toast.info("Generating physical ID card...");
-      await api.download(API_ENDPOINTS.USER.DOWNLOAD_IDCARD(userId), filename);
-      toast.success("Download complete");
-    } catch (error) {
-      toast.error("Generation failed. Please contact support.");
-    }
-  };
-
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <SectionTitle
-            title={`${t("welcomeBack")}, ${userName?.split(' ')[0] || "Member"}`}
-            subtitle={t("trackConsistency")}
-          />
-          <GlowButton 
-            onClick={() => setQrModalOpen(true)}
+        <SectionTitle
+          title={`${t("welcomeBack")}, ${userName?.split(' ')[0] || "Member"}`}
+          subtitle={t("trackConsistency")}
+        />
+        <div className="flex items-center gap-3">
+          <GlowButton
+            onClick={handleManualSync}
+            disabled={isSyncing}
+            className="h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 bg-white/5 border-white/10 hover:bg-white/10 transition-all shadow-lg"
+          >
+            <RefreshCw size={18} className={isSyncing ? "animate-spin" : ""} />
+            {isSyncing ? "Syncing..." : "Re-sync Plan"}
+          </GlowButton>
+          <GlowButton
+            onClick={() => setIdCardOpen(true)}
             className="h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500 hover:text-white transition-all shadow-lg shadow-indigo-500/10"
           >
             <QrCode size={18} />
             Digital ID Card
           </GlowButton>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -175,8 +194,8 @@ function UserDashboard() {
                 className={`aspect-square rounded-xl flex items-center justify-center text-xs font-bold transition-all border ${isDone || wasPresent
                   ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
                   : isToday
-                  ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-400 animate-pulse"
-                  : "bg-white/5 border-white/5 text-slate-600"
+                    ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-400 animate-pulse"
+                    : "bg-white/5 border-white/5 text-slate-600"
                   }`}
               >
                 {day}
@@ -192,13 +211,13 @@ function UserDashboard() {
 
         <div className="flex justify-between items-start mb-8 relative z-10">
           <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
-                <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">{t("protocolInProgress")}</span>
-              </div>
-              <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">{t("todayWorkout")} <span className="text-indigo-400/50">CHEST & TRICEPS</span></h3>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
+              <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">{t("protocolInProgress")}</span>
             </div>
-            <div className="h-14 w-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+            <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">{t("todayWorkout")} <span className="text-indigo-400/50">CHEST & TRICEPS</span></h3>
+          </div>
+          <div className="h-14 w-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
             <Dumbbell size={28} />
           </div>
         </div>
@@ -266,50 +285,28 @@ function UserDashboard() {
       </Modal>
 
       {/* 🆔 DIGITAL IDENTITY MODAL */}
-      <Modal
-        open={qrModalOpen}
-        onClose={() => setQrModalOpen(false)}
-        title="Digital Access Token"
-      >
-        <div className="flex flex-col items-center py-10 px-4 space-y-8 text-center">
-            <div className="relative p-6 bg-white rounded-[2.5rem] shadow-[0_0_50px_rgba(255,255,255,0.1)] border-8 border-indigo-500/20 group">
-                <QRCodeSVG
-                value={`FORGEFIT-${userName || "USER"}-${Date.now()}`}
-                size={220}
-                level="H"
-                includeMargin={false}
-                className="relative z-10"
-                />
-                <div className="absolute inset-0 bg-indigo-500/5 -z-1 blur-2xl group-hover:scale-110 transition-transform" />
-            </div>
-
-            <div className="max-w-[280px] space-y-3">
-                <h3 className="text-xl font-black text-white uppercase tracking-tighter">Identity Verification</h3>
-                <p className="text-[11px] text-slate-400 leading-relaxed font-medium">
-                    Present this code to the security scanner or staff for immediate facility access. Token is cryptographically unique.
-                </p>
-                <div className="flex items-center justify-center gap-2 pt-4">
-                    <span className="h-2 w-2 rounded-full bg-indigo-500 animate-ping" />
-                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">Active & Authenticated</span>
-                </div>
-            </div>
-
-            <GlowButton
-                className="w-full h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest mt-4 flex items-center justify-center gap-3"
-                onClick={handleDownloadIDCard}
-            >
-                <Download size={18} />
-                Download Physical PDF
-            </GlowButton>
-
-            <button 
-              onClick={() => setQrModalOpen(false)}
-              className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors"
-            >
-              Protocol Secure
-            </button>
-        </div>
-      </Modal>
+      <IdCardModal
+        isOpen={idCardOpen}
+        onClose={() => setIdCardOpen(false)}
+        user={{
+          name: userName || "Member",
+          id: userId || "FF-UNKNOWN",
+          currentPlan: userProfile.currentPlan,
+          metadata: {
+            dob: userProfile.metadata?.dob,
+            gender: userProfile.metadata?.gender,
+            fitness_goal: userProfile.metadata?.fitness_goal,
+            profile_image_path: userProfile.profile_image_path,
+            blood_group: "B+",
+            batch_time: "6:00 AM",
+            joining_date: Math.floor(new Date(planInfo.startDate).getTime() / 1000),
+            expiry_date: Math.floor(new Date(planInfo.expiryDate).getTime() / 1000),
+            contact: userProfile.phone,
+            emergency_contact: userProfile.metadata?.emergency_contact
+          },
+          role: "Member"
+        }}
+      />
     </div>
   );
 }

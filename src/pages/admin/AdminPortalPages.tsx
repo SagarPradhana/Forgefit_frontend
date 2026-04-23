@@ -15,12 +15,13 @@ import AdminDashboard from "../AdminDashboard";
 import { UserManagement } from "../../components/admin/UserManagement";
 import { AttendanceManagement } from "../../components/admin/AttendanceManagement";
 import { adminSubscriptionService, type PlanResponse } from "../../services/adminSubscriptionService";
+import { adminProductService, type ProductResponse } from "../../services/adminProductService";
+import { adminPaymentService, type PaymentResponse, type PaymentMethod, type PaymentStatus, type PurchaseType } from "../../services/adminPaymentService";
 import { toast } from "../../store/toastStore";
 import { InquiryCenter } from "../../components/admin/InquiryCenter";
 import { useAuthStore } from "../../store/authStore";
 import { Bell, Users, CheckCircle2 } from "lucide-react";
 import { ChangePassword } from "../../components/admin/ChangePassword";
-import { payments } from "../../data/mockData";
 
 export function AdminPortalPages({ page }: { page: string }) {
   const {
@@ -51,9 +52,30 @@ export function AdminPortalPages({ page }: { page: string }) {
   const [paymentStatus, setPaymentStatus] = useState<
     "All" | "Paid" | "Pending"
   >("All");
-  const [paymentUser, setPaymentUser] = useState("All");
   const [paymentDate, setPaymentDate] = useState("");
   const [editPlan, setEditPlan] = useState<string | null>(null);
+
+  // Product States
+  const [fetchedProducts, setFetchedProducts] = useState<ProductResponse[]>([]);
+  const [productsMeta, setProductsMeta] = useState({
+    page_no: 1,
+    total_count: 0,
+    page_size: 10,
+    has_next: false,
+    has_previous: false
+  });
+  const [productsLoading, setProductsLoading] = useState(false);
+
+  // Payment States
+  const [fetchedPayments, setFetchedPayments] = useState<PaymentResponse[]>([]);
+  const [paymentsMeta, setPaymentsMeta] = useState({
+    page_no: 1,
+    total_count: 0,
+    page_size: 10,
+    has_next: false,
+    has_previous: false
+  });
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
 
   // Settings page state
   const [settingsTab, setSettingsTab] = useState<"app" | "pages" | "design">(
@@ -95,6 +117,7 @@ export function AdminPortalPages({ page }: { page: string }) {
 
   // Product states
   const [productSearch, setProductSearch] = useState("");
+  const [productCategory, setProductCategory] = useState("All");
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<string | null>(null);
   const [productForm, setProductForm] = useState({
@@ -102,6 +125,7 @@ export function AdminPortalPages({ page }: { page: string }) {
     category: "Supplements",
     price: "",
     stock: "",
+    unit: "kg",
     image: "",
     description: ""
   });
@@ -131,18 +155,80 @@ export function AdminPortalPages({ page }: { page: string }) {
     }
   };
 
+  const fetchProducts = async (p = productsMeta.page_no || 1, search = productSearch, category = productCategory) => {
+    setProductsLoading(true);
+    try {
+      const currentPage = Number(p) || 1;
+      const pageSize = Number(productsMeta.page_size) || 10;
+      const offset = (currentPage - 1) * pageSize;
+      const res = await adminProductService.getProducts({ 
+        count: pageSize, 
+        offset, 
+        search,
+        category: category !== "All" ? category : undefined
+      });
+      if (res && res.data) {
+        setFetchedProducts(res.data);
+        setProductsMeta({
+          page_no: Math.floor(offset / pageSize) + 1,
+          total_count: res.totalcount || 0,
+          page_size: pageSize,
+          has_next: offset + pageSize < res.totalcount,
+          has_previous: offset > 0
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
+  const fetchPayments = async (p = paymentsMeta.page_no || 1) => {
+    setPaymentsLoading(true);
+    try {
+      const currentPage = Number(p) || 1;
+      const pageSize = Number(paymentsMeta.page_size) || 10;
+      const offset = (currentPage - 1) * pageSize;
+      const res = await adminPaymentService.getPayments({ 
+        count: pageSize, 
+        offset,
+        status: paymentStatus !== "All" ? paymentStatus.toLowerCase() as any : undefined,
+      });
+      if (res && res.data) {
+        setFetchedPayments(res.data);
+        setPaymentsMeta({
+          page_no: Math.floor(offset / pageSize) + 1,
+          total_count: res.totalcount || 0,
+          page_size: pageSize,
+          has_next: offset + pageSize < res.totalcount,
+          has_previous: offset > 0
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setPaymentsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (page === "subscriptions") {
       fetchPlans(1);
+    } else if (page === "products") {
+      fetchProducts(1);
+    } else if (page === "payments") {
+      fetchPayments(1);
     }
-  }, [page]);
+  }, [page, paymentStatus]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       if (page === "subscriptions") fetchPlans(1);
+      if (page === "products") fetchProducts(1);
     }, 500);
     return () => clearTimeout(timer);
-  }, [planSearch]);
+  }, [planSearch, productSearch, productCategory]);
 
   // Sync config form with store changes
   useEffect(() => {
@@ -163,23 +249,6 @@ export function AdminPortalPages({ page }: { page: string }) {
     });
   }, [appConfig]);
 
-  const filteredRows = useMemo(
-    () =>
-      payments
-        .filter((p) =>
-          paymentStatus === "All" ? true : p.status === paymentStatus,
-        )
-        .filter((p) => (paymentUser === "All" ? true : p.user === paymentUser))
-        .filter((p) => (paymentDate ? p.date === paymentDate : true))
-        .map((p) => [
-          p.id,
-          p.user,
-          p.date,
-          p.amount,
-          <StatusBadge key={p.id} status={p.status as "Paid" | "Pending"} />,
-        ]),
-    [paymentDate, paymentStatus, paymentUser],
-  );
 
   if (page === "dashboard") return <AdminDashboard />;
 
@@ -525,10 +594,7 @@ export function AdminPortalPages({ page }: { page: string }) {
   }
 
   if (page === "products") {
-    const filteredProducts = products.filter(p =>
-      p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-      p.category.toLowerCase().includes(productSearch.toLowerCase())
-    );
+    const lastPage = Math.ceil(productsMeta.total_count / productsMeta.page_size) || 1;
 
     return (
       <GlassCard>
@@ -548,10 +614,21 @@ export function AdminPortalPages({ page }: { page: string }) {
                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white outline-none focus:border-indigo-500 transition"
               />
             </div>
+            <select
+              className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white outline-none focus:border-indigo-500 transition cursor-pointer"
+              value={productCategory}
+              onChange={(e) => setProductCategory(e.target.value)}
+            >
+              <option value="All" className="bg-slate-900">All Categories</option>
+              <option value="Supplements" className="bg-slate-900">Supplements</option>
+              <option value="Apparel" className="bg-slate-900">Apparel</option>
+              <option value="Equipment" className="bg-slate-900">Equipment</option>
+              <option value="Accessories" className="bg-slate-900">Accessories</option>
+            </select>
             <GlowButton
               className="w-full md:w-auto justify-center"
               onClick={() => {
-                setProductForm({ name: "", category: "Supplements", price: "", stock: "", image: "", description: "" });
+                setProductForm({ name: "", category: "Supplements", price: "", stock: "", unit: "kg", image: "", description: "" });
                 setEditProduct(null);
                 setProductModalOpen(true);
               }}
@@ -561,52 +638,90 @@ export function AdminPortalPages({ page }: { page: string }) {
           </div>
         </div>
 
-        <Table
-          headers={["Product Info", "Category", "Price", "Stock", "Actions"]}
-          rows={filteredProducts.map((p) => [
-            <div key={p.id} className="flex items-center gap-3 text-left">
-              <img src={p.image} alt={p.name} className="h-10 w-10 rounded-lg object-cover border border-white/10" />
-              <div className="flex flex-col">
-                <span className="font-bold text-white tracking-tight uppercase text-xs">{p.name}</span>
-                <span className="text-[10px] text-slate-500 truncate max-w-[120px]">{p.description}</span>
+        {productsLoading ? (
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-xl" />
+            ))}
+          </div>
+        ) : fetchedProducts.length > 0 ? (
+          <>
+            <Table
+              headers={["Product Info", "Category", "Price", "Stock", "Actions"]}
+              rows={fetchedProducts.map((p) => [
+                <div key={p.id} className="flex items-center gap-3 text-left">
+                  <img src={p.image_url || "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&q=80&w=400"} alt={p.name} className="h-10 w-10 rounded-lg object-cover border border-white/10" />
+                  <div className="flex flex-col">
+                    <span className="font-bold text-white tracking-tight uppercase text-xs">{p.name}</span>
+                    <span className="text-[10px] text-slate-500 truncate max-w-[120px]">{p.description}</span>
+                  </div>
+                </div>,
+                <span key={`${p.id}-cat`} className="text-[10px] font-black uppercase tracking-widest text-slate-400">{p.category}</span>,
+                <span key={`${p.id}-price`} className="text-emerald-400 font-bold">${p.price}</span>,
+                <div key={`${p.id}-stock`} className="flex flex-col items-center gap-1">
+                  <span className={`text-xs font-bold ${p.stock_count < 10 ? 'text-red-400' : 'text-indigo-300'}`}>{p.stock_count}</span>
+                  {p.stock_count < 10 && <span className="text-[8px] font-black uppercase text-red-500/80 animate-pulse">Low Stock</span>}
+                </div>,
+                <div key={`${p.id}-actions`} className="flex gap-4">
+                  <button
+                    className="text-indigo-400 hover:text-indigo-300 transition-transform hover:scale-125"
+                    onClick={() => {
+                      setProductForm({
+                        name: p.name,
+                        category: p.category,
+                        price: p.price.toString(),
+                        stock: p.stock_count.toString(),
+                        unit: p.unit || "kg",
+                        image: p.image_url || "",
+                        description: p.description || ""
+                      });
+                      setEditProduct(p.id);
+                      setProductModalOpen(true);
+                    }}
+                  >
+                    <Edit2 size={18} />
+                  </button>
+                  <button
+                    className="text-red-400 hover:text-red-300 transition-transform hover:scale-125"
+                    onClick={() => {
+                      setDeleteTarget({ type: "product", id: p.id });
+                      setDeleteModalOpen(true);
+                    }}
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>,
+              ])}
+            />
+
+            {lastPage > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-6">
+                <button
+                  disabled={!productsMeta.has_previous}
+                  onClick={() => fetchProducts(productsMeta.page_no - 1)}
+                  className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-xs font-bold uppercase tracking-widest disabled:opacity-30"
+                >
+                  Prev
+                </button>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                  Page {productsMeta.page_no} of {lastPage}
+                </span>
+                <button
+                  disabled={!productsMeta.has_next}
+                  onClick={() => fetchProducts(productsMeta.page_no + 1)}
+                  className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-xs font-bold uppercase tracking-widest disabled:opacity-30"
+                >
+                  Next
+                </button>
               </div>
-            </div>,
-            <span key={`${p.id}-cat`} className="text-[10px] font-black uppercase tracking-widest text-slate-400">{p.category}</span>,
-            <span key={`${p.id}-price`} className="text-emerald-400 font-bold">${p.price}</span>,
-            <div key={`${p.id}-stock`} className="flex flex-col items-center gap-1">
-              <span className={`text-xs font-bold ${p.stock < 10 ? 'text-red-400' : 'text-indigo-300'}`}>{p.stock}</span>
-              {p.stock < 10 && <span className="text-[8px] font-black uppercase text-red-500/80 animate-pulse">Low Stock</span>}
-            </div>,
-            <div key={`${p.id}-actions`} className="flex gap-4">
-              <button
-                className="text-indigo-400 hover:text-indigo-300 transition-transform hover:scale-125"
-                onClick={() => {
-                  setProductForm({
-                    name: p.name,
-                    category: p.category,
-                    price: p.price.toString(),
-                    stock: p.stock.toString(),
-                    image: p.image,
-                    description: p.description
-                  });
-                  setEditProduct(p.id);
-                  setProductModalOpen(true);
-                }}
-              >
-                <Edit2 size={18} />
-              </button>
-              <button
-                className="text-red-400 hover:text-red-300 transition-transform hover:scale-125"
-                onClick={() => {
-                  setDeleteTarget({ type: "product", id: p.id });
-                  setDeleteModalOpen(true);
-                }}
-              >
-                <Trash2 size={18} />
-              </button>
-            </div>,
-          ])}
-        />
+            )}
+          </>
+        ) : (
+          <EmptyState
+            title="Registry Void"
+            hint={productSearch ? `No equipment matching "${productSearch}" in archives.` : "Initiate your inventory by registering your first item."}
+          />
+        )}
 
         {/* Product Modal */}
         <Modal
@@ -617,18 +732,29 @@ export function AdminPortalPages({ page }: { page: string }) {
             <>
               <GlowButton className="bg-gray-600" onClick={() => setProductModalOpen(false)}>Abort</GlowButton>
               <GlowButton
-                onClick={() => {
+                onClick={async () => {
                   const payload = {
                     name: productForm.name,
                     category: productForm.category,
                     price: Number(productForm.price),
-                    stock: Number(productForm.stock),
-                    image: productForm.image || "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&q=80&w=400",
+                    stock_count: Number(productForm.stock),
+                    unit: productForm.unit,
+                    image_url: productForm.image || "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&q=80&w=400",
                     description: productForm.description
                   };
-                  if (editProduct) updateProduct(editProduct, payload);
-                  else addProduct(payload);
-                  setProductModalOpen(false);
+                  try {
+                    if (editProduct) {
+                      await adminProductService.updateProduct(editProduct, payload);
+                      toast.success("Inventory specifications updated");
+                    } else {
+                      await adminProductService.createProduct(payload);
+                      toast.success("New product deployed to catalog");
+                    }
+                    fetchProducts(1);
+                    setProductModalOpen(false);
+                  } catch (err) {
+                    toast.error("Inventory sync failed");
+                  }
                 }}
               >
                 Sync Inventory
@@ -685,14 +811,24 @@ export function AdminPortalPages({ page }: { page: string }) {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Image URL</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Unit of Measure</label>
                 <input
-                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold text-xs"
-                  placeholder="https://..."
-                  value={productForm.image}
-                  onChange={(e) => setProductForm({ ...productForm, image: e.target.value })}
+                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
+                  placeholder="e.g. kg, pcs, bottle"
+                  value={productForm.unit}
+                  onChange={(e) => setProductForm({ ...productForm, unit: e.target.value })}
                 />
               </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Image URL</label>
+              <input
+                className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold text-xs"
+                placeholder="https://..."
+                value={productForm.image}
+                onChange={(e) => setProductForm({ ...productForm, image: e.target.value })}
+              />
             </div>
 
             <div className="space-y-1">
@@ -716,8 +852,16 @@ export function AdminPortalPages({ page }: { page: string }) {
             <>
               <GlowButton className="bg-gray-600" onClick={() => setDeleteModalOpen(false)}>Abort</GlowButton>
               <GlowButton
-                onClick={() => {
-                  if (deleteTarget && deleteTarget.type === "product") deleteProduct(deleteTarget.id);
+                onClick={async () => {
+                  if (deleteTarget && deleteTarget.type === "product") {
+                    try {
+                      await adminProductService.deleteProduct(deleteTarget.id);
+                      toast.success("Inventory item terminated successfully");
+                      fetchProducts(productsMeta.page_no);
+                    } catch (err) {
+                      toast.error("Termination failed");
+                    }
+                  }
                   setDeleteModalOpen(false);
                   setDeleteTarget(null);
                 }}
@@ -740,50 +884,97 @@ export function AdminPortalPages({ page }: { page: string }) {
   }
 
   if (page === "payments") {
+    const lastPage = Math.ceil(paymentsMeta.total_count / paymentsMeta.page_size) || 1;
+
     return (
       <GlassCard>
-        <SectionTitle
-          title="Payments"
-          subtitle="Transaction history with date, status, and user filters."
-        />
-        <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <select
-            className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs md:text-sm text-white outline-none focus:border-indigo-500 transition"
-            value={paymentStatus}
-            onChange={(e) =>
-              setPaymentStatus(e.target.value as "All" | "Paid" | "Pending")
-            }
-          >
-            <option className="bg-slate-900">All Status</option>
-            <option className="bg-slate-900">Paid</option>
-            <option className="bg-slate-900">Pending</option>
-          </select>
-          <select
-            className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs md:text-sm text-white outline-none focus:border-indigo-500 transition"
-            value={paymentUser}
-            onChange={(e) => setPaymentUser(e.target.value)}
-          >
-            <option className="bg-slate-900">All Users</option>
-            {[...new Set(payments.map((p) => p.user))].map((name) => (
-              <option key={name} className="bg-slate-900">{name}</option>
-            ))}
-          </select>
-          <input
-            className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs md:text-sm text-white outline-none focus:border-indigo-500 transition"
-            type="date"
-            value={paymentDate}
-            onChange={(e) => setPaymentDate(e.target.value)}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+          <SectionTitle
+            title="Payment Registry"
+            subtitle="Secure transaction ledger with multi-dimensional filtering."
           />
         </div>
-        {filteredRows.length ? (
-          <Table
-            headers={["Transaction", "User", "Date", "Amount", "Status"]}
-            rows={filteredRows}
-          />
+
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-1">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Transaction Status</label>
+            <select
+              className="w-full rounded-xl border border-white/10 bg-slate-950 p-3 text-xs font-bold text-white outline-none focus:border-indigo-500 transition shadow-2xl"
+              value={paymentStatus}
+              onChange={(e) =>
+                setPaymentStatus(e.target.value as "All" | "Paid" | "Pending")
+              }
+            >
+              <option value="All">All Transactions</option>
+              <option value="Paid">Paid</option>
+              <option value="Pending">Pending</option>
+              <option value="Failed">Failed</option>
+            </select>
+          </div>
+          
+          <div className="space-y-1">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Temporal Filter</label>
+            <input
+              className="w-full rounded-xl border border-white/10 bg-slate-950 p-3 text-xs font-bold text-white outline-none focus:border-indigo-500 transition shadow-2xl"
+              type="date"
+              value={paymentDate}
+              onChange={(e) => setPaymentDate(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {paymentsLoading ? (
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-xl" />
+            ))}
+          </div>
+        ) : fetchedPayments.length > 0 ? (
+          <>
+            <Table
+              headers={["Transaction ID", "Entity", "Timestamp", "Valuation", "Method", "Type", "Status"]}
+              rows={fetchedPayments.map((p) => [
+                <span key={p.id} className="text-[10px] font-mono text-slate-500 uppercase">{p.id.split('-')[0]}...</span>,
+                <div key={`${p.id}-user`} className="flex flex-col">
+                  <span className="text-[10px] font-bold text-white uppercase tracking-tighter">User ID</span>
+                  <span className="text-[9px] text-slate-500 truncate max-w-[80px]">{p.user_id}</span>
+                </div>,
+                <span key={`${p.id}-date`} className="text-xs font-medium text-slate-300">
+                  {new Date(p.payment_date * 1000).toLocaleDateString()}
+                </span>,
+                <span key={`${p.id}-amt`} className="text-emerald-400 font-black italic">${p.amount}</span>,
+                <span key={`${p.id}-method`} className="text-[10px] font-black uppercase text-indigo-400 tracking-widest">{p.payment_method}</span>,
+                <span key={`${p.id}-type`} className="text-[10px] font-bold text-slate-400 uppercase">{p.purchase_type}</span>,
+                <StatusBadge key={`${p.id}-status`} status={p.status.charAt(0).toUpperCase() + p.status.slice(1) as any} />,
+              ])}
+            />
+
+            {lastPage > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-6">
+                <button
+                  disabled={!paymentsMeta.has_previous}
+                  onClick={() => fetchPayments(paymentsMeta.page_no - 1)}
+                  className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-xs font-bold uppercase tracking-widest disabled:opacity-30"
+                >
+                  Prev
+                </button>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                  Page {paymentsMeta.page_no} of {lastPage}
+                </span>
+                <button
+                  disabled={!paymentsMeta.has_next}
+                  onClick={() => fetchPayments(paymentsMeta.page_no + 1)}
+                  className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-xs font-bold uppercase tracking-widest disabled:opacity-30"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <EmptyState
-            title="No transactions found"
-            hint="Try changing filters."
+            title="Financial Static"
+            hint="No transaction signals detected for the selected parameters."
           />
         )}
       </GlassCard>

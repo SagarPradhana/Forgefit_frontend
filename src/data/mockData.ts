@@ -31,6 +31,13 @@ export const userProfile = {
   daysLeft: 5,
   attendance: 18,
   paymentStatus: 'Pending',
+  profile_image_path: 'https://images.unsplash.com/photo-1594381898411-846e7d193883?auto=format&fit=crop&q=80&w=200',
+  metadata: {
+    dob: 889833600, // 14 Mar 1998
+    gender: 'Female',
+    fitness_goal: 'Strength',
+    emergency_contact: '+1 555 999 123'
+  }
 };
 
 export type User = {

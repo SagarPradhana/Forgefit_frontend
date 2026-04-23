@@ -21,7 +21,7 @@ interface UserListViewProps {
   onOpenAttendance: (user: any) => void;
   onOpenSubscription: (user: any) => void;
   onResetPassword: (user: any) => void;
-  onDownloadIDCard: (user: any) => void;
+  onOpenIdCard: (user: any) => void;
   lastUserElementRef: (node: HTMLDivElement) => void;
 }
 
@@ -43,7 +43,7 @@ export const UserListView = ({
   onOpenAttendance,
   onOpenSubscription,
   onResetPassword,
-  onDownloadIDCard,
+  onOpenIdCard,
   lastUserElementRef,
 }: UserListViewProps) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
@@ -145,9 +145,9 @@ export const UserListView = ({
                     )}
                   </button>
                   <button
-                    onClick={() => onDownloadIDCard(user)}
+                    onClick={() => onOpenIdCard(user)}
                     className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-white/5 hover:border-emerald-500/30 transition-all group"
-                    title="Generate & Download ID Card"
+                    title="View Identity Card"
                   >
                     <Contact size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
                     <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">ID Card</span>
@@ -289,9 +289,9 @@ export const UserListView = ({
                           <FileText size={16} />
                         </button>
                         <button
-                          onClick={() => onDownloadIDCard(user)}
+                          onClick={() => onOpenIdCard(user)}
                           className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-emerald-500 text-emerald-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-emerald-500/40"
-                          title="Download ID Card Protocol"
+                          title="View Identity Card Protocol"
                         >
                           <Contact size={16} />
                         </button>

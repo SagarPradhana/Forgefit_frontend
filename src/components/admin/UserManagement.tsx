@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { GlassCard, SectionTitle } from "../../components/ui/primitives";
-import { Search, Grid, List, Plus } from "lucide-react";
+import { Search, Grid, List, Plus, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 import { useGet, useMutation } from "../../hooks/useApi";
 import { API_ENDPOINTS } from "../../utils/url";
@@ -15,6 +15,7 @@ import { AttendanceModal } from "./users/AttendanceModal";
 import { DeleteUserModal } from "./users/DeleteUserModal";
 import { SubscriptionModal } from "./users/SubscriptionModal";
 import { PasswordResetModal } from "./users/PasswordResetModal";
+import { IdCardModal } from "../common/IdCardModal";
 
 // Types
 import type { ViewType, ModalStep, UserFormData } from "./users/types";
@@ -31,6 +32,7 @@ export function UserManagement() {
   const [showPassword, setShowPassword] = useState(false);
   const [loadingStatusId, setLoadingStatusId] = useState<string | null>(null);
   const [loadingDeleteId, setLoadingDeleteId] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   console.log("photoPreview", photoPreview);
 
@@ -49,6 +51,10 @@ export function UserManagement() {
   // Password Reset Modal State
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [selectedUserForReset, setSelectedUserForReset] = useState<any>(null);
+
+  // ID Card Modal State
+  const [idCardOpen, setIdCardOpen] = useState(false);
+  const [selectedUserForCard, setSelectedUserForCard] = useState<any>(null);
 
   // Pagination & Search State
   const [page, setPage] = useState(1);
@@ -105,6 +111,24 @@ export function UserManagement() {
       refetchUsers();
     }
   });
+
+  const { refetch: syncAllSubscriptions } = useGet(API_ENDPOINTS.ADMIN.SYNC_SUBSCRIPTIONS, {
+    enabled: false,
+    onSuccess: () => {
+      toast.success("Synchronized all user subscription plans");
+      setIsSyncing(false);
+      refetchUsers();
+    },
+    onError: () => {
+      toast.error("Subscription sync failed");
+      setIsSyncing(false);
+    }
+  });
+
+  const handleSyncAll = () => {
+    setIsSyncing(true);
+    syncAllSubscriptions();
+  };
 
   const { mutate: editUser, loading: editing } = useMutation("patch", {
     onSuccess: () => {
@@ -325,15 +349,9 @@ export function UserManagement() {
     deleteDocument(url);
   };
 
-  const handleDownloadIDCard = async (user: any) => {
-    try {
-      const filename = `${user.name.replace(/\s+/g, "_")}_ID_Card.pdf`;
-      toast.info(`Generating ID Card for ${user.name}...`);
-      await api.download(API_ENDPOINTS.USER.DOWNLOAD_IDCARD(user.id), filename);
-      toast.success("ID Card downloaded successfully");
-    } catch (error) {
-      toast.error("Failed to download ID card");
-    }
+  const handleOpenIdCard = (user: any) => {
+    setSelectedUserForCard(user);
+    setIdCardOpen(true);
   };
 
   const handleDeleteUser = (userId: string) => {
@@ -402,15 +420,28 @@ export function UserManagement() {
           </div>
         </div>
 
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleAddNew}
-          className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-orange-400 hover:from-indigo-600 hover:to-orange-500 text-white font-medium px-4 py-2 rounded-lg transition"
-        >
-          <Plus size={18} />
-          Add User
-        </motion.button>
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleSyncAll}
+            disabled={isSyncing}
+            className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white font-medium px-4 py-2 rounded-lg transition"
+          >
+            <RefreshCw size={18} className={isSyncing ? "animate-spin" : ""} />
+            {isSyncing ? "Syncing..." : "Sync All"}
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleAddNew}
+            className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-orange-400 hover:from-indigo-600 hover:to-orange-500 text-white font-medium px-4 py-2 rounded-lg transition"
+          >
+            <Plus size={18} />
+            Add User
+          </motion.button>
+        </div>
       </div>
 
       <UserListView
@@ -431,7 +462,7 @@ export function UserManagement() {
         onOpenAttendance={(user) => { setSelectedUserForAttendance(user); setAttendanceModalOpen(true); }}
         onOpenSubscription={(user) => { setSelectedUserForSubscription(user); setSubscriptionModalOpen(true); }}
         onResetPassword={(user) => { setSelectedUserForReset(user); setResetModalOpen(true); }}
-        onDownloadIDCard={handleDownloadIDCard}
+        onOpenIdCard={handleOpenIdCard}
         lastUserElementRef={lastUserElementRef}
       />
 
@@ -491,6 +522,14 @@ export function UserManagement() {
         userId={selectedUserForReset?.id}
         userName={selectedUserForReset?.name}
       />
+
+      {selectedUserForCard && (
+        <IdCardModal
+          isOpen={idCardOpen}
+          onClose={() => setIdCardOpen(false)}
+          user={selectedUserForCard}
+        />
+      )}
     </GlassCard>
   );
 }

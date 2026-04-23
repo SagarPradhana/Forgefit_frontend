@@ -27,6 +27,8 @@ import { SettingsPanel } from "../SettingPanel";
 import { useAuthStore } from "../../store/authStore";
 import { toast } from "../../store/toastStore";
 import { ChangePassword } from "../../components/admin/ChangePassword";
+import { adminAttendanceService, type AttendanceResponse } from "../../services/adminAttendanceService";
+import { useEffect } from "react";
 
 export function UserPortalPages({ page }: { page: string }) {
   const plans = useGymStore((s) => s.plans);
@@ -66,6 +68,55 @@ export function UserPortalPages({ page }: { page: string }) {
 
   const auth = useAuthStore();
   const authName = auth.name;
+  const userId = auth.id;
+
+  const [fetchedAttendance, setFetchedAttendance] = useState<AttendanceResponse[]>([]);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+
+  const fetchUserAttendance = async () => {
+    if (!userId) return;
+    setAttendanceLoading(true);
+    try {
+      let from_date: number | undefined;
+      let to_date: number | undefined;
+
+      if (range === "monthly") {
+        from_date = Math.floor(new Date(selectedYear, selectedMonth, 1).getTime() / 1000);
+        to_date = Math.floor(new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59).getTime() / 1000);
+      } else if (range === "weekly") {
+        from_date = Math.floor(new Date(selectedWeek).getTime() / 1000);
+        const endWeek = new Date(selectedWeek);
+        endWeek.setDate(endWeek.getDate() + 6);
+        to_date = Math.floor(endWeek.setHours(23, 59, 59, 999) / 1000);
+      } else if (range === "custom") {
+        from_date = Math.floor(new Date(customDates.start).getTime() / 1000);
+        to_date = Math.floor(new Date(customDates.end).setHours(23, 59, 59, 999) / 1000);
+      }
+
+      const res = await adminAttendanceService.getUserAttendance(userId, { from_date, to_date });
+      if (res && res.data) {
+        setFetchedAttendance(res.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAttendanceLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (page === "attendance") {
+      fetchUserAttendance();
+    }
+  }, [page, range, selectedMonth, selectedYear, selectedWeek, customDates]);
+
+  const formatAttendanceForUI = (data: AttendanceResponse[]) => {
+    return data.map(a => ({
+      date: new Date(a.date * 1000).toISOString().split('T')[0],
+      checkIn: new Date(a.check_in * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      checkOut: a.check_out ? new Date(a.check_out * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "---"
+    }));
+  };
 
   if (page === "dashboard") return <UserDashboard />;
 
@@ -373,19 +424,27 @@ export function UserPortalPages({ page }: { page: string }) {
           </GlassCard>
         </div>
 
-        {view === "calendar" ? (
-          <AttendanceCalendar data={attendanceHistory} />
+        {attendanceLoading ? (
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
+          </div>
+        ) : fetchedAttendance.length > 0 ? (
+          view === "calendar" ? (
+            <AttendanceCalendar data={formatAttendanceForUI(fetchedAttendance)} />
+          ) : (
+            <GlassCard>
+              <Table
+                headers={["Date", "Check In", "Check Out"]}
+                rows={formatAttendanceForUI(fetchedAttendance).map((a) => [
+                  a.date,
+                  a.checkIn,
+                  a.checkOut,
+                ])}
+              />
+            </GlassCard>
+          )
         ) : (
-          <GlassCard>
-            <Table
-              headers={["Date", "Check In", "Check Out"]}
-              rows={attendanceHistory.map((a) => [
-                a.date,
-                a.checkIn,
-                a.checkOut,
-              ])}
-            />
-          </GlassCard>
+          <EmptyState title="Registry Empty" hint="No attendance markers found for the current temporal selection." />
         )}
       </div>
     );
