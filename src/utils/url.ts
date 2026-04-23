@@ -23,10 +23,10 @@ export const API_ENDPOINTS = {
     USER_SUBSCRIPTIONS: (id: string) => `/api/admin/subscription-plan/users/${id}/subscriptions`,
     USER_SUBSCRIBE: (id: string) => `/api/admin/subscription-plan/users/${id}/subscribe`,
     ROLES: "/api/admin/user_roles/roles",
-    PLANS: "/api/admin/subscription-plan/subscription-plans",
-    PLAN_DETAIL: (id: string) => `/api/admin/subscription-plan/subscription-plans/${id}`,
+    PLANS: "/api/admin/subscription/subscription-plans",
+    PLAN_DETAIL: (id: string) => `/api/admin/subscription/subscription-plans/${id}`,
     PAYMENTS: "/api/admin/payments",
-  },
+  }
 } as const;
 
 export type ApiEndpoint = typeof API_ENDPOINTS;
