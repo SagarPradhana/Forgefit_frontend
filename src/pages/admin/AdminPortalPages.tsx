@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useGymStore } from "../../store/gymStore";
 import {
   EmptyState,
@@ -16,7 +16,7 @@ import { UserManagement } from "../../components/admin/UserManagement";
 import { AttendanceManagement } from "../../components/admin/AttendanceManagement";
 import { adminSubscriptionService, type PlanResponse } from "../../services/adminSubscriptionService";
 import { adminProductService, type ProductResponse } from "../../services/adminProductService";
-import { adminPaymentService, type PaymentResponse, type PaymentMethod, type PaymentStatus, type PurchaseType } from "../../services/adminPaymentService";
+import { adminPaymentService, type PaymentResponse } from "../../services/adminPaymentService";
 import { toast } from "../../store/toastStore";
 import { InquiryCenter } from "../../components/admin/InquiryCenter";
 import { useAuthStore } from "../../store/authStore";
@@ -29,10 +29,6 @@ export function AdminPortalPages({ page }: { page: string }) {
     publicPageConfig,
     designThemes,
     currentDesignTheme,
-    products,
-    addProduct,
-    updateProduct,
-    deleteProduct,
     updateAppConfig,
     updatePublicPageConfig,
     setDesignTheme,
@@ -161,9 +157,9 @@ export function AdminPortalPages({ page }: { page: string }) {
       const currentPage = Number(p) || 1;
       const pageSize = Number(productsMeta.page_size) || 10;
       const offset = (currentPage - 1) * pageSize;
-      const res = await adminProductService.getProducts({ 
-        count: pageSize, 
-        offset, 
+      const res = await adminProductService.getProducts({
+        count: pageSize,
+        offset,
         search,
         category: category !== "All" ? category : undefined
       });
@@ -190,8 +186,8 @@ export function AdminPortalPages({ page }: { page: string }) {
       const currentPage = Number(p) || 1;
       const pageSize = Number(paymentsMeta.page_size) || 10;
       const offset = (currentPage - 1) * pageSize;
-      const res = await adminPaymentService.getPayments({ 
-        count: pageSize, 
+      const res = await adminPaymentService.getPayments({
+        count: pageSize,
         offset,
         status: paymentStatus !== "All" ? paymentStatus.toLowerCase() as any : undefined,
       });
@@ -911,7 +907,7 @@ export function AdminPortalPages({ page }: { page: string }) {
               <option value="Failed">Failed</option>
             </select>
           </div>
-          
+
           <div className="space-y-1">
             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Temporal Filter</label>
             <input

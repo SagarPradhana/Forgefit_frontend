@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { GlassCard, SectionTitle, Table, CommonButton, Modal } from "../ui/primitives";
 import {
   Grid,
@@ -47,7 +47,7 @@ export function AttendanceManagement() {
     try {
       const from_date = Math.floor(new Date(selectedDate).setHours(0, 0, 0, 0) / 1000);
       const to_date = Math.floor(new Date(selectedDate).setHours(23, 59, 59, 999) / 1000);
-      
+
       const res = await adminAttendanceService.getAttendance({
         search: searchQuery || undefined,
         from_date,
@@ -84,7 +84,7 @@ export function AttendanceManagement() {
     try {
       // Use epoch conversion
       const dateTimestamp = Math.floor(new Date(form.date).getTime() / 1000);
-      
+
       const checkInTime = new Date(form.date + 'T' + form.checkIn);
       const checkOutTime = form.checkOut ? new Date(form.date + 'T' + form.checkOut) : undefined;
 
@@ -163,10 +163,10 @@ export function AttendanceManagement() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Registry" value={`${stats.total_present + stats.total_absent}`} icon={<UserCheck className="text-emerald-400" />} />
-        <StatCard title="Active Present" value={`${stats.total_present}`} icon={<CheckCircle2 className="text-blue-400" />} />
-        <StatCard title="Absentees" value={`${stats.total_absent}`} icon={<Clock className="text-amber-400" />} />
-        <StatCard title="Yield Rate" value={`${stats.attendance_rate}%`} icon={<Filter className="text-purple-400" />} />
+        <StatCard title="Total Registry" value={`${(stats.total_present ?? 0) + (stats.total_absent ?? 0)}`} icon={<UserCheck className="text-emerald-400" />} />
+        <StatCard title="Active Present" value={`${(stats.total_present ?? 0)}`} icon={<CheckCircle2 className="text-blue-400" />} />
+        <StatCard title="Absentees" value={`${stats.total_absent ?? 0}`} icon={<Clock className="text-amber-400" />} />
+        <StatCard title="Yield Rate" value={`${stats.attendance_rate ?? 0}%`} icon={<Filter className="text-purple-400" />} />
       </div>
 
       <GlassCard>
@@ -203,9 +203,9 @@ export function AttendanceManagement() {
 
         <AnimatePresence mode="wait">
           {loading ? (
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-               {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-2xl" />)}
-             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-2xl" />)}
+            </div>
           ) : viewType === "grid" && (
             <motion.div
               key="grid"
