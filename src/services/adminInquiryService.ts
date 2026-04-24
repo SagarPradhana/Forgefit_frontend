@@ -34,6 +34,10 @@ export const adminInquiryService = {
     return api.delete(`${API_ENDPOINTS.ADMIN.INQUIRIES_CONTACT}/${id}`);
   },
 
+  updateContactInquiry: async (id: string) => {
+    return api.patch(`${API_ENDPOINTS.ADMIN.INQUIRIES_CONTACT}/${id}`, { status: true });
+  },
+
   getProductOrders: async (params: InquiryParams) => {
     const query = new URLSearchParams();
     if (params.id) query.append("id", params.id);
@@ -48,6 +52,10 @@ export const adminInquiryService = {
 
   deleteProductOrder: async (id: string) => {
     return api.delete(`${API_ENDPOINTS.ADMIN.INQUIRIES_PRODUCT_ORDER}/${id}`);
+  },
+
+  updateProductOrder: async (id: string) => {
+    return api.patch(`${API_ENDPOINTS.ADMIN.INQUIRIES_PRODUCT_ORDER}/${id}`, { status: true });
   },
 
   getSubscriptionInquiries: async (params: InquiryParams) => {
@@ -66,6 +74,10 @@ export const adminInquiryService = {
     return api.delete(`${API_ENDPOINTS.ADMIN.INQUIRIES_SUBSCRIPTION}/${id}`);
   },
 
+  updateSubscriptionInquiry: async (id: string) => {
+    return api.patch(`${API_ENDPOINTS.ADMIN.INQUIRIES_SUBSCRIPTION}/${id}`, { status: true });
+  },
+
   getExpiringMembers: async (params: InquiryParams) => {
     const query = new URLSearchParams();
     if (params.id) query.append("id", params.id);
@@ -80,5 +92,9 @@ export const adminInquiryService = {
 
   deleteExpiringMemberRecord: async (id: string) => {
     return api.delete(`${API_ENDPOINTS.ADMIN.INQUIRIES_EXPIRING}/${id}`);
+  },
+
+  updateExpiringMemberRecord: async (id: string) => {
+    return api.patch(`${API_ENDPOINTS.ADMIN.INQUIRIES_EXPIRING}/${id}`, { status: true });
   }
 };

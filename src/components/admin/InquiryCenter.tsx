@@ -72,6 +72,21 @@ export function InquiryCenter() {
     }
   };
 
+  const handleResolve = async (id: string) => {
+    try {
+      switch (activeTab) {
+        case "subscriptions": await adminInquiryService.updateSubscriptionInquiry(id); break;
+        case "products": await adminInquiryService.updateProductOrder(id); break;
+        case "contacts": await adminInquiryService.updateContactInquiry(id); break;
+        case "expiry": await adminInquiryService.updateExpiringMemberRecord(id); break;
+      }
+      toast.success("Record marked as resolved");
+      fetchData();
+    } catch (err) {
+      toast.error("Resolve operation failed");
+    }
+  };
+
   const tabs: { id: InquiryType; label: string }[] = [
     { id: "subscriptions", label: "Subscriptions" },
     { id: "products", label: "Product Orders" },
@@ -131,6 +146,7 @@ export function InquiryCenter() {
                   <span key={`${r.id}-date`} className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span>,
                   <StatusBadge key={`${r.id}-status`} status={r.status ? "Paid" : "Pending"} />,
                   <div key={`${r.id}-actions`} className="flex gap-3">
+                    <button onClick={() => handleResolve(r.id)} className="text-emerald-400 hover:scale-125 transition-transform" title="Resolve"><CheckCircle size={16} /></button>
                     <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title="Delete"><Trash2 size={16} /></button>
                   </div>
                 ])}
@@ -150,6 +166,7 @@ export function InquiryCenter() {
                   <span key={`${r.id}-date`} className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span>,
                   <StatusBadge key={`${r.id}-status`} status={r.status ? "Paid" : "Pending"} />,
                   <div key={`${r.id}-actions`} className="flex gap-3">
+                    <button onClick={() => handleResolve(r.id)} className="text-emerald-400 hover:scale-125 transition-transform" title="Resolve"><CheckCircle size={16} /></button>
                     <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title="Delete"><Trash2 size={16} /></button>
                   </div>
                 ])}
@@ -175,6 +192,7 @@ export function InquiryCenter() {
                   <span key={`${r.id}-date`} className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span>,
                   <StatusBadge key={`${r.id}-status`} status={r.status ? "Paid" : "Pending"} />,
                   <div key={`${r.id}-actions`} className="flex gap-3">
+                    <button onClick={() => handleResolve(r.id)} className="text-emerald-400 hover:scale-125 transition-transform" title="Resolve"><CheckCircle size={16} /></button>
                     <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title="Delete"><Trash2 size={16} /></button>
                   </div>
                 ])}
@@ -198,6 +216,9 @@ export function InquiryCenter() {
                     <span className="text-[10px] font-black text-white uppercase tracking-widest">Renewal Critical</span>
                   </div>,
                   <div key={`${r.id}-actions`} className="flex gap-3">
+                    <button onClick={() => handleResolve(r.id)} className="h-8 px-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all flex items-center gap-2">
+                       <CheckCircle size={12} /> Resolve
+                    </button>
                     <button onClick={() => toast.success("Renewal reminder dispatched")} className="h-8 px-3 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all flex items-center gap-2">
                        <AlertCircle size={12} /> Warning
                     </button>
