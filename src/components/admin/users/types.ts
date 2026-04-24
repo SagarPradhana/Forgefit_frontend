@@ -36,5 +36,8 @@ export interface UserFormData {
   subscription_id?: string;
   duration_in_months?: number;
   amount?: number;
+  status?: string;
+  start_date?: number;
+  end_date?: number;
   profilePhoto?: string; // For UI display
 }

@@ -80,9 +80,9 @@ export function AttendanceManagement() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await adminAttendanceService.getStats(selectedDate);
-      if (res && res.data) {
-        setStats(res.data);
+      const res = await adminAttendanceService.getStats(selectedDate) as any;
+      if (res) {
+        setStats(res.data || res);
       }
     } catch (err) {
       console.error(err);

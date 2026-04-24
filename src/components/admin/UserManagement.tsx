@@ -276,6 +276,9 @@ export function UserManagement() {
       subscription_id: user.subscription_id || "",
       duration_in_months: user.duration_in_months || 1,
       amount: user.amount || 0,
+      status: user.status || "active",
+      start_date: user.start_date || 0,
+      end_date: user.end_date || 0,
       profilePhoto: user.profile_image_path || user.metadata?.profile_image_path || "",
     });
     setPhotoPreview(user.profile_image_path || user.metadata?.profile_image_path || "");
@@ -318,15 +321,41 @@ export function UserManagement() {
     // API Payload cleanup
     const { profilePhoto, ...rawPayload } = formData;
 
-    // Explicitly nullify empty UUID strings to prevent backend parsing errors
-    const payload = {
-      ...rawPayload,
-      trainer_id: rawPayload.trainer_id?.trim() === "" ? null : rawPayload.trainer_id,
-      subscription_id: rawPayload.subscription_id?.trim() === "" ? null : rawPayload.subscription_id,
-    };
+    const trainer_id = rawPayload.trainer_id?.trim() === "" ? null : rawPayload.trainer_id;
+    const subscription_id = rawPayload.subscription_id?.trim() === "" ? null : rawPayload.subscription_id;
 
-    if (editingUserId) editUser(API_ENDPOINTS.ADMIN.USER_EDIT(editingUserId), payload);
-    else createUser(API_ENDPOINTS.ADMIN.USER_CREATE, payload);
+    if (editingUserId) {
+      const editPayload = {
+        mobile: rawPayload.mobile,
+        name: rawPayload.name,
+        email: rawPayload.email,
+        address: rawPayload.address,
+        role: rawPayload.role,
+        metadata: rawPayload.metadata,
+        joining_date: rawPayload.joining_date,
+        trainer_id,
+        subscription_id,
+        duration_in_months: rawPayload.duration_in_months,
+        amount: rawPayload.amount,
+        status: rawPayload.status,
+        start_date: rawPayload.start_date,
+        end_date: rawPayload.end_date
+      };
+      editUser(API_ENDPOINTS.ADMIN.USER_EDIT(editingUserId), editPayload);
+    } else {
+      const createPayload = {
+        mobile: rawPayload.mobile,
+        name: rawPayload.name,
+        email: rawPayload.email,
+        password: rawPayload.password || "Password@123",
+        address: rawPayload.address,
+        role: rawPayload.role,
+        metadata: rawPayload.metadata,
+        joining_date: rawPayload.joining_date,
+        trainer_id
+      };
+      createUser(API_ENDPOINTS.ADMIN.USER_CREATE, createPayload);
+    }
   };
 
   const handleToggleStatus = (userId: string, currentStatus: boolean) => {
