@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Edit2, Calendar, ToggleRight, ToggleLeft, Trash2, FileText, Mail, Phone, Users, Loader2, ChevronLeft, ChevronRight, CreditCard, Key, Contact, RefreshCw, Clock } from "lucide-react";
+import { Edit2, Calendar, ToggleRight, ToggleLeft, Trash2, FileText, Mail, Phone, Users, Loader2, ChevronLeft, ChevronRight, CreditCard, Key, Contact, Clock } from "lucide-react";
 import type { ViewType } from "./types";
 import { useState, useEffect } from "react";
 
@@ -22,7 +22,6 @@ interface UserListViewProps {
   onOpenSubscription: (user: any) => void;
   onResetPassword: (user: any) => void;
   onOpenIdCard: (user: any) => void;
-  onSyncUser: (userId: string) => void;
   lastUserElementRef: (node: HTMLDivElement) => void;
 }
 
@@ -45,7 +44,6 @@ export const UserListView = ({
   onOpenSubscription,
   onResetPassword,
   onOpenIdCard,
-  onSyncUser,
   lastUserElementRef,
 }: UserListViewProps) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
@@ -82,7 +80,7 @@ export const UserListView = ({
                   </div>
                   <div className="min-w-0">
                     <h3 className="truncate text-xs md:text-sm font-black text-white uppercase tracking-tight">{user.name}</h3>
-                    <p className="text-[10px] font-bold text-indigo-400">#{user.member_id || 'N/A'}</p>
+                    <p className="text-[10px] font-bold text-indigo-400">#{user.username || 'N/A'}</p>
                     <p className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest">{user.role}</p>
                   </div>
                 </div>
@@ -155,22 +153,7 @@ export const UserListView = ({
                     <Contact size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
                     <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">ID Card</span>
                   </button>
-                  <button
-                    onClick={() => onOpenAttendance(user)}
-                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-amber-500/20 text-amber-400 border border-white/5 hover:border-amber-500/30 transition-all group"
-                    title="Attendance History"
-                  >
-                    <Clock size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Log</span>
-                  </button>
-                  {/* <button
-                    onClick={() => onSyncUser(user.id)}
-                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-white/5 hover:border-emerald-500/30 transition-all group"
-                    title="Sync Subscription"
-                  >
-                    <RefreshCw size={isMobile ? 14 : 16} className="group-hover:rotate-180 transition-transform" />
-                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Sync</span>
-                  </button> */}
+
                   <button
                     onClick={() => onResetPassword(user)}
                     className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-slate-600/20 text-slate-400 border border-white/5 hover:border-slate-500/30 transition-all group"
@@ -315,13 +298,7 @@ export const UserListView = ({
                         >
                           <Contact size={16} />
                         </button>
-                        <button
-                          onClick={() => onSyncUser(user.id)}
-                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-emerald-500 text-emerald-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-emerald-500/40"
-                          title="Sync Subscription"
-                        >
-                          <RefreshCw size={16} />
-                        </button>
+
                         <button
                           onClick={() => onResetPassword(user)}
                           className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-slate-600 text-slate-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-slate-500/40"
@@ -380,15 +357,40 @@ export const UserListView = ({
                     <span className="text-[10px] text-slate-400">{user.mobile || user.phone || 'N/A'}</span>
                   </div>
                 </div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${user.is_active !== false ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700/20 text-slate-500'}`}>
-                    {user.is_active !== false ? 'Active' : 'Suspended'}
-                  </span>
-                  <div className="flex gap-1.5">
-                    <button onClick={() => onEdit(user)} className="h-8 w-8 flex items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-400"><Edit2 size={14} /></button>
-                    <button onClick={() => onOpenSubscription(user)} className="h-8 w-8 flex items-center justify-center rounded-lg bg-purple-500/20 text-purple-400"><CreditCard size={14} /></button>
-                    <button onClick={() => onOpenAttendance(user)} className="h-8 w-8 flex items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400"><Calendar size={14} /></button>
-                    <button onClick={() => onDelete(user.id)} className="h-8 w-8 flex items-center justify-center rounded-lg bg-red-500/20 text-red-500"><Trash2 size={14} /></button>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${user.is_active !== false ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700/20 text-slate-500'}`}>
+                      {user.is_active !== false ? 'Active' : 'Suspended'}
+                    </span>
+                    <div className="flex gap-1">
+                      <button onClick={() => onEdit(user)} className="h-9 w-9 flex items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"><Edit2 size={16} /></button>
+                      <button onClick={() => onOpenSubscription(user)} className="h-9 w-9 flex items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20"><CreditCard size={16} /></button>
+                      <button onClick={() => onOpenAttendance(user)} className="h-9 w-9 flex items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><Clock size={16} /></button>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/5">
+                    <div className="flex gap-1">
+                      <button onClick={() => onOpenDocs(user)} className="h-9 w-9 flex items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20" title="Docs"><FileText size={16} /></button>
+                      <button onClick={() => onOpenIdCard(user)} className="h-9 w-9 flex items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" title="ID Card"><Contact size={16} /></button>
+                      <button onClick={() => onResetPassword(user)} className="h-9 w-9 flex items-center justify-center rounded-xl bg-slate-500/10 text-slate-400 border border-slate-500/20" title="Reset"><Key size={16} /></button>
+                    </div>
+                    <div className="flex gap-1">
+                      <button 
+                        disabled={statusUpdating && loadingStatusId === user.id}
+                        onClick={() => onToggleStatus(user.id, user.is_active !== false)}
+                        className={`h-9 w-9 flex items-center justify-center rounded-xl bg-white/5 border border-white/5 ${user.is_active !== false ? 'text-amber-500' : 'text-slate-500'}`}
+                      >
+                        {statusUpdating && loadingStatusId === user.id ? <Loader2 size={16} className="animate-spin" /> : (user.is_active !== false ? <ToggleRight size={20} /> : <ToggleLeft size={20} />)}
+                      </button>
+                      <button 
+                        disabled={deletingRecord && loadingDeleteId === user.id}
+                        onClick={() => onDelete(user.id)} 
+                        className="h-9 w-9 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 border border-red-500/20"
+                      >
+                        {deletingRecord && loadingDeleteId === user.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

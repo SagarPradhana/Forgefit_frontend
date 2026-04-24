@@ -80,13 +80,14 @@ export function CommonButton({
 export function StatusBadge({
   status,
 }: {
-  status: "Active" | "Expired" | "Pending" | "Paid";
+  status: "Active" | "Expired" | "Pending" | "Paid" | "Resolved";
 }) {
   const styles = {
     Active: "bg-emerald-500/25 text-emerald-200 border-emerald-400/30",
     Expired: "bg-red-500/25 text-red-200 border-red-400/30",
     Pending: "bg-amber-500/25 text-amber-200 border-amber-400/30",
     Paid: "bg-emerald-500/25 text-emerald-200 border-emerald-400/30",
+    Resolved: "bg-emerald-500/25 text-emerald-200 border-emerald-400/30",
   };
   return (
     <span

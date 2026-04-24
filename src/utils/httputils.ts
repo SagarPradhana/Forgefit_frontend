@@ -35,32 +35,47 @@ export async function httpFetch(endpoint: string | null | undefined, options: Re
   }
 
   // Handle Token Expiry (401)
-  if (response.status === 401 && refreshToken) {
-    try {
-      const refreshRes = await fetch(`${BASE_URL}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refresh_token: refreshToken }),
-      });
-
-      if (refreshRes.ok) {
-        const refreshData = await refreshRes.json();
-        const { access_token, refresh_token } = refreshData.data;
-        updateTokens(access_token, refresh_token);
-
-        // Retry original request
-        headers.set("Authorization", `Bearer ${access_token}`);
-        response = await fetch(`${BASE_URL}${endpoint}`, {
-          ...fetchOptions,
-          headers,
+  if (response.status === 401) {
+    if (refreshToken) {
+      try {
+        const refreshRes = await fetch(`${BASE_URL}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token: refreshToken }),
         });
-      } else {
+
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json();
+          // Adjust response parsing based on common API wrapper patterns
+          const newAccessToken = refreshData.data?.access_token || refreshData.access_token;
+          const newRefreshToken = refreshData.data?.refresh_token || refreshData.refresh_token;
+          
+          if (newAccessToken) {
+            updateTokens(newAccessToken, newRefreshToken || refreshToken);
+            
+            // Retry original request with New Token
+            headers.set("Authorization", `Bearer ${newAccessToken}`);
+            response = await fetch(`${BASE_URL}${endpoint}`, {
+              ...fetchOptions,
+              headers,
+            });
+          } else {
+            throw new Error("Token refresh returned no data");
+          }
+        } else {
+          logout();
+          toast.error("Session expired. Please login again.");
+          return null;
+        }
+      } catch (error) {
         logout();
-        toast.error("Session expired. Please login again.");
+        toast.error("Authentication failed. Redirecting to login.");
         return null;
       }
-    } catch (error) {
+    } else {
+      // No refresh token available, logout immediately
       logout();
+      toast.error("Authentication expired.");
       return null;
     }
   }

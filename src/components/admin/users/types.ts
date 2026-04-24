@@ -19,6 +19,7 @@ export interface UserMetadata {
   allergies: string;
   workout_time: string;
   emergency_contact: string;
+  health_issues: string;
 }
 
 export interface UserFormData {

@@ -23,6 +23,7 @@ export interface PaymentResponse extends PaymentRequest {
   username: string;
   member_id: string;
   Name: string;
+  mobile: string;
   created_date: number;
   updated_date: number;
 }

@@ -50,7 +50,7 @@ export function AdminPortalPages({ page }: { page: string }) {
   const [paymentStatus, setPaymentStatus] = useState<
     "All" | "Paid" | "Pending"
   >("All");
-  const [paymentDate, setPaymentDate] = useState("");
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [editPlan, setEditPlan] = useState<string | null>(null);
 
   // Product States
@@ -203,10 +203,15 @@ export function AdminPortalPages({ page }: { page: string }) {
       const currentPage = Number(p) || 1;
       const pageSize = Number(paymentsMeta.page_size) || 10;
       const offset = (currentPage - 1) * pageSize;
+      const fromDate = paymentDate ? Math.floor(new Date(paymentDate).setHours(0,0,0,0) / 1000) : undefined;
+      const toDate = paymentDate ? Math.floor(new Date(paymentDate).setHours(23,59,59,999) / 1000) : undefined;
+      
       const res = await adminPaymentService.getPayments({
         count: pageSize,
         offset,
         status: paymentStatus !== "All" ? paymentStatus.toLowerCase() as any : undefined,
+        from_date: fromDate,
+        to_date: toDate,
       });
       if (res && res.data) {
         setFetchedPayments(res.data);
@@ -244,7 +249,7 @@ export function AdminPortalPages({ page }: { page: string }) {
     } else if (page === "payments") {
       fetchPayments(1);
     }
-  }, [page, paymentStatus]);
+  }, [page, paymentStatus, paymentDate]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -976,13 +981,11 @@ export function AdminPortalPages({ page }: { page: string }) {
         ) : fetchedPayments.length > 0 ? (
           <>
             <Table
-              headers={["Transaction ID", "Entity", "Timestamp", "Valuation", "Method", "Type", "Status"]}
+              headers={["Username", "Name", "Mobile", "Timestamp", "Valuation", "Method", "Type", "Status"]}
               rows={fetchedPayments.map((p) => [
-                <span key={p.id} className="text-[10px] font-mono text-slate-500 uppercase">{p.id.split('-')[0]}...</span>,
-                <div key={`${p.id}-user`} className="flex flex-col">
-                  <span className="text-[10px] font-bold text-white uppercase tracking-tighter">User ID</span>
-                  <span className="text-[9px] text-slate-500 truncate max-w-[80px]">{p.user_id}</span>
-                </div>,
+                <span key={`${p.id}-user`} className="text-xs font-bold text-white uppercase tracking-tighter italic">#{p.username || 'System'}</span>,
+                <span key={`${p.id}-name`} className="text-xs font-bold text-slate-300 uppercase">{p.Name || '--'}</span>,
+                <span key={`${p.id}-mobile`} className="text-[10px] font-black text-indigo-400 tracking-widest">{p.mobile || '--'}</span>,
                 <span key={`${p.id}-date`} className="text-xs font-medium text-slate-300">
                   {new Date(p.payment_date * 1000).toLocaleDateString()}
                 </span>,
@@ -1094,7 +1097,7 @@ export function AdminPortalPages({ page }: { page: string }) {
               >
                 <option value="">Choose Registry Entity</option>
                 {usersDropdown.map((u: any) => (
-                  <option key={u.id} value={u.id}>{u.name} ({u.member_id || 'ID: ' + u.id.slice(0, 5)})</option>
+                  <option key={u.id} value={u.id}>{u.name} (@{u.username || u.member_id})</option>
                 ))}
               </select>
             </div>
@@ -1156,7 +1159,6 @@ export function AdminPortalPages({ page }: { page: string }) {
                 onChange={(e) => setPaymentForm({ ...paymentForm, purchase_type: e.target.value as any })}
               >
                 <option value="product">Product Purchase</option>
-                <option value="other">Other</option>
               </select>
             </div>
 

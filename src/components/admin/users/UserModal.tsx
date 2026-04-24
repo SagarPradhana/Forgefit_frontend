@@ -316,22 +316,31 @@ export const UserModal = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-white mb-1">Medical Conditions / Injuries / Allergies</label>
+                <label className="block text-xs font-semibold text-white mb-1 uppercase tracking-widest">Health Issues</label>
                 <textarea
-                  placeholder="Notes..."
-                  value={`${formData.metadata.medical_conditions}\n${formData.metadata.injuries}\n${formData.metadata.allergies}`.trim()}
+                  placeholder="Describe any chronic health background or concerns..."
+                  value={formData.metadata.health_issues || ""}
+                  onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, health_issues: e.target.value } })}
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-xs resize-none focus:border-orange-400 transition"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-white mb-1 uppercase tracking-widest text-slate-400">Other Medical Notes (Conditions/Allergies)</label>
+                <textarea
+                  placeholder="List specific medical conditions, injuries, or allergies..."
+                  value={`${formData.metadata.medical_conditions || ""}${formData.metadata.medical_conditions ? ' / ' : ''}${formData.metadata.injuries || ""}${formData.metadata.injuries ? ' / ' : ''}${formData.metadata.allergies || ""}`.trim()}
                   onChange={(e) => {
                     setFormData({
                       ...formData, metadata: {
                         ...formData.metadata,
-                        medical_conditions: e?.target?.value || "",
-                        injuries: e?.target?.value || "",
-                        allergies: e?.target?.value || ""
+                        medical_conditions: e.target.value,
                       }
                     });
                   }}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs resize-none"
-                  rows={3}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-[10px] resize-none"
+                  rows={2}
                 />
               </div>
             </motion.div>

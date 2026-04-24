@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { GlassCard, SectionTitle } from "../../components/ui/primitives";
-import { Search, Grid, List, Plus, RefreshCw } from "lucide-react";
+import { Search, Grid, List, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { useGet, useMutation } from "../../hooks/useApi";
 import { API_ENDPOINTS } from "../../utils/url";
 import { toast } from "../../store/toastStore";
-import { api } from "../../utils/httputils";
 
 // Sub-components
 import { UserModal } from "./users/UserModal";
@@ -32,7 +31,6 @@ export function UserManagement() {
   const [showPassword, setShowPassword] = useState(false);
   const [loadingStatusId, setLoadingStatusId] = useState<string | null>(null);
   const [loadingDeleteId, setLoadingDeleteId] = useState<string | null>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
 
   console.log("photoPreview", photoPreview);
 
@@ -115,23 +113,6 @@ export function UserManagement() {
     }
   });
 
-  const { refetch: syncAllSubscriptions } = useGet(API_ENDPOINTS.ADMIN.SYNC_SUBSCRIPTIONS, {
-    enabled: false,
-    onSuccess: () => {
-      toast.success("Synchronized all user subscription plans");
-      setIsSyncing(false);
-      refetchUsers();
-    },
-    onError: () => {
-      toast.error("Subscription sync failed");
-      setIsSyncing(false);
-    }
-  });
-
-  const handleSyncAll = () => {
-    setIsSyncing(true);
-    syncAllSubscriptions();
-  };
 
   const { mutate: editUser, loading: editing } = useMutation("patch", {
     onSuccess: () => {
@@ -142,32 +123,7 @@ export function UserManagement() {
     }
   });
 
-  const [syncingUserId, setSyncingUserId] = useState<string | null>(null);
-  const { refetch: syncUserSubscription } = useGet(
-    syncingUserId ? `${API_ENDPOINTS.ADMIN.SYNC_SUBSCRIPTIONS}?user_id=${syncingUserId}` : null,
-    {
-      enabled: false,
-      onSuccess: () => {
-        toast.success("User subscription synchronized");
-        setSyncingUserId(null);
-        refetchUsers();
-      },
-      onError: () => {
-        toast.error("User sync failed");
-        setSyncingUserId(null);
-      }
-    }
-  );
 
-  const handleSyncUser = (userId: string) => {
-    setSyncingUserId(userId);
-  };
-
-  useEffect(() => {
-    if (syncingUserId) {
-      syncUserSubscription();
-    }
-  }, [syncingUserId]);
 
   const { mutate: patchStatus, loading: statusUpdating } = useMutation("patch", {
     onSuccess: () => {
@@ -217,6 +173,7 @@ export function UserManagement() {
       allergies: "",
       workout_time: "morning",
       emergency_contact: "",
+      health_issues: "",
     },
     trainer_id: "",
     subscription_id: "",
@@ -275,6 +232,7 @@ export function UserManagement() {
         allergies: "",
         workout_time: "morning",
         emergency_contact: "",
+        health_issues: "",
       },
       trainer_id: "",
       subscription_id: "",
@@ -310,6 +268,7 @@ export function UserManagement() {
         allergies: user.metadata?.allergies || "",
         workout_time: user.metadata?.workout_time || "morning",
         emergency_contact: user.metadata?.emergency_contact || "",
+        health_issues: user.metadata?.health_issues || "",
       },
       trainer_id: user.trainer_id || "",
       subscription_id: user.subscription_id || "",
@@ -493,7 +452,6 @@ export function UserManagement() {
         onOpenSubscription={(user) => { setSelectedUserForSubscription(user); setSubscriptionModalOpen(true); }}
         onResetPassword={(user) => { setSelectedUserForReset(user); setResetModalOpen(true); }}
         onOpenIdCard={handleOpenIdCard}
-        onSyncUser={handleSyncUser}
         lastUserElementRef={lastUserElementRef}
       />
 

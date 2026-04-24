@@ -4,7 +4,7 @@ import {
   StatusBadge,
   Skeleton,
 } from "../../components/ui/primitives";
-import { Trash2, CheckCircle, RefreshCw, AlertCircle, Search } from "lucide-react";
+import { Trash2, CheckCircle, Search } from "lucide-react";
 import { toast } from "../../store/toastStore";
 import { adminInquiryService } from "../../services/adminInquiryService";
 
@@ -105,11 +105,10 @@ export function InquiryCenter() {
                 setActiveTab(tab.id);
                 setMeta({ ...meta, offset: 0 });
               }}
-              className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 border ${
-                activeTab === tab.id
+              className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 border ${activeTab === tab.id
                   ? "bg-indigo-500 border-indigo-400 text-white shadow-lg shadow-indigo-500/20"
                   : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
-              }`}
+                }`}
             >
               {tab.label}
             </button>
@@ -144,7 +143,7 @@ export function InquiryCenter() {
                   </div>,
                   <span key={`${r.id}-plan`} className="text-indigo-400 font-black italic">PLAN ID: {r.subscription_plan_id?.substring(0, 8)}...</span>,
                   <span key={`${r.id}-date`} className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span>,
-                  <StatusBadge key={`${r.id}-status`} status={r.status ? "Paid" : "Pending"} />,
+                  <StatusBadge key={`${r.id}-status`} status={r.status ? "Resolved" : "Pending"} />,
                   <div key={`${r.id}-actions`} className="flex gap-3">
                     <button onClick={() => handleResolve(r.id)} className="text-emerald-400 hover:scale-125 transition-transform" title="Resolve"><CheckCircle size={16} /></button>
                     <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title="Delete"><Trash2 size={16} /></button>
@@ -164,7 +163,7 @@ export function InquiryCenter() {
                   <span key={`${r.id}-prod`} className="text-orange-400 font-black">PROD: {r.product_id?.substring(0, 8)}...</span>,
                   <span key={`${r.id}-qty`} className="text-slate-200 font-black italic text-lg">{r.quantity}</span>,
                   <span key={`${r.id}-date`} className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span>,
-                  <StatusBadge key={`${r.id}-status`} status={r.status ? "Paid" : "Pending"} />,
+                  <StatusBadge key={`${r.id}-status`} status={r.status ? "Resolved" : "Pending"} />,
                   <div key={`${r.id}-actions`} className="flex gap-3">
                     <button onClick={() => handleResolve(r.id)} className="text-emerald-400 hover:scale-125 transition-transform" title="Resolve"><CheckCircle size={16} /></button>
                     <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title="Delete"><Trash2 size={16} /></button>
@@ -190,7 +189,7 @@ export function InquiryCenter() {
                     <span className="text-[8px] text-slate-500 font-bold uppercase">{r.email}</span>
                   </div>,
                   <span key={`${r.id}-date`} className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span>,
-                  <StatusBadge key={`${r.id}-status`} status={r.status ? "Paid" : "Pending"} />,
+                  <StatusBadge key={`${r.id}-status`} status={r.status ? "Resolved" : "Pending"} />,
                   <div key={`${r.id}-actions`} className="flex gap-3">
                     <button onClick={() => handleResolve(r.id)} className="text-emerald-400 hover:scale-125 transition-transform" title="Resolve"><CheckCircle size={16} /></button>
                     <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title="Delete"><Trash2 size={16} /></button>
@@ -213,14 +212,11 @@ export function InquiryCenter() {
                   </div>,
                   <div key={`${r.id}-status`} className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
-                    <span className="text-[10px] font-black text-white uppercase tracking-widest">Renewal Critical</span>
+                    <span className="text-[10px] font-black text-white uppercase tracking-widest">{r.status ? "Resolved" : "Renewal Critical"}</span>
                   </div>,
                   <div key={`${r.id}-actions`} className="flex gap-3">
                     <button onClick={() => handleResolve(r.id)} className="h-8 px-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all flex items-center gap-2">
-                       <CheckCircle size={12} /> Resolve
-                    </button>
-                    <button onClick={() => toast.success("Renewal reminder dispatched")} className="h-8 px-3 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all flex items-center gap-2">
-                       <AlertCircle size={12} /> Warning
+                      <CheckCircle size={12} /> Resolve
                     </button>
                     <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform p-2"><Trash2 size={16} /></button>
                   </div>
