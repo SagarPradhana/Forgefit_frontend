@@ -80,7 +80,8 @@ export function AttendanceManagement() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await adminAttendanceService.getStats(selectedDate) as any;
+      const date_timestamp = Math.floor(new Date(selectedDate).setHours(0, 0, 0, 0) / 1000);
+      const res = await adminAttendanceService.getStats(date_timestamp) as any;
       if (res) {
         setStats(res.data || res);
       }
