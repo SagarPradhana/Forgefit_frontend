@@ -10,13 +10,16 @@ import {
   CheckCircle2,
   Edit2,
   Trash2,
-  Plus
+  Plus,
+  Users
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { adminAttendanceService, type AttendanceResponse, type AttendanceRequest } from "../../services/adminAttendanceService";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useMemo } from "react";
 import { Skeleton } from "../ui/primitives";
 import { toast } from "../../store/toastStore";
+import { useGet } from "../../hooks/useApi";
+import { API_ENDPOINTS } from "../../utils/url";
 
 type AttendanceView = "grid" | "list";
 
@@ -31,16 +34,25 @@ export function AttendanceManagement() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
+    user_id: "",
     userName: "",
     date: new Date().toISOString().split('T')[0],
     checkIn: "09:00",
     checkOut: "10:30",
-    status: "Present" as "Present" | "Absent" | "Late"
+    status: "present"
   });
 
   const [records, setRecords] = useState<AttendanceResponse[]>([]);
   const [loading, setLoading] = useState(false);
-  const [stats, setStats] = useState({ total_present: 0, total_absent: 0, attendance_rate: 0 });
+  const [stats, setStats] = useState({ 
+    total_checkins_today: 0, 
+    present_now: 0, 
+    checked_out_today: 0, 
+    avg_time_hours: 0 
+  });
+
+  const { data: usersDropdownData } = useGet(API_ENDPOINTS.ADMIN.GET_USERS_DROPDOWN);
+  const members = useMemo(() => usersDropdownData?.data || [], [usersDropdownData]);
 
   const fetchRecords = useCallback(async () => {
     setLoading(true);
@@ -89,8 +101,8 @@ export function AttendanceManagement() {
       const checkOutTime = form.checkOut ? new Date(form.date + 'T' + form.checkOut) : undefined;
 
       const payload: AttendanceRequest = {
-        user_id: editingRecord?.user_id || "7593c617-e21e-450f-8704-5f50f28328c6", // Default for now if creating manual
-        status: form.status,
+        user_id: form.user_id,
+        status: form.status.toLowerCase(),
         date: dateTimestamp,
         check_in: Math.floor(checkInTime.getTime() / 1000),
         check_out: checkOutTime ? Math.floor(checkOutTime.getTime() / 1000) : undefined,
@@ -116,11 +128,12 @@ export function AttendanceManagement() {
   const handleEdit = (r: AttendanceResponse) => {
     setEditingRecord(r);
     setForm({
-      userName: r.user_id, // We'd ideally have user object here
+      user_id: r.user_id,
+      userName: r.user_name || "", 
       date: new Date(r.date * 1000).toISOString().split('T')[0],
       checkIn: new Date(r.check_in * 1000).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' }),
       checkOut: r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' }) : "",
-      status: r.status as any
+      status: r.status.toLowerCase()
     });
     setModalOpen(true);
   };
@@ -163,10 +176,10 @@ export function AttendanceManagement() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Registry" value={`${(stats.total_present ?? 0) + (stats.total_absent ?? 0)}`} icon={<UserCheck className="text-emerald-400" />} />
-        <StatCard title="Active Present" value={`${(stats.total_present ?? 0)}`} icon={<CheckCircle2 className="text-blue-400" />} />
-        <StatCard title="Absentees" value={`${stats.total_absent ?? 0}`} icon={<Clock className="text-amber-400" />} />
-        <StatCard title="Yield Rate" value={`${stats.attendance_rate ?? 0}%`} icon={<Filter className="text-purple-400" />} />
+        <StatCard title="Total Check-ins" value={`${stats.total_checkins_today ?? 0}`} icon={<UserCheck className="text-emerald-400" />} />
+        <StatCard title="Present Now" value={`${stats.present_now ?? 0}`} icon={<CheckCircle2 className="text-blue-400" />} />
+        <StatCard title="Checked Out" value={`${stats.checked_out_today ?? 0}`} icon={<Clock className="text-amber-400" />} />
+        <StatCard title="Avg Time" value={`${stats.avg_time_hours ?? 0}h`} icon={<Filter className="text-purple-400" />} />
       </div>
 
       <GlassCard>
@@ -191,7 +204,7 @@ export function AttendanceManagement() {
             <CommonButton
               onClick={() => {
                 setEditingRecord(null);
-                setForm({ userName: "", date: selectedDate, checkIn: "09:00", checkOut: "", status: "Present" });
+                setForm({ user_id: "", userName: "", date: selectedDate, checkIn: "09:00", checkOut: "", status: "present" });
                 setModalOpen(true);
               }}
               className="whitespace-nowrap flex gap-2 items-center justify-center p-3 sm:p-auto"
@@ -243,11 +256,11 @@ export function AttendanceManagement() {
                   <span key={r.id} className="text-xs font-mono text-slate-500">{r.id.substring(0, 8)}...</span>,
                   new Date(r.check_in * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                   r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Active",
-                  <span key={`${r.id}-status`} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${r.status === "Present" ? "bg-emerald-500/20 text-emerald-400" :
-                    r.status === "Late" ? "bg-amber-500/20 text-amber-400" :
+                  <span key={`${r.id}-status`} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${r.status?.toLowerCase() === "present" ? "bg-emerald-500/20 text-emerald-400" :
+                    r.status?.toLowerCase() === "late" ? "bg-amber-500/20 text-amber-400" :
                       "bg-red-500/20 text-red-400"
                     }`}>
-                    {r.status}
+                    {r.status || 'N/A'}
                   </span>,
                   <div key={`${r.id}-act`} className="flex gap-3 justify-center">
                     <button onClick={() => handleEdit(r)} className="text-indigo-400 hover:text-indigo-300 transition-transform hover:scale-125"><Edit2 size={16} /></button>
@@ -276,12 +289,19 @@ export function AttendanceManagement() {
         <div className="space-y-4 pt-2">
           <div className="space-y-1">
             <label className="text-xs font-bold uppercase text-slate-500">Member Name</label>
-            <input
+            <select
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-indigo-500"
-              placeholder="e.g. Sophia Carter"
-              value={form.userName}
-              onChange={e => setForm({ ...form, userName: e.target.value })}
-            />
+              value={form.user_id}
+              onChange={e => {
+                const user = members.find((u: any) => u.id === e.target.value);
+                setForm({ ...form, user_id: e.target.value, userName: user?.name || "" });
+              }}
+            >
+              <option value="" className="bg-slate-900">Select Member</option>
+              {members.map((m: any) => (
+                <option key={m.id} value={m.id} className="bg-slate-900">{m.name}</option>
+              ))}
+            </select>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
@@ -298,11 +318,10 @@ export function AttendanceManagement() {
               <select
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-indigo-500"
                 value={form.status}
-                onChange={e => setForm({ ...form, status: e.target.value as any })}
+                onChange={e => setForm({ ...form, status: e.target.value })}
               >
-                <option value="Present">Present</option>
-                <option value="Late">Late</option>
-                <option value="Absent">Absent</option>
+                <option value="present" className="bg-slate-900">Present</option>
+                <option value="absent" className="bg-slate-900">Absent</option>
               </select>
             </div>
           </div>
@@ -368,13 +387,13 @@ function AttendanceGridCard({ record, onEdit, onDelete }: { record: AttendanceRe
     <div className="group bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-indigo-500/50 transition-all hover:bg-white/[0.08] relative overflow-hidden">
       <div className="flex items-center gap-4 mb-4 relative z-10">
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-emerald-400 flex items-center justify-center text-white font-black text-xl shadow-[0_8px_16px_rgba(99,102,241,0.3)]">
-          {record.status.charAt(0)}
+          {(record.user_name || 'U').charAt(0)}
         </div>
         <div className="flex-1">
-          <h4 className="font-bold text-white group-hover:text-indigo-300 transition-colors uppercase tracking-tight text-xs">ID: {record.id.substring(0, 8)}...</h4>
-          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-tighter ${record.status === "Present" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
+          <h4 className="font-bold text-white group-hover:text-indigo-300 transition-colors uppercase tracking-tight text-xs">{record.user_name || `ID: ${record.id.substring(0, 8)}`}</h4>
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-tighter ${record.status?.toLowerCase() === "present" ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"
             }`}>
-            {record.status}
+            {record.status || 'N/A'}
           </span>
         </div>
         <div className="flex flex-col gap-2">

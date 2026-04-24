@@ -14,10 +14,15 @@ export interface PaymentRequest {
   purchase_type: PurchaseType;
   purchase_id: string;
   purchase_details?: any;
+  from_date?: number;
+  to_date?: number;
 }
 
 export interface PaymentResponse extends PaymentRequest {
   id: string;
+  username: string;
+  member_id: string;
+  Name: string;
   created_date: number;
   updated_date: number;
 }

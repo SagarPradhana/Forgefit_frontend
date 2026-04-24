@@ -14,6 +14,7 @@ export const API_ENDPOINTS = {
   ADMIN: {
     USERS: "/api/admin/user_roles/users",
     TRAINER_LIST: "/api/admin/user_roles/trainer_list",
+    GET_USERS_DROPDOWN: "/api/admin/user_roles/get-users-dropdown",
     USER_CREATE: "/api/admin/user_roles/users/create",
     USER_EDIT: (id: string) => `/api/admin/user_roles/users/${id}/edit`,
     USER_UPLOAD: (id: string) => `/api/admin/user_roles/users/${id}/upload_file`,

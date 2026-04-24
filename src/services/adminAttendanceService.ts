@@ -10,8 +10,16 @@ export interface AttendanceRequest {
   check_out?: number; // Unix timestamp
 }
 
-export interface AttendanceResponse extends AttendanceRequest {
+export interface AttendanceResponse {
   id: string;
+  user_id: string;
+  user_name: string;
+  date: number;
+  status: string;
+  check_in: number;
+  check_out: number;
+  duration: string;
+  description: string;
   is_deleted: boolean;
   created_date: number;
   updated_date: number;
@@ -20,10 +28,10 @@ export interface AttendanceResponse extends AttendanceRequest {
 export interface AttendanceStatsResponse {
   code: number;
   data: {
-    total_present: number;
-    total_absent: number;
-    attendance_rate: number;
-    streak?: number;
+    total_checkins_today: number;
+    present_now: number;
+    checked_out_today: number;
+    avg_time_hours: number;
   };
 }
 
@@ -40,7 +48,7 @@ export interface CommonAttendanceResponse {
   code: number;
   mCode: string;
   message: string;
-  data: any[];
+  data: any;
 }
 
 export const adminAttendanceService = {

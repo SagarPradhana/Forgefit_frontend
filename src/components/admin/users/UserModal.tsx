@@ -215,8 +215,11 @@ export const UserModal = ({
                 <label className="block text-sm font-semibold text-white mb-2">Joining Date <span className="text-orange-400">*</span></label>
                 <input
                   type="date"
-                  value={new Date(formData.joining_date * 1000).toISOString().split('T')[0]}
-                  onChange={(e) => setFormData({ ...formData, joining_date: Math.floor(new Date(e.target.value).getTime() / 1000) })}
+                  value={formData.joining_date ? new Date(formData.joining_date * 1000).toISOString().split('T')[0] : ""}
+                  onChange={(e) => {
+                    const date = e.target.value ? Math.floor(new Date(e.target.value).getTime() / 1000) : 0;
+                    setFormData({ ...formData, joining_date: date });
+                  }}
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 transition"
                 />
               </div>
@@ -252,8 +255,11 @@ export const UserModal = ({
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">DOB</label>
                   <input
                     type="date"
-                    value={new Date(formData.metadata.dob * 1000).toISOString().split('T')[0]}
-                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, dob: Math.floor(new Date(e.target.value).getTime() / 1000) } })}
+                    value={formData.metadata.dob ? new Date(formData.metadata.dob * 1000).toISOString().split('T')[0] : ""}
+                    onChange={(e) => {
+                      const date = e.target.value ? Math.floor(new Date(e.target.value).getTime() / 1000) : 0;
+                      setFormData({ ...formData, metadata: { ...formData.metadata, dob: date } });
+                    }}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-indigo-400"
                   />
                 </div>
@@ -350,47 +356,6 @@ export const UserModal = ({
                   ))}
                 </select>
               </div>
-
-              {!editingUserId && (
-                <div className="p-5 rounded-2xl bg-indigo-500/5 border border-indigo-500/20 space-y-4">
-                  <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">Initial Membership Selection</p>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Select Plan</label>
-                    <select
-                      value={formData.subscription_id || ""}
-                      onChange={(e) => {
-                        const plan = plans.find(p => p.id === e.target.value);
-                        setFormData({
-                          ...formData,
-                          subscription_id: e.target.value,
-                          duration_in_months: plan?.duration || 1,
-                          amount: plan?.price || 0
-                        });
-                      }}
-                      className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white text-sm"
-                    >
-                      <option value="">No Plan (Free Trial)</option>
-                      {plans.map((p: any) => (
-                        <option key={p.id} value={p.id}>{p.name} - ₹{p.price}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {formData.subscription_id && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[10px] text-slate-500 uppercase mb-1">Duration</label>
-                        <p className="text-white font-bold">{formData.duration_in_months} Months</p>
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-slate-500 uppercase mb-1">Amount</label>
-                        <p className="text-indigo-400 font-bold">₹{formData.amount}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
             </motion.div>
           )}
         </div>

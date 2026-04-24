@@ -72,7 +72,10 @@ export function UserManagement() {
       offset: String((currentPage - 1) * currentCount),
       count: String(currentCount),
     });
-    if (debouncedSearch.trim()) params.append("search", debouncedSearch.trim());
+    if (debouncedSearch.trim()) {
+      params.append("search", debouncedSearch.trim());
+      params.append("member_id", debouncedSearch.trim()); // The user specified member_id is a parameter in GET
+    }
     return `${API_ENDPOINTS.ADMIN.USERS}?${params.toString()}`;
   }, [page, perPage, debouncedSearch]);
 
@@ -138,6 +141,33 @@ export function UserManagement() {
       refetchUsers();
     }
   });
+
+  const [syncingUserId, setSyncingUserId] = useState<string | null>(null);
+  const { refetch: syncUserSubscription } = useGet(
+    syncingUserId ? `${API_ENDPOINTS.ADMIN.SYNC_SUBSCRIPTIONS}?user_id=${syncingUserId}` : null,
+    {
+      enabled: false,
+      onSuccess: () => {
+        toast.success("User subscription synchronized");
+        setSyncingUserId(null);
+        refetchUsers();
+      },
+      onError: () => {
+        toast.error("User sync failed");
+        setSyncingUserId(null);
+      }
+    }
+  );
+
+  const handleSyncUser = (userId: string) => {
+    setSyncingUserId(userId);
+  };
+
+  useEffect(() => {
+    if (syncingUserId) {
+      syncUserSubscription();
+    }
+  }, [syncingUserId]);
 
   const { mutate: patchStatus, loading: statusUpdating } = useMutation("patch", {
     onSuccess: () => {
@@ -326,7 +356,7 @@ export function UserManagement() {
   const handleSaveUser = () => {
     // API Payload cleanup
     const { profilePhoto, ...rawPayload } = formData;
-    
+
     // Explicitly nullify empty UUID strings to prevent backend parsing errors
     const payload = {
       ...rawPayload,
@@ -421,7 +451,7 @@ export function UserManagement() {
         </div>
 
         <div className="flex items-center gap-3">
-          <motion.button
+          {/* <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleSyncAll}
@@ -430,7 +460,7 @@ export function UserManagement() {
           >
             <RefreshCw size={18} className={isSyncing ? "animate-spin" : ""} />
             {isSyncing ? "Syncing..." : "Sync All"}
-          </motion.button>
+          </motion.button> */}
 
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -463,6 +493,7 @@ export function UserManagement() {
         onOpenSubscription={(user) => { setSelectedUserForSubscription(user); setSubscriptionModalOpen(true); }}
         onResetPassword={(user) => { setSelectedUserForReset(user); setResetModalOpen(true); }}
         onOpenIdCard={handleOpenIdCard}
+        onSyncUser={handleSyncUser}
         lastUserElementRef={lastUserElementRef}
       />
 

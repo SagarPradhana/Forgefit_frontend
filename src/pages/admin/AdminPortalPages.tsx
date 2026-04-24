@@ -16,12 +16,14 @@ import { UserManagement } from "../../components/admin/UserManagement";
 import { AttendanceManagement } from "../../components/admin/AttendanceManagement";
 import { adminSubscriptionService, type PlanResponse } from "../../services/adminSubscriptionService";
 import { adminProductService, type ProductResponse } from "../../services/adminProductService";
-import { adminPaymentService, type PaymentResponse } from "../../services/adminPaymentService";
+import { adminPaymentService, type PaymentResponse, type PaymentMethod, type PaymentStatus, type PurchaseType } from "../../services/adminPaymentService";
 import { toast } from "../../store/toastStore";
 import { InquiryCenter } from "../../components/admin/InquiryCenter";
 import { useAuthStore } from "../../store/authStore";
 import { Bell, Users, CheckCircle2 } from "lucide-react";
 import { ChangePassword } from "../../components/admin/ChangePassword";
+import { API_ENDPOINTS } from "../../utils/url";
+import { api } from "../../utils/httputils";
 
 export function AdminPortalPages({ page }: { page: string }) {
   const {
@@ -126,6 +128,21 @@ export function AdminPortalPages({ page }: { page: string }) {
     description: ""
   });
 
+  // Payment states
+  const [paymentModalOpen, setModalOpen] = useState(false);
+  const [editPayment, setEditPayment] = useState<string | null>(null);
+  const [usersDropdown, setUsersDropdown] = useState<any[]>([]);
+  const [paymentForm, setPaymentForm] = useState({
+    user_id: "",
+    amount: "0",
+    payment_date: new Date().toISOString().split('T')[0],
+    payment_method: "cash" as PaymentMethod,
+    status: "paid" as PaymentStatus,
+    purchase_type: "product" as PurchaseType,
+    purchase_id: "",
+    purchase_details: { additionalProp1: {} }
+  });
+
   // Plan Fetching
   const fetchPlans = async (p = plansMeta.page_no || 1, search = planSearch) => {
     setPlansLoading(true);
@@ -205,6 +222,17 @@ export function AdminPortalPages({ page }: { page: string }) {
       console.error(err);
     } finally {
       setPaymentsLoading(false);
+    }
+  };
+
+  const fetchDropdownUsers = async () => {
+    try {
+      const res = await api.get(API_ENDPOINTS.ADMIN.GET_USERS_DROPDOWN) as any;
+      if (res && res.data) {
+        setUsersDropdown(res.data);
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -889,6 +917,26 @@ export function AdminPortalPages({ page }: { page: string }) {
             title="Payment Registry"
             subtitle="Secure transaction ledger with multi-dimensional filtering."
           />
+          <GlowButton
+            onClick={() => {
+              setPaymentForm({
+                user_id: "",
+                amount: "0",
+                payment_date: new Date().toISOString().split('T')[0],
+                payment_method: "cash" as PaymentMethod,
+                status: "paid" as PaymentStatus,
+                purchase_type: "product" as PurchaseType,
+                purchase_id: "",
+                purchase_details: { additionalProp1: {} }
+              });
+              setEditPayment(null);
+              fetchDropdownUsers();
+              fetchProducts(1, "", "All");
+              setModalOpen(true);
+            }}
+          >
+            Create New Payment
+          </GlowButton>
         </div>
 
         <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -942,6 +990,38 @@ export function AdminPortalPages({ page }: { page: string }) {
                 <span key={`${p.id}-method`} className="text-[10px] font-black uppercase text-indigo-400 tracking-widest">{p.payment_method}</span>,
                 <span key={`${p.id}-type`} className="text-[10px] font-bold text-slate-400 uppercase">{p.purchase_type}</span>,
                 <StatusBadge key={`${p.id}-status`} status={p.status.charAt(0).toUpperCase() + p.status.slice(1) as any} />,
+                <div key={`${p.id}-act`} className="flex gap-2 justify-center">
+                  <button
+                    onClick={() => {
+                      setEditPayment(p.id);
+                      setPaymentForm({
+                        user_id: p.user_id,
+                        amount: String(p.amount),
+                        payment_date: new Date(p.payment_date * 1000).toISOString().split('T')[0],
+                        payment_method: p.payment_method as PaymentMethod,
+                        status: p.status as PaymentStatus,
+                        purchase_type: p.purchase_type as PurchaseType,
+                        purchase_id: p.purchase_id,
+                        purchase_details: p.purchase_details || { additionalProp1: {} }
+                      });
+                      fetchDropdownUsers();
+                      fetchProducts(1, "", "All");
+                      setModalOpen(true);
+                    }}
+                    className="text-indigo-400 hover:text-indigo-300"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setDeleteTarget({ type: "payment", id: p.id });
+                      setDeleteModalOpen(true);
+                    }}
+                    className="text-red-400 hover:text-red-300"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               ])}
             />
 
@@ -973,6 +1053,176 @@ export function AdminPortalPages({ page }: { page: string }) {
             hint="No transaction signals detected for the selected parameters."
           />
         )}
+        {/* Create/Edit Payment Modal */}
+        <Modal
+          open={paymentModalOpen}
+          onClose={() => setModalOpen(false)}
+          title={editPayment ? "Modify Financial Record" : "Log Strategic Transaction"}
+          footer={
+            <>
+              <GlowButton className="bg-gray-600" onClick={() => setModalOpen(false)}>Abort</GlowButton>
+              <GlowButton onClick={async () => {
+                const payload = {
+                  ...paymentForm,
+                  amount: Number(paymentForm.amount),
+                  payment_date: Math.floor(new Date(paymentForm.payment_date).getTime() / 1000)
+                };
+                try {
+                  if (editPayment) {
+                    await adminPaymentService.updatePayment(editPayment, payload);
+                    toast.success("Financial record updated");
+                  } else {
+                    await adminPaymentService.createPayment(payload);
+                    toast.success("New transaction logged");
+                  }
+                  setModalOpen(false);
+                  fetchPayments(1);
+                } catch (err) {
+                  toast.error("Process failed");
+                }
+              }}>Execute</GlowButton>
+            </>
+          }
+        >
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Select Member</label>
+              <select
+                className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
+                value={paymentForm.user_id}
+                onChange={(e) => setPaymentForm({ ...paymentForm, user_id: e.target.value })}
+              >
+                <option value="">Choose Registry Entity</option>
+                {usersDropdown.map((u: any) => (
+                  <option key={u.id} value={u.id}>{u.name} ({u.member_id || 'ID: ' + u.id.slice(0, 5)})</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Transaction Value ($)</label>
+                <input
+                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
+                  type="number"
+                  value={paymentForm.amount}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Entry Date</label>
+                <input
+                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
+                  type="date"
+                  value={paymentForm.payment_date}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, payment_date: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Strategic Method</label>
+                <select
+                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold uppercase"
+                  value={paymentForm.payment_method}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, payment_method: e.target.value as any })}
+                >
+                  <option value="cash">Cash</option>
+                  <option value="card">Card</option>
+                  <option value="upi">UPI</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</label>
+                <select
+                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold uppercase"
+                  value={paymentForm.status}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, status: e.target.value as any })}
+                >
+                  <option value="paid">Paid</option>
+                  <option value="pending">Pending</option>
+                  <option value="failed">Failed</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Purchase Type</label>
+              <select
+                className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold uppercase"
+                value={paymentForm.purchase_type}
+                onChange={(e) => setPaymentForm({ ...paymentForm, purchase_type: e.target.value as any })}
+              >
+                <option value="subscription">Subscription</option>
+                <option value="renewal">Renewal</option>
+                <option value="product">Product Purchase</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            {paymentForm.purchase_type === "product" && (
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Select Inventory Item</label>
+                <select
+                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
+                  value={paymentForm.purchase_id}
+                  onChange={(e) => {
+                    const product = fetchedProducts.find(p => p.id === e.target.value);
+                    setPaymentForm({
+                      ...paymentForm,
+                      purchase_id: e.target.value,
+                      amount: product ? String(product.price) : paymentForm.amount
+                    });
+                  }}
+                >
+                  <option value="">Choose Product</option>
+                  {fetchedProducts.map((p: any) => (
+                    <option key={p.id} value={p.id}>{p.name} (${p.price})</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        </Modal>
+
+        {/* Delete Modal for Payments */}
+        <Modal
+          open={deleteModalOpen && deleteTarget?.type === "payment"}
+          onClose={() => setDeleteModalOpen(false)}
+          title="Confirm Registry Purge"
+          footer={
+            <>
+              <GlowButton className="bg-gray-600" onClick={() => setDeleteModalOpen(false)}>Abort</GlowButton>
+              <GlowButton
+                onClick={async () => {
+                  if (deleteTarget && deleteTarget.type === "payment") {
+                    try {
+                      await adminPaymentService.deletePayment(deleteTarget.id);
+                      toast.success("Transaction purged successfully");
+                      fetchPayments(paymentsMeta.page_no);
+                    } catch (err) {
+                      toast.error("Purge failed");
+                    }
+                  }
+                  setDeleteModalOpen(false);
+                  setDeleteTarget(null);
+                }}
+              >
+                Confirm Delete
+              </GlowButton>
+            </>
+          }
+        >
+          <div className="text-sm text-slate-300 text-center py-4">
+            <div className="h-16 w-16 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mx-auto mb-4">
+              <Trash2 size={32} />
+            </div>
+            <p className="font-bold text-white mb-2">Permanently delete this transaction?</p>
+            <p className="text-xs">This action will remove the record from the financial ledger. This cannot be undone.</p>
+          </div>
+        </Modal>
       </GlassCard>
     );
   }
