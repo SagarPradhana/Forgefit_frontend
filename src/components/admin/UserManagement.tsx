@@ -197,7 +197,7 @@ export function UserManagement() {
 
   // --- Logic ---
   const [formData, setFormData] = useState<UserFormData>({
-    username: "",
+    // username: "",
     mobile: "",
     name: "",
     email: "",
@@ -255,7 +255,7 @@ export function UserManagement() {
 
   const handleAddNew = () => {
     setFormData({
-      username: "",
+      // username: "",
       mobile: "",
       name: "",
       email: "",
@@ -290,7 +290,7 @@ export function UserManagement() {
 
   const handleEdit = (user: any) => {
     setFormData({
-      username: user.username || "",
+      // username: user.username || "",
       mobile: user.mobile || user.phone || "",
       name: user.name,
       email: user.email,
@@ -326,7 +326,7 @@ export function UserManagement() {
 
   const handleNextStep = () => {
     if (modalStep === "role") {
-      if (!formData.username || !formData.name || !formData.mobile || !formData.email) {
+      if (!formData.name || !formData.mobile || !formData.email) {
         toast.error("Please fill in all mandatory account details");
         return;
       }

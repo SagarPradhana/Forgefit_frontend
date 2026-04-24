@@ -100,7 +100,7 @@ export const UserModal = ({
               animate={{ opacity: 1, x: 0 }}
               className="space-y-5"
             >
-              <div>
+              {/* <div>
                 <label className="block text-sm font-semibold text-white mb-2">Username <span className="text-orange-400">*</span></label>
                 <input
                   id="user_registration_username_field"
@@ -112,7 +112,7 @@ export const UserModal = ({
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
                 />
-              </div>
+              </div> */}
 
               <div>
                 <label className="block text-sm font-semibold text-white mb-2">Full Name <span className="text-orange-400">*</span></label>

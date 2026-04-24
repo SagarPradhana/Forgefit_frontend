@@ -22,7 +22,7 @@ export interface UserMetadata {
 }
 
 export interface UserFormData {
-  username: string;
+  // username: string;
   mobile: string;
   name: string;
   email: string;
