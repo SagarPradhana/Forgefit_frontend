@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Table,
   StatusBadge,
@@ -11,6 +12,7 @@ import { adminInquiryService } from "../../services/adminInquiryService";
 type InquiryType = "subscriptions" | "products" | "contacts" | "expiry";
 
 export function InquiryCenter() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<InquiryType>("subscriptions");
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any[]>([]);
@@ -88,10 +90,10 @@ export function InquiryCenter() {
   };
 
   const tabs: { id: InquiryType; label: string }[] = [
-    { id: "subscriptions", label: "Subscriptions" },
-    { id: "products", label: "Product Orders" },
-    { id: "contacts", label: "Contact Inquiries" },
-    { id: "expiry", label: "Expiring Soon" },
+    { id: "subscriptions", label: t("subscriptions") },
+    { id: "products", label: t("products") },
+    { id: "contacts", label: t("contact") },
+    { id: "expiry", label: t("upcomingRenewals") },
   ];
 
   return (

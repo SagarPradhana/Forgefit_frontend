@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { GlassCard, SectionTitle } from "../../components/ui/primitives";
 import { Search, Grid, List, Plus } from "lucide-react";
 import { motion } from "framer-motion";
@@ -20,6 +21,7 @@ import { IdCardModal } from "../common/IdCardModal";
 import type { ViewType, ModalStep, UserFormData } from "./users/types";
 
 export function UserManagement() {
+  const { t } = useTranslation();
   // --- States ---
   const [viewType, setViewType] = useState<ViewType>("grid");
   const [modalOpen, setModalOpen] = useState(false);
@@ -370,7 +372,7 @@ export function UserManagement() {
     <GlassCard>
       <div className="mb-6">
         <SectionTitle
-          title="User Management"
+          title={t("users")}
           subtitle="Manage gym members, trainers, and employees"
         />
       </div>
@@ -428,7 +430,7 @@ export function UserManagement() {
             className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-orange-400 hover:from-indigo-600 hover:to-orange-500 text-white font-medium px-4 py-2 rounded-lg transition"
           >
             <Plus size={18} />
-            Add User
+            {t("submit")}
           </motion.button>
         </div>
       </div>

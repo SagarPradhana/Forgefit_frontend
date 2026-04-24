@@ -24,8 +24,10 @@ import { Bell, Users, CheckCircle2 } from "lucide-react";
 import { ChangePassword } from "../../components/admin/ChangePassword";
 import { API_ENDPOINTS } from "../../utils/url";
 import { api } from "../../utils/httputils";
+import { useTranslation } from "react-i18next";
 
 export function AdminPortalPages({ page }: { page: string }) {
+  const { t } = useTranslation();
   const {
     appConfig,
     publicPageConfig,
@@ -203,9 +205,9 @@ export function AdminPortalPages({ page }: { page: string }) {
       const currentPage = Number(p) || 1;
       const pageSize = Number(paymentsMeta.page_size) || 10;
       const offset = (currentPage - 1) * pageSize;
-      const fromDate = paymentDate ? Math.floor(new Date(paymentDate).setHours(0,0,0,0) / 1000) : undefined;
-      const toDate = paymentDate ? Math.floor(new Date(paymentDate).setHours(23,59,59,999) / 1000) : undefined;
-      
+      const fromDate = paymentDate ? Math.floor(new Date(paymentDate).setHours(0, 0, 0, 0) / 1000) : undefined;
+      const toDate = paymentDate ? Math.floor(new Date(paymentDate).setHours(23, 59, 59, 999) / 1000) : undefined;
+
       const res = await adminPaymentService.getPayments({
         count: pageSize,
         offset,
@@ -292,15 +294,15 @@ export function AdminPortalPages({ page }: { page: string }) {
       <GlassCard>
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
           <SectionTitle
-            title="Subscription Management"
-            subtitle="Manage gym membership plans and pricing strategies."
+            title={t("subscriptions")}
+            subtitle={t("subscriptionsSubtitle") || "Manage gym membership plans and pricing strategies."}
           />
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 w-full md:w-auto">
             <div className="relative flex-1 md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input
                 type="text"
-                placeholder="Search plans..."
+                placeholder={t("search") || "Search plans..."}
                 value={planSearch}
                 onChange={(e) => setPlanSearch(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white outline-none focus:border-indigo-500 transition"
@@ -314,7 +316,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                 setPlanModalOpen(true);
               }}
             >
-              Create Plan
+              {t("createPlan") || "Create Plan"}
             </GlowButton>
           </div>
         </div>
@@ -629,15 +631,15 @@ export function AdminPortalPages({ page }: { page: string }) {
       <GlassCard>
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
           <SectionTitle
-            title="Inventory Management"
-            subtitle="Manage gym merchandise, supplements, and equipment stock."
+            title={t("products")}
+            subtitle={t("productsSubtitle") || "Manage gym merchandise, supplements, and equipment stock."}
           />
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 w-full md:w-auto">
             <div className="relative flex-1 md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder={t("search") || "Search products..."}
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white outline-none focus:border-indigo-500 transition"
@@ -648,7 +650,7 @@ export function AdminPortalPages({ page }: { page: string }) {
               value={productCategory}
               onChange={(e) => setProductCategory(e.target.value)}
             >
-              <option value="All" className="bg-slate-900">All Categories</option>
+              <option value="All" className="bg-slate-900">{t("allCategories") || "All Categories"}</option>
               <option value="Supplements" className="bg-slate-900">Supplements</option>
               <option value="Apparel" className="bg-slate-900">Apparel</option>
               <option value="Equipment" className="bg-slate-900">Equipment</option>
@@ -662,7 +664,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                 setProductModalOpen(true);
               }}
             >
-              Add Product
+              {t("addProduct") || "Add Product"}
             </GlowButton>
           </div>
         </div>
@@ -919,7 +921,7 @@ export function AdminPortalPages({ page }: { page: string }) {
       <GlassCard>
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
           <SectionTitle
-            title="Payment Registry"
+            title={t("payments")}
             subtitle="Secure transaction ledger with multi-dimensional filtering."
           />
           <GlowButton
@@ -1232,7 +1234,7 @@ export function AdminPortalPages({ page }: { page: string }) {
     return (
       <GlassCard>
         <SectionTitle
-          title="Settings"
+          title={t("settings")}
           subtitle="Configure your app, public pages, and design themes."
         />
 

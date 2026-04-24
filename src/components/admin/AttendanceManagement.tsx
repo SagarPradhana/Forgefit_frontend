@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { GlassCard, SectionTitle, Table, CommonButton, Modal } from "../ui/primitives";
 import {
   Grid,
@@ -25,6 +26,7 @@ type AttendanceView = "grid" | "list";
 
 
 export function AttendanceManagement() {
+  const { t } = useTranslation();
   const [viewType, setViewType] = useState<AttendanceView>("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
@@ -157,7 +159,7 @@ export function AttendanceManagement() {
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <SectionTitle
-          title="Attendance Management"
+          title={t("attendance")}
           subtitle="Precision control over member gym access and history"
         />
 
@@ -176,10 +178,10 @@ export function AttendanceManagement() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Check-ins" value={`${stats.total_checkins_today ?? 0}`} icon={<UserCheck className="text-emerald-400" />} />
-        <StatCard title="Present Now" value={`${stats.present_now ?? 0}`} icon={<CheckCircle2 className="text-blue-400" />} />
-        <StatCard title="Checked Out" value={`${stats.checked_out_today ?? 0}`} icon={<Clock className="text-amber-400" />} />
-        <StatCard title="Avg Time" value={`${stats.avg_time_hours ?? 0}h`} icon={<Filter className="text-purple-400" />} />
+        <StatCard title={t("totalCheckins")} value={`${stats.total_checkins_today ?? 0}`} icon={<UserCheck className="text-emerald-400" />} />
+        <StatCard title={t("presentNow")} value={`${stats.present_now ?? 0}`} icon={<CheckCircle2 className="text-blue-400" />} />
+        <StatCard title={t("checkedOut")} value={`${stats.checked_out_today ?? 0}`} icon={<Clock className="text-amber-400" />} />
+        <StatCard title={t("avgTime")} value={`${stats.avg_time_hours ?? 0}h`} icon={<Filter className="text-purple-400" />} />
       </div>
 
       <GlassCard>
@@ -209,7 +211,7 @@ export function AttendanceManagement() {
               }}
               className="whitespace-nowrap flex gap-2 items-center justify-center p-3 sm:p-auto"
             >
-              <Plus size={18} /> Mark Attendance
+              <Plus size={18} /> {t("markAttendance")}
             </CommonButton>
           </div>
         </div>

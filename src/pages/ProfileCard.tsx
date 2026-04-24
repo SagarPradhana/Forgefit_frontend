@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { User, Dumbbell, Target, Ruler, Scale, MapPin, Edit3, Phone, AtSign, Fingerprint } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import {
@@ -9,6 +10,7 @@ import {
 } from "../components/ui/primitives";
 
 export function ProfileCard({ user: initialUser }: any) {
+  const { t } = useTranslation();
   const [user, setUser] = useState(initialUser);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -95,7 +97,7 @@ export function ProfileCard({ user: initialUser }: any) {
               <div className="absolute -bottom-10 -right-10 p-4 opacity-5 group-hover:opacity-10 transition-all duration-700 scale-150 rotate-12">
                 <Ruler size={100} />
               </div>
-              <SectionTitle title="Biological Metrics" className="mb-6" />
+              <SectionTitle title={t("biologicalMetrics") || "Biological Metrics"} className="mb-6" />
               <div className="grid grid-cols-1 gap-4">
                 <div className="flex items-center justify-between p-5 rounded-3xl bg-gradient-to-br from-indigo-500/10 to-transparent border border-indigo-500/20">
                   <div className="flex items-center gap-4">
@@ -126,7 +128,7 @@ export function ProfileCard({ user: initialUser }: any) {
               <div className="absolute -bottom-10 -right-10 p-4 opacity-5 group-hover:opacity-10 transition-all duration-700 scale-150 -rotate-12">
                 <MapPin size={100} />
               </div>
-              <SectionTitle title="Residence" className="mb-6" />
+              <SectionTitle title={t("residence") || "Residence"} className="mb-6" />
               <div className="p-6 rounded-3xl bg-white/5 border border-white/10 h-[calc(100%-4rem)] flex flex-col justify-center gap-5">
                 <div className="flex items-start gap-4">
                   <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 flex-shrink-0 shadow-inner">
@@ -145,7 +147,7 @@ export function ProfileCard({ user: initialUser }: any) {
             <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] -mr-32 -mt-32" />
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10 gap-4">
-              <SectionTitle title="Performance Snapshot" />
+              <SectionTitle title={t("performanceSnapshot") || "Performance Snapshot"} />
               <button
                 onClick={() => setIsEditOpen(true)}
                 className="flex items-center gap-3 px-8 py-3.5 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-indigo-500/30 active:scale-95 group/btn"

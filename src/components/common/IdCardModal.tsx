@@ -1,9 +1,8 @@
 import React, { useRef } from 'react';
-import { motion } from 'framer-motion';
-import { GlowButton, Modal } from '../ui/primitives';
-import { Printer, Download, CreditCard, X } from 'lucide-react';
+import { Modal } from '../ui/primitives';
+import { useTranslation } from 'react-i18next';
+import { Download, } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
-import { toast } from '../../store/toastStore';
 
 interface IdCardModalProps {
   isOpen: boolean;
@@ -30,6 +29,7 @@ interface IdCardModalProps {
 }
 
 export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user }) => {
+  const { t } = useTranslation();
   const cardRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = () => {
@@ -94,14 +94,33 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
       hideTitle
       className="!bg-transparent !border-none !shadow-none"
     >
-      <div className="flex flex-col items-center gap-10 py-6">
-        <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-4">
+      <div className="flex flex-col items-center py-6">
+        <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-8">
           ForgeFit Gym Portal · Member ID Card
         </div>
+
+        {/* Action Buttons at Top (Accessibility Fix) */}
+        <div className="flex gap-4 w-full justify-center mb-10">
+          <button
+            onClick={handlePrint}
+            className="px-8 md:px-10 h-14 rounded-xl text-[11px] font-black uppercase tracking-widest bg-white/90 text-slate-700 shadow-xl hover:scale-105 transition-transform"
+          >
+            {t("print") || "Print Card"}
+          </button>
+          <button
+            onClick={handleDownload}
+            className="px-6 h-14 rounded-xl text-[10px] font-black uppercase tracking-widest bg-slate-800 text-slate-400 hover:text-white transition-all flex items-center justify-center border border-white/10"
+            title="Download Image"
+          >
+            <Download size={18} />
+          </button>
+        </div>
+
         {/* The Card */}
         <div ref={cardRef} className="id-card-render-container">
-           <style>{idCardStyles}</style>
-           <div className="card" id="card">
+          <style>{idCardStyles}</style>
+          <div className="card" id="card">
+
             {/* ── DARK TOP SECTION ── */}
             <div className="card-top">
               {/* Logo */}
@@ -109,12 +128,12 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
                 <div className="logo-left">
                   <div className="flame-wrap">
                     <svg width="26" height="28" viewBox="0 0 26 28" fill="none">
-                      <path d="M13 1C11.5 5 9.5 7 10.5 11C8.5 9 8.5 6 9.5 4C6 8 5 13 8 16.5C6.5 15.5 5.5 13.5 6 12C4 15 5 20 9.5 21.5C8 21 7 19 7.5 17.5C6 20 7 24.5 11.5 26L14.5 26C19 24.5 20 20 18.5 17.5C19 19 18 21 16.5 21.5C21 20 22 15 20 12C20.5 13.5 19.5 15.5 18 16.5C21 13 20 8 16.5 4C17.5 6 17.5 9 15.5 11C16.5 7 14.5 5 13 1Z" fill="url(#fg)"/>
+                      <path d="M13 1C11.5 5 9.5 7 10.5 11C8.5 9 8.5 6 9.5 4C6 8 5 13 8 16.5C6.5 15.5 5.5 13.5 6 12C4 15 5 20 9.5 21.5C8 21 7 19 7.5 17.5C6 20 7 24.5 11.5 26L14.5 26C19 24.5 20 20 18.5 17.5C19 19 18 21 16.5 21.5C21 20 22 15 20 12C20.5 13.5 19.5 15.5 18 16.5C21 13 20 8 16.5 4C17.5 6 17.5 9 15.5 11C16.5 7 14.5 5 13 1Z" fill="url(#fg)" />
                       <defs>
                         <linearGradient id="fg" x1="13" y1="1" x2="13" y2="26" gradientUnits="userSpaceOnUse">
-                          <stop offset="0%" stopColor="#fbbf24"/>
-                          <stop offset="55%" stopColor="#f07040"/>
-                          <stop offset="100%" stopColor="#e8501a"/>
+                          <stop offset="0%" stopColor="#fbbf24" />
+                          <stop offset="55%" stopColor="#f07040" />
+                          <stop offset="100%" stopColor="#e8501a" />
                         </linearGradient>
                       </defs>
                     </svg>
@@ -131,12 +150,12 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
               <div className="profile-area">
                 <div className="avatar-ring">
                   <div className="avatar-inner">
-                    { (user.profile_image_path || user.metadata?.profile_image_path) ? (
+                    {(user.profile_image_path || user.metadata?.profile_image_path) ? (
                       <img src={user.profile_image_path || user.metadata?.profile_image_path} alt="Photo" style={{ display: 'block' }} />
                     ) : (
                       <svg width="56" height="68" viewBox="0 0 56 68" fill="none">
-                        <circle cx="28" cy="22" r="15" fill="rgba(255,255,255,0.18)"/>
-                        <path d="M2 68C2 50 54 50 54 68" fill="rgba(255,255,255,0.18)"/>
+                        <circle cx="28" cy="22" r="15" fill="rgba(255,255,255,0.18)" />
+                        <path d="M2 68C2 50 54 50 54 68" fill="rgba(255,255,255,0.18)" />
                       </svg>
                     )}
                   </div>
@@ -157,7 +176,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
             {/* Wave transition */}
             <div className="wave-divider">
               <svg viewBox="0 0 400 28" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0 0 Q100 28 200 14 Q300 0 400 22 L400 28 L0 28Z" fill="#faf9f4"/>
+                <path d="M0 0 Q100 28 200 14 Q300 0 400 22 L400 28 L0 28Z" fill="#faf9f4" />
               </svg>
             </div>
 
@@ -166,15 +185,15 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
               {/* Detail cells */}
               <div className="details-grid">
                 <div className="detail-cell">
-                  <div className="d-label">Date of Birth</div>
+                  <div className="d-label">{t("dob") || "Date of Birth"}</div>
                   <div className="d-value">{formatDate(user.metadata?.dob)}</div>
                 </div>
                 <div className="detail-cell">
-                  <div className="d-label">Blood Group</div>
+                  <div className="d-label">{t("bloodGroup") || "Blood Group"}</div>
                   <div className="d-value accent">{user.metadata?.blood_group || 'O+'}</div>
                 </div>
                 <div className="detail-cell">
-                  <div className="d-label">Trainer</div>
+                  <div className="d-label">{t("trainer") || "Trainer"}</div>
                   <div className="d-value teal">System Assigned</div>
                 </div>
                 <div className="detail-cell">
@@ -186,7 +205,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
                   <div className="d-value">{formatDate(user.metadata?.joining_date)}</div>
                 </div>
                 <div className="detail-cell">
-                  <div className="d-label">Expiry</div>
+                  <div className="d-label">{t("expiry") || "Expiry"}</div>
                   <div className="d-value">{formatDate(user.metadata?.expiry_date)}</div>
                 </div>
                 <div className="detail-cell">
@@ -217,11 +236,11 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
                 <div className="tier-panel">
                   <div className="tier-icon-wrap">
                     <svg width="28" height="22" viewBox="0 0 28 22" fill="none">
-                      <path d="M2 18 L4 8 L9 14 L14 2 L19 14 L24 8 L26 18Z" fill="#c9922a" opacity="0.9"/>
-                      <rect x="2" y="18" width="24" height="3" rx="1.5" fill="#c9922a"/>
-                      <circle cx="2" cy="8" r="2" fill="#c9922a"/>
-                      <circle cx="14" cy="2" r="2" fill="#c9922a"/>
-                      <circle cx="26" cy="8" r="2" fill="#c9922a"/>
+                      <path d="M2 18 L4 8 L9 14 L14 2 L19 14 L24 8 L26 18Z" fill="#c9922a" opacity="0.9" />
+                      <rect x="2" y="18" width="24" height="3" rx="1.5" fill="#c9922a" />
+                      <circle cx="2" cy="8" r="2" fill="#c9922a" />
+                      <circle cx="14" cy="2" r="2" fill="#c9922a" />
+                      <circle cx="26" cy="8" r="2" fill="#c9922a" />
                     </svg>
                   </div>
                   <div className="tier-label-sm">Membership</div>
@@ -242,22 +261,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4 w-full justify-center mt-4">
-           <button 
-             onClick={handlePrint}
-             className="px-10 h-14 rounded-xl text-[11px] font-black uppercase tracking-widest bg-[#e2e2e2] text-slate-700 shadow-xl hover:scale-105 transition-transform"
-           >
-             Print Card
-           </button>
-           <button 
-             onClick={handleDownload}
-             className="px-6 h-14 rounded-xl text-[10px] font-black uppercase tracking-widest bg-slate-800 text-slate-400 hover:text-white transition-all flex items-center justify-center"
-             title="Download Image"
-           >
-             <Download size={18} />
-           </button>
-        </div>
+
       </div>
     </Modal>
   );
@@ -280,12 +284,12 @@ const QrSvg = ({ value }: { value: string }) => {
   addFinder(0, cols - 7);
 
   const rects: React.ReactNode[] = [];
-  
+
   // Finder patterns
   const drawFinder = (ox: number, oy: number) => {
-    rects.push(<rect key={`f-bg-${ox}-${oy}`} x={ox*cell} y={oy*cell} width={7*cell} height={7*cell} fill="#1c1410" />);
-    rects.push(<rect key={`f-in-${ox}-${oy}`} x={(ox+1)*cell} y={(oy+1)*cell} width={5*cell} height={5*cell} fill="#fff" />);
-    rects.push(<rect key={`f-dot-${ox}-${oy}`} x={(ox+2)*cell} y={(oy+2)*cell} width={3*cell} height={3*cell} fill="#1c1410" />);
+    rects.push(<rect key={`f-bg-${ox}-${oy}`} x={ox * cell} y={oy * cell} width={7 * cell} height={7 * cell} fill="#1c1410" />);
+    rects.push(<rect key={`f-in-${ox}-${oy}`} x={(ox + 1) * cell} y={(oy + 1) * cell} width={5 * cell} height={5 * cell} fill="#fff" />);
+    rects.push(<rect key={`f-dot-${ox}-${oy}`} x={(ox + 2) * cell} y={(oy + 2) * cell} width={3 * cell} height={3 * cell} fill="#1c1410" />);
   };
   drawFinder(0, 0);
   drawFinder(cols - 7, 0);

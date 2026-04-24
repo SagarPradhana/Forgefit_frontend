@@ -111,7 +111,7 @@ function UserDashboard() {
             className="h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500 hover:text-white transition-all shadow-lg shadow-indigo-500/10"
           >
             <QrCode size={18} />
-            Digital ID Card
+            {t("profile")} ID
           </GlowButton>
         </div>
       </div>

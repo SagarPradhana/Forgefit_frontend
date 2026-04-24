@@ -353,7 +353,7 @@ export function Sidebar({
         { name: "payments", icon: CreditCard, label: t("payments") },
         { name: "products", icon: Box, label: t("products") },
         { name: "settings", icon: Settings, label: t("settings") },
-        { name: "inquiries", icon: Bell, label: "Inquiries" },
+        { name: "inquiries", icon: Bell, label: t("inquiries") },
       ]
       : [
         { name: "dashboard", icon: LayoutDashboard, label: t("dashboard") },
@@ -650,7 +650,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
               </div>
 
               <div className="flex items-center gap-2 lg:gap-4 overflow-visible shrink-0 relative">
-                <div className="hidden sm:block">
+                <div className="flex shrink-0">
                   <LanguageSwitcher />
                 </div>
 

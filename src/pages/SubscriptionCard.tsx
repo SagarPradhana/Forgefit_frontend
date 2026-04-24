@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Check, Zap, ShieldCheck, Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { GlassCard, GlowButton } from "../components/ui/primitives";
 import clsx from "clsx";
 
@@ -9,6 +10,7 @@ export function SubscriptionCard({
   onSelect,
   highlight,
 }: any) {
+  const { t } = useTranslation();
   const isCurrent = plan.name === currentPlan;
 
   // Dynamic styling based on plan type
@@ -46,7 +48,7 @@ export function SubscriptionCard({
 
         {isCurrent && (
           <div className="absolute top-4 right-4 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg flex items-center gap-1.5 shadow-lg group">
-            <ShieldCheck size={12} fill="currentColor" className="animate-pulse" /> Active Plan
+            <ShieldCheck size={12} fill="currentColor" className="animate-pulse" /> {t("activePlan")}
           </div>
         )}
 
@@ -66,7 +68,7 @@ export function SubscriptionCard({
             </div>
             <div>
               <h3 className="text-lg font-black text-white uppercase tracking-tighter leading-none">{plan.name}</h3>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Tier Level Access</p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{t("membershipCycle")}</p>
             </div>
           </div>
 

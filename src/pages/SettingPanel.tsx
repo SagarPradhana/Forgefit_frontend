@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import { 
@@ -23,6 +24,7 @@ import { toast } from "../store/toastStore";
 type TabType = "general" | "security" | "notifications";
 
 export function SettingsPanel() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const isPasswordOnly = searchParams.get("view") === "password";
   const [activeTab, setActiveTab] = useState<TabType>(isPasswordOnly ? "security" : "general");
@@ -50,9 +52,9 @@ export function SettingsPanel() {
   };
 
   const tabs = [
-    { id: "general", label: "General", icon: User },
-    { id: "security", label: "Security", icon: Lock },
-    { id: "notifications", label: "Alerts", icon: Bell },
+    { id: "general", label: t("general") || "General", icon: User },
+    { id: "security", label: t("security") || "Security", icon: Lock },
+    { id: "notifications", label: t("notifications") || "Alerts", icon: Bell },
   ];
 
   return (

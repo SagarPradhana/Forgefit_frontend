@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
   ShoppingBag,
   Zap,
@@ -14,6 +15,7 @@ import {
 import { toast } from "../store/toastStore";
 
 export function ProductCard({ product }: any) {
+  const { t } = useTranslation();
   const isSupplement = product.category?.toLowerCase().includes("supplement");
 
   const handleBook = () => {
@@ -33,7 +35,7 @@ export function ProductCard({ product }: any) {
         <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 items-end">
           <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
             <CheckCircle2 size={10} />
-            <span className="text-[9px] font-black uppercase tracking-widest">In Stock</span>
+            <span className="text-[9px] font-black uppercase tracking-widest">{t("success")}</span>
           </div>
         </div>
 
@@ -98,7 +100,7 @@ export function ProductCard({ product }: any) {
             className="w-full h-12 flex items-center justify-center gap-2.5 text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-500/10 active:scale-95"
           >
             <CalendarFold size={16} />
-            Book for Pickup
+            {t("submit")}
           </CommonButton>
         </div>
       </GlassCard>

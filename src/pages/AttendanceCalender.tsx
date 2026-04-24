@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { Clock, LogIn, LogOut, CheckCircle2 } from "lucide-react";
 import { GlassCard } from "../components/ui/primitives";
 
 export function AttendanceCalendar({ data }: any) {
+  const { t } = useTranslation();
   const days = Array.from({ length: 30 }, (_, i) => i + 1);
 
   const attendanceMap: Record<string, any> = {};
@@ -19,16 +21,16 @@ export function AttendanceCalendar({ data }: any) {
       <div className="flex items-center justify-between mb-8">
         <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
           <Clock size={14} className="text-indigo-400" />
-          Monthly Visit Heatmap
+          {t("attendanceStatus")}
         </h3>
         <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-tighter">
           <div className="flex items-center gap-1.5 text-emerald-400">
             <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-            Present
+            {t("verifiedPresent")}
           </div>
           <div className="flex items-center gap-1.5 text-slate-500">
             <span className="h-2 w-2 rounded-full bg-slate-700" />
-            Absent
+            {t("markedAbsent")}
           </div>
         </div>
       </div>

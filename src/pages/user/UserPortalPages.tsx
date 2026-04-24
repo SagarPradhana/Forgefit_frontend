@@ -1,7 +1,7 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useGymStore } from "../../store/gymStore";
 import {
-  attendanceHistory,
   payments,
   products,
   userProfile,
@@ -31,6 +31,7 @@ import { adminAttendanceService, type AttendanceResponse } from "../../services/
 import { useEffect } from "react";
 
 export function UserPortalPages({ page }: { page: string }) {
+  const { t } = useTranslation();
   const plans = useGymStore((s) => s.plans);
   const flags = useGymStore(
     (s) =>
@@ -124,8 +125,8 @@ export function UserPortalPages({ page }: { page: string }) {
     return (
       <div className="space-y-6">
         <SectionTitle
-          title="Profile"
-          subtitle="Manage your personal information"
+          title={t("profile")}
+          subtitle={t("trackConsistency")}
         />
         <ProfileCard user={userProfile} />
       </div>
@@ -147,8 +148,8 @@ export function UserPortalPages({ page }: { page: string }) {
       <div className="space-y-10 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <SectionTitle
-            title="Sovereign Subscription"
-            subtitle="Architect your fitness journey with our elite membership strategies"
+            title={t("subscription")}
+            subtitle={t("membershipCycle")}
           />
           <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-slate-400">
             <ShieldCheck size={14} className="text-emerald-400" /> Auto-Renewal Enabled
@@ -268,7 +269,7 @@ export function UserPortalPages({ page }: { page: string }) {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <SectionTitle
-            title="Attendance Hub"
+            title={t("attendance")}
             subtitle="Monitor your performance and consistency"
           />
           <div className="flex p-1 bg-slate-900/50 backdrop-blur-md border border-white/5 rounded-xl">
@@ -453,7 +454,7 @@ export function UserPortalPages({ page }: { page: string }) {
   if (page === "payments")
     return (
       <GlassCard>
-        <SectionTitle title="Payments" />
+        <SectionTitle title={t("payments")} />
         <Table
           headers={["Transaction", "Amount", "Date", "Status"]}
           rows={payments
@@ -475,7 +476,7 @@ export function UserPortalPages({ page }: { page: string }) {
     return flags.showProducts ? (
       <div className="space-y-6">
         <SectionTitle
-          title="Products"
+          title={t("products")}
           subtitle="Recommended supplements & fitness gear"
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -495,7 +496,7 @@ export function UserPortalPages({ page }: { page: string }) {
     return (
       <div className="space-y-6">
         <SectionTitle
-          title="Settings"
+          title={t("settings")}
           subtitle="Manage your account and preferences"
         />
         <SettingsPanel />

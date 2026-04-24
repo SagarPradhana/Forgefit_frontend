@@ -120,12 +120,12 @@ export function Modal({
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-start justify-center bg-slate-950/80 p-4 pb-10 pt-10 md:pt-20 backdrop-blur-md overflow-y-auto custom-scrollbar">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         className={clsx(
-          "w-full rounded-2xl border border-white/10 bg-slate-900 shadow-2xl relative",
+          "w-full rounded-2xl border border-white/10 bg-slate-900 shadow-2xl relative overflow-hidden",
           maxWidth,
           className
         )}
@@ -145,7 +145,7 @@ export function Modal({
 
         {/* Body */}
         <div className={clsx(
-          "max-h-[85vh] overflow-y-auto px-4 md:px-6 py-5 dark:text-slate-200 [.light_&]:text-slate-700 custom-scrollbar",
+          "max-h-[85vh] overflow-y-auto px-4 md:px-6 py-5 dark:text-slate-200 [.light_&]:text-slate-700 custom-scrollbar scroll-smooth",
           hideTitle && "pt-0"
         )}>
           {hideTitle && (
