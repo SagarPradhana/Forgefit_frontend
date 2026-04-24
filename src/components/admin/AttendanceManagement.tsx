@@ -83,7 +83,13 @@ export function AttendanceManagement() {
       const date_timestamp = Math.floor(new Date(selectedDate).setHours(0, 0, 0, 0) / 1000);
       const res = await adminAttendanceService.getStats(date_timestamp) as any;
       if (res) {
-        setStats(res.data || res);
+        // Stats are returned at the root level, not nested in `data`
+        setStats({
+          total_checkins_today: res.total_checkins_today ?? res.data?.total_checkins_today ?? 0,
+          present_now: res.present_now ?? res.data?.present_now ?? 0,
+          checked_out_today: res.checked_out_today ?? res.data?.checked_out_today ?? 0,
+          avg_time_hours: res.avg_time_hours ?? res.data?.avg_time_hours ?? 0,
+        });
       }
     } catch (err) {
       console.error(err);
@@ -158,26 +164,42 @@ export function AttendanceManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Header row: title + date filter + view toggle */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <SectionTitle
           title={t("attendance")}
           subtitle="Precision control over member gym access and history"
         />
 
-        <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl self-end md:self-auto">
-          {(["grid", "list"] as AttendanceView[]).map((type) => (
-            <button
-              key={type}
-              onClick={() => setViewType(type)}
-              className={`p-2 rounded-lg transition-all ${viewType === type ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" : "text-slate-400 hover:text-white"}`}
-            >
-              {type === "grid" && <Grid size={18} />}
-              {type === "list" && <List size={18} />}
-            </button>
-          ))}
+        <div className="flex items-center gap-3 self-end md:self-auto">
+          {/* Date filter — controls both stats and list */}
+          <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+            <Filter size={14} className="text-slate-400 shrink-0" />
+            <input
+              type="date"
+              className="bg-transparent text-sm text-white outline-none cursor-pointer"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+            />
+          </div>
+
+          {/* View toggle */}
+          <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl">
+            {(["grid", "list"] as AttendanceView[]).map((type) => (
+              <button
+                key={type}
+                onClick={() => setViewType(type)}
+                className={`p-2 rounded-lg transition-all ${viewType === type ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" : "text-slate-400 hover:text-white"}`}
+              >
+                {type === "grid" && <Grid size={18} />}
+                {type === "list" && <List size={18} />}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
+      {/* Stat cards — driven by selectedDate */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title={t("totalCheckins")} value={`${stats.total_checkins_today ?? 0}`} icon={<UserCheck className="text-emerald-400" />} />
         <StatCard title={t("presentNow")} value={`${stats.present_now ?? 0}`} icon={<CheckCircle2 className="text-blue-400" />} />
@@ -186,7 +208,7 @@ export function AttendanceManagement() {
       </div>
 
       <GlassCard>
-        {/* Controls */}
+        {/* Controls — search + Mark Attendance only (date moved to top) */}
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -197,24 +219,16 @@ export function AttendanceManagement() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="date"
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-indigo-500 cursor-pointer"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-            />
-            <CommonButton
-              onClick={() => {
-                setEditingRecord(null);
-                setForm({ user_id: "", userName: "", date: selectedDate, checkIn: "09:00", checkOut: "", status: "present" });
-                setModalOpen(true);
-              }}
-              className="whitespace-nowrap flex gap-2 items-center justify-center p-3 sm:p-auto"
-            >
-              <Plus size={18} /> {t("markAttendance")}
-            </CommonButton>
-          </div>
+          <CommonButton
+            onClick={() => {
+              setEditingRecord(null);
+              setForm({ user_id: "", userName: "", date: selectedDate, checkIn: "09:00", checkOut: "", status: "present" });
+              setModalOpen(true);
+            }}
+            className="whitespace-nowrap flex gap-2 items-center justify-center p-3 sm:p-auto"
+          >
+            <Plus size={18} /> {t("markAttendance")}
+          </CommonButton>
         </div>
 
         <AnimatePresence mode="wait">
