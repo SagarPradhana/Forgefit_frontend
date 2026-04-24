@@ -38,7 +38,7 @@ export function AttendanceManagement() {
     userName: "",
     date: new Date().toISOString().split('T')[0],
     checkIn: "09:00",
-    checkOut: "10:30",
+    checkOut: "",
     status: "present"
   });
 
@@ -76,21 +76,21 @@ export function AttendanceManagement() {
     }
   }, [searchQuery, selectedDate]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
-      const res = await adminAttendanceService.getStats();
+      const res = await adminAttendanceService.getStats(selectedDate);
       if (res && res.data) {
         setStats(res.data);
       }
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [selectedDate]);
 
   useEffect(() => {
     fetchRecords();
     fetchStats();
-  }, [fetchRecords]);
+  }, [fetchRecords, fetchStats]);
 
   const handleSave = async () => {
     try {

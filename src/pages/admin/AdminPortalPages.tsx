@@ -140,7 +140,7 @@ export function AdminPortalPages({ page }: { page: string }) {
     status: "paid" as PaymentStatus,
     purchase_type: "product" as PurchaseType,
     purchase_id: "",
-    purchase_details: { additionalProp1: {} }
+    purchase_details: { additionalProp1: {} } as any
   });
 
   // Plan Fetching
@@ -1155,8 +1155,6 @@ export function AdminPortalPages({ page }: { page: string }) {
                 value={paymentForm.purchase_type}
                 onChange={(e) => setPaymentForm({ ...paymentForm, purchase_type: e.target.value as any })}
               >
-                <option value="subscription">Subscription</option>
-                <option value="renewal">Renewal</option>
                 <option value="product">Product Purchase</option>
                 <option value="other">Other</option>
               </select>
@@ -1173,7 +1171,8 @@ export function AdminPortalPages({ page }: { page: string }) {
                     setPaymentForm({
                       ...paymentForm,
                       purchase_id: e.target.value,
-                      amount: product ? String(product.price) : paymentForm.amount
+                      amount: product ? String(product.price) : paymentForm.amount,
+                      purchase_details: product ? { product_name: product.name, price: product.price, category: product.category } : { additionalProp1: {} }
                     });
                   }}
                 >

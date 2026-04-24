@@ -86,8 +86,11 @@ export const adminAttendanceService = {
     return api.post(API_ENDPOINTS.ADMIN.ATTENDANCE, data) as Promise<CommonAttendanceResponse>;
   },
 
-  getStats: async () => {
-    return api.get(API_ENDPOINTS.ADMIN.ATTENDANCE_STATS) as Promise<AttendanceStatsResponse>;
+  getStats: async (date?: string | number) => {
+    const query = new URLSearchParams();
+    if (date) query.append("date", date.toString());
+    const url = `${API_ENDPOINTS.ADMIN.ATTENDANCE_STATS}${query.toString() ? '?' + query.toString() : ''}`;
+    return api.get(url) as Promise<AttendanceStatsResponse>;
   },
 
   updateAttendance: async (id: string, data: Partial<AttendanceRequest>) => {

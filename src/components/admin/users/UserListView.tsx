@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Edit2, Calendar, ToggleRight, ToggleLeft, Trash2, FileText, Mail, Phone, Users, Loader2, ChevronLeft, ChevronRight, CreditCard, Key, Contact, RefreshCw } from "lucide-react";
+import { Edit2, Calendar, ToggleRight, ToggleLeft, Trash2, FileText, Mail, Phone, Users, Loader2, ChevronLeft, ChevronRight, CreditCard, Key, Contact, RefreshCw, Clock } from "lucide-react";
 import type { ViewType } from "./types";
 import { useState, useEffect } from "react";
 
@@ -155,6 +155,14 @@ export const UserListView = ({
                     <Contact size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
                     <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">ID Card</span>
                   </button>
+                  <button
+                    onClick={() => onOpenAttendance(user)}
+                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-amber-500/20 text-amber-400 border border-white/5 hover:border-amber-500/30 transition-all group"
+                    title="Attendance History"
+                  >
+                    <Clock size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Log</span>
+                  </button>
                   {/* <button
                     onClick={() => onSyncUser(user.id)}
                     className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-white/5 hover:border-emerald-500/30 transition-all group"
@@ -288,10 +296,10 @@ export const UserListView = ({
                         </button>
                         <button
                           onClick={() => onOpenAttendance(user)}
-                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-emerald-500 text-emerald-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-emerald-500/40"
-                          title="Registry Log"
+                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-amber-500 text-amber-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-amber-500/40"
+                          title="Attendance History Log"
                         >
-                          <Calendar size={16} />
+                          <Clock size={16} />
                         </button>
                         <button
                           onClick={() => onOpenDocs(user)}

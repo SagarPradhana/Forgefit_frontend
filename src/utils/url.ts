@@ -35,6 +35,10 @@ export const API_ENDPOINTS = {
     ATTENDANCE_STATS: "/api/admin/attendance/attendance-stats",
     ATTENDANCE_USER: (userId: string) => `/api/admin/attendance/${userId}`,
     ATTENDANCE_DETAIL: (id: string) => `/api/admin/attendance/${id}`,
+    INQUIRIES_CONTACT: "/api/admin/inquiries/contact",
+    INQUIRIES_PRODUCT_ORDER: "/api/admin/inquiries/product-order",
+    INQUIRIES_SUBSCRIPTION: "/api/admin/inquiries/subscription",
+    INQUIRIES_EXPIRING: "/api/admin/inquiries/expiring-member",
   }
 } as const;
 
