@@ -93,8 +93,8 @@ export const adminAttendanceService = {
     return api.get(url) as Promise<AttendanceStatsResponse>;
   },
 
-  updateAttendance: async (id: string, data: Partial<AttendanceRequest>) => {
-    return api.patch(API_ENDPOINTS.ADMIN.ATTENDANCE_DETAIL(id), data) as Promise<CommonAttendanceResponse>;
+  updateAttendance: async (id: string, userId: string, data: Partial<AttendanceRequest>) => {
+    return api.patch(API_ENDPOINTS.ADMIN.ATTENDANCE_EDIT(id, userId), data) as Promise<CommonAttendanceResponse>;
   },
 
   deleteAttendance: async (id: string) => {

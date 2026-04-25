@@ -1,19 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { GlassCard, SectionTitle, Table, CommonButton, Modal } from "../ui/primitives";
-import {
-  Grid,
-  List,
-  Search,
-  UserCheck,
-  Clock,
-  Filter,
-  CheckCircle2,
-  Edit2,
-  Trash2,
-  Plus,
-  Users
-} from "lucide-react";
+import { Grid, List, Search, UserCheck, Clock, Filter, CheckCircle2, Edit2, Trash2, Plus, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { adminAttendanceService, type AttendanceResponse, type AttendanceRequest } from "../../services/adminAttendanceService";
 import { useEffect, useCallback, useMemo } from "react";
@@ -21,6 +9,7 @@ import { Skeleton } from "../ui/primitives";
 import { toast } from "../../store/toastStore";
 import { useGet } from "../../hooks/useApi";
 import { API_ENDPOINTS } from "../../utils/url";
+import { DateRangeFilter, type DateRange } from "../ui/DateRangeFilter";
 
 type AttendanceView = "grid" | "list";
 
@@ -29,7 +18,7 @@ export function AttendanceManagement() {
   const { t } = useTranslation();
   const [viewType, setViewType] = useState<AttendanceView>("grid");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [dateRange, setDateRange] = useState<DateRange>({ label: "Today" });
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<AttendanceResponse | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -59,31 +48,26 @@ export function AttendanceManagement() {
   const fetchRecords = useCallback(async () => {
     setLoading(true);
     try {
-      const from_date = Math.floor(new Date(selectedDate).setHours(0, 0, 0, 0) / 1000);
-      const to_date = Math.floor(new Date(selectedDate).setHours(23, 59, 59, 999) / 1000);
-
       const res = await adminAttendanceService.getAttendance({
         search: searchQuery || undefined,
-        from_date,
-        to_date,
-        count: 50 // Fixed count for now
+        from_date: dateRange.from_date,
+        to_date: dateRange.to_date,
+        count: 100
       });
-      if (res && res.data) {
-        setRecords(res.data);
-      }
+      if (res && res.data) setRecords(res.data);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, selectedDate]);
+  }, [searchQuery, dateRange]);
 
   const fetchStats = useCallback(async () => {
     try {
-      const date_timestamp = Math.floor(new Date(selectedDate).setHours(0, 0, 0, 0) / 1000);
+      // Pass the range's from timestamp as the date_timestamp for stats
+      const date_timestamp = dateRange.from_date ?? Math.floor(new Date().setHours(0,0,0,0) / 1000);
       const res = await adminAttendanceService.getStats(date_timestamp) as any;
       if (res) {
-        // Stats are returned at the root level, not nested in `data`
         setStats({
           total_checkins_today: res.total_checkins_today ?? res.data?.total_checkins_today ?? 0,
           present_now: res.present_now ?? res.data?.present_now ?? 0,
@@ -91,10 +75,8 @@ export function AttendanceManagement() {
           avg_time_hours: res.avg_time_hours ?? res.data?.avg_time_hours ?? 0,
         });
       }
-    } catch (err) {
-      console.error(err);
-    }
-  }, [selectedDate]);
+    } catch (err) { console.error(err); }
+  }, [dateRange]);
 
   useEffect(() => {
     fetchRecords();
@@ -119,7 +101,7 @@ export function AttendanceManagement() {
       };
 
       if (editingRecord) {
-        await adminAttendanceService.updateAttendance(editingRecord.id, payload);
+        await adminAttendanceService.updateAttendance(editingRecord.id, editingRecord.user_id, payload);
         toast.success("Attendance record updated");
       } else {
         await adminAttendanceService.createAttendance(payload);
@@ -172,16 +154,11 @@ export function AttendanceManagement() {
         />
 
         <div className="flex items-center gap-3 self-end md:self-auto">
-          {/* Date filter — controls both stats and list */}
-          <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
-            <Filter size={14} className="text-slate-400 shrink-0" />
-            <input
-              type="date"
-              className="bg-transparent text-sm text-white outline-none cursor-pointer"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-            />
-          </div>
+          {/* Date Range Filter */}
+          <DateRangeFilter
+            defaultPreset="today"
+            onChange={(range) => setDateRange(range)}
+          />
 
           {/* View toggle */}
           <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl">
@@ -222,7 +199,7 @@ export function AttendanceManagement() {
           <CommonButton
             onClick={() => {
               setEditingRecord(null);
-              setForm({ user_id: "", userName: "", date: selectedDate, checkIn: "09:00", checkOut: "", status: "present" });
+              setForm({ user_id: "", userName: "", date: new Date().toISOString().split('T')[0], checkIn: "09:00", checkOut: "", status: "present" });
               setModalOpen(true);
             }}
             className="whitespace-nowrap flex gap-2 items-center justify-center p-3 sm:p-auto"

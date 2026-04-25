@@ -83,12 +83,25 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
 
   const formatDate = (ts?: number) => {
     if (!ts) return "N/A";
-    return new Date(ts * 1000).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
+    return new Date(ts * 1000).toLocaleDateString('en-IN', {
+      day: 'numeric', month: 'long', year: 'numeric'
     });
   };
+
+  const formatValidTill = (ts?: number | string) => {
+    if (!ts) return "N/A";
+    const d = new Date(Number(ts) * 1000);
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  const formatFitnessGoal = (raw?: string) => {
+    if (!raw) return "Fitness";
+    return raw.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
+  const isUser = !user.role || user.role === "user";
+  const isAdmin = user.role === "admin";
+  const username = (user as any).username || user.id.split("-")[0].toUpperCase();
 
   return (
     <Modal
@@ -148,7 +161,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
                     <div className="logo-sub">Strength · Performance · Results</div>
                   </div>
                 </div>
-                <div className="id-badge">{user.role?.toUpperCase() || 'MEMBER'} ID</div>
+                <div className="id-badge">{(user.role?.toUpperCase() || 'USER')}</div>
               </div>
 
               {/* Profile */}
@@ -168,11 +181,10 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
 
                 <div className="hero-info">
                   <div className="hero-name">{user.name}</div>
-                  <div className="hero-id">{user.id.split('-')[0].toUpperCase()}</div>
+                  <div className="hero-id">{username}</div>
                   <div className="status-row">
-                    <span className="tag tag-orange font-bold">{user.metadata?.fitness_goal || 'Fitness'}</span>
                     <span className="tag tag-teal">● Active</span>
-                    <span className="tag tag-neutral">{user.metadata?.gender || 'N/A'}</span>
+                    <span className="tag tag-neutral" style={{textTransform:'capitalize'}}>{user.metadata?.gender || 'N/A'}</span>
                   </div>
                 </div>
               </div>
@@ -187,7 +199,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
 
             {/* ── BODY ── */}
             <div className="card-body">
-              {/* Detail cells */}
+              {/* Detail cells — role-aware */}
               <div className="details-grid">
                 <div className="detail-cell">
                   <div className="d-label">Date of Birth</div>
@@ -209,18 +221,37 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
                   <div className="d-label">Join Date</div>
                   <div className="d-value">{formatDate(user.joining_date)}</div>
                 </div>
-                <div className="detail-cell">
-                  <div className="d-label">Expiry</div>
-                  <div className="d-value">{formatDate(user.latest_subscription_details?.end_date ? Number(user.latest_subscription_details.end_date) : undefined)}</div>
-                </div>
-                <div className="detail-cell">
-                  <div className="d-label">Plan Start</div>
-                  <div className="d-value teal">{formatDate(user.latest_subscription_details?.start_date ? Number(user.latest_subscription_details.start_date) : undefined)}</div>
-                </div>
-                <div className="detail-cell">
-                  <div className="d-label">Fitness Goal</div>
-                  <div className="d-value">{user.metadata?.fitness_goal || 'Fitness'}</div>
-                </div>
+                {isUser ? (
+                  <>
+                    <div className="detail-cell">
+                      <div className="d-label">Valid Till</div>
+                      <div className="d-value teal">{formatValidTill(user.latest_subscription_details?.end_date)}</div>
+                    </div>
+                    <div className="detail-cell">
+                      <div className="d-label">Fitness Goal</div>
+                      <div className="d-value">{formatFitnessGoal(user.metadata?.fitness_goal)}</div>
+                    </div>
+                    <div className="detail-cell">
+                      <div className="d-label">Workout Time</div>
+                      <div className="d-value" style={{textTransform:'capitalize'}}>{user.metadata?.workout_time || 'N/A'}</div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="detail-cell">
+                      <div className="d-label">Role</div>
+                      <div className="d-value accent" style={{textTransform:'capitalize'}}>{user.role || 'Admin'}</div>
+                    </div>
+                    <div className="detail-cell">
+                      <div className="d-label">Username</div>
+                      <div className="d-value teal">{username}</div>
+                    </div>
+                    <div className="detail-cell">
+                      <div className="d-label">Status</div>
+                      <div className="d-value teal">● Active</div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Bottom: QR + Tier */}
@@ -237,7 +268,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
                   </div>
                   <div className="qr-info">
                     <div className="qr-caption">Scan to Verify</div>
-                    <div className="qr-code-id">{user.id.split('-')[0].toUpperCase()}</div>
+                    <div className="qr-code-id">{username}</div>
                     <div className="qr-status">
                       <span className="live-dot"></span> Valid Member
                     </div>
@@ -256,6 +287,9 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
                   </div>
                   <div className="tier-label-sm">Membership</div>
                   <div className="tier-name">{user.latest_subscription_details?.subscription_name || user.currentPlan || 'General'}</div>
+                  {user.latest_subscription_details?.end_date && (
+                    <div className="tier-valid">Valid till {formatValidTill(user.latest_subscription_details.end_date)}</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -652,6 +686,16 @@ const idCardStyles = `
     font-size:14px;
     font-weight:700;
     color:var(--gold);
+  }
+
+  .tier-valid {
+    font-size:7px;
+    font-weight:600;
+    letter-spacing:0.5px;
+    color:var(--ink-muted);
+    text-align:center;
+    margin-top:2px;
+    line-height:1.3;
   }
 
   .card-footer {

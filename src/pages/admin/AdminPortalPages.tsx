@@ -26,6 +26,7 @@ import { ChangePassword } from "../../components/admin/ChangePassword";
 import { API_ENDPOINTS } from "../../utils/url";
 import { api } from "../../utils/httputils";
 import { useTranslation } from "react-i18next";
+import { DateRangeFilter, type DateRange } from "../../components/ui/DateRangeFilter";
 
 export function AdminPortalPages({ page }: { page: string }) {
   const { t } = useTranslation();
@@ -50,10 +51,8 @@ export function AdminPortalPages({ page }: { page: string }) {
   const [planSearch, setPlanSearch] = useState("");
   const [plansLoading, setPlansLoading] = useState(false);
 
-  const [paymentStatus, setPaymentStatus] = useState<
-    "All" | "Paid" | "Pending"
-  >("All");
-  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [paymentStatus, setPaymentStatus] = useState<"All" | "Paid" | "Pending">("All");
+  const [paymentDateRange, setPaymentDateRange] = useState<DateRange>({ label: "This Month" });
   const [editPlan, setEditPlan] = useState<string | null>(null);
 
   // Product States
@@ -957,15 +956,13 @@ export function AdminPortalPages({ page }: { page: string }) {
           </GlowButton>
         </div>
 
-        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="mb-6 flex flex-col sm:flex-row gap-4 items-end">
           <div className="space-y-1">
             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Transaction Status</label>
             <select
               className="w-full rounded-xl border border-white/10 bg-slate-950 p-3 text-xs font-bold text-white outline-none focus:border-indigo-500 transition shadow-2xl"
               value={paymentStatus}
-              onChange={(e) =>
-                setPaymentStatus(e.target.value as "All" | "Paid" | "Pending")
-              }
+              onChange={(e) => setPaymentStatus(e.target.value as "All" | "Paid" | "Pending")}
             >
               <option value="All">All Transactions</option>
               <option value="Paid">Paid</option>
@@ -973,16 +970,10 @@ export function AdminPortalPages({ page }: { page: string }) {
               <option value="Failed">Failed</option>
             </select>
           </div>
-
-          <div className="space-y-1">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Temporal Filter</label>
-            <input
-              className="w-full rounded-xl border border-white/10 bg-slate-950 p-3 text-xs font-bold text-white outline-none focus:border-indigo-500 transition shadow-2xl"
-              type="date"
-              value={paymentDate}
-              onChange={(e) => setPaymentDate(e.target.value)}
-            />
-          </div>
+          <DateRangeFilter
+            defaultPreset="monthly"
+            onChange={(r) => setPaymentDateRange(r)}
+          />
         </div>
 
         {paymentsLoading ? (
