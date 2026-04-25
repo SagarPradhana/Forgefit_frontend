@@ -205,8 +205,8 @@ export function AdminPortalPages({ page }: { page: string }) {
       const currentPage = Number(p) || 1;
       const pageSize = Number(paymentsMeta.page_size) || 10;
       const offset = (currentPage - 1) * pageSize;
-      const fromDate = paymentDate ? Math.floor(new Date(paymentDate).setHours(0, 0, 0, 0) / 1000) : undefined;
-      const toDate = paymentDate ? Math.floor(new Date(paymentDate).setHours(23, 59, 59, 999) / 1000) : undefined;
+      const fromDate = paymentDateRange.from_date;
+      const toDate   = paymentDateRange.to_date;
 
       const res = await adminPaymentService.getPayments({
         count: pageSize,
@@ -251,7 +251,7 @@ export function AdminPortalPages({ page }: { page: string }) {
     } else if (page === "payments") {
       fetchPayments(1);
     }
-  }, [page, paymentStatus, paymentDate]);
+  }, [page, paymentStatus, paymentDateRange]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

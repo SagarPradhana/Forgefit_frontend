@@ -86,9 +86,10 @@ export const adminAttendanceService = {
     return api.post(API_ENDPOINTS.ADMIN.ATTENDANCE, data) as Promise<CommonAttendanceResponse>;
   },
 
-  getStats: async (date?: string | number) => {
+  getStats: async (from_date?: number, to_date?: number) => {
     const query = new URLSearchParams();
-    if (date) query.append("date", date.toString());
+    if (from_date) query.append("from_date", from_date.toString());
+    if (to_date)   query.append("to_date",   to_date.toString());
     const url = `${API_ENDPOINTS.ADMIN.ATTENDANCE_STATS}${query.toString() ? '?' + query.toString() : ''}`;
     return api.get(url) as Promise<AttendanceStatsResponse>;
   },

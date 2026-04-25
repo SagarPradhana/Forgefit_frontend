@@ -11,6 +11,7 @@ import {
 import { GlassCard, SectionTitle } from "../components/ui/primitives";
 import { api } from "../utils/httputils";
 import { API_ENDPOINTS } from "../utils/url";
+import { DateRangeFilter, type DateRange } from "../components/ui/DateRangeFilter";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const getMonthRange = () => {
@@ -106,12 +107,11 @@ function RevTooltip({ active, payload, label }: any) {
 export default function AdminDashboard() {
   const monthRange = getMonthRange();
 
-  // Global date range (for most sections)
-  const [fromDate, setFromDate] = useState(monthRange.from);
-  const [toDate, setToDate] = useState(monthRange.to);
+  // Global date range (for most sections) — default: This Month
+  const [dateRange, setDateRange] = useState<DateRange>({ label: "This Month" });
 
-  // Attendance date (default today)
-  const [attDate, setAttDate] = useState(today());
+  // Attendance date range (default today)
+  const [attRange, setAttRange] = useState<DateRange>({ label: "Today" });
 
   // Monthly revenue months param
   const [revenueMonths, setRevenueMonths] = useState(6);
@@ -136,11 +136,11 @@ export default function AdminDashboard() {
   const setLoad = (key: string, val: boolean) =>
     setLoading((prev) => ({ ...prev, [key]: val }));
 
-  // ── Date params helper ──
-  const dateParams = useCallback((from: string, to: string) => {
+  // ── Date params helper — uses unix timestamps from DateRange directly ──
+  const dateParams = useCallback((range: DateRange) => {
     const p = new URLSearchParams();
-    if (from) p.set("from_date", String(toUnix(from)));
-    if (to)   p.set("to_date",   String(toUnix(to, true)));
+    if (range.from_date) p.set("from_date", String(range.from_date));
+    if (range.to_date)   p.set("to_date",   String(range.to_date));
     return p;
   }, []);
 
@@ -148,8 +148,7 @@ export default function AdminDashboard() {
   const fetchStats = useCallback(async () => {
     setLoad("stats", true);
     try {
-      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_STATS}?${dateParams(fromDate, toDate)}`);
-      // Stats are at root level alongside code/message — not nested under res.data
+      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_STATS}?${dateParams(dateRange)}`);
       if (res && res.code === 200) {
         setStats({
           total_users: res.total_users,
@@ -160,50 +159,50 @@ export default function AdminDashboard() {
         });
       }
     } catch (e) { console.error(e); } finally { setLoad("stats", false); }
-  }, [fromDate, toDate, dateParams]);
+  }, [dateRange, dateParams]);
 
   const fetchInquiries = useCallback(async () => {
     setLoad("inquiries", true);
     try {
-      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_INQUIRIES}?${dateParams(fromDate, toDate)}`);
+      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_INQUIRIES}?${dateParams(dateRange)}`);
       if (res?.data) setInquiries(res.data);
     } catch (e) { console.error(e); } finally { setLoad("inquiries", false); }
-  }, [fromDate, toDate, dateParams]);
+  }, [dateRange, dateParams]);
 
   const fetchPayments = useCallback(async () => {
     setLoad("payments", true);
     try {
-      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_PAYMENTS}?${dateParams(fromDate, toDate)}`);
+      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_PAYMENTS}?${dateParams(dateRange)}`);
       if (res?.data) setPayments(res.data);
     } catch (e) { console.error(e); } finally { setLoad("payments", false); }
-  }, [fromDate, toDate, dateParams]);
+  }, [dateRange, dateParams]);
 
   const fetchSubscriptions = useCallback(async () => {
     setLoad("subscriptions", true);
     try {
-      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_SUBSCRIPTIONS}?${dateParams(fromDate, toDate)}`);
+      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_SUBSCRIPTIONS}?${dateParams(dateRange)}`);
       if (res?.data) setSubscriptions(res.data);
     } catch (e) { console.error(e); } finally { setLoad("subscriptions", false); }
-  }, [fromDate, toDate, dateParams]);
+  }, [dateRange, dateParams]);
 
   const fetchProducts = useCallback(async () => {
     setLoad("products", true);
     try {
-      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_PRODUCTS}?${dateParams(fromDate, toDate)}`);
+      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_PRODUCTS}?${dateParams(dateRange)}`);
       if (res?.data) setProducts(res.data);
     } catch (e) { console.error(e); } finally { setLoad("products", false); }
-  }, [fromDate, toDate, dateParams]);
+  }, [dateRange, dateParams]);
 
   const fetchAttendance = useCallback(async () => {
     setLoad("attendance", true);
     try {
       const p = new URLSearchParams();
-      p.set("from_date", String(toUnix(attDate)));
-      p.set("to_date",   String(toUnix(attDate, true)));
+      if (attRange.from_date) p.set("from_date", String(attRange.from_date));
+      if (attRange.to_date)   p.set("to_date",   String(attRange.to_date));
       const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_ATTENDANCE}?${p}`);
       if (res?.data) setAttendance(res.data);
     } catch (e) { console.error(e); } finally { setLoad("attendance", false); }
-  }, [attDate]);
+  }, [attRange]);
 
   const fetchMonthlyRevenue = useCallback(async () => {
     setLoad("revenue", true);
@@ -235,16 +234,14 @@ export default function AdminDashboard() {
       {/* ── Top Header + Global Date Filter ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <SectionTitle title="Dashboard" subtitle="Real-time gym intelligence — members, revenue & activity" />
-        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 shrink-0">
-          <Calendar size={14} className="text-indigo-400 shrink-0" />
-          <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)}
-            className="bg-transparent text-white text-xs font-bold outline-none w-28 cursor-pointer" />
-          <span className="text-slate-600 text-xs font-black">→</span>
-          <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)}
-            className="bg-transparent text-white text-xs font-bold outline-none w-28 cursor-pointer" />
+        <div className="flex items-center gap-2">
+          <DateRangeFilter
+            defaultPreset="monthly"
+            onChange={(r) => setDateRange(r)}
+          />
           <button onClick={refreshAll}
-            className="ml-1 h-7 w-7 flex items-center justify-center rounded-lg bg-indigo-500/20 hover:bg-indigo-500 text-indigo-400 hover:text-white transition-all" title="Refresh">
-            <RefreshCw size={12} className={isAnyLoading ? "animate-spin" : ""} />
+            className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-indigo-500 hover:border-indigo-500 text-indigo-400 hover:text-white transition-all" title="Refresh all">
+            <RefreshCw size={14} className={isAnyLoading ? "animate-spin" : ""} />
           </button>
         </div>
       </div>
@@ -379,12 +376,11 @@ export default function AdminDashboard() {
       {/* ── [ROW 4] Attendance Count ── */}
       <GlassCard>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-          <SectionHeader title="Attendance Today" sub="Live count" />
-          <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
-            <Calendar size={13} className="text-indigo-400" />
-            <input type="date" value={attDate} onChange={(e) => setAttDate(e.target.value)}
-              className="bg-transparent text-white text-xs font-bold outline-none cursor-pointer" />
-          </div>
+          <SectionHeader title="Attendance" sub="Live count" />
+          <DateRangeFilter
+            defaultPreset="today"
+            onChange={(r) => setAttRange(r)}
+          />
         </div>
         {loading.attendance ? (
           <div className="grid grid-cols-3 gap-4"><div className="h-20 rounded-xl bg-white/5 animate-pulse" /><div className="h-20 rounded-xl bg-white/5 animate-pulse" /><div className="h-20 rounded-xl bg-white/5 animate-pulse" /></div>

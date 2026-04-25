@@ -2,12 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   TrendingUp, DollarSign, CreditCard, ShoppingBag,
-  RefreshCw, Calendar, Search, ChevronLeft, ChevronRight,
+  RefreshCw, Search, ChevronLeft, ChevronRight,
   Users, Mail, Phone, CheckCircle, XCircle, Filter,
 } from "lucide-react";
 import { API_ENDPOINTS } from "../../utils/url";
 import { api } from "../../utils/httputils";
 import { GlassCard, SectionTitle } from "../ui/primitives";
+import { DateRangeFilter, type DateRange } from "../ui/DateRangeFilter";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface RevenueStats {
@@ -107,12 +108,7 @@ function Badge({ value, green, red }: { value: string; green?: string[]; red?: s
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function RevenueOps() {
-  const today = new Date().toISOString().split("T")[0];
-  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-    .toISOString().split("T")[0];
-
-  const [fromDate, setFromDate] = useState(monthStart);
-  const [toDate, setToDate] = useState(today);
+  const [dateRange, setDateRange] = useState<DateRange>({ label: "This Month" });
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -136,19 +132,19 @@ export function RevenueOps() {
   }, [search]);
 
   // Reset page on filter changes
-  useEffect(() => { setPage(1); }, [activeTab, fromDate, toDate, paymentMethod]);
+  useEffect(() => { setPage(1); }, [activeTab, dateRange, paymentMethod]);
 
   // Fetch Stats
   const fetchStats = useCallback(async () => {
     setStatsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (fromDate) params.set("from_date", String(toUnix(fromDate)));
-      if (toDate)   params.set("to_date",   String(toUnix(toDate, true)));
+      if (dateRange.from_date) params.set("from_date", String(dateRange.from_date));
+      if (dateRange.to_date)   params.set("to_date",   String(dateRange.to_date));
       const res: any = await api.get(`${API_ENDPOINTS.ADMIN.REVENUE_STATS}?${params}`);
       if (res?.data) setStats(res.data);
     } catch (e) { console.error(e); } finally { setStatsLoading(false); }
-  }, [fromDate, toDate]);
+  }, [dateRange]);
 
   // Fetch Payments (all / subscriptions / products)
   const fetchPayments = useCallback(async () => {
@@ -163,17 +159,17 @@ export function RevenueOps() {
         offset: String((page - 1) * PAGE_SIZE),
         count:  String(PAGE_SIZE),
       });
-      if (fromDate)       params.set("from_date",       String(toUnix(fromDate)));
-      if (toDate)         params.set("to_date",         String(toUnix(toDate, true)));
-      if (debouncedSearch) params.set("search",         debouncedSearch);
-      if (paymentMethod)  params.set("payment_method",  paymentMethod);
+      if (dateRange.from_date) params.set("from_date", String(dateRange.from_date));
+      if (dateRange.to_date)   params.set("to_date",   String(dateRange.to_date));
+      if (debouncedSearch)     params.set("search",    debouncedSearch);
+      if (paymentMethod)       params.set("payment_method", paymentMethod);
       const res: any = await api.get(`${endpoint}?${params}`);
       if (res?.data) {
         setPayments(res.data);
         setPaymentsTotal(res.totalcount ?? res.count ?? 0);
       }
     } catch (e) { console.error(e); } finally { setPaymentsLoading(false); }
-  }, [activeTab, page, fromDate, toDate, debouncedSearch, paymentMethod]);
+  }, [activeTab, page, dateRange, debouncedSearch, paymentMethod]);
 
   // Fetch Contact Inquiries
   const fetchInquiries = useCallback(async () => {
@@ -184,16 +180,16 @@ export function RevenueOps() {
         offset: String((page - 1) * PAGE_SIZE),
         count:  String(PAGE_SIZE),
       });
-      if (fromDate)        params.set("from_date", String(toUnix(fromDate)));
-      if (toDate)          params.set("to_date",   String(toUnix(toDate, true)));
-      if (debouncedSearch) params.set("search",    debouncedSearch);
+      if (dateRange.from_date) params.set("from_date", String(dateRange.from_date));
+      if (dateRange.to_date)   params.set("to_date",   String(dateRange.to_date));
+      if (debouncedSearch)     params.set("search",    debouncedSearch);
       const res: any = await api.get(`${API_ENDPOINTS.ADMIN.REVENUE_CONTACT_INQUIRIES}?${params}`);
       if (res?.data) {
         setInquiries(res.data);
         setInquiriesTotal(res.totalcount ?? res.count ?? 0);
       }
     } catch (e) { console.error(e); } finally { setInquiriesLoading(false); }
-  }, [activeTab, page, fromDate, toDate, debouncedSearch]);
+  }, [activeTab, page, dateRange, debouncedSearch]);
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
   useEffect(() => { fetchPayments(); }, [fetchPayments]);
@@ -221,24 +217,14 @@ export function RevenueOps() {
         />
 
         {/* Global Date Range Filter */}
-        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 shrink-0">
-          <Calendar size={16} className="text-indigo-400 shrink-0" />
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className="bg-transparent text-white text-xs font-bold outline-none w-32 cursor-pointer"
-          />
-          <span className="text-slate-600 text-xs font-black">→</span>
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className="bg-transparent text-white text-xs font-bold outline-none w-32 cursor-pointer"
+        <div className="flex items-center gap-2">
+          <DateRangeFilter
+            defaultPreset="monthly"
+            onChange={(r) => setDateRange(r)}
           />
           <button
             onClick={() => { fetchStats(); fetchPayments(); fetchInquiries(); }}
-            className="ml-2 h-7 w-7 flex items-center justify-center rounded-lg bg-indigo-500/20 hover:bg-indigo-500 text-indigo-400 hover:text-white transition-all"
+            className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-indigo-500 hover:border-indigo-500 text-indigo-400 hover:text-white transition-all"
             title="Refresh"
           >
             <RefreshCw size={13} className={isLoading ? "animate-spin" : ""} />

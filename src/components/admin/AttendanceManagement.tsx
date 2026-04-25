@@ -64,9 +64,9 @@ export function AttendanceManagement() {
 
   const fetchStats = useCallback(async () => {
     try {
-      // Pass the range's from timestamp as the date_timestamp for stats
-      const date_timestamp = dateRange.from_date ?? Math.floor(new Date().setHours(0,0,0,0) / 1000);
-      const res = await adminAttendanceService.getStats(date_timestamp) as any;
+      const from = dateRange.from_date ?? Math.floor(new Date().setHours(0, 0, 0, 0) / 1000);
+      const to   = dateRange.to_date   ?? Math.floor(new Date().setHours(23, 59, 59, 999) / 1000);
+      const res = await adminAttendanceService.getStats(from, to) as any;
       if (res) {
         setStats({
           total_checkins_today: res.total_checkins_today ?? res.data?.total_checkins_today ?? 0,
