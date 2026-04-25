@@ -115,7 +115,9 @@ export function UserPortalPages({ page }: { page: string }) {
         appSubscriptionService.getSubscriptionHistory(userId, { count: 100 })
       ]);
       if (plansRes && plansRes.data) setFetchedSubscriptionPlans(plansRes.data);
-      if (currentRes && currentRes.data && currentRes.data.length > 0) {
+      if (currentRes && currentRes.id) {
+        setCurrentSubscription(currentRes as unknown as AppCurrentSubscriptionResponse);
+      } else if (currentRes && currentRes.data && currentRes.data.length > 0) {
         const activeSub = currentRes.data.find(sub => sub.user_id === userId) || currentRes.data[0];
         setCurrentSubscription(activeSub);
       }
@@ -358,10 +360,11 @@ export function UserPortalPages({ page }: { page: string }) {
             </div>
             <button
               onClick={() => setHistoryModalOpen(true)}
-              className="h-10 w-10 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-indigo-500 hover:border-indigo-500 text-indigo-400 hover:text-white transition-all shadow-lg"
+              className="px-4 h-10 flex items-center justify-center gap-2 rounded-2xl bg-white/5 border border-white/10 hover:bg-indigo-500 hover:border-indigo-500 text-indigo-400 hover:text-white transition-all shadow-lg text-[10px] font-black uppercase tracking-widest"
               title="Subscription History"
             >
               <Clock size={16} />
+              <span>History</span>
             </button>
           </div>
         </div>
@@ -408,14 +411,7 @@ export function UserPortalPages({ page }: { page: string }) {
               </div>
             </div>
 
-            {flags.allowUpgrade && (
-              <GlowButton
-                className="relative z-10 w-full md:w-auto px-8 md:px-12 h-14 md:h-16 rounded-xl md:rounded-2xl text-[10px] md:text-sm font-black uppercase tracking-widest shadow-2xl shadow-indigo-500/40"
-                onClick={() => setUpgradeOpen(true)}
-              >
-                Request Manual Renewal
-              </GlowButton>
-            )}
+
           </div>
         </motion.div>
 

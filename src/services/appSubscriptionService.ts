@@ -37,9 +37,12 @@ export interface AppCurrentSubscriptionResponse {
 }
 
 export interface PaginatedAppCurrentSubscriptionResponse {
-  count: number;
-  totalcount: number;
-  data: AppCurrentSubscriptionResponse[];
+  count?: number;
+  totalcount?: number;
+  data?: AppCurrentSubscriptionResponse[];
+  id?: string;
+  user_id?: string;
+  [key: string]: any; // Allow for other flattened properties
 }
 
 export interface AppSubscriptionHistoryResponse {
