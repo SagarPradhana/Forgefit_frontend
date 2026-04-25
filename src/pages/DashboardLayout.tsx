@@ -11,6 +11,7 @@ import {
   LogOut,
   Palette,
   Settings,
+  TrendingUp,
   User,
   Users,
   Menu,
@@ -352,6 +353,7 @@ export function Sidebar({
         { name: "subscriptions", icon: CreditCard, label: t("subscription") },
         { name: "payments", icon: CreditCard, label: t("payments") },
         { name: "products", icon: Box, label: t("products") },
+        { name: "revenueops", icon: TrendingUp, label: "RevenueOps" },
         { name: "settings", icon: Settings, label: t("settings") },
         { name: "inquiries", icon: Bell, label: t("inquiries") },
       ]

@@ -39,6 +39,11 @@ export const API_ENDPOINTS = {
     INQUIRIES_PRODUCT_ORDER: "/api/admin/inquiries/product-orders",
     INQUIRIES_SUBSCRIPTION: "/api/admin/inquiries/subscriptions",
     INQUIRIES_EXPIRING: "/api/admin/inquiries/expiring-members",
+    REVENUE_STATS: "/api/admin/revenue/stats",
+    REVENUE_PAYMENTS: "/api/admin/revenue/payments",
+    REVENUE_PAYMENTS_SUBSCRIPTIONS: "/api/admin/revenue/payments/subscriptions",
+    REVENUE_PAYMENTS_PRODUCTS: "/api/admin/revenue/payments/products",
+    REVENUE_CONTACT_INQUIRIES: "/api/admin/revenue/contact-inquiries",
   },
   APP: {
     INQUIRIES_CONTACT: "/api/app/inquiries/contact-page",

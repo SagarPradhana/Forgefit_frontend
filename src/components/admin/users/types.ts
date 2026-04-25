@@ -15,11 +15,8 @@ export interface UserMetadata {
   theme: string;
   fitness_goal: string;
   medical_conditions: string;
-  injuries: string;
-  allergies: string;
   workout_time: string;
   emergency_contact: string;
-  health_issues: string;
 }
 
 export interface UserFormData {

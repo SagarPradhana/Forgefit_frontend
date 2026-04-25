@@ -171,11 +171,8 @@ export function UserManagement() {
       theme: "dark",
       fitness_goal: "fitness",
       medical_conditions: "",
-      injuries: "",
-      allergies: "",
       workout_time: "morning",
       emergency_contact: "",
-      health_issues: "",
     },
     trainer_id: "",
     subscription_id: "",
@@ -230,11 +227,8 @@ export function UserManagement() {
         theme: "dark",
         fitness_goal: "fitness",
         medical_conditions: "",
-        injuries: "",
-        allergies: "",
         workout_time: "morning",
         emergency_contact: "",
-        health_issues: "",
       },
       trainer_id: "",
       subscription_id: "",
@@ -266,11 +260,8 @@ export function UserManagement() {
         theme: user.metadata?.theme || "dark",
         fitness_goal: user.metadata?.fitness_goal || "fitness",
         medical_conditions: user.metadata?.medical_conditions || "",
-        injuries: user.metadata?.injuries || "",
-        allergies: user.metadata?.allergies || "",
         workout_time: user.metadata?.workout_time || "morning",
         emergency_contact: user.metadata?.emergency_contact || "",
-        health_issues: user.metadata?.health_issues || "",
       },
       trainer_id: user.trainer_id || "",
       subscription_id: user.subscription_id || "",
@@ -290,7 +281,7 @@ export function UserManagement() {
 
   const handleNextStep = () => {
     if (modalStep === "role") {
-      if (!formData.name || !formData.mobile || !formData.email) {
+      if (!formData.name || !formData.mobile) {
         toast.error("Please fill in all mandatory account details");
         return;
       }
@@ -318,20 +309,35 @@ export function UserManagement() {
   };
 
   const handleSaveUser = () => {
-    // API Payload cleanup
+    // Strip UI-only fields before sending
     const { profilePhoto, ...rawPayload } = formData;
 
     const trainer_id = rawPayload.trainer_id?.trim() === "" ? null : rawPayload.trainer_id;
     const subscription_id = rawPayload.subscription_id?.trim() === "" ? null : rawPayload.subscription_id;
 
+    // Build metadata strictly matching API schema (no extra fields)
+    const metadata = {
+      height: rawPayload.metadata.height,
+      weight: rawPayload.metadata.weight,
+      dob: rawPayload.metadata.dob,
+      gender: rawPayload.metadata.gender,
+      language: rawPayload.metadata.language,
+      theme: rawPayload.metadata.theme,
+      fitness_goal: rawPayload.metadata.fitness_goal,
+      medical_conditions: rawPayload.metadata.medical_conditions,
+      workout_time: rawPayload.metadata.workout_time,
+      emergency_contact: rawPayload.metadata.emergency_contact,
+    };
+
     if (editingUserId) {
+      // Edit payload — includes subscription fields, no password
       const editPayload = {
         mobile: rawPayload.mobile,
         name: rawPayload.name,
         email: rawPayload.email,
         address: rawPayload.address,
         role: rawPayload.role,
-        metadata: rawPayload.metadata,
+        metadata,
         joining_date: rawPayload.joining_date,
         trainer_id,
         subscription_id,
@@ -339,10 +345,11 @@ export function UserManagement() {
         amount: rawPayload.amount,
         status: rawPayload.status,
         start_date: rawPayload.start_date,
-        end_date: rawPayload.end_date
+        end_date: rawPayload.end_date,
       };
       editUser(API_ENDPOINTS.ADMIN.USER_EDIT(editingUserId), editPayload);
     } else {
+      // Create payload — includes password, no subscription fields
       const createPayload = {
         mobile: rawPayload.mobile,
         name: rawPayload.name,
@@ -350,9 +357,9 @@ export function UserManagement() {
         password: rawPayload.password || "Password@123",
         address: rawPayload.address,
         role: rawPayload.role,
-        metadata: rawPayload.metadata,
+        metadata,
         joining_date: rawPayload.joining_date,
-        trainer_id
+        trainer_id,
       };
       createUser(API_ENDPOINTS.ADMIN.USER_CREATE, createPayload);
     }
