@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
@@ -6,105 +7,249 @@ import {
   CheckCircle2,
   MapPin,
   CalendarFold,
-  Info
+  Info,
+  Package,
+  Minus,
+  Plus,
 } from "lucide-react";
 import {
   GlassCard,
   CommonButton,
+  Modal,
+  GlowButton,
 } from "../components/ui/primitives";
 import { toast } from "../store/toastStore";
+import { useAuthStore } from "../store/authStore";
+import { appInquiryService } from "../services/appInquiryService";
+import type { AppProductResponse } from "../services/appProductService";
 
-export function ProductCard({ product }: any) {
+interface ProductCardProps {
+  product: AppProductResponse;
+}
+
+export function ProductCard({ product }: ProductCardProps) {
   const { t } = useTranslation();
+  const userId = useAuthStore((s) => s.id);
   const isSupplement = product.category?.toLowerCase().includes("supplement");
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  const handleBook = () => {
-    toast.success(`Reserved ${product.name}! Please pick it up at the gym front desk within 24 hours.`);
+  const [orderOpen, setOrderOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [description, setDescription] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleOrderInquiry = async () => {
+    if (!userId) {
+      toast.error("Please log in to place an order inquiry.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await appInquiryService.createProductOrder({
+        user_id: userId,
+        product_id: product.id,
+        quantity,
+        description: description || `Order inquiry for ${product.name}`,
+      });
+      setOrderOpen(false);
+      setQuantity(1);
+      setDescription("");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -5 }}
-      transition={{ duration: 0.3 }}
-      className="group relative"
-    >
-      <GlassCard className="h-full p-6 flex flex-col gap-5 overflow-hidden border-white/5 hover:border-white/20 transition-all duration-500 shadow-2xl">
-        {/* 🔥 TOP BADGE */}
-        <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 items-end">
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-            <CheckCircle2 size={10} />
-            <span className="text-[9px] font-black uppercase tracking-widest">{t("success")}</span>
-          </div>
-        </div>
-
-        {/* 🖼 VISUAL HERO */}
-        <div className="relative h-44 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 border border-white/5 flex items-center justify-center overflow-hidden group-hover:shadow-[0_0_30px_rgba(99,102,241,0.1)] transition-all">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(99,102,241,0.15),transparent_70%)]" />
-
-          <motion.div
-            whileHover={{ rotate: 10, scale: 1.1 }}
-            className="relative z-10"
-          >
-            {isSupplement ? (
-              <Zap size={48} className="text-indigo-400/40 drop-shadow-[0_0_15px_rgba(129,140,248,0.3)]" />
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{ y: -5 }}
+        transition={{ duration: 0.3 }}
+        className="group relative"
+      >
+        <GlassCard className="h-full p-6 flex flex-col gap-5 overflow-hidden border-white/5 hover:border-white/20 transition-all duration-500 shadow-2xl">
+          {/* 🔥 TOP BADGE */}
+          <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 items-end">
+            {product.stock_count > 0 ? (
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                <CheckCircle2 size={10} />
+                <span className="text-[9px] font-black uppercase tracking-widest">In Stock</span>
+              </div>
             ) : (
-              <ShoppingBag size={48} className="text-orange-400/40 drop-shadow-[0_0_15px_rgba(251,146,60,0.3)]" />
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400">
+                <Package size={10} />
+                <span className="text-[9px] font-black uppercase tracking-widest">Out of Stock</span>
+              </div>
             )}
-          </motion.div>
+          </div>
 
-          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-slate-950/80 to-transparent">
-            <div className="flex items-center gap-2 text-slate-400">
-              <MapPin size={10} className="text-indigo-400" />
-              <span className="text-[9px] font-black uppercase tracking-tighter">Locally available at Gym</span>
+          {/* 🖼 VISUAL HERO */}
+          <div className="relative h-44 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 border border-white/5 flex items-center justify-center overflow-hidden group-hover:shadow-[0_0_30px_rgba(99,102,241,0.1)] transition-all">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(99,102,241,0.15),transparent_70%)]" />
+
+            {product.image_url ? (
+              <img
+                src={product.image_url.startsWith("http") ? product.image_url : `${BASE_URL}${product.image_url}`}
+                alt={product.name}
+                className="relative z-10 h-full w-full object-cover rounded-2xl"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                  (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden");
+                }}
+              />
+            ) : null}
+
+            <motion.div
+              whileHover={{ rotate: 10, scale: 1.1 }}
+              className={`relative z-10 ${product.image_url ? "hidden" : ""}`}
+            >
+              {isSupplement ? (
+                <Zap size={48} className="text-indigo-400/40 drop-shadow-[0_0_15px_rgba(129,140,248,0.3)]" />
+              ) : (
+                <ShoppingBag size={48} className="text-orange-400/40 drop-shadow-[0_0_15px_rgba(251,146,60,0.3)]" />
+              )}
+            </motion.div>
+
+            <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-slate-950/80 to-transparent">
+              <div className="flex items-center gap-2 text-slate-400">
+                <MapPin size={10} className="text-indigo-400" />
+                <span className="text-[9px] font-black uppercase tracking-tighter">Locally available at Gym</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* 🏷 IDENTIFIER */}
-        <div className="flex-1 space-y-3">
-          <div className="flex items-center gap-2">
-            <span className={`text-[9px] px-2.5 py-1 rounded-lg font-black uppercase tracking-widest border transition-colors ${isSupplement ? "bg-indigo-500/10 text-indigo-300 border-indigo-500/20" : "bg-orange-500/10 text-orange-300 border-orange-500/20"
-              }`}>
-              {product.category}
+          {/* 🏷 IDENTIFIER */}
+          <div className="flex-1 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className={`text-[9px] px-2.5 py-1 rounded-lg font-black uppercase tracking-widest border transition-colors ${isSupplement ? "bg-indigo-500/10 text-indigo-300 border-indigo-500/20" : "bg-orange-500/10 text-orange-300 border-orange-500/20"
+                }`}>
+                {product.category}
+              </span>
+              <div className="h-1 w-1 rounded-full bg-slate-700" />
+              {product.unit && (
+                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{product.unit}</span>
+              )}
+            </div>
+
+            <h3 className="text-lg font-black text-white leading-tight uppercase tracking-tight group-hover:text-indigo-300 transition-colors">
+              {product.name}
+            </h3>
+
+            {product.description && (
+              <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-2">{product.description}</p>
+            )}
+
+            <div className="flex items-center justify-between pt-2">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Price</span>
+                <p className="text-2xl font-black text-white italic tracking-tighter">
+                  ₹{Number(product.price).toLocaleString("en-IN")}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Stock</span>
+                  <p className="text-sm font-black text-emerald-400">{product.stock_count}</p>
+                </div>
+                <button
+                  onClick={() => setOrderOpen(true)}
+                  className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all"
+                >
+                  <Info size={18} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 📅 BOOKING ZONE */}
+          <div className="pt-4 border-t border-white/5 flex flex-col gap-3">
+            <p className="text-[9px] font-bold text-slate-500 italic text-center px-2 leading-relaxed">
+              Note: Online payments are disabled. Please place an order inquiry and complete the transaction at our local gym counter.
+            </p>
+            <CommonButton
+              onClick={() => setOrderOpen(true)}
+              disabled={product.stock_count <= 0}
+              className={`w-full h-12 flex items-center justify-center gap-2.5 text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-500/10 active:scale-95 ${product.stock_count <= 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <CalendarFold size={16} />
+              Order Inquiry
+            </CommonButton>
+          </div>
+        </GlassCard>
+      </motion.div>
+
+      {/* 🛒 ORDER INQUIRY MODAL */}
+      <Modal
+        open={orderOpen}
+        onClose={() => setOrderOpen(false)}
+        title={`Order Inquiry — ${product.name}`}
+      >
+        <div className="space-y-6 p-4">
+          <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+            <div className="h-14 w-14 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
+              {isSupplement ? <Zap size={24} className="text-indigo-400" /> : <ShoppingBag size={24} className="text-orange-400" />}
+            </div>
+            <div>
+              <p className="text-sm font-black text-white uppercase tracking-tight">{product.name}</p>
+              <p className="text-[10px] text-slate-400 uppercase tracking-widest">{product.category} • ₹{Number(product.price).toLocaleString("en-IN")}</p>
+            </div>
+          </div>
+
+          {/* Quantity Selector */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Quantity</label>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-all"
+              >
+                <Minus size={16} />
+              </button>
+              <span className="text-2xl font-black text-white w-12 text-center">{quantity}</span>
+              <button
+                onClick={() => setQuantity((q) => Math.min(product.stock_count, q + 1))}
+                className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-all"
+              >
+                <Plus size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Note (Optional)</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              placeholder="Any special requests or notes..."
+              className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 outline-none focus:border-indigo-500 transition resize-none"
+            />
+          </div>
+
+          {/* Total */}
+          <div className="flex justify-between items-center p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/20">
+            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Estimated Total</span>
+            <span className="text-xl font-black text-white italic tracking-tighter">
+              ₹{(product.price * quantity).toLocaleString("en-IN")}
             </span>
-            <div className="h-1 w-1 rounded-full bg-slate-700" />
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Verified Product</span>
           </div>
 
-          <h3 className="text-lg font-black text-white leading-tight uppercase tracking-tight group-hover:text-indigo-300 transition-colors">
-            {product.name}
-          </h3>
-
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex flex-col">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Pickup Price</span>
-              <p className="text-2xl font-black text-white italic tracking-tighter">
-                ${product.price}
-              </p>
-            </div>
-            <button className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all">
-              <Info size={18} />
-            </button>
-          </div>
-        </div>
-
-        {/* 📅 BOOKING ZONE */}
-        <div className="pt-4 border-t border-white/5 flex flex-col gap-3">
-          <p className="text-[9px] font-bold text-slate-500 italic text-center px-2 leading-relaxed">
-            Note: Online payments are disabled. Please book it here and complete the transaction at our local gym counter.
-          </p>
-          <CommonButton
-            onClick={handleBook}
-            className="w-full h-12 flex items-center justify-center gap-2.5 text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-500/10 active:scale-95"
+          <GlowButton
+            className="w-full h-14 rounded-2xl text-xs font-black uppercase tracking-widest"
+            onClick={handleOrderInquiry}
+            disabled={submitting}
           >
-            <CalendarFold size={16} />
-            {t("submit")}
-          </CommonButton>
+            {submitting ? "Submitting..." : "Submit Order Inquiry"}
+          </GlowButton>
+          <p className="text-[9px] text-center text-slate-500 italic px-6">
+            This sends an inquiry to the gym admin. You'll complete the payment at the counter.
+          </p>
         </div>
-      </GlassCard>
-    </motion.div>
+      </Modal>
+    </>
   );
 }
-

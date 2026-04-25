@@ -59,6 +59,8 @@ export const API_ENDPOINTS = {
     INQUIRIES_PRODUCT_ORDER: "/api/app/inquiries/product-orders",
     INQUIRIES_SUBSCRIPTION: "/api/app/inquiries/subscriptions",
     INQUIRIES_EXPIRING: "/api/app/inquiries/expiring-members",
+    PRODUCTS: "/api/app/product/",
+    PAYMENTS: (userId: string) => `/api/app/payment/${userId}`,
   }
 } as const;
 

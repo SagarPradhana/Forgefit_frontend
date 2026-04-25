@@ -1,9 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useGymStore } from "../../store/gymStore";
 import {
-  payments,
-  products,
   userProfile,
 } from "../../data/mockData";
 import {
@@ -16,7 +14,7 @@ import {
   StatusBadge,
   Table,
 } from "../../components/ui/primitives";
-import { Calendar as CalendarIcon, List as ListIcon, Info, Users, Clock, Filter, CalendarCheck, ShieldCheck, Star, CheckCircle2, Zap } from "lucide-react";
+import { Calendar as CalendarIcon, List as ListIcon, Info, Users, Clock, Filter, CalendarCheck, ShieldCheck, Star, CheckCircle2, Zap, CreditCard, Search, ShoppingBag, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import UserDashboard from "../UserDashboard";
 import { ProfileCard } from "../ProfileCard";
@@ -28,7 +26,9 @@ import { useAuthStore } from "../../store/authStore";
 import { toast } from "../../store/toastStore";
 import { ChangePassword } from "../../components/admin/ChangePassword";
 import { adminAttendanceService, type AttendanceResponse } from "../../services/adminAttendanceService";
-import { useEffect } from "react";
+import { appProductService, type AppProductResponse } from "../../services/appProductService";
+import { appPaymentService, type AppPaymentResponse } from "../../services/appPaymentService";
+import { DateRangeFilter, type DateRange } from "../../components/ui/DateRangeFilter";
 
 export function UserPortalPages({ page }: { page: string }) {
   const { t } = useTranslation();
@@ -74,6 +74,21 @@ export function UserPortalPages({ page }: { page: string }) {
   const [fetchedAttendance, setFetchedAttendance] = useState<AttendanceResponse[]>([]);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
 
+  // ── Products State ──
+  const [fetchedProducts, setFetchedProducts] = useState<AppProductResponse[]>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [productSearch, setProductSearch] = useState("");
+  const [productCategory, setProductCategory] = useState("");
+  const [productCategories, setProductCategories] = useState<string[]>([]);
+
+  // ── Payments State ──
+  const [fetchedPayments, setFetchedPayments] = useState<AppPaymentResponse[]>([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [paymentDateRange, setPaymentDateRange] = useState<DateRange>({ label: "This Month" });
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>("");
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>("");
+  const [paymentPurchaseTypeFilter, setPaymentPurchaseTypeFilter] = useState<string>("");
+
   const fetchUserAttendance = async () => {
     if (!userId) return;
     setAttendanceLoading(true);
@@ -110,6 +125,69 @@ export function UserPortalPages({ page }: { page: string }) {
       fetchUserAttendance();
     }
   }, [page, range, selectedMonth, selectedYear, selectedWeek, customDates]);
+
+  // ── Products Fetcher ──
+  const fetchProducts = useCallback(async () => {
+    setProductsLoading(true);
+    try {
+      const res = await appProductService.getProducts({
+        search: productSearch || undefined,
+        category: productCategory || undefined,
+        is_deleted: false,
+        count: 100,
+        offset: 0,
+      });
+      if (res && res.data) {
+        setFetchedProducts(res.data);
+        // Extract unique categories
+        const cats = [...new Set(res.data.map((p) => p.category).filter(Boolean))];
+        setProductCategories(cats);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setProductsLoading(false);
+    }
+  }, [productSearch, productCategory]);
+
+  useEffect(() => {
+    if (page === "products") {
+      fetchProducts();
+    }
+  }, [page, fetchProducts]);
+
+  // ── Payments Fetcher ──
+  const fetchPayments = useCallback(async () => {
+    if (!userId) return;
+    setPaymentsLoading(true);
+    try {
+      const res = await appPaymentService.getPayments({
+        user_id: userId!,
+        from_date: paymentDateRange.from_date,
+        to_date: paymentDateRange.to_date,
+        status: (paymentStatusFilter || undefined) as any,
+        payment_method: (paymentMethodFilter || undefined) as any,
+        purchase_type: (paymentPurchaseTypeFilter || undefined) as any,
+        count: 100,
+        offset: 0,
+        order_by: "payment_date",
+        order_dir: "DESC",
+      });
+      if (res && res.data) {
+        setFetchedPayments(res.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setPaymentsLoading(false);
+    }
+  }, [paymentDateRange, paymentStatusFilter, paymentMethodFilter, paymentPurchaseTypeFilter]);
+
+  useEffect(() => {
+    if (page === "payments") {
+      fetchPayments();
+    }
+  }, [page, fetchPayments]);
 
   const formatAttendanceForUI = (data: AttendanceResponse[]) => {
     return data.map(a => ({
@@ -541,39 +619,215 @@ export function UserPortalPages({ page }: { page: string }) {
     );
   }
 
-  if (page === "payments")
-    return (
-      <GlassCard>
-        <SectionTitle title={t("payments")} />
-        <Table
-          headers={["Transaction", "Amount", "Date", "Status"]}
-          rows={payments
-            .filter((p) => p.user === (authName || userProfile.name))
-            .map((p) => [
-              p.id,
-              p.amount,
-              p.date,
-              <StatusBadge
-                key={p.id}
-                status={p.status as "Paid" | "Pending"}
-              />,
-            ])}
-        />
-      </GlassCard>
-    );
+  if (page === "payments") {
+    const fmtCurrency = (n: number) =>
+      new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n ?? 0);
+    const fmtPayDate = (ts: number) =>
+      ts ? new Date(ts * 1000).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
-  if (page === "products")
+    return (
+      <div className="space-y-6">
+        {/* Header + Date Filter */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <SectionTitle title={t("payments")} subtitle="Your complete transaction history" />
+          <div className="flex items-center gap-2">
+            <DateRangeFilter
+              defaultPreset="monthly"
+              onChange={(r) => setPaymentDateRange(r)}
+            />
+            <button
+              onClick={fetchPayments}
+              className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-indigo-500 hover:border-indigo-500 text-indigo-400 hover:text-white transition-all"
+              title="Refresh"
+            >
+              <RefreshCw size={14} className={paymentsLoading ? "animate-spin" : ""} />
+            </button>
+          </div>
+        </div>
+
+        {/* Filter Pills */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Status Filter */}
+          <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
+            {["", "paid", "pending", "failed"].map((s) => (
+              <button
+                key={s}
+                onClick={() => setPaymentStatusFilter(s)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                  paymentStatusFilter === s
+                    ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {s || "All Status"}
+              </button>
+            ))}
+          </div>
+
+          {/* Payment Method Filter */}
+          <select
+            value={paymentMethodFilter}
+            onChange={(e) => setPaymentMethodFilter(e.target.value)}
+            className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[10px] font-black text-white uppercase tracking-widest outline-none cursor-pointer hover:border-indigo-500/50 transition-all"
+          >
+            <option value="" className="bg-slate-900">All Methods</option>
+            <option value="cash" className="bg-slate-900">Cash</option>
+            <option value="card" className="bg-slate-900">Card</option>
+            <option value="upi" className="bg-slate-900">UPI</option>
+            <option value="other" className="bg-slate-900">Other</option>
+          </select>
+
+          {/* Purchase Type Filter */}
+          <select
+            value={paymentPurchaseTypeFilter}
+            onChange={(e) => setPaymentPurchaseTypeFilter(e.target.value)}
+            className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[10px] font-black text-white uppercase tracking-widest outline-none cursor-pointer hover:border-indigo-500/50 transition-all"
+          >
+            <option value="" className="bg-slate-900">All Types</option>
+            <option value="subscription" className="bg-slate-900">Subscription</option>
+            <option value="renewal" className="bg-slate-900">Renewal</option>
+            <option value="product" className="bg-slate-900">Product</option>
+            <option value="other" className="bg-slate-900">Other</option>
+          </select>
+        </div>
+
+        {/* Summary Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <GlassCard className="p-4 flex items-center gap-4">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+              <CreditCard size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Total Transactions</p>
+              <p className="text-xl font-black text-white leading-none">{fetchedPayments.length}</p>
+            </div>
+          </GlassCard>
+          <GlassCard className="p-4 flex items-center gap-4">
+            <div className="h-10 w-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+              <CheckCircle2 size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Total Paid</p>
+              <p className="text-xl font-black text-emerald-400 leading-none">
+                {fmtCurrency(fetchedPayments.filter(p => p.status === "paid").reduce((sum, p) => sum + (p.amount || 0), 0))}
+              </p>
+            </div>
+          </GlassCard>
+          <GlassCard className="p-4 flex items-center gap-4">
+            <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400">
+              <Clock size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Pending</p>
+              <p className="text-xl font-black text-orange-400 leading-none">
+                {fmtCurrency(fetchedPayments.filter(p => p.status === "pending").reduce((sum, p) => sum + (p.amount || 0), 0))}
+              </p>
+            </div>
+          </GlassCard>
+        </div>
+
+        {/* Payments Table */}
+        {paymentsLoading ? (
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}
+          </div>
+        ) : fetchedPayments.length > 0 ? (
+          <GlassCard>
+            <Table
+              headers={["Purchase Type", "Amount", "Method", "Date", "Status"]}
+              rows={fetchedPayments.map((p) => [
+                <span key={`type-${p.id}`} className="capitalize">{p.purchase_type || "—"}</span>,
+                <span key={`amt-${p.id}`} className="font-black text-emerald-400">{fmtCurrency(p.amount)}</span>,
+                <span key={`meth-${p.id}`} className="capitalize">{p.payment_method || "—"}</span>,
+                fmtPayDate(p.payment_date),
+                <StatusBadge
+                  key={p.id}
+                  status={p.status === "paid" ? "Paid" : p.status === "pending" ? "Pending" : (p.status as any)}
+                />,
+              ])}
+            />
+          </GlassCard>
+        ) : (
+          <EmptyState title="No Payments" hint="No payment records found for the selected filters." />
+        )}
+      </div>
+    );
+  }
+
+  if (page === "products") {
     return flags.showProducts ? (
       <div className="space-y-6">
-        <SectionTitle
-          title={t("products")}
-          subtitle="Recommended supplements & fitness gear"
-        />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map((p) => (
-            <ProductCard key={p.name} product={p} />
-          ))}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <SectionTitle
+            title={t("products")}
+            subtitle="Browse supplements & fitness gear available at the gym"
+          />
+          <button
+            onClick={fetchProducts}
+            className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-indigo-500 hover:border-indigo-500 text-indigo-400 hover:text-white transition-all"
+            title="Refresh"
+          >
+            <RefreshCw size={14} className={productsLoading ? "animate-spin" : ""} />
+          </button>
         </div>
+
+        {/* Search + Category Filter */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              type="text"
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              placeholder="Search products..."
+              className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500 transition"
+            />
+          </div>
+
+          <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
+            <button
+              onClick={() => setProductCategory("")}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                productCategory === ""
+                  ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg"
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              All
+            </button>
+            {productCategories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setProductCategory(cat)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                  productCategory === cat
+                    ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Products Grid */}
+        {productsLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-[420px] w-full rounded-2xl" />)}
+          </div>
+        ) : fetchedProducts.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {fetchedProducts.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title="No Products Found"
+            hint="No products match your current search or category filter."
+          />
+        )}
       </div>
     ) : (
       <EmptyState
@@ -581,6 +835,7 @@ export function UserPortalPages({ page }: { page: string }) {
         hint="Admin disabled product recommendations for this user."
       />
     );
+  }
 
   if (page === "settings") {
     return (
