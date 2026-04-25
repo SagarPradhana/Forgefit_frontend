@@ -1,297 +1,447 @@
-import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
+import { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 import {
-  GlassCard,
-  SectionTitle,
-  NoDataFound,
-  StatusBadge,
-  Table,
-  Modal,
-  GlowButton,
-} from "../components/ui/primitives";
-import {
-  adminMetrics,
-  attendanceHistory,
-  expiringUsers,
-  monthlyRevenue,
-  payments,
-  services,
-} from "../data/mockData";
-import { InquiryCenter } from "../components/admin/InquiryCenter";
-import { useGymStore } from "../store/gymStore";
-
-import { Users, Activity, DollarSign, UserPlus, Clock, AlertTriangle, RefreshCw } from "lucide-react";
-import { useGet } from "../hooks/useApi";
+  Users, CreditCard, UserPlus, RefreshCw, DollarSign, Calendar,
+  ShoppingBag, Mail, Bell, CheckCircle, XCircle, Activity,
+  ChevronRight, TrendingUp, Clock,
+} from "lucide-react";
+import { GlassCard, SectionTitle } from "../components/ui/primitives";
+import { api } from "../utils/httputils";
 import { API_ENDPOINTS } from "../utils/url";
-import { toast } from "../store/toastStore";
 
-function AdminDashboard() {
-  const { t } = useTranslation();
-  const { subscriptionRequests, productRequests, contactInquiries, dashboardColorTheme } = useGymStore();
-  const [mgmtModalOpen, setMgmtModalOpen] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-
-  const { refetch: syncAllSubscriptions } = useGet(API_ENDPOINTS.ADMIN.SYNC_SUBSCRIPTIONS, {
-    enabled: false,
-    onSuccess: () => {
-      toast.success("All user subscription plans synchronized successfully.");
-      setIsSyncing(false);
-    },
-    onError: () => {
-      toast.error("Failed to sync subscription plans.");
-      setIsSyncing(false);
-    },
-  });
-
-  const handleSync = () => {
-    setIsSyncing(true);
-    syncAllSubscriptions();
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const getMonthRange = () => {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  return {
+    from: start.toISOString().split("T")[0],
+    to: now.toISOString().split("T")[0],
   };
+};
+const today = () => new Date().toISOString().split("T")[0];
+const toUnix = (d: string, end = false) => {
+  if (!d) return undefined;
+  const dt = new Date(d);
+  end ? dt.setHours(23, 59, 59, 999) : dt.setHours(0, 0, 0, 0);
+  return Math.floor(dt.getTime() / 1000);
+};
+const fmt = (n: number) =>
+  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n ?? 0);
+const fmtDate = (ts: number) =>
+  ts ? new Date(ts * 1000).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
-  // Gradient mapping based on DashboardLayout themes
-  const themeGradients: Record<string, string> = {
-    theme1: "from-blue-500/20 to-emerald-500/20",
-    theme2: "from-purple-500/20 to-pink-500/20",
-    theme3: "from-emerald-500/20 to-cyan-500/20",
-    theme4: "from-orange-500/20 to-blue-500/20",
-    theme5: "from-amber-500/20 to-sky-500/20",
-  };
+// ─── Badge ────────────────────────────────────────────────────────────────────
+function Badge({ v }: { v: string }) {
+  const val = String(v ?? "").toLowerCase();
+  const cls =
+    ["paid", "success", "completed", "active"].includes(val)
+      ? "bg-emerald-500/20 text-emerald-400"
+      : ["failed", "pending", "inactive"].includes(val)
+      ? "bg-red-500/20 text-red-400"
+      : "bg-indigo-500/20 text-indigo-300";
+  return <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${cls}`}>{v || "—"}</span>;
+}
 
-  const activeGradient = themeGradients[dashboardColorTheme] || themeGradients.theme1;
-
-  useEffect(() => {
-    const hasPending =
-      subscriptionRequests.some(r => r.status === 'pending') ||
-      productRequests.some(r => r.status === 'pending') ||
-      contactInquiries.some(r => r.status === 'pending');
-
-    if (hasPending) {
-      setMgmtModalOpen(true);
-    }
-  }, [subscriptionRequests, productRequests, contactInquiries]);
-
-  const pendingPayments = payments.filter(
-    (payment) => payment.status === "Pending",
-  ).length;
-  const newSignups = 78;
-  const serviceHighlights = services.slice(0, 3);
-  const recentPayments = payments.slice(-4).reverse();
-
-  const metrics = [
-    { label: t("totalUsers"), value: adminMetrics.users, icon: Users, color: "text-blue-400" },
-    { label: "Active Subs", value: adminMetrics.subscriptions, icon: Activity, color: "text-emerald-400" },
-    { label: t("revenue"), value: adminMetrics.revenue, icon: DollarSign, color: "text-emerald-400" },
-    { label: t("newSignups"), value: newSignups, icon: UserPlus, color: "text-indigo-400" },
-    { label: t("pendingPayments"), value: pendingPayments, icon: Clock, color: "text-red-400" },
-    { label: t("upcomingRenewals"), value: expiringUsers.length, icon: AlertTriangle, color: "text-orange-400" },
-  ];
-
+// ─── Stat Card ────────────────────────────────────────────────────────────────
+function StatCard({ label, value, icon: Icon, color, delay, prefix = "" }: {
+  label: string; value: any; icon: any; color: string; delay: number; prefix?: string;
+}) {
   return (
-    <>
-      <Modal
-        open={mgmtModalOpen}
-        onClose={() => setMgmtModalOpen(false)}
-        title={t("priorityCenter")}
-        maxWidth="max-w-[95vw]"
-      >
-        <div className="py-2">
-          <InquiryCenter />
-        </div>
-      </Modal>
-
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
-        <SectionTitle
-          title={t("dashboard")}
-          subtitle="Monitor users, subscriptions, and revenue growth."
-        />
-        <GlowButton
-          onClick={handleSync}
-          disabled={isSyncing}
-          className="h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all shadow-lg shadow-emerald-500/10"
-        >
-          <RefreshCw size={18} className={isSyncing ? "animate-spin" : ""} />
-          {isSyncing ? "Syncing..." : "Sync Subscriptions"}
-        </GlowButton>
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.35 }}
+      className="relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-5 backdrop-blur-xl hover:border-white/20 transition-all group"
+    >
+      <div className={`absolute -top-6 -right-6 w-20 h-20 rounded-full blur-2xl opacity-20 ${color}`} />
+      <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${color} bg-opacity-20 mb-3 group-hover:scale-110 transition-transform`}>
+        <Icon size={18} className="text-white" />
       </div>
-
-      <div className="mb-6 grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {metrics.map((m, i) => (
-          <GlassCard key={i} className={`p-4 bg-gradient-to-br ${activeGradient} border-white/10 hover:border-white/20 transition-all group relative overflow-hidden`}>
-            <div className="flex flex-col h-full justify-between">
-              <div className="flex items-center justify-between mb-2">
-                <div className={`p-2 rounded-xl bg-white/10 ${m.color} group-hover:scale-110 transition-transform`}>
-                  <m.icon size={18} />
-                </div>
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 leading-tight">{m.label}</p>
-                <p className="text-xl font-black text-white tracking-tighter">{m.value}</p>
-              </div>
-            </div>
-          </GlassCard>
-        ))}
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <GlassCard className="min-h-[320px] p-6">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-slate-300">Monthly Revenue</p>
-              <h3 className="text-xl font-semibold text-white">
-                {t("revenueTrend")}
-              </h3>
-            </div>
-            <span className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1 text-xs uppercase text-slate-400">
-              {adminMetrics.revenue}
-            </span>
-          </div>
-          <div className="mt-6 h-[220px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyRevenue}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis dataKey="month" stroke="#cbd5e1" />
-                <YAxis stroke="#cbd5e1" />
-                <Tooltip />
-                <Bar dataKey="revenue" fill="#F97316" radius={6} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </GlassCard>
-
-        <GlassCard className="min-h-[320px] p-6">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-slate-300">Growth</p>
-              <h3 className="text-xl font-semibold text-white">
-                Monthly trend
-              </h3>
-            </div>
-            <span className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1 text-xs uppercase text-slate-400">
-              {recentPayments.length} latest payments
-            </span>
-          </div>
-          <div className="mt-6 h-[220px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={monthlyRevenue}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis dataKey="month" stroke="#cbd5e1" />
-                <YAxis stroke="#cbd5e1" />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="growth"
-                  stroke="#22d3ee"
-                  strokeWidth={3}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </GlassCard>
-      </div>
-
-      <div className="mt-4 grid gap-4 lg:grid-cols-1 xl:grid-cols-[1.55fr_0.75fr]">
-        <GlassCard className="p-6">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-slate-300">Recent Payments</p>
-              <h3 className="text-xl font-semibold text-white">
-                Latest subscription activity
-              </h3>
-            </div>
-            <span className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1 text-xs uppercase text-slate-400">
-              {recentPayments.length} entries
-            </span>
-          </div>
-
-          <div className="mt-5 overflow-x-auto">
-            <Table
-              headers={["ID", "User", "Date", "Amount", "Status"]}
-              rows={recentPayments.map((payment) => [
-                payment.id,
-                payment.user,
-                payment.date,
-                payment.amount,
-                <StatusBadge
-                  key={payment.id}
-                  status={payment.status as "Paid" | "Pending"}
-                />,
-              ])}
-            />
-          </div>
-        </GlassCard>
-
-        <GlassCard className="space-y-4 p-6">
-          <div>
-            <p className="text-sm text-slate-300">Upcoming renewals</p>
-            <h3 className="text-xl font-semibold text-white">
-              Priority follow-ups
-            </h3>
-          </div>
-
-          {expiringUsers.length > 0 ? (
-            <div className="space-y-3">
-              {expiringUsers.map((user) => (
-                <div
-                  key={user.name}
-                  className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md p-4 transition-colors"
-                >
-                  <p className="font-black text-slate-900 dark:text-white uppercase tracking-tight">{user.name}</p>
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">
-                    {user.daysLeft} day(s) left
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <NoDataFound
-              title="No renewals due"
-              subtitle="All subscriptions are up to date."
-            />
-          )}
-
-          <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md p-5 mt-6">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-4">Attendance snapshot</p>
-            {attendanceHistory.slice(-3).map((item) => (
-              <div
-                key={item.date}
-                className="mt-3 rounded-2xl bg-white/80 dark:bg-slate-950/70 p-3 border border-slate-100 dark:border-transparent shadow-sm dark:shadow-none"
-              >
-                <p className="font-bold text-slate-900 dark:text-white">{item.date}</p>
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
-                  {item.checkIn} — {item.checkOut}
-                </p>
-              </div>
-            ))}
-          </div>
-        </GlassCard>
-      </div>
-
-      <div className="mt-6 grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-        {serviceHighlights.map((service) => (
-          <GlassCard key={service.title} className="p-5">
-            <p className="text-sm text-slate-300">Service</p>
-            <h3 className="mt-3 text-lg font-semibold text-white">
-              {service.title}
-            </h3>
-            <p className="mt-2 text-sm leading-6 text-slate-400">
-              {service.description}
-            </p>
-          </GlassCard>
-        ))}
-      </div>
-    </>
+      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 leading-tight">{label}</p>
+      <p className="text-xl font-black text-white tracking-tighter">{prefix}{value ?? "—"}</p>
+    </motion.div>
   );
 }
 
-export default AdminDashboard;
+// ─── Section Header ───────────────────────────────────────────────────────────
+function SectionHeader({ title, sub }: { title: string; sub?: string }) {
+  return (
+    <div className="mb-4">
+      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{sub}</p>
+      <h3 className="text-base font-black text-white uppercase tracking-tight">{title}</h3>
+    </div>
+  );
+}
+
+// ─── Skeleton rows ────────────────────────────────────────────────────────────
+function SkeletonRows({ n = 5 }: { n?: number }) {
+  return (
+    <div className="space-y-2">
+      {[...Array(n)].map((_, i) => (
+        <div key={i} className="h-12 rounded-xl bg-white/5 animate-pulse" />
+      ))}
+    </div>
+  );
+}
+
+// ─── Custom Tooltip for Bar Chart ─────────────────────────────────────────────
+function RevTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-slate-900 border border-white/10 rounded-xl p-3 text-xs">
+      <p className="font-black text-white mb-2">{label}</p>
+      {payload.map((p: any) => (
+        <p key={p.name} style={{ color: p.color }} className="font-bold">
+          {p.name}: {fmt(p.value)}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+// ─── Main Dashboard ───────────────────────────────────────────────────────────
+export default function AdminDashboard() {
+  const monthRange = getMonthRange();
+
+  // Global date range (for most sections)
+  const [fromDate, setFromDate] = useState(monthRange.from);
+  const [toDate, setToDate] = useState(monthRange.to);
+
+  // Attendance date (default today)
+  const [attDate, setAttDate] = useState(today());
+
+  // Monthly revenue months param
+  const [revenueMonths, setRevenueMonths] = useState(6);
+
+  // Inquiry tab
+  const [inqTab, setInqTab] = useState<"subscriptions" | "product_orders" | "contact_inquiries">("subscriptions");
+
+  // ── Data states ──
+  const [stats, setStats] = useState<any>(null);
+  const [inquiries, setInquiries] = useState<any>(null);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [attendance, setAttendance] = useState<any>(null);
+  const [monthlyRevenue, setMonthlyRevenue] = useState<any[]>([]);
+
+  const [loading, setLoading] = useState({
+    stats: false, inquiries: false, payments: false,
+    subscriptions: false, products: false, attendance: false, revenue: false,
+  });
+
+  const setLoad = (key: string, val: boolean) =>
+    setLoading((prev) => ({ ...prev, [key]: val }));
+
+  // ── Date params helper ──
+  const dateParams = useCallback((from: string, to: string) => {
+    const p = new URLSearchParams();
+    if (from) p.set("from_date", String(toUnix(from)));
+    if (to)   p.set("to_date",   String(toUnix(to, true)));
+    return p;
+  }, []);
+
+  // ── Fetchers ──
+  const fetchStats = useCallback(async () => {
+    setLoad("stats", true);
+    try {
+      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_STATS}?${dateParams(fromDate, toDate)}`);
+      // Stats are at root level alongside code/message — not nested under res.data
+      if (res && res.code === 200) {
+        setStats({
+          total_users: res.total_users,
+          total_active_subscriptions: res.total_active_subscriptions,
+          new_registrations: res.new_registrations,
+          upcoming_renewals: res.upcoming_renewals,
+          total_revenue: res.total_revenue,
+        });
+      }
+    } catch (e) { console.error(e); } finally { setLoad("stats", false); }
+  }, [fromDate, toDate, dateParams]);
+
+  const fetchInquiries = useCallback(async () => {
+    setLoad("inquiries", true);
+    try {
+      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_INQUIRIES}?${dateParams(fromDate, toDate)}`);
+      if (res?.data) setInquiries(res.data);
+    } catch (e) { console.error(e); } finally { setLoad("inquiries", false); }
+  }, [fromDate, toDate, dateParams]);
+
+  const fetchPayments = useCallback(async () => {
+    setLoad("payments", true);
+    try {
+      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_PAYMENTS}?${dateParams(fromDate, toDate)}`);
+      if (res?.data) setPayments(res.data);
+    } catch (e) { console.error(e); } finally { setLoad("payments", false); }
+  }, [fromDate, toDate, dateParams]);
+
+  const fetchSubscriptions = useCallback(async () => {
+    setLoad("subscriptions", true);
+    try {
+      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_SUBSCRIPTIONS}?${dateParams(fromDate, toDate)}`);
+      if (res?.data) setSubscriptions(res.data);
+    } catch (e) { console.error(e); } finally { setLoad("subscriptions", false); }
+  }, [fromDate, toDate, dateParams]);
+
+  const fetchProducts = useCallback(async () => {
+    setLoad("products", true);
+    try {
+      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_PRODUCTS}?${dateParams(fromDate, toDate)}`);
+      if (res?.data) setProducts(res.data);
+    } catch (e) { console.error(e); } finally { setLoad("products", false); }
+  }, [fromDate, toDate, dateParams]);
+
+  const fetchAttendance = useCallback(async () => {
+    setLoad("attendance", true);
+    try {
+      const p = new URLSearchParams();
+      p.set("from_date", String(toUnix(attDate)));
+      p.set("to_date",   String(toUnix(attDate, true)));
+      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_ATTENDANCE}?${p}`);
+      if (res?.data) setAttendance(res.data);
+    } catch (e) { console.error(e); } finally { setLoad("attendance", false); }
+  }, [attDate]);
+
+  const fetchMonthlyRevenue = useCallback(async () => {
+    setLoad("revenue", true);
+    try {
+      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_MONTHLY_REVENUE}?months=${revenueMonths}`);
+      if (res?.data) setMonthlyRevenue(res.data);
+    } catch (e) { console.error(e); } finally { setLoad("revenue", false); }
+  }, [revenueMonths]);
+
+  // ── Effects ──
+  useEffect(() => { fetchStats(); fetchInquiries(); fetchPayments(); fetchSubscriptions(); fetchProducts(); }, [fetchStats, fetchInquiries, fetchPayments, fetchSubscriptions, fetchProducts]);
+  useEffect(() => { fetchAttendance(); }, [fetchAttendance]);
+  useEffect(() => { fetchMonthlyRevenue(); }, [fetchMonthlyRevenue]);
+
+  const refreshAll = () => { fetchStats(); fetchInquiries(); fetchPayments(); fetchSubscriptions(); fetchProducts(); fetchAttendance(); fetchMonthlyRevenue(); };
+
+  const isAnyLoading = Object.values(loading).some(Boolean);
+
+  // ── Inquiry tab data ──
+  const inqData: any[] = inquiries?.[inqTab] ?? [];
+  const inqTabs = [
+    { id: "subscriptions",     label: "Subscriptions",    icon: CreditCard },
+    { id: "product_orders",    label: "Product Orders",   icon: ShoppingBag },
+    { id: "contact_inquiries", label: "Contact",          icon: Mail },
+  ] as const;
+
+  return (
+    <div className="space-y-6">
+      {/* ── Top Header + Global Date Filter ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <SectionTitle title="Dashboard" subtitle="Real-time gym intelligence — members, revenue & activity" />
+        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 shrink-0">
+          <Calendar size={14} className="text-indigo-400 shrink-0" />
+          <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)}
+            className="bg-transparent text-white text-xs font-bold outline-none w-28 cursor-pointer" />
+          <span className="text-slate-600 text-xs font-black">→</span>
+          <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)}
+            className="bg-transparent text-white text-xs font-bold outline-none w-28 cursor-pointer" />
+          <button onClick={refreshAll}
+            className="ml-1 h-7 w-7 flex items-center justify-center rounded-lg bg-indigo-500/20 hover:bg-indigo-500 text-indigo-400 hover:text-white transition-all" title="Refresh">
+            <RefreshCw size={12} className={isAnyLoading ? "animate-spin" : ""} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── [ROW 1] 5 Stat Cards ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <StatCard label="Total Users"          value={stats?.total_users}                icon={Users}       color="bg-indigo-500"  delay={0}    />
+        <StatCard label="Active Subscriptions" value={stats?.total_active_subscriptions} icon={CreditCard}  color="bg-violet-500"  delay={0.05} />
+        <StatCard label="New Registrations"    value={stats?.new_registrations}           icon={UserPlus}    color="bg-sky-500"     delay={0.1}  />
+        <StatCard label="Upcoming Renewals"    value={stats?.upcoming_renewals}           icon={Clock}       color="bg-amber-500"   delay={0.15} />
+        <StatCard label="Total Revenue"        value={stats?.total_revenue != null ? fmt(stats.total_revenue) : "—"} icon={DollarSign} color="bg-emerald-500" delay={0.2} />
+      </div>
+
+      {/* ── [ROW 2] Recent Inquiries (4 tabs) ── */}
+      <GlassCard>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+          <SectionHeader title="Recent Inquiries" sub="Latest incoming requests" />
+          <div className="flex gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
+            {inqTabs.map(({ id, label, icon: Icon }) => (
+              <button key={id} onClick={() => setInqTab(id as any)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                  inqTab === id ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
+                <Icon size={12} />{label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {loading.inquiries ? <SkeletonRows /> : inqData.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-10 text-slate-500">
+            <Bell size={32} className="opacity-20" /><p className="text-sm font-bold">No records</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {inqData.slice(0, 5).map((item: any, i: number) => (
+              <motion.div key={item.id ?? i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
+                className="flex items-center justify-between gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-white/15 transition-all group">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-8 w-8 rounded-xl bg-violet-500/20 flex items-center justify-center text-xs font-black text-violet-300 shrink-0">
+                    {(item.name ?? item.user_name ?? "?")?.[0]?.toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white truncate">{item.name ?? item.user_name ?? "—"}</p>
+                    <p className="text-[10px] text-slate-500 truncate">{item.email ?? item.subject ?? item.plan_name ?? "—"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {item.status === true || item.status === "paid" ? <CheckCircle size={14} className="text-emerald-400" /> : <XCircle size={14} className="text-amber-400" />}
+                  <span className="text-[10px] text-slate-500">{fmtDate(item.created_date ?? item.inquiry_date ?? item.start_date)}</span>
+                  <ChevronRight size={12} className="text-slate-600" />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </GlassCard>
+
+      {/* ── [ROW 3] Payments | Subscriptions | Products (3-col) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Recent Payments */}
+        <GlassCard>
+          <SectionHeader title="Recent Payments" sub="This month" />
+          {loading.payments ? <SkeletonRows /> : payments.length === 0 ? (
+            <p className="text-slate-500 text-xs text-center py-8">No payments</p>
+          ) : (
+            <div className="space-y-2">
+              {payments.slice(0, 5).map((p: any, i: number) => (
+                <motion.div key={p.id ?? i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
+                  className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-white/15 transition-all">
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white truncate">{p.name ?? "—"}</p>
+                    <p className="text-[10px] text-slate-500">{p.payment_method} · {fmtDate(p.payment_date)}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span className="text-xs font-black text-emerald-400">{fmt(p.amount)}</span>
+                    <Badge v={p.status} />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </GlassCard>
+
+        {/* Recent Subscription History */}
+        <GlassCard>
+          <SectionHeader title="Subscription History" sub="This month" />
+          {loading.subscriptions ? <SkeletonRows /> : subscriptions.length === 0 ? (
+            <p className="text-slate-500 text-xs text-center py-8">No records</p>
+          ) : (
+            <div className="space-y-2">
+              {subscriptions.slice(0, 5).map((s: any, i: number) => (
+                <motion.div key={s.id ?? i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
+                  className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-white/15 transition-all">
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white truncate">{s.user_name ?? "—"}</p>
+                    <p className="text-[10px] text-slate-500 truncate">{s.plan_name} · {s.duration_in_months}mo</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span className="text-xs font-black text-violet-400">{fmt(s.amount)}</span>
+                    <Badge v={s.status === true ? "active" : s.status === false ? "inactive" : String(s.status)} />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </GlassCard>
+
+        {/* Recent Product Purchases */}
+        <GlassCard>
+          <SectionHeader title="Product Purchases" sub="This month" />
+          {loading.products ? <SkeletonRows /> : products.length === 0 ? (
+            <p className="text-slate-500 text-xs text-center py-8">No records</p>
+          ) : (
+            <div className="space-y-2">
+              {products.slice(0, 5).map((p: any, i: number) => (
+                <motion.div key={p.id ?? i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
+                  className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-white/15 transition-all">
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white truncate">{p.user_name ?? "—"}</p>
+                    <p className="text-[10px] text-slate-500 truncate">{p.product_name}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span className="text-xs font-black text-amber-400">{fmt(p.amount)}</span>
+                    <Badge v={p.status} />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </GlassCard>
+      </div>
+
+      {/* ── [ROW 4] Attendance Count ── */}
+      <GlassCard>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+          <SectionHeader title="Attendance Today" sub="Live count" />
+          <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+            <Calendar size={13} className="text-indigo-400" />
+            <input type="date" value={attDate} onChange={(e) => setAttDate(e.target.value)}
+              className="bg-transparent text-white text-xs font-bold outline-none cursor-pointer" />
+          </div>
+        </div>
+        {loading.attendance ? (
+          <div className="grid grid-cols-3 gap-4"><div className="h-20 rounded-xl bg-white/5 animate-pulse" /><div className="h-20 rounded-xl bg-white/5 animate-pulse" /><div className="h-20 rounded-xl bg-white/5 animate-pulse" /></div>
+        ) : (
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { label: "Total Check-ins", value: attendance?.total_count ?? 0, icon: Users,    color: "text-indigo-400", bg: "bg-indigo-500/10" },
+              { label: "Present Now",     value: attendance?.present_now   ?? 0, icon: Activity, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+              { label: "Checked Out",     value: attendance?.checked_out   ?? 0, icon: TrendingUp, color: "text-amber-400", bg: "bg-amber-500/10" },
+            ].map(({ label, value, icon: Icon, color, bg }) => (
+              <div key={label} className={`rounded-2xl ${bg} border border-white/5 p-5 flex flex-col items-center gap-2 text-center`}>
+                <Icon size={22} className={color} />
+                <p className="text-2xl font-black text-white">{value}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </GlassCard>
+
+      {/* ── [ROW 5] Monthly Revenue Bar Chart ── */}
+      <GlassCard>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+          <SectionHeader title="Monthly Revenue" sub="Subscription · Product · Renewal breakdown" />
+          <div className="flex items-center gap-2">
+            {[3, 6, 12].map((m) => (
+              <button key={m} onClick={() => setRevenueMonths(m)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                  revenueMonths === m ? "bg-indigo-500 text-white" : "bg-white/5 text-slate-400 hover:text-white border border-white/10"}`}>
+                {m}M
+              </button>
+            ))}
+          </div>
+        </div>
+        {loading.revenue ? (
+          <div className="h-64 rounded-xl bg-white/5 animate-pulse" />
+        ) : monthlyRevenue.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-16 text-slate-500">
+            <TrendingUp size={40} className="opacity-20" /><p className="text-sm font-bold">No revenue data</p>
+          </div>
+        ) : (
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyRevenue} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                <XAxis dataKey="month_label" stroke="#475569" tick={{ fontSize: 11, fontWeight: 700 }} />
+                <YAxis stroke="#475569" tick={{ fontSize: 10 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+                <Tooltip content={<RevTooltip />} />
+                <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700, paddingTop: 12 }} />
+                <Bar dataKey="subscription_revenue" name="Subscriptions" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="product_revenue"      name="Products"      fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="renewal_revenue"      name="Renewals"      fill="#10b981" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </GlassCard>
+    </div>
+  );
+}

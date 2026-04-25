@@ -519,14 +519,14 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!userId) return;
     const fetchUserData = async () => {
-      if (userId) {
-        try {
-          const res = await api.get(API_ENDPOINTS.USER.DETAIL(userId));
-          if (res?.data) setUserData(res.data);
-        } catch (err) {
-          console.error("Failed to sync user data", err);
-        }
+      try {
+        // MY_DETAILS returns all fields at root level (not nested under 'data')
+        const res: any = await api.get(API_ENDPOINTS.USER.MY_DETAILS(userId));
+        if (res && res.code === 200) setUserData(res);
+      } catch (err) {
+        console.error("Failed to sync user data", err);
       }
     };
     fetchUserData();

@@ -27,8 +27,12 @@ type AuthState = {
   name: string | null;
   email: string | null;
   mobile: string | null;
+  username: string | null;
+  address: string | null;
+  joining_date: number | null;
   profile_image_path: string | null;
   metadata: any | null;
+  latest_subscription_details: any | null;
   isAuthenticated: boolean;
   token: string | null;
   refreshToken: string | null;
@@ -46,11 +50,15 @@ export const useAuthStore = create<AuthState>()(
       name: null,
       email: null,
       mobile: null,
+      username: null,
+      address: null,
+      joining_date: null,
       isAuthenticated: false,
       token: null,
       refreshToken: null,
       profile_image_path: null,
       metadata: null,
+      latest_subscription_details: null,
       login: (accessToken, refreshToken) => {
         const userData = parseJwt(accessToken);
         if (!userData) return;
@@ -73,8 +81,13 @@ export const useAuthStore = create<AuthState>()(
           name: data.name,
           email: data.email,
           mobile: data.mobile,
-          profile_image_path: data.profile_image_path,
-          metadata: data.metadata,
+          username: data.username ?? null,
+          address: data.address ?? null,
+          joining_date: data.joining_date ?? null,
+          role: data.role ?? null,
+          profile_image_path: data.profile_image_path ?? null,
+          metadata: data.metadata ?? null,
+          latest_subscription_details: data.latest_subscription_details ?? null,
         });
       },
       updateTokens: (token, refreshToken) => set({ token, refreshToken }),
@@ -85,8 +98,12 @@ export const useAuthStore = create<AuthState>()(
           name: null,
           email: null,
           mobile: null,
+          username: null,
+          address: null,
+          joining_date: null,
           profile_image_path: null,
           metadata: null,
+          latest_subscription_details: null,
           isAuthenticated: false,
           token: null,
           refreshToken: null,

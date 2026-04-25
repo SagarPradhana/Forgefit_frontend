@@ -6,6 +6,7 @@ export const API_ENDPOINTS = {
   },
   USER: {
     PROFILE: "/api/user/profile",
+    MY_DETAILS: (id: string) => `/api/user/my-details/${id}`,
     UPDATE: "/api/user/update",
     DETAIL: (id: string) => `/api/user/${id}`,
     RESET_PASSWORD: (id: string) => `/api/user/${id}/reset-password`,
@@ -44,6 +45,13 @@ export const API_ENDPOINTS = {
     REVENUE_PAYMENTS_SUBSCRIPTIONS: "/api/admin/revenue/payments/subscriptions",
     REVENUE_PAYMENTS_PRODUCTS: "/api/admin/revenue/payments/products",
     REVENUE_CONTACT_INQUIRIES: "/api/admin/revenue/contact-inquiries",
+    DASHBOARD_STATS: "/api/admin/dashboard/stats",
+    DASHBOARD_RECENT_INQUIRIES: "/api/admin/dashboard/recent-inquiries",
+    DASHBOARD_RECENT_PAYMENTS: "/api/admin/dashboard/recent-payments",
+    DASHBOARD_RECENT_SUBSCRIPTIONS: "/api/admin/dashboard/recent-subscription-history",
+    DASHBOARD_RECENT_PRODUCTS: "/api/admin/dashboard/recent-product-purchases",
+    DASHBOARD_ATTENDANCE: "/api/admin/dashboard/attendance-count",
+    DASHBOARD_MONTHLY_REVENUE: "/api/admin/dashboard/monthly-revenue",
   },
   APP: {
     INQUIRIES_CONTACT: "/api/app/inquiries/contact-page",

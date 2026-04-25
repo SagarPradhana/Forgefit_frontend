@@ -555,64 +555,72 @@ export function AdminPortalPages({ page }: { page: string }) {
 
   if (page === "profile") {
     const user = useAuthStore.getState();
+    const fmtDate = (ts: number | null) =>
+      ts ? new Date(ts * 1000).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
     return (
       <div className="space-y-4 md:space-y-6">
-        <GlassCard className="p-4 md:p-10 border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 to-transparent relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 md:w-64 md:h-64 bg-indigo-500/10 blur-[60px] md:blur-[100px]" />
-          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 relative z-10 text-center md:text-left">
-            <div className="h-20 w-20 md:h-32 md:w-32 rounded-2xl md:rounded-3xl bg-indigo-500 flex items-center justify-center text-3xl md:text-5xl font-black text-white shadow-2xl shadow-indigo-500/40 shrink-0">
-              {user.name?.[0] || "A"}
+        {/* Hero Card */}
+        <GlassCard className="p-6 md:p-10 border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 to-transparent relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[100px]" />
+          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 relative z-10">
+            <div className="relative shrink-0">
+              {user.profile_image_path ? (
+                <img src={user.profile_image_path} alt={user.name || ""}
+                  className="h-24 w-24 md:h-32 md:w-32 rounded-2xl md:rounded-3xl object-cover shadow-2xl shadow-indigo-500/30 border-2 border-indigo-500/30" />
+              ) : (
+                <div className="h-24 w-24 md:h-32 md:w-32 rounded-2xl md:rounded-3xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-3xl md:text-5xl font-black text-white shadow-2xl shadow-indigo-500/40">
+                  {user.name?.[0]?.toUpperCase() || "A"}
+                </div>
+              )}
+              <span className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-lg bg-indigo-500 text-[9px] font-black uppercase tracking-widest text-white shadow-lg">
+                {user.role || "admin"}
+              </span>
             </div>
-            <div className="space-y-1.5 md:space-y-2">
-              <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3">
-                <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tighter italic leading-none">{user.name}</h2>
-                <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-lg bg-indigo-500 text-[8px] md:text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20">{user.role}</span>
-              </div>
-              <p className="text-[10px] md:text-sm text-slate-400 font-medium tracking-wide uppercase">Strategic System Administrator</p>
-              <div className="flex flex-wrap gap-2 md:gap-4 pt-2 md:pt-4 justify-center md:justify-start">
-                <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2">
-                  <Bell size={12} className="text-indigo-400" />
-                  <span className="text-[9px] font-black text-white uppercase tracking-widest">Inquiries</span>
-                </div>
-                <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2">
-                  <Users size={12} className="text-emerald-400" />
-                  <span className="text-[9px] font-black text-white uppercase tracking-widest">Registry</span>
-                </div>
-              </div>
+            <div className="text-center md:text-left space-y-2">
+              <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tighter italic leading-none">{user.name}</h2>
+              {user.username && <p className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.3em]">{user.username}</p>}
+              <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">System Administrator</p>
+              {user.joining_date && (
+                <p className="text-[10px] text-slate-500 font-bold">
+                  Member since {fmtDate(user.joining_date)}
+                </p>
+              )}
             </div>
           </div>
         </GlassCard>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <GlassCard className="p-8 space-y-6">
-            <h3 className="text-xl font-black text-white uppercase tracking-wide border-b border-white/10 pb-4">Personal Credentials</h3>
-            <div className="space-y-6">
-              <div className="grid gap-1">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Full Name</p>
-                <p className="text-white font-bold tracking-tight">{user.name}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Contact Info */}
+          <GlassCard className="p-6 space-y-5">
+            <h3 className="text-sm font-black text-white uppercase tracking-widest border-b border-white/10 pb-3">Contact Information</h3>
+            {[
+              { label: "Full Name",   value: user.name },
+              { label: "Username",    value: user.username },
+              { label: "Email",       value: user.email },
+              { label: "Mobile",      value: user.mobile },
+              { label: "Address",     value: user.address },
+              { label: "Joining Date", value: fmtDate(user.joining_date) },
+            ].map(({ label, value }) => (
+              <div key={label} className="grid gap-0.5">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{label}</p>
+                <p className="text-sm text-white font-bold">{value || "—"}</p>
               </div>
-              <div className="grid gap-1">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Digital Mailbox</p>
-                <p className="text-white font-bold tracking-tight">{user.email || "admin@forgefit.app"}</p>
-              </div>
-              <div className="grid gap-1">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Secure Mobile</p>
-                <p className="text-white font-bold tracking-tight">{user.mobile || "+1 555-ADMIN-X"}</p>
-              </div>
-            </div>
+            ))}
           </GlassCard>
 
-          <GlassCard className="p-8 space-y-6">
-            <h3 className="text-xl font-black text-white uppercase tracking-wide border-b border-white/10 pb-4">System Privileges</h3>
-            <div className="space-y-4">
+          {/* System Privileges */}
+          <GlassCard className="p-6 space-y-5">
+            <h3 className="text-sm font-black text-white uppercase tracking-widest border-b border-white/10 pb-3">System Privileges</h3>
+            <div className="space-y-3">
               {[
-                "Database Migration Control",
-                "User Liquidation Authority",
-                "Strategic Pricing Override",
-                "Inventory Management Access",
-                "Security Protocol Execution"
-              ].map(perm => (
+                "User Management & Registration",
+                "Subscription Plan Control",
+                "Revenue & Payment Oversight",
+                "Attendance Monitoring",
+                "Inventory & Product Management",
+                "Inquiry Center Access",
+              ].map((perm) => (
                 <div key={perm} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-indigo-500/30 transition-all group">
                   <div className="h-6 w-6 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
                     <CheckCircle2 size={14} />

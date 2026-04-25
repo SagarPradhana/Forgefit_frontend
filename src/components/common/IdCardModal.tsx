@@ -10,19 +10,24 @@ interface IdCardModalProps {
   user: {
     name: string;
     id: string;
-    currentPlan: string;
-    profile_image_path?: string; // New field for root mapping
+    currentPlan?: string;
+    profile_image_path?: string;
+    mobile?: string;
+    joining_date?: number;
+    latest_subscription_details?: {
+      subscription_id?: string;
+      subscription_name?: string;
+      start_date?: number | string;
+      end_date?: number | string;
+      status?: boolean;
+    } | null;
     metadata?: {
       dob?: number;
       gender?: string;
       fitness_goal?: string;
       profile_image_path?: string;
-      blood_group?: string; // New field from design
-      batch_time?: string;  // New field from design
-      joining_date?: number;
-      expiry_date?: number;
-      contact?: string;
       emergency_contact?: string;
+      workout_time?: string;
     };
     role?: string;
   };
@@ -185,36 +190,36 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
               {/* Detail cells */}
               <div className="details-grid">
                 <div className="detail-cell">
-                  <div className="d-label">{t("dob") || "Date of Birth"}</div>
+                  <div className="d-label">Date of Birth</div>
                   <div className="d-value">{formatDate(user.metadata?.dob)}</div>
                 </div>
                 <div className="detail-cell">
-                  <div className="d-label">{t("bloodGroup") || "Blood Group"}</div>
-                  <div className="d-value accent">{user.metadata?.blood_group || 'O+'}</div>
+                  <div className="d-label">Gender</div>
+                  <div className="d-value accent" style={{textTransform:'capitalize'}}>{user.metadata?.gender || 'N/A'}</div>
                 </div>
                 <div className="detail-cell">
-                  <div className="d-label">{t("trainer") || "Trainer"}</div>
-                  <div className="d-value teal">System Assigned</div>
-                </div>
-                <div className="detail-cell">
-                  <div className="d-label">Batch Time</div>
-                  <div className="d-value">{user.metadata?.batch_time || 'General'}</div>
-                </div>
-                <div className="detail-cell">
-                  <div className="d-label">Join Date</div>
-                  <div className="d-value">{formatDate(user.metadata?.joining_date)}</div>
-                </div>
-                <div className="detail-cell">
-                  <div className="d-label">{t("expiry") || "Expiry"}</div>
-                  <div className="d-value">{formatDate(user.metadata?.expiry_date)}</div>
-                </div>
-                <div className="detail-cell">
-                  <div className="d-label">Contact</div>
-                  <div className="d-value">{user.metadata?.contact || 'N/A'}</div>
+                  <div className="d-label">Mobile</div>
+                  <div className="d-value">{user.mobile || 'N/A'}</div>
                 </div>
                 <div className="detail-cell">
                   <div className="d-label">Emergency</div>
                   <div className="d-value">{user.metadata?.emergency_contact || 'N/A'}</div>
+                </div>
+                <div className="detail-cell">
+                  <div className="d-label">Join Date</div>
+                  <div className="d-value">{formatDate(user.joining_date)}</div>
+                </div>
+                <div className="detail-cell">
+                  <div className="d-label">Expiry</div>
+                  <div className="d-value">{formatDate(user.latest_subscription_details?.end_date ? Number(user.latest_subscription_details.end_date) : undefined)}</div>
+                </div>
+                <div className="detail-cell">
+                  <div className="d-label">Plan Start</div>
+                  <div className="d-value teal">{formatDate(user.latest_subscription_details?.start_date ? Number(user.latest_subscription_details.start_date) : undefined)}</div>
+                </div>
+                <div className="detail-cell">
+                  <div className="d-label">Fitness Goal</div>
+                  <div className="d-value">{user.metadata?.fitness_goal || 'Fitness'}</div>
                 </div>
               </div>
 
@@ -222,7 +227,13 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
               <div className="bottom-strip">
                 <div className="qr-section">
                   <div className="qr-frame">
-                    <QrSvg value={user.id} />
+                    <QrSvg value={JSON.stringify({
+                      user_id: user.id,
+                      subscription_id: user.latest_subscription_details?.subscription_id || null,
+                      subscription_name: user.latest_subscription_details?.subscription_name || null,
+                      start_date: user.latest_subscription_details?.start_date || null,
+                      end_date: user.latest_subscription_details?.end_date || null,
+                    })} />
                   </div>
                   <div className="qr-info">
                     <div className="qr-caption">Scan to Verify</div>
@@ -244,7 +255,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user 
                     </svg>
                   </div>
                   <div className="tier-label-sm">Membership</div>
-                  <div className="tier-name">{user.currentPlan}</div>
+                  <div className="tier-name">{user.latest_subscription_details?.subscription_name || user.currentPlan || 'General'}</div>
                 </div>
               </div>
             </div>
