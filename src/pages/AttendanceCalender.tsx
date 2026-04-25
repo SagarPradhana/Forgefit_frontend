@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Clock, LogIn, LogOut, CheckCircle2 } from "lucide-react";
 import { GlassCard } from "../components/ui/primitives";
 
-export function AttendanceCalendar({ data }: any) {
+export function AttendanceCalendar({ data, onViewMore }: any) {
   const { t } = useTranslation();
   const days = Array.from({ length: 30 }, (_, i) => i + 1);
 
@@ -70,7 +70,16 @@ export function AttendanceCalendar({ data }: any) {
                       {record.checkOut}
                     </span>
                   </div>
-                  <CheckCircle2 size={10} className="text-emerald-400 sm:w-[12px] sm:h-[12px] drop-shadow-[0_0_5px_rgba(16,185,129,0.5)]" />
+                  {record.records && record.records.length > 1 ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onViewMore?.(record.records); }}
+                      className="mt-1 px-2 py-0.5 bg-indigo-500/20 text-indigo-400 text-[8px] sm:text-[9px] font-black uppercase tracking-widest rounded-md hover:bg-indigo-500/40 z-10"
+                    >
+                      +{record.records.length - 1} More
+                    </button>
+                  ) : (
+                    <CheckCircle2 size={10} className="text-emerald-400 sm:w-[12px] sm:h-[12px] drop-shadow-[0_0_5px_rgba(16,185,129,0.5)]" />
+                  )}
                 </div>
               ) : (
                 <div className="h-1 w-1 rounded-full bg-slate-800" />

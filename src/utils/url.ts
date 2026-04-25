@@ -61,6 +61,11 @@ export const API_ENDPOINTS = {
     INQUIRIES_EXPIRING: "/api/app/inquiries/expiring-members",
     PRODUCTS: "/api/app/product/",
     PAYMENTS: (userId: string) => `/api/app/payment/${userId}`,
+    SUBSCRIPTION_PLANS: "/api/app/subscription/subscription-plans",
+    CURRENT_SUBSCRIPTION: (userId: string) => `/api/app/subscription/current-subscription/${userId}`,
+    SUBSCRIPTION_HISTORY: (userId: string) => `/api/app/subscription/subscription-history/${userId}`,
+    ATTENDANCE_STATS: (userId: string) => `/api/app/attendance/attendance-stats/${userId}`,
+    ATTENDANCE: (userId: string) => `/api/app/attendance/${userId}`,
   }
 } as const;
 

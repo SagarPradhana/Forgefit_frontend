@@ -25,14 +25,16 @@ import { SettingsPanel } from "../SettingPanel";
 import { useAuthStore } from "../../store/authStore";
 import { toast } from "../../store/toastStore";
 import { ChangePassword } from "../../components/admin/ChangePassword";
-import { adminAttendanceService, type AttendanceResponse } from "../../services/adminAttendanceService";
+import { appAttendanceService, type AppAttendanceResponse, type AppAttendanceStatsResponse } from "../../services/appAttendanceService";
+import { appSubscriptionService, type AppSubscriptionPlanResponse, type AppCurrentSubscriptionResponse, type AppSubscriptionHistoryResponse } from "../../services/appSubscriptionService";
+import { appInquiryService } from "../../services/appInquiryService";
 import { appProductService, type AppProductResponse } from "../../services/appProductService";
 import { appPaymentService, type AppPaymentResponse } from "../../services/appPaymentService";
 import { DateRangeFilter, type DateRange } from "../../components/ui/DateRangeFilter";
 
+
 export function UserPortalPages({ page }: { page: string }) {
   const { t } = useTranslation();
-  const plans = useGymStore((s) => s.plans);
   const flags = useGymStore(
     (s) =>
       s.featureFlags[1] ?? {
@@ -48,31 +50,19 @@ export function UserPortalPages({ page }: { page: string }) {
   const [view, setView] = useState<"table" | "calendar">("calendar");
 
   // Attendance Dates & State
-  const today = new Date();
-  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split("T")[0];
-  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split("T")[0];
-  const day = today.getDay();
-  const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-  const startOfWeek = new Date(today.setDate(diff)).toISOString().split("T")[0];
-
-  const [range, setRange] = useState<"weekly" | "monthly" | "custom">("monthly");
-  const [customDates, setCustomDates] = useState({ start: firstDay, end: lastDay });
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedWeek, setSelectedWeek] = useState(startOfWeek);
-
-  const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
-  const years = ["2024", "2025", "2026"];
-
-  const auth = useAuthStore();
-  const authName = auth.name;
-  const userId = auth.id;
-
-  const [fetchedAttendance, setFetchedAttendance] = useState<AttendanceResponse[]>([]);
+  const [attDateRange, setAttDateRange] = useState<DateRange>({ label: "This Month" });
+  const [fetchedAttendance, setFetchedAttendance] = useState<AppAttendanceResponse[]>([]);
+  const [attendanceStats, setAttendanceStats] = useState<AppAttendanceStatsResponse | null>(null);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [viewMoreAttendance, setViewMoreAttendance] = useState<AppAttendanceResponse[] | null>(null);
+
+  // ── Subscription State ──
+  const [fetchedSubscriptionPlans, setFetchedSubscriptionPlans] = useState<AppSubscriptionPlanResponse[]>([]);
+  const [currentSubscription, setCurrentSubscription] = useState<AppCurrentSubscriptionResponse | null>(null);
+  const [subscriptionHistory, setSubscriptionHistory] = useState<AppSubscriptionHistoryResponse[]>([]);
+  const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [upgradeDescription, setUpgradeDescription] = useState("");
 
   // ── Products State ──
   const [fetchedProducts, setFetchedProducts] = useState<AppProductResponse[]>([]);
@@ -89,42 +79,59 @@ export function UserPortalPages({ page }: { page: string }) {
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>("");
   const [paymentPurchaseTypeFilter, setPaymentPurchaseTypeFilter] = useState<string>("");
 
-  const fetchUserAttendance = async () => {
+  const auth = useAuthStore();
+  const userId = auth.id;
+
+  const fetchUserAttendance = useCallback(async () => {
     if (!userId) return;
     setAttendanceLoading(true);
     try {
-      let from_date: number | undefined;
-      let to_date: number | undefined;
-
-      if (range === "monthly") {
-        from_date = Math.floor(new Date(selectedYear, selectedMonth, 1).getTime() / 1000);
-        to_date = Math.floor(new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59).getTime() / 1000);
-      } else if (range === "weekly") {
-        from_date = Math.floor(new Date(selectedWeek).getTime() / 1000);
-        const endWeek = new Date(selectedWeek);
-        endWeek.setDate(endWeek.getDate() + 6);
-        to_date = Math.floor(endWeek.setHours(23, 59, 59, 999) / 1000);
-      } else if (range === "custom") {
-        from_date = Math.floor(new Date(customDates.start).getTime() / 1000);
-        to_date = Math.floor(new Date(customDates.end).setHours(23, 59, 59, 999) / 1000);
-      }
-
-      const res = await adminAttendanceService.getUserAttendance(userId, { from_date, to_date });
-      if (res && res.data) {
-        setFetchedAttendance(res.data);
-      }
+      const [statsRes, listRes] = await Promise.all([
+        appAttendanceService.getAttendanceStats(userId, { from_date: attDateRange.from_date, to_date: attDateRange.to_date }),
+        appAttendanceService.getAttendance(userId, { from_date: attDateRange.from_date, to_date: attDateRange.to_date })
+      ]);
+      if (statsRes) setAttendanceStats(statsRes);
+      if (listRes && listRes.data) setFetchedAttendance(listRes.data);
     } catch (err) {
       console.error(err);
     } finally {
       setAttendanceLoading(false);
     }
-  };
+  }, [userId, attDateRange]);
 
   useEffect(() => {
     if (page === "attendance") {
       fetchUserAttendance();
     }
-  }, [page, range, selectedMonth, selectedYear, selectedWeek, customDates]);
+  }, [page, fetchUserAttendance]);
+
+  const fetchSubscriptions = useCallback(async () => {
+    if (!userId) return;
+    setSubscriptionsLoading(true);
+    try {
+      const [plansRes, currentRes, historyRes] = await Promise.all([
+        appSubscriptionService.getSubscriptionPlans({ is_deleted: false, count: 100 }),
+        appSubscriptionService.getCurrentSubscription(userId),
+        appSubscriptionService.getSubscriptionHistory(userId, { count: 100 })
+      ]);
+      if (plansRes && plansRes.data) setFetchedSubscriptionPlans(plansRes.data);
+      if (currentRes && currentRes.data && currentRes.data.length > 0) {
+        const activeSub = currentRes.data.find(sub => sub.user_id === userId) || currentRes.data[0];
+        setCurrentSubscription(activeSub);
+      }
+      if (historyRes && historyRes.data) setSubscriptionHistory(historyRes.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSubscriptionsLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (page === "subscription") {
+      fetchSubscriptions();
+    }
+  }, [page, fetchSubscriptions]);
 
   // ── Products Fetcher ──
   const fetchProducts = useCallback(async () => {
@@ -189,12 +196,21 @@ export function UserPortalPages({ page }: { page: string }) {
     }
   }, [page, fetchPayments]);
 
-  const formatAttendanceForUI = (data: AttendanceResponse[]) => {
-    return data.map(a => ({
-      date: new Date(a.date * 1000).toISOString().split('T')[0],
-      checkIn: new Date(a.check_in * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      checkOut: a.check_out ? new Date(a.check_out * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "---"
-    }));
+  const formatAttendanceForUI = (data: AppAttendanceResponse[]) => {
+    const map = new Map<string, AppAttendanceResponse[]>();
+    data.forEach(a => {
+      const d = new Date(a.date * 1000).toISOString().split('T')[0];
+      if (!map.has(d)) map.set(d, []);
+      map.get(d)!.push(a);
+    });
+    return Array.from(map.entries()).map(([date, records]) => {
+      return {
+        date,
+        checkIn: new Date(records[0].check_in * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        checkOut: records[0].check_out ? new Date(records[0].check_out * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "---",
+        records
+      };
+    });
   };
 
   if (page === "dashboard") return <UserDashboard />;
@@ -307,10 +323,27 @@ export function UserPortalPages({ page }: { page: string }) {
       setUpgradeOpen(true);
     };
 
-    const handleConfirmUpgrade = () => {
-      toast.success(`Request for ${selectedPlanForUpgrade?.name} plan sent successfully! Our team will process it shortly.`);
-      setUpgradeOpen(false);
+    const handleConfirmUpgrade = async () => {
+      if (!userId || !selectedPlanForUpgrade) return;
+      try {
+        await appInquiryService.createSubscriptionInquiry({
+          user_id: userId,
+          subscription_plan_id: selectedPlanForUpgrade.id,
+          description: upgradeDescription || `Requesting plan transition to ${selectedPlanForUpgrade.name}`
+        });
+        toast.success(`Request for ${selectedPlanForUpgrade.name} plan sent successfully! Our team will process it shortly.`);
+        setUpgradeOpen(false);
+        setUpgradeDescription("");
+      } catch (err) {
+        toast.error("Failed to submit request.");
+      }
     };
+
+    const currentPlanName = currentSubscription?.subscription_name;
+    const currentDuration = currentSubscription?.duration_in_months ? `${currentSubscription.duration_in_months} Months` : "N/A";
+    const fmtDate = (ts: number | null | undefined) =>
+      ts ? new Date(Number(ts) * 1000).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+
 
     return (
       <div className="space-y-10 max-w-7xl mx-auto">
@@ -319,8 +352,17 @@ export function UserPortalPages({ page }: { page: string }) {
             title={t("subscription")}
             subtitle={t("membershipCycle")}
           />
-          <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-slate-400">
-            <ShieldCheck size={14} className="text-emerald-400" /> Auto-Renewal Enabled
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-slate-400">
+              <ShieldCheck size={14} className="text-emerald-400" /> Auto-Renewal Enabled
+            </div>
+            <button
+              onClick={() => setHistoryModalOpen(true)}
+              className="h-10 w-10 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-indigo-500 hover:border-indigo-500 text-indigo-400 hover:text-white transition-all shadow-lg"
+              title="Subscription History"
+            >
+              <Clock size={16} />
+            </button>
           </div>
         </div>
 
@@ -340,16 +382,29 @@ export function UserPortalPages({ page }: { page: string }) {
                 </div>
               </div>
               <div>
-                <p className="text-[9px] sm:text-[11px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-2 leading-none">Primary Strategy</p>
-                <h2 className="text-3xl sm:text-5xl font-black text-white italic tracking-tighter leading-none mb-4">{userProfile.currentPlan}</h2>
-                <div className="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-4">
-                  <span className="flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
-                    <Clock size={12} className="text-emerald-500 sm:w-[14px] sm:h-[14px]" /> May 20, 2026
-                  </span>
-                  <span className="flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
-                    <CheckCircle2 size={12} className="text-emerald-500 sm:w-[14px] sm:h-[14px]" /> 12 Benefits
-                  </span>
-                </div>
+                <p className="text-[9px] sm:text-[11px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-2 leading-none">Current Subscription</p>
+                {currentSubscription ? (
+                  <>
+                    <h2 className="text-3xl sm:text-5xl font-black text-white italic tracking-tighter leading-none mb-4">{currentPlanName}</h2>
+                    <div className="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-4">
+                      <span className="flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                        <Clock size={12} className="text-emerald-500 sm:w-[14px] sm:h-[14px]" /> Expires: {fmtDate(currentSubscription?.end_date)}
+                      </span>
+                      <span className="flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                        <CheckCircle2 size={12} className="text-emerald-500 sm:w-[14px] sm:h-[14px]" /> Duration: {currentDuration}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-3xl sm:text-5xl font-black text-slate-500 italic tracking-tighter leading-none mb-4">Not Available</h2>
+                    <div className="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-4">
+                      <span className="flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-bold text-orange-400 uppercase tracking-widest whitespace-nowrap">
+                        <Info size={12} className="sm:w-[14px] sm:h-[14px]" /> Please select a strategy from below
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -364,18 +419,23 @@ export function UserPortalPages({ page }: { page: string }) {
           </div>
         </motion.div>
 
-        {/* --- PLAN MATRIX --- */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {plans.map((p) => (
-            <SubscriptionCard
-              key={p.id}
-              plan={p}
-              currentPlan={userProfile.currentPlan}
-              highlight={p.name === "Performance"} // Assuming Performance is popular
-              onSelect={handlePlanSelect}
-            />
-          ))}
-        </div>
+        {subscriptionsLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-64 rounded-3xl" />)}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {fetchedSubscriptionPlans.map((p) => (
+              <SubscriptionCard
+                key={p.id}
+                plan={p}
+                currentPlan={currentPlanName}
+                highlight={p.price > 1000} // Example highlight logic
+                onSelect={handlePlanSelect}
+              />
+            ))}
+          </div>
+        )}
 
         {/* --- UPGRADE WIZARD --- */}
         <Modal
@@ -391,7 +451,7 @@ export function UserPortalPages({ page }: { page: string }) {
               <div>
                 <p className="text-sm font-bold text-white mb-1 uppercase tracking-tight">Upgrade Confirmation</p>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  You are requesting to transition from <span className="text-white font-bold">{userProfile.currentPlan}</span> to <span className="text-indigo-400 font-bold">{selectedPlanForUpgrade?.name || "a New Plan"}</span>.
+                  You are requesting to transition from <span className="text-white font-bold">{currentPlanName}</span> to <span className="text-indigo-400 font-bold">{selectedPlanForUpgrade?.name || "a New Plan"}</span>.
                 </p>
               </div>
             </div>
@@ -415,17 +475,47 @@ export function UserPortalPages({ page }: { page: string }) {
               </div>
             </div>
 
-            <div className="pt-4">
-              <GlowButton
-                className="w-full h-14 rounded-2xl text-xs font-black uppercase tracking-widest"
-                onClick={handleConfirmUpgrade}
-              >
-                Confirm Strategy Transition
-              </GlowButton>
-              <p className="text-[9px] text-center text-slate-500 italic mt-4 px-6">
-                By confirming, you authorize our administrative team to process your plan change. Final billing will be adjusted on your next cycle.
-              </p>
+              <div className="pt-4 space-y-4">
+                <div>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Additional Description</label>
+                  <textarea
+                    value={upgradeDescription}
+                    onChange={(e) => setUpgradeDescription(e.target.value)}
+                    className="w-full bg-slate-950/50 border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-indigo-500 min-h-[80px]"
+                    placeholder="Any specific requests?"
+                  />
+                </div>
+                <GlowButton
+                  className="w-full h-14 rounded-2xl text-xs font-black uppercase tracking-widest"
+                  onClick={handleConfirmUpgrade}
+                >
+                  Confirm Strategy Transition
+                </GlowButton>
+                <p className="text-[9px] text-center text-slate-500 italic px-6">
+                  By confirming, you authorize our administrative team to process your plan change. Final billing will be adjusted on your next cycle.
+                </p>
+              </div>
             </div>
+        </Modal>
+
+        {/* --- HISTORY MODAL --- */}
+        <Modal open={historyModalOpen} onClose={() => setHistoryModalOpen(false)} title="Subscription History">
+          <div className="p-4 max-h-[60vh] overflow-y-auto">
+            {subscriptionHistory.length === 0 ? (
+              <EmptyState title="No History" hint="You don't have any past subscriptions." />
+            ) : (
+              <Table
+                headers={["Plan", "Amount", "Duration", "Start Date", "End Date", "Status"]}
+                rows={subscriptionHistory.map((h) => [
+                  "Subscription", // Replace with plan name if API includes it
+                  `₹${h.amount}`,
+                  `${h.duration_in_months} months`,
+                  fmtDate(h.start_date),
+                  fmtDate(h.end_date),
+                  <StatusBadge key={h.id} status={h.status ? "Active" : "Expired"} />
+                ])}
+              />
+            )}
           </div>
         </Modal>
       </div>
@@ -435,131 +525,40 @@ export function UserPortalPages({ page }: { page: string }) {
   if (page === "attendance") {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <SectionTitle
             title={t("attendance")}
             subtitle="Monitor your performance and consistency"
           />
-          <div className="flex p-1 bg-slate-900/50 backdrop-blur-md border border-white/5 rounded-xl">
-            <button
-              onClick={() => setView("calendar")}
-              className={`p-2.5 rounded-lg transition-all duration-300 relative group ${view === "calendar" ? "text-white" : "text-slate-500 hover:text-slate-300"
-                }`}
-              title="Calendar View"
-            >
-              {view === "calendar" && (
-                <motion.div layoutId="viewActive" className="absolute inset-0 bg-indigo-500/20 border border-indigo-500/30 rounded-lg" />
-              )}
-              <CalendarIcon size={18} className="relative z-10" />
-            </button>
-            <button
-              onClick={() => setView("table")}
-              className={`p-2.5 rounded-lg transition-all duration-300 relative group ${view === "table" ? "text-white" : "text-slate-500 hover:text-slate-300"
-                }`}
-              title="List View"
-            >
-              {view === "table" && (
-                <motion.div layoutId="viewActive" className="absolute inset-0 bg-indigo-500/20 border border-indigo-500/30 rounded-lg" />
-              )}
-              <ListIcon size={18} className="relative z-10" />
-            </button>
-          </div>
-        </div>
-
-        {/* --- DYNAMIC FILTER BAR --- */}
-        <div className="flex flex-wrap items-center justify-between gap-4 py-2">
-          <div className="flex p-1 bg-white/5 border border-white/10 rounded-2xl">
-            {["weekly", "monthly", "custom"].map((r) => (
+          <div className="flex flex-wrap items-center gap-3">
+            <DateRangeFilter
+              defaultPreset="monthly"
+              onChange={(r) => setAttDateRange(r)}
+            />
+            <div className="flex p-1 bg-slate-900/50 backdrop-blur-md border border-white/5 rounded-xl">
               <button
-                key={r}
-                onClick={() => setRange(r as any)}
-                className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 relative ${range === r ? "text-white" : "text-slate-500 hover:text-slate-300"
+                onClick={() => setView("calendar")}
+                className={`p-2.5 rounded-lg transition-all duration-300 relative group ${view === "calendar" ? "text-white" : "text-slate-500 hover:text-slate-300"
                   }`}
+                title="Calendar View"
               >
-                {range === r && (
-                  <motion.div layoutId="rangeActive" className="absolute inset-0 bg-indigo-500/20 border border-indigo-500/30 rounded-xl shadow-[0_0_15px_rgba(99,102,241,0.2)]" />
+                {view === "calendar" && (
+                  <motion.div layoutId="viewActive" className="absolute inset-0 bg-indigo-500/20 border border-indigo-500/30 rounded-lg" />
                 )}
-                <span className="relative z-10">{r}</span>
+                <CalendarIcon size={18} className="relative z-10" />
               </button>
-            ))}
-          </div>
-
-          <AnimatePresence mode="wait">
-            {range === "custom" && (
-              <motion.div
-                key="custom"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                className="flex items-center gap-3 bg-white/5 p-1 rounded-2xl border border-white/10 shadow-xl"
+              <button
+                onClick={() => setView("table")}
+                className={`p-2.5 rounded-lg transition-all duration-300 relative group ${view === "table" ? "text-white" : "text-slate-500 hover:text-slate-300"
+                  }`}
+                title="List View"
               >
-                <div className="flex items-center gap-2 px-3">
-                  <CalendarCheck size={14} className="text-indigo-400" />
-                  <input
-                    type="date"
-                    className="bg-transparent text-[10px] font-bold text-white outline-none [color-scheme:dark]"
-                    value={customDates.start}
-                    onChange={(e) => setCustomDates({ ...customDates, start: e.target.value })}
-                  />
-                  <span className="text-slate-600 text-xs">to</span>
-                  <input
-                    type="date"
-                    className="bg-transparent text-[10px] font-bold text-white outline-none [color-scheme:dark]"
-                    value={customDates.end}
-                    onChange={(e) => setCustomDates({ ...customDates, end: e.target.value })}
-                  />
-                </div>
-              </motion.div>
-            )}
-
-            {range === "weekly" && (
-              <motion.div
-                key="weekly"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                className="flex items-center gap-3 bg-white/5 p-1.5 rounded-2xl border border-white/10 shadow-xl"
-              >
-                <span className="text-[10px] font-black uppercase text-slate-500 pl-3">Select Week Start</span>
-                <input
-                  type="date"
-                  className="bg-transparent text-[10px] font-bold text-white outline-none [color-scheme:dark] pr-3"
-                  value={selectedWeek}
-                  onChange={(e) => setSelectedWeek(e.target.value)}
-                />
-              </motion.div>
-            )}
-
-            {range === "monthly" && (
-              <motion.div
-                key="monthly"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                className="flex items-center gap-2 bg-white/5 p-1 rounded-2xl border border-white/10 shadow-xl"
-              >
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                  className="bg-transparent text-[10px] font-bold text-white outline-none cursor-pointer px-3 py-1.5"
-                >
-                  {months.map((m, i) => <option key={m} value={i} className="bg-slate-900">{m}</option>)}
-                </select>
-                <div className="w-px h-4 bg-white/10" />
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(Number(e.target.value))}
-                  className="bg-transparent text-[10px] font-bold text-white outline-none cursor-pointer px-3 py-1.5"
-                >
-                  {years.map(y => <option key={y} value={y} className="bg-slate-900">{y}</option>)}
-                </select>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400">
-            <Filter size={14} />
-            <span className="text-[10px] font-black uppercase tracking-widest">Active Filter</span>
+                {view === "table" && (
+                  <motion.div layoutId="viewActive" className="absolute inset-0 bg-indigo-500/20 border border-indigo-500/30 rounded-lg" />
+                )}
+                <ListIcon size={18} className="relative z-10" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -570,7 +569,7 @@ export function UserPortalPages({ page }: { page: string }) {
             </div>
             <div>
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Total visits</p>
-              <p className="text-xl font-black text-white leading-none">18 <span className="text-[10px] text-emerald-500">Days</span></p>
+              <p className="text-xl font-black text-white leading-none">{attendanceStats?.total_visits || 0} <span className="text-[10px] text-emerald-500">Days</span></p>
             </div>
           </GlassCard>
           <GlassCard className="p-4 flex items-center gap-4">
@@ -579,7 +578,7 @@ export function UserPortalPages({ page }: { page: string }) {
             </div>
             <div>
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Avg Duration</p>
-              <p className="text-xl font-black text-white leading-none">1.5 <span className="text-[10px] text-indigo-500">Hours</span></p>
+              <p className="text-xl font-black text-white leading-none">{attendanceStats?.avg_duration_in_hrs || 0} <span className="text-[10px] text-indigo-500">Hours</span></p>
             </div>
           </GlassCard>
           <GlassCard className="p-4 flex items-center gap-4">
@@ -588,7 +587,7 @@ export function UserPortalPages({ page }: { page: string }) {
             </div>
             <div>
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Current Streak</p>
-              <p className="text-xl font-black text-white leading-none">4 <span className="text-[10px] text-orange-500">Days</span></p>
+              <p className="text-xl font-black text-white leading-none">{attendanceStats?.current_streak || 0} <span className="text-[10px] text-orange-500">Days</span></p>
             </div>
           </GlassCard>
         </div>
@@ -599,15 +598,23 @@ export function UserPortalPages({ page }: { page: string }) {
           </div>
         ) : fetchedAttendance.length > 0 ? (
           view === "calendar" ? (
-            <AttendanceCalendar data={formatAttendanceForUI(fetchedAttendance)} />
+            <AttendanceCalendar data={formatAttendanceForUI(fetchedAttendance)} onViewMore={setViewMoreAttendance} />
           ) : (
             <GlassCard>
               <Table
-                headers={["Date", "Check In", "Check Out"]}
+                headers={["Date", "Check In", "Check Out", "Action"]}
                 rows={formatAttendanceForUI(fetchedAttendance).map((a) => [
                   a.date,
                   a.checkIn,
                   a.checkOut,
+                  a.records.length > 1 ? (
+                    <button
+                      onClick={() => setViewMoreAttendance(a.records)}
+                      className="px-2 py-1 bg-indigo-500/20 text-indigo-400 text-[10px] rounded hover:bg-indigo-500/40"
+                    >
+                      +{a.records.length - 1} More
+                    </button>
+                  ) : null
                 ])}
               />
             </GlassCard>
@@ -615,6 +622,20 @@ export function UserPortalPages({ page }: { page: string }) {
         ) : (
           <EmptyState title="Registry Empty" hint="No attendance markers found for the current temporal selection." />
         )}
+
+        <Modal open={!!viewMoreAttendance} onClose={() => setViewMoreAttendance(null)} title="Check-in Details">
+          <div className="p-4">
+            <Table
+              headers={["Check In", "Check Out", "Status", "Duration"]}
+              rows={(viewMoreAttendance || []).map((r) => [
+                new Date(r.check_in * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "---",
+                <StatusBadge key={r.id} status={r.status === "present" ? "Present" : (r.status as any)} />,
+                r.duration || "—"
+              ])}
+            />
+          </div>
+        </Modal>
       </div>
     );
   }
