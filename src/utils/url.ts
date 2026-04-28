@@ -53,6 +53,10 @@ export const API_ENDPOINTS = {
     DASHBOARD_RECENT_PRODUCTS: "/api/admin/dashboard/recent-product-purchases",
     DASHBOARD_ATTENDANCE: "/api/admin/dashboard/attendance-count",
     DASHBOARD_MONTHLY_REVENUE: "/api/admin/dashboard/monthly-revenue",
+    APP_CONFIG: "/api/admin/app-config/",
+    APP_CONFIG_UPLOAD: "/api/admin/app-config/upload-app-config-files",
+    LOCATION: "/api/admin/location/",
+    LOCATION_DETAIL: (id: string) => `/api/admin/location/${id}`,
   },
   APP: {
     INQUIRIES_CONTACT: "/api/app/inquiries/contact-page",
