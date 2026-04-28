@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { GlassCard, SectionTitle } from "../../components/ui/primitives";
-import { Search, Grid, List, Plus } from "lucide-react";
+import { Search, Grid, List, Plus, Filter } from "lucide-react";
 import { motion } from "framer-motion";
 import { useGet, useMutation } from "../../hooks/useApi";
 import { API_ENDPOINTS } from "../../utils/url";
 import { toast } from "../../store/toastStore";
+import { useLocation } from "react-router-dom";
 
 // Sub-components
 import { UserModal } from "./users/UserModal";
@@ -22,6 +23,14 @@ import type { ViewType, ModalStep, UserFormData } from "./users/types";
 
 export function UserManagement() {
   const { t } = useTranslation();
+  const location = useLocation();
+
+  // Read initial role from URL query param (e.g. ?role=admin from dashboard redirect)
+  const initialRole = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("role") || "";
+  }, [location.search]);
+
   // --- States ---
   const [viewType, setViewType] = useState<ViewType>("grid");
   const [modalOpen, setModalOpen] = useState(false);
@@ -34,7 +43,14 @@ export function UserManagement() {
   const [loadingStatusId, setLoadingStatusId] = useState<string | null>(null);
   const [loadingDeleteId, setLoadingDeleteId] = useState<string | null>(null);
 
-  console.log("photoPreview", photoPreview);
+  // Role filter state — initialized from URL param
+  const [roleFilter, setRoleFilter] = useState<string>(initialRole);
+
+  // Sync roleFilter if URL param changes (e.g. navigating back from dashboard with new role)
+  useEffect(() => {
+    setRoleFilter(initialRole);
+    setPage(1);
+  }, [initialRole]);
 
   // Document Modal State
   const [docModalOpen, setDocModalOpen] = useState(false);
@@ -76,8 +92,11 @@ export function UserManagement() {
       params.append("search", debouncedSearch.trim());
       params.append("member_id", debouncedSearch.trim()); // The user specified member_id is a parameter in GET
     }
+    if (roleFilter) {
+      params.append("role", roleFilter);
+    }
     return `${API_ENDPOINTS.ADMIN.USERS}?${params.toString()}`;
-  }, [page, perPage, debouncedSearch]);
+  }, [page, perPage, debouncedSearch, roleFilter]);
 
   const { loading: usersLoading, refetch: refetchUsers } = useGet(
     usersApiUrl,
@@ -188,6 +207,9 @@ export function UserManagement() {
     }, 500);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // Reset page when role filter changes
+  useEffect(() => { setPage(1); setAllUsers([]); }, [roleFilter]);
 
   // Sync selected user when data refreshes
   useEffect(() => {
@@ -406,11 +428,25 @@ export function UserManagement() {
 
   return (
     <GlassCard>
-      <div className="mb-6">
+      <div className="mb-6 flex items-center gap-3 flex-wrap">
         <SectionTitle
           title={t("users")}
           subtitle="Manage gym members, trainers, and employees"
         />
+        {roleFilter && (
+          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+            roleFilter === "admin"   ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30" :
+            roleFilter === "trainer" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" :
+                                       "bg-sky-500/20 text-sky-300 border-sky-500/30"
+          }`}>
+            {roleFilter === "admin" ? "Admins" : roleFilter === "trainer" ? "Trainers" : "Users"}
+            <button
+              onClick={() => setRoleFilter("")}
+              className="ml-1.5 opacity-60 hover:opacity-100 transition-opacity font-black"
+              title="Clear filter"
+            >✕</button>
+          </span>
+        )}
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
@@ -445,6 +481,22 @@ export function UserManagement() {
               className="w-full bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-10 pr-4 py-2 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition shadow-sm dark:shadow-none"
             />
           </div>
+        </div>
+
+        {/* Role Filter */}
+        <div className="relative">
+          <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+          <select
+            id="admin-user-role-filter"
+            value={roleFilter}
+            onChange={(e) => { setRoleFilter(e.target.value); }}
+            className="bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white outline-none focus:border-indigo-500 transition cursor-pointer appearance-none min-w-[130px]"
+          >
+            <option value="" className="bg-slate-900">All Roles</option>
+            <option value="admin" className="bg-slate-900">Admins</option>
+            <option value="trainer" className="bg-slate-900">Trainers</option>
+            <option value="user" className="bg-slate-900">Users</option>
+          </select>
         </div>
 
         <div className="flex items-center gap-3">

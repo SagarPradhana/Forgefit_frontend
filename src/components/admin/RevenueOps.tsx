@@ -5,6 +5,9 @@ import {
   RefreshCw, Search, ChevronLeft, ChevronRight,
   Users, Mail, Phone, CheckCircle, XCircle, Filter,
 } from "lucide-react";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from "recharts";
 import { API_ENDPOINTS } from "../../utils/url";
 import { api } from "../../utils/httputils";
 import { GlassCard, SectionTitle } from "../ui/primitives";
@@ -90,6 +93,21 @@ function StatCard({ label, value, icon: Icon, color, delay }: {
   );
 }
 
+// ─── Custom Tooltip for Bar Chart ─────────────────────────────────────────────
+function RevTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-slate-900 border border-white/10 rounded-xl p-3 text-xs">
+      <p className="font-black text-white mb-2">{label}</p>
+      {payload.map((p: any) => (
+        <p key={p.name} style={{ color: p.color }} className="font-bold">
+          {p.name}: {fmt(p.value)}
+        </p>
+      ))}
+    </div>
+  );
+}
+
 // ─── Badge ────────────────────────────────────────────────────────────────────
 function Badge({ value, green, red }: { value: string; green?: string[]; red?: string[] }) {
   const v = value?.toLowerCase?.() ?? "";
@@ -124,6 +142,9 @@ export function RevenueOps() {
   const [inquiries, setInquiries] = useState<ContactInquiry[]>([]);
   const [inquiriesTotal, setInquiriesTotal] = useState(0);
   const [inquiriesLoading, setInquiriesLoading] = useState(false);
+  const [monthlyRevenue, setMonthlyRevenue] = useState<any[]>([]);
+  const [revenueMonths, setRevenueMonths] = useState(6);
+  const [revenueLoading, setRevenueLoading] = useState(false);
 
   // Debounce search
   useEffect(() => {
@@ -191,9 +212,19 @@ export function RevenueOps() {
     } catch (e) { console.error(e); } finally { setInquiriesLoading(false); }
   }, [activeTab, page, dateRange, debouncedSearch]);
 
+  // Fetch Monthly Revenue
+  const fetchMonthlyRevenue = useCallback(async () => {
+    setRevenueLoading(true);
+    try {
+      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_MONTHLY_REVENUE}?months=${revenueMonths}`);
+      if (res?.data) setMonthlyRevenue(res.data);
+    } catch (e) { console.error(e); } finally { setRevenueLoading(false); }
+  }, [revenueMonths]);
+
   useEffect(() => { fetchStats(); }, [fetchStats]);
   useEffect(() => { fetchPayments(); }, [fetchPayments]);
   useEffect(() => { fetchInquiries(); }, [fetchInquiries]);
+  useEffect(() => { fetchMonthlyRevenue(); }, [fetchMonthlyRevenue]);
 
   const isLoading = statsLoading || paymentsLoading || inquiriesLoading;
   const totalPages = activeTab === "inquiries"
@@ -241,6 +272,47 @@ export function RevenueOps() {
           <StatCard label="Renewal Revenue"      value={stats.renewal_revenue}      icon={RefreshCw}   color="bg-emerald-500" delay={0.15} />
         </div>
       )}
+
+      {/* ── Monthly Revenue Bar Chart ── */}
+      <div className="mb-8 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+          <div>
+            <h3 className="text-base font-black text-white uppercase tracking-tight">Monthly Revenue</h3>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Subscription · Product · Renewal breakdown</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {[3, 6, 12].map((m) => (
+              <button key={m} onClick={() => setRevenueMonths(m)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                  revenueMonths === m ? "bg-indigo-500 text-white" : "bg-white/5 text-slate-400 hover:text-white border border-white/10"}`}>
+                {m}M
+              </button>
+            ))}
+          </div>
+        </div>
+        {revenueLoading ? (
+          <div className="h-64 rounded-xl bg-white/5 animate-pulse" />
+        ) : monthlyRevenue.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-16 text-slate-500">
+            <TrendingUp size={40} className="opacity-20" /><p className="text-sm font-bold">No revenue data</p>
+          </div>
+        ) : (
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyRevenue} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                <XAxis dataKey="month_label" stroke="#475569" tick={{ fontSize: 11, fontWeight: 700 }} />
+                <YAxis stroke="#475569" tick={{ fontSize: 10 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+                <Tooltip content={<RevTooltip />} />
+                <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700, paddingTop: 12 }} />
+                <Bar dataKey="subscription_revenue" name="Subscriptions" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="product_revenue"      name="Products"      fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="renewal_revenue"      name="Renewals"      fill="#10b981" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
 
       {/* ── Tabs ── */}
       <div className="flex gap-1 bg-white/5 border border-white/10 rounded-xl p-1 mb-6 overflow-x-auto custom-scrollbar">

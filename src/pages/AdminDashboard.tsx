@@ -48,22 +48,30 @@ function Badge({ v }: { v: string }) {
 }
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
-function StatCard({ label, value, icon: Icon, color, delay, prefix = "" }: {
-  label: string; value: any; icon: any; color: string; delay: number; prefix?: string;
+function StatCard({ label, value, icon: Icon, color, delay, prefix = "", subLabel, subValue }: {
+  label: string; value: any; icon: any; color: string; delay: number; prefix?: string; subLabel?: string; subValue?: any;
 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.35 }}
-      className="relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-5 backdrop-blur-xl hover:border-white/20 transition-all group"
+      className="relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-5 backdrop-blur-xl hover:border-white/20 transition-all group flex flex-col justify-between"
     >
       <div className={`absolute -top-6 -right-6 w-20 h-20 rounded-full blur-2xl opacity-20 ${color}`} />
-      <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${color} bg-opacity-20 mb-3 group-hover:scale-110 transition-transform`}>
-        <Icon size={18} className="text-white" />
+      <div>
+        <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${color} bg-opacity-20 mb-3 group-hover:scale-110 transition-transform`}>
+          <Icon size={18} className="text-white" />
+        </div>
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 leading-tight">{label}</p>
+        <p className="text-xl font-black text-white tracking-tighter">{prefix}{value ?? "—"}</p>
       </div>
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 leading-tight">{label}</p>
-      <p className="text-xl font-black text-white tracking-tighter">{prefix}{value ?? "—"}</p>
+      {subLabel && (
+        <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between">
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">{subLabel}</p>
+          <p className="text-xs font-black text-red-400">{subValue ?? "—"}</p>
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -172,6 +180,7 @@ export default function AdminDashboard() {
           total_admins: res.total_admins,
           total_members: res.total_members,
           total_active_subscriptions: res.total_active_subscriptions,
+          total_expired_subscriptions: res.total_expired_subscriptions,
           new_registrations: res.new_registrations,
           upcoming_renewals: res.upcoming_renewals,
           total_revenue: res.total_revenue,
@@ -299,7 +308,7 @@ export default function AdminDashboard() {
             </button>
           </div>
         </motion.div>
-        <StatCard label="Active Subscriptions" value={stats?.total_active_subscriptions} icon={CreditCard}  color="bg-violet-500"  delay={0.05} />
+        <StatCard label="Active Subscriptions" value={stats?.total_active_subscriptions} icon={CreditCard}  color="bg-violet-500"  delay={0.05} subLabel="Expired" subValue={stats?.total_expired_subscriptions} />
         <StatCard label="New Registrations"    value={stats?.new_registrations}           icon={UserPlus}    color="bg-sky-500"     delay={0.1}  />
         <StatCard label="Upcoming Renewals"    value={stats?.upcoming_renewals}           icon={Clock}       color="bg-amber-500"   delay={0.15} />
         <StatCard label="Total Revenue"        value={stats?.total_revenue != null ? fmt(stats.total_revenue) : "—"} icon={DollarSign} color="bg-emerald-500" delay={0.2} />
@@ -456,7 +465,7 @@ export default function AdminDashboard() {
       {/* ── [ROW 5] Monthly Revenue Bar Chart ── */}
       <GlassCard>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-          <SectionHeader title="Monthly Revenue" sub="Subscription · Product · Renewal breakdown" />
+          <SectionHeader title="Monthly Revenue" sub="Subscription · Product · Renewal breakdown" onRedirect={() => navigate('/admin/revenueops')} />
           <div className="flex items-center gap-2">
             {[3, 6, 12].map((m) => (
               <button key={m} onClick={() => setRevenueMonths(m)}

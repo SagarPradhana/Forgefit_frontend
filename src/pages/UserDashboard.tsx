@@ -37,7 +37,7 @@ function UserDashboard() {
 
   // Fetch my-details for ID Card
   const { data: myDetailsRes } = useGet(
-    userId ? API_ENDPOINTS.USER.MY_DETAILS : null
+    userId ? API_ENDPOINTS.USER.MY_DETAILS(userId) : null
   );
   const myDetails = myDetailsRes?.data?.[0] || myDetailsRes?.data || myDetailsRes || {};
 
