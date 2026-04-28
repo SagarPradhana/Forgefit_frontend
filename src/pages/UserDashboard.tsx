@@ -35,6 +35,12 @@ function UserDashboard() {
   const [idCardOpen, setIdCardOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
+  // Fetch my-details for ID Card
+  const { data: myDetailsRes } = useGet(
+    userId ? API_ENDPOINTS.USER.MY_DETAILS(userId) : null
+  );
+  const myDetails = myDetailsRes?.data?.[0] || myDetailsRes?.data || myDetailsRes || {};
+
   // Auto-sync plan on home mount
   const { refetch: syncUserPlan } = useGet(
     userId ? `${API_ENDPOINTS.ADMIN.SYNC_SUBSCRIPTIONS}?user_id=${userId}` : null,
@@ -289,22 +295,22 @@ function UserDashboard() {
         isOpen={idCardOpen}
         onClose={() => setIdCardOpen(false)}
         user={{
-          name: userName || "Member",
-          id: userId || "FF-UNKNOWN",
-          currentPlan: userProfile.currentPlan,
+          name: myDetails.name || userName || "Member",
+          id: myDetails.id || userId || "FF-UNKNOWN",
+          currentPlan: myDetails.latest_subscription_details?.subscription_name || userProfile.currentPlan,
+          profile_image_path: myDetails.profile_image_path || userProfile.profile_image_path,
+          mobile: myDetails.mobile || userProfile.phone,
+          joining_date: myDetails.joining_date || Math.floor(new Date(planInfo.startDate).getTime() / 1000),
+          latest_subscription_details: myDetails.latest_subscription_details,
           metadata: {
-            dob: userProfile.metadata?.dob,
-            gender: userProfile.metadata?.gender,
-            fitness_goal: userProfile.metadata?.fitness_goal,
-            profile_image_path: userProfile.profile_image_path,
-            blood_group: "B+",
-            batch_time: "6:00 AM",
-            joining_date: Math.floor(new Date(planInfo.startDate).getTime() / 1000),
-            expiry_date: Math.floor(new Date(planInfo.expiryDate).getTime() / 1000),
-            contact: userProfile.phone,
-            emergency_contact: userProfile.metadata?.emergency_contact
+            dob: myDetails.metadata?.dob || userProfile.metadata?.dob,
+            gender: myDetails.metadata?.gender || userProfile.metadata?.gender,
+            fitness_goal: myDetails.metadata?.fitness_goal || userProfile.metadata?.fitness_goal,
+            profile_image_path: myDetails.metadata?.profile_image_path || userProfile.profile_image_path,
+            emergency_contact: myDetails.metadata?.emergency_contact || userProfile.metadata?.emergency_contact,
+            workout_time: myDetails.metadata?.workout_time
           },
-          role: "Member"
+          role: myDetails.role || "user"
         }}
       />
     </div>

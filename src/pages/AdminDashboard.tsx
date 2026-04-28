@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -68,11 +69,24 @@ function StatCard({ label, value, icon: Icon, color, delay, prefix = "" }: {
 }
 
 // ─── Section Header ───────────────────────────────────────────────────────────
-function SectionHeader({ title, sub }: { title: string; sub?: string }) {
+function SectionHeader({ title, sub, onRedirect }: { title: string; sub?: string; onRedirect?: () => void }) {
   return (
-    <div className="mb-4">
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{sub}</p>
-      <h3 className="text-base font-black text-white uppercase tracking-tight">{title}</h3>
+    <div className="mb-4 flex items-center justify-between w-full">
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{sub}</p>
+        <h3 className="text-base font-black text-white uppercase tracking-tight flex items-center gap-2">
+          {title}
+        </h3>
+      </div>
+      {onRedirect && (
+        <button 
+          onClick={onRedirect}
+          className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10 hover:bg-indigo-500/20 hover:border-indigo-500/30 hover:text-indigo-400 transition-all text-slate-400"
+          title={`Go to ${title}`}
+        >
+          <ChevronRight size={16} />
+        </button>
+      )}
     </div>
   );
 }
@@ -105,6 +119,7 @@ function RevTooltip({ active, payload, label }: any) {
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const monthRange = getMonthRange();
 
   // Global date range (for most sections) — default: This Month
@@ -258,7 +273,7 @@ export default function AdminDashboard() {
       {/* ── [ROW 2] Recent Inquiries (4 tabs) ── */}
       <GlassCard>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-          <SectionHeader title="Recent Inquiries" sub="Latest incoming requests" />
+          <SectionHeader title="Recent Inquiries" sub="Latest incoming requests" onRedirect={() => navigate('/admin/inquiries')} />
           <div className="flex gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
             {inqTabs.map(({ id, label, icon: Icon }) => (
               <button key={id} onClick={() => setInqTab(id as any)}
@@ -282,15 +297,12 @@ export default function AdminDashboard() {
                   <div className="h-8 w-8 rounded-xl bg-violet-500/20 flex items-center justify-center text-xs font-black text-violet-300 shrink-0">
                     {(item.name ?? item.user_name ?? "?")?.[0]?.toUpperCase()}
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-white truncate">{item.name ?? item.user_name ?? "—"}</p>
-                    <p className="text-[10px] text-slate-500 truncate">{item.email ?? item.subject ?? item.plan_name ?? "—"}</p>
+                  <div className="min-w-0 flex flex-col justify-center">
+                    <p className="text-sm font-bold text-white truncate">{item.name ?? item.user_name ?? "—"}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {item.status === true || item.status === "paid" ? <CheckCircle size={14} className="text-emerald-400" /> : <XCircle size={14} className="text-amber-400" />}
-                  <span className="text-[10px] text-slate-500">{fmtDate(item.created_date ?? item.inquiry_date ?? item.start_date)}</span>
-                  <ChevronRight size={12} className="text-slate-600" />
+                  <ChevronRight size={14} className="text-slate-600 group-hover:text-white transition-colors" />
                 </div>
               </motion.div>
             ))}
@@ -302,7 +314,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Recent Payments */}
         <GlassCard>
-          <SectionHeader title="Recent Payments" sub="This month" />
+          <SectionHeader title="Recent Payments" sub="This month" onRedirect={() => navigate('/admin/payments')} />
           {loading.payments ? <SkeletonRows /> : payments.length === 0 ? (
             <p className="text-slate-500 text-xs text-center py-8">No payments</p>
           ) : (
@@ -326,7 +338,7 @@ export default function AdminDashboard() {
 
         {/* Recent Subscription History */}
         <GlassCard>
-          <SectionHeader title="Subscription History" sub="This month" />
+          <SectionHeader title="Subscription History" sub="This month" onRedirect={() => navigate('/admin/subscriptions')} />
           {loading.subscriptions ? <SkeletonRows /> : subscriptions.length === 0 ? (
             <p className="text-slate-500 text-xs text-center py-8">No records</p>
           ) : (
@@ -350,7 +362,7 @@ export default function AdminDashboard() {
 
         {/* Recent Product Purchases */}
         <GlassCard>
-          <SectionHeader title="Product Purchases" sub="This month" />
+          <SectionHeader title="Product Purchases" sub="This month" onRedirect={() => navigate('/admin/products')} />
           {loading.products ? <SkeletonRows /> : products.length === 0 ? (
             <p className="text-slate-500 text-xs text-center py-8">No records</p>
           ) : (
@@ -376,7 +388,7 @@ export default function AdminDashboard() {
       {/* ── [ROW 4] Attendance Count ── */}
       <GlassCard>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-          <SectionHeader title="Attendance" sub="Live count" />
+          <SectionHeader title="Attendance" sub="Live count" onRedirect={() => navigate('/admin/attendance')} />
           <DateRangeFilter
             defaultPreset="today"
             onChange={(r) => setAttRange(r)}
