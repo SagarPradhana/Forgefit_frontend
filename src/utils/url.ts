@@ -6,7 +6,7 @@ export const API_ENDPOINTS = {
   },
   USER: {
     PROFILE: "/api/user/profile",
-    MY_DETAILS: (id: string) => `/api/app/user/my-details/${id}`,
+    MY_DETAILS: "https://gymmanagement-backend-1wvo.onrender.com/api/user/my-details",
     UPDATE: "/api/user/update",
     DETAIL: (id: string) => `/api/user/${id}`,
     RESET_PASSWORD: (id: string) => `/api/user/${id}/reset-password`,

@@ -522,8 +522,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
     if (!userId) return;
     const fetchUserData = async () => {
       try {
-        // MY_DETAILS returns all fields at root level (not nested under 'data')
-        const res: any = await api.get(API_ENDPOINTS.USER.MY_DETAILS(userId));
+        const res: any = await api.get(API_ENDPOINTS.USER.MY_DETAILS);
         if (res && res.code === 200) setUserData(res);
       } catch (err) {
         console.error("Failed to sync user data", err);

@@ -81,10 +81,11 @@ function SectionHeader({ title, sub, onRedirect }: { title: string; sub?: string
       {onRedirect && (
         <button 
           onClick={onRedirect}
-          className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10 hover:bg-indigo-500/20 hover:border-indigo-500/30 hover:text-indigo-400 transition-all text-slate-400"
+          className="group flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-indigo-500/20 hover:border-indigo-500/30 hover:text-indigo-400 transition-all text-[10px] font-black uppercase tracking-widest text-slate-400"
           title={`Go to ${title}`}
         >
-          <ChevronRight size={16} />
+          View All
+          <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
         </button>
       )}
     </div>
@@ -167,6 +168,9 @@ export default function AdminDashboard() {
       if (res && res.code === 200) {
         setStats({
           total_users: res.total_users,
+          total_trainers: res.total_trainers,
+          total_admins: res.total_admins,
+          total_members: res.total_members,
           total_active_subscriptions: res.total_active_subscriptions,
           new_registrations: res.new_registrations,
           upcoming_renewals: res.upcoming_renewals,
@@ -262,8 +266,39 @@ export default function AdminDashboard() {
       </div>
 
       {/* ── [ROW 1] 5 Stat Cards ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        <StatCard label="Total Users"          value={stats?.total_users}                icon={Users}       color="bg-indigo-500"  delay={0}    />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0, duration: 0.35 }}
+          className="col-span-2 relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-5 backdrop-blur-xl hover:border-white/20 transition-all group flex flex-col justify-between"
+        >
+          <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full blur-3xl opacity-20 bg-indigo-500" />
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500 bg-opacity-20 mb-3 group-hover:scale-110 transition-transform">
+                <Users size={18} className="text-white" />
+              </div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 leading-tight">Total Users</p>
+              <p className="text-3xl font-black text-white tracking-tighter">{stats?.total_users ?? "—"}</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-2 mt-auto relative z-10">
+            <button onClick={() => navigate('/admin/users?role=admin')} className="py-2 px-1 rounded-xl bg-white/5 hover:bg-indigo-500/20 hover:border-indigo-500/30 border border-transparent transition-all flex flex-col items-center group/btn">
+              <span className="text-lg font-black text-indigo-400 group-hover/btn:scale-110 transition-transform">{stats?.total_admins ?? 0}</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">Admins</span>
+            </button>
+            <button onClick={() => navigate('/admin/users?role=trainer')} className="py-2 px-1 rounded-xl bg-white/5 hover:bg-emerald-500/20 hover:border-emerald-500/30 border border-transparent transition-all flex flex-col items-center group/btn">
+              <span className="text-lg font-black text-emerald-400 group-hover/btn:scale-110 transition-transform">{stats?.total_trainers ?? 0}</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">Trainers</span>
+            </button>
+            <button onClick={() => navigate('/admin/users?role=user')} className="py-2 px-1 rounded-xl bg-white/5 hover:bg-sky-500/20 hover:border-sky-500/30 border border-transparent transition-all flex flex-col items-center group/btn">
+              <span className="text-lg font-black text-sky-400 group-hover/btn:scale-110 transition-transform">{stats?.total_members ?? 0}</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">Users</span>
+            </button>
+          </div>
+        </motion.div>
         <StatCard label="Active Subscriptions" value={stats?.total_active_subscriptions} icon={CreditCard}  color="bg-violet-500"  delay={0.05} />
         <StatCard label="New Registrations"    value={stats?.new_registrations}           icon={UserPlus}    color="bg-sky-500"     delay={0.1}  />
         <StatCard label="Upcoming Renewals"    value={stats?.upcoming_renewals}           icon={Clock}       color="bg-amber-500"   delay={0.15} />
@@ -299,10 +334,15 @@ export default function AdminDashboard() {
                   </div>
                   <div className="min-w-0 flex flex-col justify-center">
                     <p className="text-sm font-bold text-white truncate">{item.name ?? item.user_name ?? "—"}</p>
+                    {inqTab === 'subscriptions' && <p className="text-[10px] text-slate-400 truncate mt-0.5"><span className="text-indigo-400 font-bold">{item.plan_name || 'Plan'}</span> • {item.duration_in_months ? `${item.duration_in_months} Months` : 'N/A'}</p>}
+                    {inqTab === 'product_orders' && <p className="text-[10px] text-slate-400 truncate mt-0.5"><span className="text-emerald-400 font-bold">{item.product_name || 'Product'}</span> • Qty: {item.quantity || 1}</p>}
+                    {inqTab === 'contact_inquiries' && <p className="text-[10px] text-slate-400 truncate mt-0.5"><span className="text-amber-400 font-bold">{item.subject || 'Inquiry'}</span> • {item.phone || item.email}</p>}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <ChevronRight size={14} className="text-slate-600 group-hover:text-white transition-colors" />
+                  <button onClick={() => navigate('/admin/inquiries')} className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10 hover:text-white transition-all text-slate-500">
+                    <ChevronRight size={14} />
+                  </button>
                 </div>
               </motion.div>
             ))}
