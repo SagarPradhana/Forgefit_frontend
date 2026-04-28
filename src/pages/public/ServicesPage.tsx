@@ -43,7 +43,7 @@ export function ServicesPage() {
       >
         <section className="grid gap-10 xl:grid-cols-[1.1fr_0.9fr] items-center">
           <div className="space-y-6 xl:max-w-xl">
-            <motion.div 
+            <motion.div
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
@@ -52,7 +52,7 @@ export function ServicesPage() {
               <Sparkles className="h-4 w-4 text-orange-300" />
               Trusted training, recovery, and coaching for every fitness goal
             </motion.div>
-            <motion.h1 
+            <motion.h1
               initial={{ clipPath: "inset(0 100% 0 0)" }}
               whileInView={{ clipPath: "inset(0 0% 0 0)" }}
               viewport={{ once: true }}
@@ -61,7 +61,7 @@ export function ServicesPage() {
             >
               Everything you need to reach your strongest self.
             </motion.h1>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
@@ -263,6 +263,4 @@ export function ServicesPage() {
       </motion.div>
     </PublicLayout>
   );
-}
-
 }
