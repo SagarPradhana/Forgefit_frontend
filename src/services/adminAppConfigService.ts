@@ -24,11 +24,12 @@ export interface AppConfigData {
   website_url: string;
 }
 
-export interface AppConfigResponse {
-  code: number;
+export interface AppConfigResponse extends Partial<AppConfigData> {
+  code?: number;
   mCode?: string;
   message?: string;
-  data: AppConfigData[];
+  params?: any[];
+  data?: AppConfigData[]; // fallback / legacy shape
 }
 
 export const adminAppConfigService = {

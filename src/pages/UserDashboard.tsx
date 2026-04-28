@@ -294,24 +294,8 @@ function UserDashboard() {
       <IdCardModal
         isOpen={idCardOpen}
         onClose={() => setIdCardOpen(false)}
-        user={{
-          name: myDetails.name || userName || "Member",
-          id: myDetails.id || userId || "FF-UNKNOWN",
-          currentPlan: myDetails.latest_subscription_details?.subscription_name || userProfile.currentPlan,
-          profile_image_path: myDetails.profile_image_path || userProfile.profile_image_path,
-          mobile: myDetails.mobile || userProfile.phone,
-          joining_date: myDetails.joining_date || Math.floor(new Date(planInfo.startDate).getTime() / 1000),
-          latest_subscription_details: myDetails.latest_subscription_details,
-          metadata: {
-            dob: myDetails.metadata?.dob || userProfile.metadata?.dob,
-            gender: myDetails.metadata?.gender || userProfile.metadata?.gender,
-            fitness_goal: myDetails.metadata?.fitness_goal || userProfile.metadata?.fitness_goal,
-            profile_image_path: myDetails.metadata?.profile_image_path || userProfile.profile_image_path,
-            emergency_contact: myDetails.metadata?.emergency_contact || userProfile.metadata?.emergency_contact,
-            workout_time: myDetails.metadata?.workout_time
-          },
-          role: myDetails.role || "user"
-        }}
+        user={{ id: userId || '', role: myDetails.role || 'user' }}
+        portalType="user"
       />
     </div>
   );

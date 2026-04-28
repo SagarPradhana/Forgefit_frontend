@@ -140,10 +140,15 @@ export function InquiryCenter() {
                 headers={["User", "Requested Plan", "Inquiry Date", "Status", "Actions"]}
                 rows={data.map((r) => [
                   <div key={r.id}>
-                    <p className="font-bold text-white uppercase tracking-tighter text-xs">{r.name || r.username}</p>
-                    <p className="text-[10px] text-slate-500">{r.email}</p>
+                    <p className="font-bold text-white uppercase tracking-tighter text-xs">{r.user_name || r.name || r.username || '—'}</p>
+                    <p className="text-[10px] text-slate-500">{r.user_mobile || r.email || '—'}</p>
                   </div>,
-                  <span key={`${r.id}-plan`} className="text-indigo-400 font-black italic">PLAN ID: {r.subscription_plan_id?.substring(0, 8)}...</span>,
+                  <div key={`${r.id}-plan`}>
+                    <p className="text-indigo-400 font-black italic text-xs">
+                      {r.plan_name || r.subscription_plan_name || r.subscription_name || `Plan: ${r.subscription_plan_id?.substring(0, 8)}…`}
+                    </p>
+                    {r.description && <p className="text-[10px] text-slate-500 mt-0.5 italic line-clamp-1">{r.description}</p>}
+                  </div>,
                   <span key={`${r.id}-date`} className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span>,
                   <StatusBadge key={`${r.id}-status`} status={r.status ? "Resolved" : "Pending"} />,
                   <div key={`${r.id}-actions`} className="flex gap-3">
@@ -156,13 +161,18 @@ export function InquiryCenter() {
 
             {activeTab === "products" && (
               <Table
-                headers={["User", "Product ID", "Quantity", "Date", "Status", "Actions"]}
+                headers={["User", "Product", "Qty", "Date", "Status", "Actions"]}
                 rows={data.map((r) => [
                   <div key={r.id}>
-                    <p className="font-bold text-white uppercase tracking-tighter text-xs">{r.name || r.username}</p>
-                    <p className="text-[10px] text-slate-500">{r.email}</p>
+                    <p className="font-bold text-white uppercase tracking-tighter text-xs">{r.user_name || r.name || r.username || '—'}</p>
+                    <p className="text-[10px] text-slate-500">{r.user_mobile || r.email || '—'}</p>
                   </div>,
-                  <span key={`${r.id}-prod`} className="text-orange-400 font-black">PROD: {r.product_id?.substring(0, 8)}...</span>,
+                  <div key={`${r.id}-prod`}>
+                    <p className="text-orange-400 font-black text-xs">
+                      {r.product_name || r.product?.name || `Product: ${r.product_id?.substring(0, 8)}…`}
+                    </p>
+                    {r.description && <p className="text-[10px] text-slate-500 mt-0.5 italic line-clamp-1">{r.description}</p>}
+                  </div>,
                   <span key={`${r.id}-qty`} className="text-slate-200 font-black italic text-lg">{r.quantity}</span>,
                   <span key={`${r.id}-date`} className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span>,
                   <StatusBadge key={`${r.id}-status`} status={r.status ? "Resolved" : "Pending"} />,
@@ -202,11 +212,11 @@ export function InquiryCenter() {
 
             {activeTab === "expiry" && (
               <Table
-                headers={["Entity", "Timeline", "Status", "Actions"]}
+                headers={["Member", "Timeline", "Status", "Actions"]}
                 rows={data.map((r) => [
                   <div key={r.id}>
-                    <p className="font-bold text-white uppercase tracking-tight italic">{r.name || r.username}</p>
-                    <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">{r.mobile || r.email || 'Member Protocol'}</p>
+                    <p className="font-bold text-white uppercase tracking-tight italic">{r.user_name || r.name || r.username || '—'}</p>
+                    <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">{r.user_mobile || r.mobile || r.email || 'Member Protocol'}</p>
                   </div>,
                   <div key={`${r.id}-cycle`} className="flex flex-col">
                     <span className="text-xl font-black text-orange-400 italic leading-none">{r.remaining_days} DAYS</span>

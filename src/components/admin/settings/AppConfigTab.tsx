@@ -34,11 +34,36 @@ export function AppConfigTab() {
   const fetchConfig = async () => {
     try {
       const res = await adminAppConfigService.getConfig();
-      if (res?.data && res.data.length > 0) {
-        setConfig(res.data[0]);
-        if (res.data[0].logo_image_path) {
-          setLogoPreview(res.data[0].logo_image_path);
-        }
+      // API returns config fields at root level (brand_name, logo_image_path, etc.)
+      // data[] is empty — the config object IS the response itself
+      const cfg = (res?.brand_name !== undefined)
+        ? res                        // root-level response (actual API shape)
+        : (res?.data?.[0] ?? null);  // fallback: nested in data[]
+
+      if (cfg) {
+        setConfig({
+          id: cfg.id,
+          brand_name: cfg.brand_name || "",
+          logo_image_path: cfg.logo_image_path || "",
+          gym_in_out_limit_in_hrs: Number(cfg.gym_in_out_limit_in_hrs) || 0,
+          theme_name: cfg.theme_name || "",
+          description: cfg.description || "",
+          timezone: cfg.timezone || "",
+          currency: cfg.currency || "",
+          language: cfg.language || "",
+          country: cfg.country || "",
+          email: cfg.email || "",
+          phone: cfg.phone || "",
+          whatsapp: cfg.whatsapp || "",
+          facebook_url: cfg.facebook_url || "",
+          instagram_url: cfg.instagram_url || "",
+          twitter_url: cfg.twitter_url || "",
+          linkedin_url: cfg.linkedin_url || "",
+          tiktok_url: cfg.tiktok_url || "",
+          youtube_url: cfg.youtube_url || "",
+          website_url: cfg.website_url || "",
+        });
+        if (cfg.logo_image_path) setLogoPreview(cfg.logo_image_path);
       }
     } catch (err) {
       console.error(err);

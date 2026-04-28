@@ -606,7 +606,8 @@ export function UserManagement() {
         <IdCardModal
           isOpen={idCardOpen}
           onClose={() => setIdCardOpen(false)}
-          user={selectedUserForCard}
+          user={{ id: selectedUserForCard.id, name: selectedUserForCard.name, role: selectedUserForCard.role }}
+          portalType="admin"
         />
       )}
     </GlassCard>
