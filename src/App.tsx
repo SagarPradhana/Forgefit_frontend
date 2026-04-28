@@ -1,9 +1,11 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
 import DashboardLayout from "./pages/DashboardLayout";
 import { NotFound404, LoadingSpinner } from "./components/ui/primitives";
 import { ToastContainer } from "./components/ui/ToastContainer";
+import { motion, AnimatePresence } from "framer-motion";
+import { Dumbbell } from "lucide-react";
 
 const HomePage = lazy(() =>
   import("./pages/public/HomePage").then((m) => ({ default: m.HomePage })),
@@ -78,26 +80,80 @@ function RoleRoute({ role }: { role: "admin" | "user" }) {
   );
 }
 
+const LoadingScreen = () => (
+  <motion.div
+    initial={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.5 }}
+    className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950"
+  >
+    <motion.div
+      initial={{ scale: 0.5, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      className="flex flex-col items-center gap-6"
+    >
+      <div className="flex items-center gap-4">
+        <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/20 bg-gradient-to-br from-indigo-500 via-purple-500 to-orange-400 shadow-glow">
+          <Dumbbell size={32} className="text-white" />
+        </span>
+        <h1 className="text-4xl font-bold tracking-tighter text-white">
+          Forge<span className="text-orange-400">Fit</span>
+        </h1>
+      </div>
+      <div className="h-1 w-48 overflow-hidden rounded-full bg-white/10">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: "100%" }}
+          transition={{ duration: 1, ease: "easeInOut" }}
+          className="h-full bg-orange-500"
+        />
+      </div>
+    </motion.div>
+  </motion.div>
+);
+
 export default function App() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1200);
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      document.documentElement.style.setProperty("--mouse-x", `${e.clientX}px`);
+      document.documentElement.style.setProperty("--mouse-y", `${e.clientY}px`);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, []);
+
   return (
-    <>
+    <div className="relative min-h-screen bg-slate-950 overflow-x-hidden">
+      <AnimatePresence>
+        {isLoading && <LoadingScreen key="loader" />}
+      </AnimatePresence>
+      <div className="cursor-glow" />
       <ToastContainer />
       <Suspense fallback={<LoadingSpinner />}>
         <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/services" element={<ServicesPage />} />
-        <Route path="/pricing" element={<PricingPage />} />
-        <Route path="/testimonials" element={<TestimonialsPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/signin" element={<SignInPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/auth" element={<Navigate to="/signin" replace />} />
-        <Route path="/admin/:page" element={<RoleRoute role="admin" />} />
-        <Route path="/user/:page" element={<RoleRoute role="user" />} />
-        <Route path="*" element={<NotFound404 />} />
-      </Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/services" element={<ServicesPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/testimonials" element={<TestimonialsPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/signin" element={<SignInPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/auth" element={<Navigate to="/signin" replace />} />
+          <Route path="/admin/:page" element={<RoleRoute role="admin" />} />
+          <Route path="/user/:page" element={<RoleRoute role="user" />} />
+          <Route path="*" element={<NotFound404 />} />
+        </Routes>
       </Suspense>
-    </>
+    </div>
   );
 }

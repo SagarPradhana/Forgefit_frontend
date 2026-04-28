@@ -28,14 +28,23 @@ export function GlassCard({
 export function GlowButton({
   children,
   className,
+  variant = "secondary",
   ...props
-}: import("framer-motion").HTMLMotionProps<"button">) {
+}: import("framer-motion").HTMLMotionProps<"button"> & {
+  variant?: "primary" | "secondary";
+}) {
+  const variants = {
+    primary: "border-indigo-500/30 bg-indigo-600 shadow-indigo-500/20",
+    secondary: "border-orange-500/30 bg-orange-600 shadow-orange-500/20",
+  };
+
   return (
     <motion.button
       whileHover={{ scale: 1.04 }}
       whileTap={{ scale: 0.97 }}
       className={clsx(
-        "rounded-xl border border-orange-300/30 bg-accent px-5 py-2 text-sm font-semibold text-white shadow-glow transition",
+        "rounded-xl border px-5 py-2 text-sm font-semibold text-white shadow-glow transition",
+        variants[variant],
         className,
       )}
       {...props}

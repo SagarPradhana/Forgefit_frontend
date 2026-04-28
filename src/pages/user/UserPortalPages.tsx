@@ -2,9 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useGymStore } from "../../store/gymStore";
 import {
-  userProfile,
-} from "../../data/mockData";
-import {
   EmptyState,
   GlassCard,
   GlowButton,
@@ -14,10 +11,9 @@ import {
   StatusBadge,
   Table,
 } from "../../components/ui/primitives";
-import { Calendar as CalendarIcon, List as ListIcon, Info, Users, Clock, Filter, CalendarCheck, ShieldCheck, Star, CheckCircle2, Zap, CreditCard, Search, ShoppingBag, RefreshCw } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Calendar as CalendarIcon, List as ListIcon, Info, Users, Clock, ShieldCheck, Star, CheckCircle2, Zap, CreditCard, Search, RefreshCw } from "lucide-react";
+import { motion } from "framer-motion";
 import UserDashboard from "../UserDashboard";
-import { ProfileCard } from "../ProfileCard";
 import { SubscriptionCard } from "../SubscriptionCard";
 import { AttendanceCalendar } from "../AttendanceCalender";
 import { ProductCard } from "../ProductCard";
@@ -261,10 +257,10 @@ export function UserPortalPages({ page }: { page: string }) {
             <h3 className="text-sm font-black text-white uppercase tracking-widest border-b border-white/10 pb-3">Contact Details</h3>
             {[
               { label: "Full Name", value: user.name },
-              { label: "Username",  value: user.username },
-              { label: "Email",     value: user.email },
-              { label: "Mobile",    value: user.mobile },
-              { label: "Address",   value: user.address },
+              { label: "Username", value: user.username },
+              { label: "Email", value: user.email },
+              { label: "Mobile", value: user.mobile },
+              { label: "Address", value: user.address },
             ].map(({ label, value }) => (
               <div key={label} className="grid gap-0.5">
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{label}</p>
@@ -277,14 +273,14 @@ export function UserPortalPages({ page }: { page: string }) {
           <GlassCard className="p-6 space-y-4">
             <h3 className="text-sm font-black text-white uppercase tracking-widest border-b border-white/10 pb-3">Health & Vitals</h3>
             {[
-              { label: "Date of Birth",       value: fmtDate(user.metadata?.dob) },
-              { label: "Gender",              value: user.metadata?.gender },
-              { label: "Height (cm)",         value: user.metadata?.height ? `${user.metadata.height} cm` : null },
-              { label: "Weight (kg)",         value: user.metadata?.weight ? `${user.metadata.weight} kg` : null },
-              { label: "Fitness Goal",        value: user.metadata?.fitness_goal },
-              { label: "Workout Time",        value: user.metadata?.workout_time },
-              { label: "Medical Conditions",  value: user.metadata?.medical_conditions },
-              { label: "Emergency Contact",   value: user.metadata?.emergency_contact },
+              { label: "Date of Birth", value: fmtDate(user.metadata?.dob) },
+              { label: "Gender", value: user.metadata?.gender },
+              { label: "Height (cm)", value: user.metadata?.height ? `${user.metadata.height} cm` : null },
+              { label: "Weight (kg)", value: user.metadata?.weight ? `${user.metadata.weight} kg` : null },
+              { label: "Fitness Goal", value: user.metadata?.fitness_goal },
+              { label: "Workout Time", value: user.metadata?.workout_time },
+              { label: "Medical Conditions", value: user.metadata?.medical_conditions },
+              { label: "Emergency Contact", value: user.metadata?.emergency_contact },
             ].map(({ label, value }) => (
               <div key={label} className="grid gap-0.5">
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{label}</p>
@@ -300,12 +296,12 @@ export function UserPortalPages({ page }: { page: string }) {
             <h3 className="text-sm font-black text-white uppercase tracking-widest border-b border-white/10 pb-3 mb-4">Active Subscription</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {[
-                { label: "Plan",       value: sub.subscription_name },
-                { label: "Duration",   value: sub.duration_in_months ? `${sub.duration_in_months} Months` : null },
-                { label: "Amount",     value: sub.amount ? `₹${Number(sub.amount).toLocaleString("en-IN")}` : null },
+                { label: "Plan", value: sub.subscription_name },
+                { label: "Duration", value: sub.duration_in_months ? `${sub.duration_in_months} Months` : null },
+                { label: "Amount", value: sub.amount ? `₹${Number(sub.amount).toLocaleString("en-IN")}` : null },
                 { label: "Start Date", value: fmtDate(sub.start_date) },
-                { label: "End Date",   value: fmtDate(sub.end_date) },
-                { label: "Status",     value: sub.status === true ? "Active" : sub.status === false ? "Inactive" : String(sub.status ?? "—") },
+                { label: "End Date", value: fmtDate(sub.end_date) },
+                { label: "Status", value: sub.status === true ? "Active" : sub.status === false ? "Inactive" : String(sub.status ?? "—") },
               ].map(({ label, value }) => (
                 <div key={label} className="grid gap-0.5">
                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{label}</p>
@@ -471,27 +467,27 @@ export function UserPortalPages({ page }: { page: string }) {
               </div>
             </div>
 
-              <div className="pt-4 space-y-4">
-                <div>
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Additional Description</label>
-                  <textarea
-                    value={upgradeDescription}
-                    onChange={(e) => setUpgradeDescription(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-indigo-500 min-h-[80px]"
-                    placeholder="Any specific requests?"
-                  />
-                </div>
-                <GlowButton
-                  className="w-full h-14 rounded-2xl text-xs font-black uppercase tracking-widest"
-                  onClick={handleConfirmUpgrade}
-                >
-                  Confirm Strategy Transition
-                </GlowButton>
-                <p className="text-[9px] text-center text-slate-500 italic px-6">
-                  By confirming, you authorize our administrative team to process your plan change. Final billing will be adjusted on your next cycle.
-                </p>
+            <div className="pt-4 space-y-4">
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Additional Description</label>
+                <textarea
+                  value={upgradeDescription}
+                  onChange={(e) => setUpgradeDescription(e.target.value)}
+                  className="w-full bg-slate-950/50 border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-indigo-500 min-h-[80px]"
+                  placeholder="Any specific requests?"
+                />
               </div>
+              <GlowButton
+                className="w-full h-14 rounded-2xl text-xs font-black uppercase tracking-widest"
+                onClick={handleConfirmUpgrade}
+              >
+                Confirm Strategy Transition
+              </GlowButton>
+              <p className="text-[9px] text-center text-slate-500 italic px-6">
+                By confirming, you authorize our administrative team to process your plan change. Final billing will be adjusted on your next cycle.
+              </p>
             </div>
+          </div>
         </Modal>
 
         {/* --- HISTORY MODAL --- */}
@@ -670,11 +666,10 @@ export function UserPortalPages({ page }: { page: string }) {
               <button
                 key={s}
                 onClick={() => setPaymentStatusFilter(s)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                  paymentStatusFilter === s
-                    ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${paymentStatusFilter === s
+                  ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg"
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
               >
                 {s || "All Status"}
               </button>
@@ -804,11 +799,10 @@ export function UserPortalPages({ page }: { page: string }) {
           <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
             <button
               onClick={() => setProductCategory("")}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                productCategory === ""
-                  ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg"
-                  : "text-slate-400 hover:text-white hover:bg-white/5"
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${productCategory === ""
+                ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg"
+                : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
             >
               All
             </button>
@@ -816,11 +810,10 @@ export function UserPortalPages({ page }: { page: string }) {
               <button
                 key={cat}
                 onClick={() => setProductCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                  productCategory === cat
-                    ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${productCategory === cat
+                  ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg"
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
               >
                 {cat}
               </button>

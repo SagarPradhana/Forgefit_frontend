@@ -52,10 +52,10 @@ const contactInfo = [
   {
     icon: MapPin,
     label: "Address",
-    value: "123 Fitness Street, Gym City, GC 12345",
+    value: "Ahmedabad, Gujarat, India",
   },
-  { icon: Phone, label: "Phone", value: "+1 (555) 123-4567" },
-  { icon: Mail, label: "Email", value: "contact@fitnessgym.com" },
+  { icon: Phone, label: "Phone", value: "+91 98765 43210" },
+  { icon: Mail, label: "Email", value: "support@forgefit.com" },
 ];
 
 export function Footer() {
@@ -72,11 +72,19 @@ export function Footer() {
   };
 
   return (
-    <footer className="relative border-t border-white/10 bg-gradient-to-b from-black/40 to-black/80 backdrop-blur-xl">
+    <footer className="relative border-t border-white/10 bg-gradient-to-b from-black/40 to-black/80 backdrop-blur-xl overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        <motion.div 
+          animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
+          transition={{ duration: 8, repeat: Infinity }}
+          className="absolute -bottom-40 -right-40 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl" 
+        />
+        <motion.div 
+          animate={{ scale: [1, 1.3, 1], opacity: [0.1, 0.15, 0.1] }}
+          transition={{ duration: 10, repeat: Infinity, delay: 1 }}
+          className="absolute -bottom-32 -left-32 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl" 
+        />
       </div>
 
       <div className="relative z-10">
@@ -84,80 +92,96 @@ export function Footer() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
           {/* Header Section */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
             className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16 pb-16 border-b border-white/10"
           >
             {/* Brand Section */}
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-gradient-to-br from-indigo-500 to-orange-400 rounded-lg">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <motion.div 
+                  whileHover={{ rotate: 180 }}
+                  className="p-2 bg-gradient-to-br from-indigo-500 to-orange-400 rounded-lg shadow-glow"
+                >
                   <Dumbbell className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-white">FitnessPro</h3>
+                </motion.div>
+                <h3 className="text-2xl font-bold text-white tracking-tight">ForgeFit</h3>
               </div>
-              <p className="text-slate-400 mb-6 leading-relaxed">
+              <p className="text-slate-400 max-w-md leading-relaxed">
                 Transform your body, elevate your mind. Join our community of
                 fitness enthusiasts and achieve your goals with expert guidance.
               </p>
 
               {/* Contact Info */}
-              <div className="space-y-3">
-                {contactInfo.map((item) => (
-                  <div key={item.label} className="flex items-start gap-3">
-                    <item.icon className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-1" />
+              <div className="space-y-4">
+                {contactInfo.map((item, i) => (
+                  <motion.div 
+                    key={item.label} 
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 + i * 0.1 }}
+                    className="flex items-start gap-4 group cursor-default"
+                  >
+                    <div className="p-2 rounded-lg bg-white/5 border border-white/10 text-indigo-400 transition-colors group-hover:bg-indigo-500/20 group-hover:text-white">
+                      <item.icon className="w-4 h-4" />
+                    </div>
                     <div>
-                      <p className="text-xs uppercase tracking-wider text-slate-500">
+                      <p className="text-xs uppercase tracking-wider text-slate-500 mb-0.5">
                         {item.label}
                       </p>
-                      <p className="text-slate-300">{item.value}</p>
+                      <p className="text-slate-300 text-sm">{item.value}</p>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
 
             {/* Newsletter Signup */}
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="bg-gradient-to-br from-indigo-500/10 to-orange-400/10 rounded-xl border border-white/10 p-8 backdrop-blur-md"
+              transition={{ duration: 0.6 }}
+              className="bg-gradient-to-br from-indigo-500/5 to-orange-400/5 rounded-2xl border border-white/10 p-8 backdrop-blur-md relative overflow-hidden group"
             >
-              <h4 className="text-lg font-semibold text-white mb-2">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              <h4 className="text-lg font-semibold text-white mb-2 relative z-10">
                 Stay Updated
               </h4>
-              <p className="text-slate-400 mb-6">
+              <p className="text-slate-400 mb-6 text-sm relative z-10">
                 Subscribe to get the latest fitness tips and exclusive offers.
               </p>
 
-              <form onSubmit={handleNewsletterSubmit} className="space-y-3">
-                <div className="relative">
+              <form onSubmit={handleNewsletterSubmit} className="space-y-4 relative z-10">
+                <div className="relative group/input">
                   <input
                     type="email"
+                    required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email"
-                    className="w-full bg-white/8 border border-white/15 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-3.5 text-white placeholder-slate-500 outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all"
                   />
                 </div>
-                <button
+                <motion.button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-indigo-500 to-orange-400 hover:from-indigo-600 hover:to-orange-500 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 group"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full bg-gradient-to-r from-indigo-500 to-orange-400 text-white font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-glow hover:shadow-indigo-500/40 transition-all duration-300"
                 >
-                  Subscribe
-                  <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
+                  <span>Subscribe Now</span>
+                  <Send className="w-4 h-4" />
+                </motion.button>
               </form>
 
               {subscribed && (
                 <motion.div
-                  initial={{ opacity: 0, y: -10 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg text-green-300 text-sm"
+                  className="mt-4 p-3 bg-green-500/20 border border-green-500/30 rounded-xl text-green-300 text-sm text-center"
                 >
                   ✓ Thank you for subscribing!
                 </motion.div>
@@ -166,73 +190,78 @@ export function Footer() {
           </motion.div>
 
           {/* Links Grid */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-16"
-          >
-            {footerSections.map((section) => (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-12 mb-16">
+            {footerSections.map((section, sIdx) => (
               <div key={section.title}>
-                <h4 className="text-sm font-semibold uppercase tracking-wider text-white mb-4">
+                <motion.h4 
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: sIdx * 0.1 }}
+                  className="text-xs font-bold uppercase tracking-widest text-white mb-6 border-l-2 border-orange-500 pl-3"
+                >
                   {section.title}
-                </h4>
-                <ul className="space-y-3">
-                  {section.links.map((link) => (
-                    <li key={link.label}>
+                </motion.h4>
+                <ul className="space-y-4">
+                  {section.links.map((link, lIdx) => (
+                    <motion.li 
+                      key={link.label}
+                      initial={{ opacity: 0, x: -10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: (sIdx * 0.1) + (lIdx * 0.05) }}
+                    >
                       <Link
                         to={link.href}
-                        className="text-slate-400 hover:text-indigo-400 transition-colors duration-200 text-sm"
+                        className="text-slate-400 hover:text-orange-400 transition-all duration-300 text-sm flex items-center group"
                       >
+                        <span className="w-0 group-hover:w-2 h-[1px] bg-orange-400 transition-all duration-300 mr-0 group-hover:mr-2" />
                         {link.label}
                       </Link>
-                    </li>
+                    </motion.li>
                   ))}
                 </ul>
               </div>
             ))}
-          </motion.div>
+          </div>
 
           {/* Social Links */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex justify-center gap-4 mb-16 pb-16 border-b border-white/10"
-          >
-            {socialLinks.map((social) => (
+          <div className="flex justify-center gap-5 mb-16 pb-16 border-b border-white/10">
+            {socialLinks.map((social, i) => (
               <motion.a
                 key={social.label}
                 href={social.href}
                 aria-label={social.label}
-                whileHover={{ scale: 1.1, y: -4 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-3 bg-white/8 hover:bg-gradient-to-br hover:from-indigo-500/30 hover:to-orange-400/30 border border-white/15 rounded-lg text-slate-400 hover:text-white transition-all duration-300"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                whileHover={{ scale: 1.2, rotate: 10, y: -5 }}
+                whileTap={{ scale: 0.9 }}
+                className="p-4 bg-white/5 hover:bg-orange-500/10 border border-white/10 rounded-2xl text-slate-400 hover:text-white transition-all duration-300 shadow-sm hover:shadow-glow"
               >
-                <social.icon className="w-5 h-5" />
+                <social.icon className="w-6 h-6" />
               </motion.a>
             ))}
-          </motion.div>
+          </div>
 
           {/* Bottom Section */}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="flex flex-col sm:flex-row justify-between items-center gap-4 text-slate-500 text-sm"
+            transition={{ duration: 1, delay: 0.5 }}
+            className="flex flex-col sm:flex-row justify-between items-center gap-6 text-slate-500 text-xs font-medium tracking-wide"
           >
-            <p>&copy; 2024 FitnessPro. All rights reserved.</p>
-            <div className="flex gap-6">
-              <a href="#" className="hover:text-indigo-400 transition-colors">
-                Privacy
+            <p>&copy; {new Date().getFullYear()} ForgeFit. All rights reserved.</p>
+            <div className="flex gap-8">
+              <a href="#" className="hover:text-indigo-400 transition-colors uppercase">
+                Privacy Policy
               </a>
-              <a href="#" className="hover:text-indigo-400 transition-colors">
-                Terms
+              <a href="#" className="hover:text-indigo-400 transition-colors uppercase">
+                Terms of Service
               </a>
-              <a href="#" className="hover:text-indigo-400 transition-colors">
+              <a href="#" className="hover:text-indigo-400 transition-colors uppercase">
                 Cookies
               </a>
             </div>

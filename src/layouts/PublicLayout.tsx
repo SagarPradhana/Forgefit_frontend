@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, useScroll, useSpring } from "framer-motion";
 import {
   Dumbbell,
   Home,
@@ -43,19 +43,19 @@ function AnimatedNav() {
             key={path}
             to={path}
             end={path === "/"}
-            className="relative px-4 h-10 flex items-center gap-2 text-sm z-10"
+            className="relative px-4 h-10 flex items-center gap-2 text-sm z-10 nav-link-underline"
           >
             {isActive && (
               <motion.div
                 layoutId="nav-pill"
-                className="absolute inset-0 rounded-lg bg-gradient-to-r from-indigo-500/30 to-orange-400/30 border border-white/10 shadow-[0_0_20px_rgba(99,102,241,0.4)]"
+                className="absolute inset-0 rounded-lg bg-gradient-to-r from-indigo-500/30 to-orange-400/30 border border-white/10 shadow-[0_0_20px_rgba(99,102,241,0.45)]"
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
               />
             )}
 
             <span
-              className={`flex items-center gap-2 ${
-                isActive ? "text-white" : "text-slate-300"
+              className={`flex items-center gap-2 transition-colors ${
+                isActive ? "text-white" : "text-slate-300 hover:text-white"
               }`}
             >
               <Icon size={16} />
@@ -139,17 +139,38 @@ function MobileMenu({
 // ?? MAIN LAYOUT
 export function PublicLayout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { t } = useTranslation();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 80);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <ThemeProvider>
       <div className="flex flex-col min-h-screen bg-hero-gradient text-white">
-        <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/60 backdrop-blur-xl">
-          <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between px-4 sm:px-6 py-4">
-            <Link to="/" className="flex items-center gap-3 flex-shrink-0">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-gradient-to-br from-indigo-500/50 via-violet-500/35 to-orange-400/45 shadow-[0_0_25px_rgba(99,102,241,0.45)]">
+        <motion.header
+          initial={{ y: -60, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className={`sticky top-0 z-20 border-b border-white/10 transition-all duration-300 ${
+            isScrolled ? "bg-slate-950/80 backdrop-blur-md py-2" : "bg-slate-950/60 backdrop-blur-xl py-4"
+          }`}
+        >
+          <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between px-4 sm:px-6">
+            <Link to="/" className="flex items-center gap-3 flex-shrink-0 group">
+              <motion.span 
+                initial={{ rotate: -5 }}
+                animate={{ rotate: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-gradient-to-br from-indigo-500/50 via-violet-500/35 to-orange-400/45 shadow-[0_0_25px_rgba(99,102,241,0.45)] group-hover:shadow-glow transition-all"
+              >
                 <Dumbbell size={18} />
-              </span>
+              </motion.span>
               <span className="text-sm sm:text-lg font-semibold tracking-tight">
                 Forge
                 <span className="bg-gradient-to-r from-indigo-300 via-white to-orange-300 bg-clip-text text-transparent">
@@ -162,7 +183,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               <AnimatedNav />
               <LanguageSwitcher />
               <Link to="/signin">
-                <CommonButton className="h-10 px-5 flex items-center">
+                <CommonButton className="h-10 px-5 flex items-center pulse-glow-hover transition-all">
                   {t("login")}
                 </CommonButton>
               </Link>
@@ -175,7 +196,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
-        </header>
+        </motion.header>
 
         <MobileMenu
           isOpen={mobileMenuOpen}
