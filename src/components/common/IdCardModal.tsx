@@ -22,6 +22,7 @@ interface IdCardModalProps {
       end_date?: number | string;
       status?: boolean;
     } | null;
+    qr_url?: string;
     metadata?: {
       dob?: number;
       gender?: string;
@@ -199,6 +200,48 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user,
 
             {/* ── BODY ── */}
             <div className="card-body">
+              {/* QR Code Section (Centered & Large) */}
+              <div className="qr-center-wrapper">
+                <div className="qr-frame-lg">
+                  {user.qr_url ? (
+                    <img src={user.qr_url} alt="QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  ) : (
+                    <QrSvg value={JSON.stringify({
+                      user_id: user.id,
+                      subscription_id: user.latest_subscription_details?.subscription_id || null,
+                      subscription_name: user.latest_subscription_details?.subscription_name || null,
+                      start_date: user.latest_subscription_details?.start_date || null,
+                      end_date: user.latest_subscription_details?.end_date || null,
+                    })} />
+                  )}
+                </div>
+                <div className="qr-info-center">
+                  <div className="qr-code-id">{username}</div>
+                  <div className="qr-status">
+                    <span className="live-dot"></span> Valid Member
+                  </div>
+                </div>
+              </div>
+
+              {/* Membership Tier */}
+              {isUser && user.latest_subscription_details && (
+                <div className="tier-panel-wide">
+                  <div className="tier-icon-wrap">
+                    <svg width="28" height="22" viewBox="0 0 28 22" fill="none">
+                      <path d="M2 18 L4 8 L9 14 L14 2 L19 14 L24 8 L26 18Z" fill="#c9922a" opacity="0.9" />
+                      <rect x="2" y="18" width="24" height="3" rx="1.5" fill="#c9922a" />
+                      <circle cx="2" cy="8" r="2" fill="#c9922a" />
+                      <circle cx="14" cy="2" r="2" fill="#c9922a" />
+                      <circle cx="26" cy="8" r="2" fill="#c9922a" />
+                    </svg>
+                  </div>
+                  <div className="tier-text-stack">
+                    <div className="tier-label-sm">Membership Plan</div>
+                    <div className="tier-name">{user.latest_subscription_details.subscription_name || 'N/A'}</div>
+                  </div>
+                </div>
+              )}
+
               {/* Detail cells — role-aware */}
               <div className="details-grid">
                 <div className="detail-cell">
@@ -239,44 +282,6 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user,
                   <div className="detail-cell">
                     <div className="d-label">Workout Time</div>
                     <div className="d-value" style={{textTransform:'capitalize'}}>{user.metadata.workout_time}</div>
-                  </div>
-                )}
-              </div>
-
-              {/* Bottom: QR + Tier */}
-              <div className="bottom-strip">
-                <div className="qr-section">
-                  <div className="qr-frame">
-                    <QrSvg value={JSON.stringify({
-                      user_id: user.id,
-                      subscription_id: user.latest_subscription_details?.subscription_id || null,
-                      subscription_name: user.latest_subscription_details?.subscription_name || null,
-                      start_date: user.latest_subscription_details?.start_date || null,
-                      end_date: user.latest_subscription_details?.end_date || null,
-                    })} />
-                  </div>
-                  <div className="qr-info">
-                    <div className="qr-caption">Scan to Verify</div>
-                    <div className="qr-code-id">{username}</div>
-                    <div className="qr-status">
-                      <span className="live-dot"></span> Valid Member
-                    </div>
-                  </div>
-                </div>
-
-                {isUser && user.latest_subscription_details && (
-                  <div className="tier-panel">
-                    <div className="tier-icon-wrap">
-                      <svg width="28" height="22" viewBox="0 0 28 22" fill="none">
-                        <path d="M2 18 L4 8 L9 14 L14 2 L19 14 L24 8 L26 18Z" fill="#c9922a" opacity="0.9" />
-                        <rect x="2" y="18" width="24" height="3" rx="1.5" fill="#c9922a" />
-                        <circle cx="2" cy="8" r="2" fill="#c9922a" />
-                        <circle cx="14" cy="2" r="2" fill="#c9922a" />
-                        <circle cx="26" cy="8" r="2" fill="#c9922a" />
-                      </svg>
-                    </div>
-                    <div className="tier-label-sm">Membership</div>
-                    <div className="tier-name">{user.latest_subscription_details.subscription_name || 'N/A'}</div>
                   </div>
                 )}
               </div>
@@ -591,99 +596,98 @@ const idCardStyles = `
 
   .d-value.teal { color:var(--teal); font-weight:600; }
 
-  .bottom-strip {
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    background:var(--paper);
-    border-radius:14px;
-    padding:14px 16px;
-    border:1px solid rgba(180,160,140,0.2);
-    gap:12px;
+  .qr-center-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    gap: 12px;
   }
 
-  .qr-section { display:flex; align-items:center; gap:12px; }
-
-  .qr-frame {
-    width:70px;
-    height:70px;
-    background:#fff;
-    border-radius:8px;
-    padding:4px;
-    border:1px solid rgba(180,160,140,0.3);
-    flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;
+  .qr-frame-lg {
+    width: 140px;
+    height: 140px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 8px;
+    border: 1px solid rgba(180,160,140,0.3);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .qr-info { display:flex; flex-direction:column; gap:2px; }
+  .qr-frame-lg svg {
+    width: 100%;
+    height: 100%;
+  }
 
-  .qr-caption {
-    font-size:7px;
-    font-weight:600;
-    letter-spacing:1px;
-    text-transform:uppercase;
-    color:var(--ink-faint);
+  .qr-info-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
   }
 
   .qr-code-id {
     font-family:'JetBrains Mono',monospace;
-    font-size:12px;
-    font-weight:500;
+    font-size:14px;
+    font-weight:600;
     color:var(--ink);
+    letter-spacing:1px;
   }
 
   .qr-status {
     display:flex;
     align-items:center;
-    gap:4px;
-    font-size:9px;
-    font-weight:500;
+    gap:6px;
+    font-size:10px;
+    font-weight:600;
     color:#2ea87e;
+    text-transform:uppercase;
+    letter-spacing:1px;
   }
 
   .live-dot {
-    width:5px;height:5px;
+    width:6px;height:6px;
     border-radius:50%;
     background:#2ea87e;
+    box-shadow: 0 0 0 2px rgba(46,168,126,0.2);
   }
 
-  .tier-panel {
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-    gap:4px;
-    padding:8px 12px;
-    background:var(--gold-pale);
-    border:1px solid rgba(201,146,42,0.3);
-    border-radius:10px;
-    min-width:80px;
+  .tier-panel-wide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 12px 20px;
+    background: var(--gold-pale);
+    border: 1px solid rgba(201,146,42,0.3);
+    border-radius: 14px;
+    margin-bottom: 20px;
+  }
+
+  .tier-text-stack {
+    display: flex;
+    flex-direction: column;
   }
 
   .tier-label-sm {
-    font-size:7px;
-    font-weight:600;
-    letter-spacing:1px;
+    font-size:8px;
+    font-weight:700;
+    letter-spacing:1.5px;
     text-transform:uppercase;
     color:var(--gold);
+    margin-bottom:2px;
   }
 
   .tier-name {
     font-family:'Playfair Display',serif;
-    font-size:14px;
-    font-weight:700;
+    font-size:18px;
+    font-weight:800;
     color:var(--gold);
-  }
-
-  .tier-valid {
-    font-size:7px;
-    font-weight:600;
-    letter-spacing:0.5px;
-    color:var(--ink-muted);
-    text-align:center;
-    margin-top:2px;
-    line-height:1.3;
+    line-height:1;
   }
 
   .card-footer {

@@ -31,6 +31,7 @@ type AuthState = {
   address: string | null;
   joining_date: number | null;
   profile_image_path: string | null;
+  qr_url: string | null;
   metadata: any | null;
   latest_subscription_details: any | null;
   isAuthenticated: boolean;
@@ -57,6 +58,7 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       refreshToken: null,
       profile_image_path: null,
+      qr_url: null,
       metadata: null,
       latest_subscription_details: null,
       login: (accessToken, refreshToken) => {
@@ -73,6 +75,7 @@ export const useAuthStore = create<AuthState>()(
           token: accessToken,
           refreshToken: refreshToken,
           profile_image_path: userData.profile_image_path || null,
+          qr_url: userData.qr_url || null,
           metadata: userData.metadata || null,
         });
       },
@@ -86,6 +89,7 @@ export const useAuthStore = create<AuthState>()(
           joining_date: data.joining_date ?? null,
           role: data.role ?? null,
           profile_image_path: data.profile_image_path ?? null,
+          qr_url: data.qr_url ?? null,
           metadata: data.metadata ?? null,
           latest_subscription_details: data.latest_subscription_details ?? null,
         });
@@ -102,6 +106,7 @@ export const useAuthStore = create<AuthState>()(
           address: null,
           joining_date: null,
           profile_image_path: null,
+          qr_url: null,
           metadata: null,
           latest_subscription_details: null,
           isAuthenticated: false,

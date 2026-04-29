@@ -40,11 +40,13 @@ function UserDashboard() {
   const userRole = useAuthStore((s) => s.role);
   const joining_date = useAuthStore((s) => s.joining_date);
   const username = useAuthStore((s) => s.username);
+  const qr_url = useAuthStore((s) => s.qr_url);
 
   const myDetails = {
     mobile,
     email,
     profile_image_path,
+    qr_url,
     metadata,
     latest_subscription_details,
     role: userRole,
