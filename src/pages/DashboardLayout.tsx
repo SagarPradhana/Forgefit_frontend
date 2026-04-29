@@ -16,6 +16,7 @@ import {
   Users,
   Menu,
   X,
+  ClipboardList,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -353,6 +354,7 @@ export function Sidebar({
         { name: "subscriptions", icon: CreditCard, label: t("subscription") },
         { name: "payments", icon: CreditCard, label: t("payments") },
         { name: "products", icon: Box, label: t("products") },
+        { name: "plans", icon: ClipboardList, label: t("plans") || "Plans" },
         { name: "revenueops", icon: TrendingUp, label: "RevenueOps" },
         { name: "settings", icon: Settings, label: t("settings") },
         { name: "inquiries", icon: Bell, label: t("inquiries") },

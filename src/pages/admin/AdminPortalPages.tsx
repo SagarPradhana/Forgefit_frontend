@@ -21,6 +21,7 @@ import { adminPaymentService, type PaymentResponse, type PaymentMethod, type Pay
 import { toast } from "../../store/toastStore";
 import { InquiryCenter } from "../../components/admin/InquiryCenter";
 import { RevenueOps } from "../../components/admin/RevenueOps";
+import { PlansManagement } from "../../components/admin/PlansManagement";
 import { useAuthStore } from "../../store/authStore";
 import { Bell, Users, CheckCircle2 } from "lucide-react";
 import { ChangePassword } from "../../components/admin/ChangePassword";
@@ -289,6 +290,8 @@ export function AdminPortalPages({ page }: { page: string }) {
   if (page === "attendance") return <AttendanceManagement />;
 
   if (page === "revenueops") return <RevenueOps />;
+
+  if (page === "plans") return <PlansManagement />;
 
   if (page === "subscriptions") {
     const lastPage = Math.ceil(plansMeta.total_count / plansMeta.page_size) || 1;
