@@ -68,7 +68,7 @@ export function QRScannerModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
         targetUrl = urlObj.pathname;
       } catch (e) {}
       
-      const res: any = await api.post(targetUrl, {});
+      const res: any = await api.post(targetUrl, {}, { showToast: false });
       if (res && res.code !== undefined && res.code !== 200) {
         throw new Error(res.message || "Invalid API response");
       }
@@ -79,24 +79,19 @@ export function QRScannerModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
       }, 3000);
       
     } catch (err: any) {
-      setErrorMessage(err.message || "Invalid QR Code or Request Failed");
+      const errMessage = err?.message || err?.error || err?.errors?.[0]?.msg || "Invalid QR Code or Request Failed";
+      setErrorMessage(errMessage);
       setScanStatus("error");
-      setTimeout(() => {
-        setScanStatus("scanning");
-        setScannedData(null);
-        setErrorMessage("");
-        scanner?.resume();
-      }, 4000);
     }
   };
 
   return (
     <Modal open={isOpen} onClose={onClose} title="Scan ID Card">
-      <div className="flex flex-col items-center justify-center p-4 min-h-[350px]">
+      <div className="flex flex-col items-center justify-center p-4 min-h-[400px] w-full sm:w-[500px]">
         
         {scanStatus === "scanning" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full flex flex-col items-center">
-            <div id={containerId} className="w-full max-w-sm rounded-xl overflow-hidden border-2 border-indigo-500/50 relative shadow-[0_0_20px_rgba(99,102,241,0.2)]">
+            <div id={containerId} className="w-full max-w-md rounded-xl overflow-hidden border-2 border-indigo-500/50 relative shadow-[0_0_20px_rgba(99,102,241,0.2)] bg-black">
                {/* Scanner machine line animation via CSS */}
                <div className="absolute inset-0 z-10 pointer-events-none before:absolute before:top-0 before:left-0 before:w-full before:h-1 before:bg-indigo-500 before:shadow-[0_0_15px_rgba(99,102,241,1)] before:animate-[scan_2s_ease-in-out_infinite]" />
             </div>
@@ -130,14 +125,24 @@ export function QRScannerModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
             transition={{ duration: 0.4 }}
             className="flex flex-col items-center py-10 text-center w-full"
           >
-            <div className="w-full max-w-sm rounded-xl border-2 border-red-500 bg-red-500/5 p-6 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+            <div className="w-full max-w-md rounded-xl border-2 border-red-500 bg-red-500/5 p-6 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
               <div className="h-16 w-16 bg-red-500/20 text-red-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/30">
                 <XCircle size={32} />
               </div>
               <p className="text-lg font-black text-red-400 mb-2 uppercase tracking-widest">Scan Rejected</p>
-              <p className="text-sm text-slate-300 font-medium">{errorMessage}</p>
+              <p className="text-sm text-slate-300 font-medium break-words">{errorMessage}</p>
             </div>
-            <p className="text-xs text-slate-500 mt-6 uppercase tracking-widest animate-pulse">Restarting Scanner...</p>
+            <button 
+              onClick={() => {
+                setScanStatus("scanning");
+                setScannedData(null);
+                setErrorMessage("");
+                scannerRef.current?.resume();
+              }}
+              className="mt-6 px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all border border-slate-700 hover:border-slate-500 shadow-lg"
+            >
+              Try Again
+            </button>
           </motion.div>
         )}
 
