@@ -7,12 +7,13 @@ import {
 import {
   Users, CreditCard, UserPlus, RefreshCw, DollarSign, Calendar,
   ShoppingBag, Mail, Bell, CheckCircle, XCircle, Activity,
-  ChevronRight, TrendingUp, Clock,
+  ChevronRight, TrendingUp, Clock, Camera,
 } from "lucide-react";
 import { GlassCard, SectionTitle } from "../components/ui/primitives";
 import { api } from "../utils/httputils";
 import { API_ENDPOINTS } from "../utils/url";
 import { DateRangeFilter, type DateRange } from "../components/ui/DateRangeFilter";
+import { QRScannerModal } from "../components/admin/users/QRScannerModal";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const getMonthRange = () => {
@@ -143,6 +144,8 @@ export default function AdminDashboard() {
   // Inquiry tab
   const [inqTab, setInqTab] = useState<"subscriptions" | "product_orders" | "contact_inquiries">("subscriptions");
 
+  const [scannerOpen, setScannerOpen] = useState(false);
+
   // ── Data states ──
   const [stats, setStats] = useState<any>(null);
   const [inquiries, setInquiries] = useState<any>(null);
@@ -263,6 +266,16 @@ export default function AdminDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <SectionTitle title="Dashboard" subtitle="Real-time gym intelligence — members, revenue & activity" />
         <div className="flex items-center gap-2">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setScannerOpen(true)}
+            className="h-10 px-4 flex items-center justify-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white transition-all text-xs font-black tracking-widest uppercase shadow-[0_0_15px_rgba(16,185,129,0.15)] hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+            title="Scan ID Card"
+          >
+            <Camera size={16} />
+            Scan
+          </motion.button>
           <DateRangeFilter
             defaultPreset="monthly"
             onChange={(r) => setDateRange(r)}
@@ -499,6 +512,8 @@ export default function AdminDashboard() {
           </div>
         )}
       </GlassCard>
+
+      <QRScannerModal isOpen={scannerOpen} onClose={() => setScannerOpen(false)} />
     </div>
   );
 }

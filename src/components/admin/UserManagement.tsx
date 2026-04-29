@@ -508,17 +508,6 @@ export function UserManagement() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleSyncAll}
-            disabled={isSyncing}
-            className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white font-medium px-4 py-2 rounded-lg transition"
-          >
-            <RefreshCw size={18} className={isSyncing ? "animate-spin" : ""} />
-            {isSyncing ? "Syncing..." : "Sync All"}
-          </motion.button> */}
-
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

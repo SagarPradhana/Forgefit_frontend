@@ -250,7 +250,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user,
                 </div>
                 <div className="detail-cell">
                   <div className="d-label">Gender</div>
-                  <div className="d-value accent" style={{textTransform:'capitalize'}}>{user.metadata?.gender || 'N/A'}</div>
+                  <div className="d-value accent" style={{ textTransform: 'capitalize' }}>{user.metadata?.gender || 'N/A'}</div>
                 </div>
                 <div className="detail-cell">
                   <div className="d-label">Mobile</div>
@@ -281,7 +281,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user,
                 {isUser && user.metadata?.workout_time && (
                   <div className="detail-cell">
                     <div className="d-label">Workout Time</div>
-                    <div className="d-value" style={{textTransform:'capitalize'}}>{user.metadata.workout_time}</div>
+                    <div className="d-value" style={{ textTransform: 'capitalize' }}>{user.metadata.workout_time}</div>
                   </div>
                 )}
               </div>
@@ -371,12 +371,15 @@ const idCardStyles = `
 
   .card {
     width:var(--card-w);
+    min-height: 750px;
     background:var(--warm-white);
     border-radius:24px;
     overflow:hidden;
     position:relative;
     box-shadow: 0 30px 60px rgba(80,50,20,0.22);
     text-align: left;
+    display: flex;
+    flex-direction: column;
   }
 
   .card-top {
@@ -553,6 +556,9 @@ const idCardStyles = `
   .card-body {
     background:var(--warm-white);
     padding:20px 28px 24px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
   }
 
   .details-grid {
@@ -606,11 +612,11 @@ const idCardStyles = `
   }
 
   .qr-frame-lg {
-    width: 140px;
-    height: 140px;
+    width: 160px;
+    height: 160px;
     background: #fff;
     border-radius: 14px;
-    padding: 8px;
+    padding: 1px;
     border: 1px solid rgba(180,160,140,0.3);
     box-shadow: 0 10px 30px rgba(0,0,0,0.06);
     display: flex;
@@ -696,6 +702,7 @@ const idCardStyles = `
     display:flex;
     align-items:center;
     justify-content:space-between;
+    margin-top: auto;
   }
 
   .footer-text {
