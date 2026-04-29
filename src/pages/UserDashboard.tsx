@@ -73,16 +73,22 @@ function UserDashboard() {
     }
   );
 
-  // Active plan fetch
+  // Active plan fetch — /current-subscription/{userId}
+  // API may return a flat object OR { data: [...] } — handle both shapes
   const { data: activePlanRes } = useGet(
     userId ? API_ENDPOINTS.APP.CURRENT_SUBSCRIPTION(userId) : null
   );
-  const activePlanData = activePlanRes?.data?.[0];
+  const activePlanData =
+    activePlanRes?.data?.[0] ??           // paginated shape: { data: [{...}] }
+    (activePlanRes?.start_date != null     // flat shape: { start_date, end_date, ... }
+      ? activePlanRes
+      : null);
 
-  // Consistency Tracker fetch
+  // Consistency Tracker fetch — /consistency-tracker/{userId}
   const { data: trackerRes } = useGet(
     userId ? API_ENDPOINTS.APP.CONSISTENCY_TRACKER(userId) : null
   );
+  // API returns { month, year, days: [...] } at the top level
   const trackerData = trackerRes || {};
 
   const handleManualSync = () => {
@@ -192,7 +198,24 @@ function UserDashboard() {
             <div className="h-10 w-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
               <Zap size={20} />
             </div>
-            <h3 className="text-xl font-black text-white uppercase tracking-tight">{t("activePlan")} {planInfo.name !== "No Active Plan" && `- ${planInfo.name}`}</h3>
+            <h3 className="text-xl font-black text-white uppercase tracking-tight flex-1">
+              {t("activePlan")} {planInfo.name !== "No Active Plan" && `- ${planInfo.name}`}
+            </h3>
+            {/* Status signal badge from API status boolean */}
+            <div
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                planInfo.status
+                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                  : "bg-red-500/10 text-red-400 border-red-500/20"
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  planInfo.status ? "bg-emerald-400 animate-pulse" : "bg-red-400"
+                }`}
+              />
+              {planInfo.status ? "Active" : "Expired"}
+            </div>
           </div>
 
           <div className="space-y-6">
@@ -207,11 +230,21 @@ function UserDashboard() {
               </div>
             </div>
 
-            <div className="relative h-20 rounded-2xl bg-indigo-500 shadow-lg shadow-indigo-500/20 flex items-center justify-between px-8 overflow-hidden">
+            <div
+              className={`relative h-20 rounded-2xl shadow-lg flex items-center justify-between px-8 overflow-hidden ${
+                isExpired
+                  ? "bg-gradient-to-r from-red-600 to-orange-500 shadow-red-500/20"
+                  : "bg-indigo-500 shadow-indigo-500/20"
+              }`}
+            >
               <div className="absolute top-0 right-0 w-32 h-full bg-white/10 -skew-x-12 translate-x-8" />
               <div>
-                <p className="text-[10px] font-black text-indigo-100 uppercase tracking-widest opacity-80">Remaining Days</p>
-                <p className="text-3xl font-black text-white italic tracking-tighter">{planInfo.daysRemaining} Days</p>
+                <p className="text-[10px] font-black text-white/70 uppercase tracking-widest">
+                  {isExpired ? "Plan Expired" : "Remaining Days"}
+                </p>
+                <p className="text-3xl font-black text-white italic tracking-tighter">
+                  {isExpired ? "0 Days" : `${planInfo.daysRemaining} Days`}
+                </p>
               </div>
               <Zap size={32} className="text-white/20" />
             </div>
