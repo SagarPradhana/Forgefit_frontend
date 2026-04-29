@@ -168,28 +168,22 @@ function UserDashboard() {
           title={`${t("welcomeBack")}, ${userName?.split(' ')[0] || "Member"}`}
           subtitle={t("trackConsistency")}
         />
-        <div className="flex items-center gap-3">
+        <div className="flex flex-row items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
           <GlowButton
             onClick={handleManualSync}
             disabled={isSyncing}
-            className="h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 bg-white/5 border-white/10 hover:bg-white/10 transition-all shadow-lg"
+            className="flex-1 md:flex-none h-12 px-4 sm:px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 bg-white/5 border-white/10 hover:bg-white/10 transition-all shadow-lg"
           >
-            <RefreshCw size={18} className={isSyncing ? "animate-spin" : ""} />
-            {isSyncing ? "Syncing..." : "Re-sync Plan"}
+            <RefreshCw size={18} className={isSyncing ? "animate-spin shrink-0" : "shrink-0"} />
+            <span className="truncate">{isSyncing ? "Syncing..." : "Re-sync"}</span>
           </GlowButton>
-          <GlowButton
-            onClick={() => navigate("/user/subscription?history=1")}
-            className="h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all shadow-lg shadow-emerald-500/10"
-          >
-            <Clock size={18} />
-            Sub History
-          </GlowButton>
+          
           <GlowButton
             onClick={() => setIdCardOpen(true)}
-            className="h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500 hover:text-white transition-all shadow-lg shadow-indigo-500/10"
+            className="flex-1 md:flex-none h-12 px-4 sm:px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500 hover:text-white transition-all shadow-lg shadow-indigo-500/10"
           >
-            <QrCode size={18} />
-            {t("profile")} ID
+            <QrCode size={18} className="shrink-0" />
+            <span className="truncate">{t("profile")} ID</span>
           </GlowButton>
         </div>
       </div>
@@ -213,14 +207,14 @@ function UserDashboard() {
           </GlassCard>
         ) : (
           <GlassCard className="p-8 border-indigo-500/20 bg-gradient-to-br from-indigo-500/5 to-transparent">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-10 w-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 mb-6">
+              <div className="h-10 w-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
                 <Zap size={20} />
               </div>
-              <h3 className="text-xl font-black text-white uppercase tracking-tight flex-1">
+              <h3 className="text-lg sm:text-xl font-black text-white uppercase tracking-tight flex-1 min-w-[120px] truncate">
                 {t("activePlan")} {planInfo.name !== "No Active Plan" && `- ${planInfo.name}`}
               </h3>
-              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${planInfo.status ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"}`}>
+              <div className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${planInfo.status ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"}`}>
                 <span className={`h-1.5 w-1.5 rounded-full ${planInfo.status ? "bg-emerald-400 animate-pulse" : "bg-red-400"}`} />
                 {planInfo.status ? "Active" : "Expired"}
               </div>
@@ -303,9 +297,9 @@ function UserDashboard() {
               <h3 className="text-xl font-black text-white uppercase tracking-tight">{t("consistencyTracker")} <span className="text-slate-600 ml-2">{monthName} {yearName}</span></h3>
             </div>
           </div>
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(day => (
-              <div key={day} className="text-center text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">{day}</div>
+              <div key={day} className="text-center text-[9px] sm:text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">{day}</div>
             ))}
             {Array.from({ length: firstDayOfMonth }).map((_, i) => <div key={`empty-${i}`} />)}
             {trackerDays.map((dayData: any) => {
