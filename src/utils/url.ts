@@ -71,6 +71,15 @@ export const API_ENDPOINTS = {
     ATTENDANCE_STATS: (userId: string) => `/api/app/attendance/attendance-stats/${userId}`,
     ATTENDANCE: (userId: string) => `/api/app/attendance/${userId}`,
     CONSISTENCY_TRACKER: (userId: string) => `/api/app/dashboard/consistency-tracker/${userId}`,
+    LANGUAGES: "/api/app/languages",
+    TIMEZONES: "/api/app/timezones",
+  },
+  PUBLIC: {
+    FAQ: "/api/public/faq",
+    FAQ_DETAIL: (id: string) => `/api/public/faq/${id}`,
+    TESTIMONIAL: "/api/public/testimonial",
+    TESTIMONIALS: "/api/public/testimonials",
+    TESTIMONIAL_DETAIL: (id: string) => `/api/public/testimonial/${id}`,
   }
 } as const;
 

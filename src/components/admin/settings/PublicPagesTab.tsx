@@ -1,16 +1,99 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GlowButton, SectionTitle } from "../../ui/primitives";
-import { Trash2 } from "lucide-react";
+import { Trash2, Save } from "lucide-react";
 import { useGymStore } from "../../../store/gymStore";
 import { toast } from "../../../store/toastStore";
+import { adminPublicPagesService, type FAQ, type Testimonial } from "../../../services/adminPublicPagesService";
 
 export function PublicPagesTab() {
   const { publicPageConfig, updatePublicPageConfig } = useGymStore();
   const [form, setForm] = useState(publicPageConfig);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const faqRes = await adminPublicPagesService.getFAQs();
+      if (faqRes?.data) setFaqs(faqRes.data);
+      
+      const testRes = await adminPublicPagesService.getTestimonials();
+      if (testRes?.data) setTestimonials(testRes.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const handleSave = () => {
     updatePublicPageConfig(form);
     toast.success("Public Portal synchronized successfully!");
+  };
+
+  const handleSaveFaq = async (idx: number) => {
+    const faq = faqs[idx];
+    try {
+      if (faq.id) {
+        await adminPublicPagesService.updateFAQ(faq.id, { question: faq.question, answer: faq.answer });
+        toast.success("FAQ updated successfully!");
+      } else {
+        const res = await adminPublicPagesService.createFAQ({ question: faq.question, answer: faq.answer });
+        const newFaqs = [...faqs];
+        newFaqs[idx] = res.data;
+        setFaqs(newFaqs);
+        toast.success("FAQ created successfully!");
+      }
+    } catch (err) {
+      toast.error("Failed to save FAQ.");
+    }
+  };
+
+  const handleDeleteFaq = async (idx: number) => {
+    const faq = faqs[idx];
+    try {
+      if (faq.id) {
+        await adminPublicPagesService.deleteFAQ(faq.id);
+      }
+      const newFaqs = faqs.filter((_, i) => i !== idx);
+      setFaqs(newFaqs);
+      toast.success("FAQ deleted successfully!");
+    } catch (err) {
+      toast.error("Failed to delete FAQ.");
+    }
+  };
+
+  const handleSaveTestimonial = async (idx: number) => {
+    const test = testimonials[idx];
+    try {
+      if (test.id) {
+        await adminPublicPagesService.updateTestimonial(test.id, { name: test.name, note: test.note });
+        toast.success("Testimonial updated successfully!");
+      } else {
+        const res = await adminPublicPagesService.createTestimonial({ name: test.name, note: test.note });
+        const newT = [...testimonials];
+        newT[idx] = res.data;
+        setTestimonials(newT);
+        toast.success("Testimonial created successfully!");
+      }
+    } catch (err) {
+      toast.error("Failed to save Testimonial.");
+    }
+  };
+
+  const handleDeleteTestimonial = async (idx: number) => {
+    const test = testimonials[idx];
+    try {
+      if (test.id) {
+        await adminPublicPagesService.deleteTestimonial(test.id);
+      }
+      const newT = testimonials.filter((_, i) => i !== idx);
+      setTestimonials(newT);
+      toast.success("Testimonial deleted successfully!");
+    } catch (err) {
+      toast.error("Failed to delete Testimonial.");
+    }
   };
 
   return (
@@ -186,27 +269,27 @@ export function PublicPagesTab() {
         <div className="rounded-2xl bg-white/5 p-6 border border-white/10 space-y-4">
           <div className="flex items-center justify-between">
             <h4 className="text-lg font-black text-white uppercase tracking-tighter">Testimonials</h4>
-            <button className="text-indigo-400 text-[10px] font-black uppercase hover:underline" onClick={() => setForm({ ...form, testimonials: { ...form.testimonials, testimonials: [...form.testimonials.testimonials, { name: "User", role: "Member", content: "", avatar: "" }] } })}>+ Add Story</button>
+            <button className="text-indigo-400 text-[10px] font-black uppercase hover:underline" onClick={() => setTestimonials([...testimonials, { name: "New User", note: "" }])}>+ Add Story</button>
           </div>
           <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-            {form.testimonials.testimonials.map((test, idx) => (
+            {testimonials.map((test, idx) => (
               <div key={idx} className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-2">
                 <div className="flex items-center justify-between">
                   <input className="bg-transparent border-none text-xs font-bold text-white p-0 focus:ring-0" value={test.name} onChange={(e) => {
-                    const newT = [...form.testimonials.testimonials];
+                    const newT = [...testimonials];
                     newT[idx].name = e.target.value;
-                    setForm({ ...form, testimonials: { ...form.testimonials, testimonials: newT } });
+                    setTestimonials(newT);
                   }} />
-                  <button className="text-red-400/50 hover:text-red-400" onClick={() => {
-                    const newT = form.testimonials.testimonials.filter((_, i) => i !== idx);
-                    setForm({ ...form, testimonials: { ...form.testimonials, testimonials: newT } });
-                  }}><Trash2 size={12} /></button>
+                  <div className="flex gap-2">
+                    <button className="text-green-400/50 hover:text-green-400 transition-colors" onClick={() => handleSaveTestimonial(idx)}><Save size={14} /></button>
+                    <button className="text-red-400/50 hover:text-red-400 transition-colors" onClick={() => handleDeleteTestimonial(idx)}><Trash2 size={14} /></button>
+                  </div>
                 </div>
-                <textarea className="w-full bg-transparent border-none text-[10px] text-slate-400 p-0 focus:ring-0 italic" rows={2} value={test.content} onChange={(e) => {
-                  const newT = [...form.testimonials.testimonials];
-                  newT[idx].content = e.target.value;
-                  setForm({ ...form, testimonials: { ...form.testimonials, testimonials: newT } });
-                }} />
+                <textarea className="w-full bg-transparent border-none text-[10px] text-slate-400 p-0 focus:ring-0 italic" rows={2} value={test.note} onChange={(e) => {
+                  const newT = [...testimonials];
+                  newT[idx].note = e.target.value;
+                  setTestimonials(newT);
+                }} placeholder="Testimonial content..." />
               </div>
             ))}
           </div>
@@ -215,26 +298,24 @@ export function PublicPagesTab() {
         <div className="rounded-2xl bg-white/5 p-6 border border-white/10 space-y-4">
           <div className="flex items-center justify-between">
             <h4 className="text-lg font-black text-white uppercase tracking-tighter">Global FAQs</h4>
-            <button className="text-indigo-400 text-[10px] font-black uppercase hover:underline" onClick={() => setForm({ ...form, faqs: [...form.faqs, { question: "New Question", answer: "" }] })}>+ Add FAQ</button>
+            <button className="text-indigo-400 text-[10px] font-black uppercase hover:underline" onClick={() => setFaqs([...faqs, { question: "New Question", answer: "" }])}>+ Add FAQ</button>
           </div>
           <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-            {form.faqs.map((faq, idx) => (
+            {faqs.map((faq, idx) => (
               <div key={idx} className="p-3 rounded-xl bg-slate-900 border border-white/5 space-y-2">
                 <input className="w-full bg-transparent border-none text-xs font-black text-indigo-400 p-0 focus:ring-0" value={faq.question} onChange={(e) => {
-                  const newF = [...form.faqs];
+                  const newF = [...faqs];
                   newF[idx].question = e.target.value;
-                  setForm({ ...form, faqs: newF });
+                  setFaqs(newF);
                 }} />
                 <textarea className="w-full bg-transparent border-none text-[10px] text-slate-400 p-0 focus:ring-0 leading-relaxed" rows={2} value={faq.answer} onChange={(e) => {
-                  const newF = [...form.faqs];
+                  const newF = [...faqs];
                   newF[idx].answer = e.target.value;
-                  setForm({ ...form, faqs: newF });
+                  setFaqs(newF);
                 }} />
-                <div className="flex justify-end">
-                  <button className="text-red-400/30 hover:text-red-400 transition-colors" onClick={() => {
-                    const newF = form.faqs.filter((_, i) => i !== idx);
-                    setForm({ ...form, faqs: newF });
-                  }}><Trash2 size={12} /></button>
+                <div className="flex justify-end gap-3">
+                  <button className="text-green-400/30 hover:text-green-400 transition-colors" onClick={() => handleSaveFaq(idx)}><Save size={14} /></button>
+                  <button className="text-red-400/30 hover:text-red-400 transition-colors" onClick={() => handleDeleteFaq(idx)}><Trash2 size={14} /></button>
                 </div>
               </div>
             ))}

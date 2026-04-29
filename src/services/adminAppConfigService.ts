@@ -46,4 +46,13 @@ export const adminAppConfigService = {
     formData.append("file", file);
     return api.upload(API_ENDPOINTS.ADMIN.APP_CONFIG_UPLOAD, formData, { showToast: false });
   },
+
+  getLanguages: async (): Promise<any> => {
+    return api.get(API_ENDPOINTS.APP.LANGUAGES, { showToast: false });
+  },
+
+  getTimezones: async (search?: string): Promise<any> => {
+    const url = search ? `${API_ENDPOINTS.APP.TIMEZONES}?search=${search}` : API_ENDPOINTS.APP.TIMEZONES;
+    return api.get(url, { showToast: false });
+  },
 };

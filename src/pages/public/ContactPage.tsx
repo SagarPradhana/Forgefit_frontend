@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
 import {
   GlassCard,
   GlowButton,
@@ -7,8 +8,41 @@ import {
 import { PublicLayout } from "../../layouts/PublicLayout";
 import { Phone, Mail, MapPin, Clock, Sparkles } from "lucide-react";
 import { AnimatedSection } from "../../components/common/AnimatedSection";
+import { appInquiryService } from "../../services/appInquiryService";
 
 export function ContactPage() {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess(false);
+
+    try {
+      await appInquiryService.createContactInquiry(formData);
+      setSuccess(true);
+      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
+    } catch (err: any) {
+      setError(err.response?.data?.detail || "Failed to send message. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <PublicLayout>
       <div className="space-y-12 px-4 sm:px-6 lg:px-8">
@@ -149,24 +183,71 @@ export function ContactPage() {
               <p className="text-base sm:text-xl font-semibold text-white mb-6 relative z-10">
                 Send Us a Message
               </p>
-              <div className="grid gap-5 relative z-10">
+              <form onSubmit={handleSubmit} className="grid gap-5 relative z-10">
+                {error && (
+                  <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-4 text-sm text-red-400">
+                    {error}
+                  </div>
+                )}
+                {success && (
+                  <div className="rounded-xl bg-green-500/10 border border-green-500/20 p-4 text-sm text-green-400">
+                    Message sent successfully! We will get back to you soon.
+                  </div>
+                )}
+
                 <div className="grid gap-4 sm:grid-cols-2">
                   <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}>
                     <input
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
                       className="w-full rounded-3xl bg-white/10 border border-white/10 px-5 py-4 text-sm text-slate-100 outline-none transition-all focus:border-orange-400/50 focus:bg-white/15 focus:ring-4 focus:ring-orange-400/10 placeholder:text-slate-500"
                       placeholder="Full Name"
                     />
                   </motion.div>
                   <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}>
                     <input
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
                       className="w-full rounded-3xl bg-white/10 border border-white/10 px-5 py-4 text-sm text-slate-100 outline-none transition-all focus:border-orange-400/50 focus:bg-white/15 focus:ring-4 focus:ring-orange-400/10 placeholder:text-slate-500"
                       placeholder="Email Address"
                     />
                   </motion.div>
                 </div>
 
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.15 }}>
+                    <input
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-3xl bg-white/10 border border-white/10 px-5 py-4 text-sm text-slate-100 outline-none transition-all focus:border-orange-400/50 focus:bg-white/15 focus:ring-4 focus:ring-orange-400/10 placeholder:text-slate-500"
+                      placeholder="Phone Number"
+                    />
+                  </motion.div>
+                  <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.25 }}>
+                    <input
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-3xl bg-white/10 border border-white/10 px-5 py-4 text-sm text-slate-100 outline-none transition-all focus:border-orange-400/50 focus:bg-white/15 focus:ring-4 focus:ring-orange-400/10 placeholder:text-slate-500"
+                      placeholder="Subject"
+                    />
+                  </motion.div>
+                </div>
+
                 <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.3 }}>
                   <textarea
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    required
                     className="min-h-[170px] w-full rounded-[1.5rem] bg-white/10 border border-white/10 p-5 text-sm text-slate-100 outline-none transition-all focus:border-orange-400/50 focus:bg-white/15 focus:ring-4 focus:ring-orange-400/10 placeholder:text-slate-500"
                     placeholder="Your Message"
                   />
@@ -183,14 +264,16 @@ export function ContactPage() {
                     We will get back to you as soon as possible.
                   </p>
                   <GlowButton 
+                    type="submit"
+                    disabled={loading}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="w-full sm:w-auto px-10 py-4 transition-all hover:shadow-glow pulse-glow-hover"
+                    className="w-full sm:w-auto px-10 py-4 transition-all hover:shadow-glow pulse-glow-hover disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Send Message
+                    {loading ? "Sending..." : "Send Message"}
                   </GlowButton>
                 </motion.div>
-              </div>
+              </form>
             </GlassCard>
           </motion.div>
         </section>
