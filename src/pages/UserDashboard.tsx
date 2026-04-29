@@ -74,21 +74,17 @@ function UserDashboard() {
   );
 
   // Active plan fetch — /current-subscription/{userId}
-  // API may return a flat object OR { data: [...] } — handle both shapes
-  const { data: activePlanRes } = useGet(
+  const { data: activePlanRes, loading: planLoading } = useGet(
     userId ? API_ENDPOINTS.APP.CURRENT_SUBSCRIPTION(userId) : null
   );
   const activePlanData =
-    activePlanRes?.data?.[0] ??           // paginated shape: { data: [{...}] }
-    (activePlanRes?.start_date != null     // flat shape: { start_date, end_date, ... }
-      ? activePlanRes
-      : null);
+    activePlanRes?.data?.[0] ??
+    (activePlanRes?.start_date != null ? activePlanRes : null);
 
   // Consistency Tracker fetch — /consistency-tracker/{userId}
-  const { data: trackerRes } = useGet(
+  const { data: trackerRes, loading: trackerLoading } = useGet(
     userId ? API_ENDPOINTS.APP.CONSISTENCY_TRACKER(userId) : null
   );
-  // API returns { month, year, days: [...] } at the top level
   const trackerData = trackerRes || {};
 
   const handleManualSync = () => {
@@ -158,6 +154,11 @@ function UserDashboard() {
     });
   };
 
+  // Shimmer skeleton block
+  const Sk = ({ cls }: { cls: string }) => (
+    <div className={`animate-pulse bg-white/[0.06] rounded-xl ${cls}`} />
+  );
+
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -193,166 +194,132 @@ function UserDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* --- PLAN STATUS --- */}
-        <GlassCard className="p-8 border-indigo-500/20 bg-gradient-to-br from-indigo-500/5 to-transparent">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-10 w-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <Zap size={20} />
+        {planLoading ? (
+          <GlassCard className="p-8 border-indigo-500/20 bg-gradient-to-br from-indigo-500/5 to-transparent">
+            <div className="flex items-center gap-3 mb-6">
+              <Sk cls="h-10 w-10" />
+              <Sk cls="h-6 flex-1" />
+              <Sk cls="h-7 w-20 rounded-full" />
             </div>
-            <h3 className="text-xl font-black text-white uppercase tracking-tight flex-1">
-              {t("activePlan")} {planInfo.name !== "No Active Plan" && `- ${planInfo.name}`}
-            </h3>
-            {/* Status signal badge from API status boolean */}
-            <div
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                planInfo.status
-                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                  : "bg-red-500/10 text-red-400 border-red-500/20"
-              }`}
-            >
-              <span
-                className={`h-1.5 w-1.5 rounded-full ${
-                  planInfo.status ? "bg-emerald-400 animate-pulse" : "bg-red-400"
-                }`}
-              />
-              {planInfo.status ? "Active" : "Expired"}
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Start Date</p>
-                <p className="text-lg font-black text-white italic tracking-tighter">{planInfo.startDate}</p>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <Sk cls="h-20" />
+                <Sk cls="h-20" />
               </div>
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Expiry Date</p>
-                <p className="text-lg font-black text-orange-400 italic tracking-tighter">{planInfo.expiryDate}</p>
+              <Sk cls="h-20" />
+            </div>
+          </GlassCard>
+        ) : (
+          <GlassCard className="p-8 border-indigo-500/20 bg-gradient-to-br from-indigo-500/5 to-transparent">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-10 w-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                <Zap size={20} />
+              </div>
+              <h3 className="text-xl font-black text-white uppercase tracking-tight flex-1">
+                {t("activePlan")} {planInfo.name !== "No Active Plan" && `- ${planInfo.name}`}
+              </h3>
+              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${planInfo.status ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"}`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${planInfo.status ? "bg-emerald-400 animate-pulse" : "bg-red-400"}`} />
+                {planInfo.status ? "Active" : "Expired"}
               </div>
             </div>
-
-            <div
-              className={`relative h-20 rounded-2xl shadow-lg flex items-center justify-between px-8 overflow-hidden ${
-                isExpired
-                  ? "bg-gradient-to-r from-red-600 to-orange-500 shadow-red-500/20"
-                  : "bg-indigo-500 shadow-indigo-500/20"
-              }`}
-            >
-              <div className="absolute top-0 right-0 w-32 h-full bg-white/10 -skew-x-12 translate-x-8" />
-              <div>
-                <p className="text-[10px] font-black text-white/70 uppercase tracking-widest">
-                  {isExpired ? "Plan Expired" : "Remaining Days"}
-                </p>
-                <p className="text-3xl font-black text-white italic tracking-tighter">
-                  {isExpired ? "0 Days" : `${planInfo.daysRemaining} Days`}
-                </p>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Start Date</p>
+                  <p className="text-lg font-black text-white italic tracking-tighter">{planInfo.startDate}</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Expiry Date</p>
+                  <p className="text-lg font-black text-orange-400 italic tracking-tighter">{planInfo.expiryDate}</p>
+                </div>
               </div>
-              <Zap size={32} className="text-white/20" />
-            </div>
-          </div>
-        </GlassCard>
-
-        {/* --- ATTENDANCE STATUS (Admin Driven) --- */}
-        <GlassCard
-          className={`p-8 border-[1px] flex flex-col justify-center text-center transition-all ${
-            isExpired
-              ? "border-orange-500/20 bg-orange-500/5 shadow-lg shadow-orange-500/5"
-              : isPresentToday
-              ? "border-emerald-500/20 bg-emerald-500/5"
-              : "border-red-500/20 bg-red-500/5 shadow-lg shadow-red-500/5"
-          }`}
-        >
-          <div className="mb-6">
-            <div
-              className={`h-24 w-24 mx-auto rounded-full flex items-center justify-center transition-all duration-700 shadow-xl ${
-                isExpired
-                  ? "bg-orange-500 text-white shadow-orange-500/20"
-                  : isPresentToday
-                  ? "bg-emerald-500 text-white shadow-emerald-500/20"
-                  : "bg-red-500 text-white shadow-red-500/20 animate-pulse"
-              }`}
-            >
-              {isExpired ? (
-                <AlertCircle size={48} />
-              ) : isPresentToday ? (
-                <CheckCircle2 size={48} />
-              ) : (
-                <XCircle size={48} />
-              )}
-            </div>
-            <h3 className="mt-6 text-3xl font-black text-white uppercase italic tracking-tighter">
-              {isExpired
-                ? "Plan Expired"
-                : isPresentToday
-                ? t("verifiedPresent")
-                : t("markedAbsent")}
-            </h3>
-            <p className="text-sm text-slate-400 mt-2 font-medium">Official Registry Status for Today</p>
-          </div>
-
-          {isExpired ? (
-            <div className="space-y-3">
-              <div className="py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border bg-orange-500/10 text-orange-400 border-orange-500/20">
-                Subscription Expired • Access Restricted
+              <div className={`relative h-20 rounded-2xl shadow-lg flex items-center justify-between px-8 overflow-hidden ${isExpired ? "bg-gradient-to-r from-red-600 to-orange-500 shadow-red-500/20" : "bg-indigo-500 shadow-indigo-500/20"}`}>
+                <div className="absolute top-0 right-0 w-32 h-full bg-white/10 -skew-x-12 translate-x-8" />
+                <div>
+                  <p className="text-[10px] font-black text-white/70 uppercase tracking-widest">{isExpired ? "Plan Expired" : "Remaining Days"}</p>
+                  <p className="text-3xl font-black text-white italic tracking-tighter">{isExpired ? "0 Days" : `${planInfo.daysRemaining} Days`}</p>
+                </div>
+                <Zap size={32} className="text-white/20" />
               </div>
-              <p className="text-xs text-slate-500 italic leading-relaxed px-2">
-                Your membership plan has expired. Please renew your subscription to regain gym access.
-              </p>
             </div>
-          ) : (
-            <div
-              className={`py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border ${
-                isPresentToday
-                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                  : "bg-red-500/10 text-red-400 border-red-500/20"
-              }`}
-            >
-              {isPresentToday ? "Scan Complete • Access Granted" : "Awaiting Scanner Authentication"}
+          </GlassCard>
+        )}
+
+        {/* --- ATTENDANCE STATUS --- */}
+        {trackerLoading || planLoading ? (
+          <GlassCard className="p-8 border-white/5 flex flex-col items-center justify-center gap-6">
+            <Sk cls="h-24 w-24 rounded-full" />
+            <Sk cls="h-8 w-48" />
+            <Sk cls="h-4 w-40" />
+            <Sk cls="h-14 w-full rounded-2xl" />
+          </GlassCard>
+        ) : (
+          <GlassCard className={`p-8 border-[1px] flex flex-col justify-center text-center transition-all ${isExpired ? "border-orange-500/20 bg-orange-500/5 shadow-lg shadow-orange-500/5" : isPresentToday ? "border-emerald-500/20 bg-emerald-500/5" : "border-red-500/20 bg-red-500/5 shadow-lg shadow-red-500/5"}`}>
+            <div className="mb-6">
+              <div className={`h-24 w-24 mx-auto rounded-full flex items-center justify-center transition-all duration-700 shadow-xl ${isExpired ? "bg-orange-500 text-white shadow-orange-500/20" : isPresentToday ? "bg-emerald-500 text-white shadow-emerald-500/20" : "bg-red-500 text-white shadow-red-500/20 animate-pulse"}`}>
+                {isExpired ? <AlertCircle size={48} /> : isPresentToday ? <CheckCircle2 size={48} /> : <XCircle size={48} />}
+              </div>
+              <h3 className="mt-6 text-3xl font-black text-white uppercase italic tracking-tighter">
+                {isExpired ? "Plan Expired" : isPresentToday ? t("verifiedPresent") : t("markedAbsent")}
+              </h3>
+              <p className="text-sm text-slate-400 mt-2 font-medium">Official Registry Status for Today</p>
             </div>
-          )}
-        </GlassCard>
+            {isExpired ? (
+              <div className="space-y-3">
+                <div className="py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border bg-orange-500/10 text-orange-400 border-orange-500/20">Subscription Expired • Access Restricted</div>
+                <p className="text-xs text-slate-500 italic leading-relaxed px-2">Your membership plan has expired. Please renew your subscription to regain gym access.</p>
+              </div>
+            ) : (
+              <div className={`py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border ${isPresentToday ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"}`}>
+                {isPresentToday ? "Scan Complete • Access Granted" : "Awaiting Scanner Authentication"}
+              </div>
+            )}
+          </GlassCard>
+        )}
       </div>
 
       {/* --- ATTENDANCE CALENDAR --- */}
-      <GlassCard className="p-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400">
-              <Calendar size={20} />
-            </div>
-            <h3 className="text-xl font-black text-white uppercase tracking-tight">{t("consistencyTracker")} <span className="text-slate-600 ml-2">{monthName} {yearName}</span></h3>
+      {trackerLoading ? (
+        <GlassCard className="p-8">
+          <div className="flex items-center gap-3 mb-8">
+            <Sk cls="h-10 w-10" />
+            <Sk cls="h-6 w-56" />
           </div>
-        </div>
-
-        <div className="grid grid-cols-7 gap-2">
-          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(day => (
-            <div key={day} className="text-center text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">{day}</div>
-          ))}
-          {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-            <div key={`empty-${i}`} />
-          ))}
-          {trackerDays.map((dayData: any, i: number) => {
-            const dateObj = new Date(dayData.date * 1000);
-            const day = dateObj.getDate();
-            const wasPresent = dayData.attended;
-            const isToday = new Date().toLocaleDateString() === dateObj.toLocaleDateString();
-            const isDone = isToday && wasPresent;
-
-            return (
-              <div
-                key={day}
-                className={`aspect-square rounded-xl flex items-center justify-center text-xs font-bold transition-all border ${isDone || wasPresent
-                  ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
-                  : isToday
-                    ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-400 animate-pulse"
-                    : "bg-white/5 border-white/5 text-slate-600"
-                  }`}
-              >
-                {day}
+          <div className="grid grid-cols-7 gap-2">
+            {Array.from({ length: 7 }).map((_, i) => <Sk key={i} cls="h-4 mb-2" />)}
+            {Array.from({ length: 35 }).map((_, i) => <Sk key={i} cls="aspect-square" />)}
+          </div>
+        </GlassCard>
+      ) : (
+        <GlassCard className="p-8">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400">
+                <Calendar size={20} />
               </div>
-            );
-          })}
-        </div>
-      </GlassCard>
+              <h3 className="text-xl font-black text-white uppercase tracking-tight">{t("consistencyTracker")} <span className="text-slate-600 ml-2">{monthName} {yearName}</span></h3>
+            </div>
+          </div>
+          <div className="grid grid-cols-7 gap-2">
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(day => (
+              <div key={day} className="text-center text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">{day}</div>
+            ))}
+            {Array.from({ length: firstDayOfMonth }).map((_, i) => <div key={`empty-${i}`} />)}
+            {trackerDays.map((dayData: any) => {
+              const dateObj = new Date(dayData.date * 1000);
+              const day = dateObj.getDate();
+              const wasPresent = dayData.attended;
+              const isToday = new Date().toLocaleDateString() === dateObj.toLocaleDateString();
+              return (
+                <div key={day} className={`aspect-square rounded-xl flex items-center justify-center text-xs font-bold transition-all border ${(isToday && wasPresent) || wasPresent ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400" : isToday ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-400 animate-pulse" : "bg-white/5 border-white/5 text-slate-600"}`}>
+                  {day}
+                </div>
+              );
+            })}
+          </div>
+        </GlassCard>
+      )}
 
       {/* --- TODAY WORKOUT --- */}
       <GlassCard className="p-8 border-white/5 bg-gradient-to-br from-slate-950 to-slate-900 group relative overflow-hidden">
