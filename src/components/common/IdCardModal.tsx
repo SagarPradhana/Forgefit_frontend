@@ -185,7 +185,9 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user,
                   <div className="hero-name">{user.name}</div>
                   <div className="status-row">
                     <span className="tag tag-teal">● Active</span>
-                    <span className="tag tag-neutral">{username}</span>
+                    {isUser && user.metadata?.gender && (
+                      <span className="tag tag-orange" style={{ textTransform: 'capitalize' }}>{user.metadata.gender}</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -244,45 +246,39 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user,
 
               {/* Detail cells — role-aware */}
               <div className="details-grid">
-                <div className="detail-cell">
-                  <div className="d-label">Date of Birth</div>
-                  <div className="d-value">{formatDate(user.metadata?.dob)}</div>
-                </div>
-                <div className="detail-cell">
-                  <div className="d-label">Gender</div>
-                  <div className="d-value accent" style={{ textTransform: 'capitalize' }}>{user.metadata?.gender || 'N/A'}</div>
-                </div>
-                <div className="detail-cell">
-                  <div className="d-label">Mobile</div>
-                  <div className="d-value">{user.mobile || 'N/A'}</div>
-                </div>
-                <div className="detail-cell">
-                  <div className="d-label">Emergency</div>
-                  <div className="d-value">{user.metadata?.emergency_contact || 'N/A'}</div>
-                </div>
-                {isUser && user.latest_subscription_details && (
+                {!isUser ? (
                   <>
                     <div className="detail-cell">
-                      <div className="d-label">Valid From</div>
-                      <div className="d-value teal">{formatValidTill(user.latest_subscription_details.start_date)}</div>
+                      <div className="d-label">Date of Birth</div>
+                      <div className="d-value">{formatDate(user.metadata?.dob)}</div>
                     </div>
                     <div className="detail-cell">
-                      <div className="d-label">Valid Till</div>
-                      <div className="d-value teal">{formatValidTill(user.latest_subscription_details.end_date)}</div>
+                      <div className="d-label">Gender</div>
+                      <div className="d-value accent" style={{ textTransform: 'capitalize' }}>{user.metadata?.gender || 'N/A'}</div>
+                    </div>
+                    <div className="detail-cell">
+                      <div className="d-label">Mobile</div>
+                      <div className="d-value">{user.mobile || 'N/A'}</div>
+                    </div>
+                    <div className="detail-cell">
+                      <div className="d-label">Emergency</div>
+                      <div className="d-value">{user.metadata?.emergency_contact || 'N/A'}</div>
                     </div>
                   </>
-                )}
-                {isUser && user.metadata?.fitness_goal && (
-                  <div className="detail-cell">
-                    <div className="d-label">Fitness Goal</div>
-                    <div className="d-value">{formatFitnessGoal(user.metadata.fitness_goal)}</div>
-                  </div>
-                )}
-                {isUser && user.metadata?.workout_time && (
-                  <div className="detail-cell">
-                    <div className="d-label">Workout Time</div>
-                    <div className="d-value" style={{ textTransform: 'capitalize' }}>{user.metadata.workout_time}</div>
-                  </div>
+                ) : (
+                  <>
+                    <div className="detail-cell">
+                      <div className="d-label">Contact / Emergency</div>
+                      <div className="d-value">
+                        {user.mobile || 'N/A'}
+                        {user.metadata?.emergency_contact ? ` / ${user.metadata.emergency_contact}` : ''}
+                      </div>
+                    </div>
+                    <div className="detail-cell">
+                      <div className="d-label">Workout Time</div>
+                      <div className="d-value" style={{ textTransform: 'capitalize' }}>{user.metadata?.workout_time || 'N/A'}</div>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -365,13 +361,12 @@ const idCardStyles = `
     --teal-pale:#d6eeec;
     --gold:#c9922a;
     --gold-pale:#f5e8cc;
-    --card-w:400px;
+    --card-w:320px;
     font-family:'Outfit',sans-serif;
   }
 
   .card {
     width:var(--card-w);
-    min-height: 750px;
     background:var(--warm-white);
     border-radius:24px;
     overflow:hidden;
@@ -386,7 +381,7 @@ const idCardStyles = `
     background: var(--ink);
     position:relative;
     overflow:hidden;
-    padding:24px 28px 0;
+    padding:20px 24px 0;
   }
 
   .card-top::before {
@@ -459,13 +454,13 @@ const idCardStyles = `
     position:relative;
     z-index:1;
     display:flex;
-    align-items:flex-end;
-    gap:20px;
-    padding:20px 28px 0;
+    align-items:center;
+    gap:16px;
+    padding:16px 24px 0;
   }
 
   .avatar-ring {
-    width:96px; height:96px;
+    width:80px; height:80px;
     border-radius:50%;
     background: conic-gradient(var(--orange) 0deg, var(--orange-lt) 120deg, rgba(232,80,26,0.2) 120deg);
     padding:3px;
@@ -555,8 +550,7 @@ const idCardStyles = `
 
   .card-body {
     background:var(--warm-white);
-    padding:20px 28px 24px;
-    flex: 1;
+    padding:12px 20px 12px;
     display: flex;
     flex-direction: column;
   }
@@ -569,12 +563,12 @@ const idCardStyles = `
     border-radius:14px;
     overflow:hidden;
     border:1px solid rgba(180,160,140,0.2);
-    margin-bottom:20px;
+    margin-bottom:0px;
   }
 
   .detail-cell {
     background:var(--warm-white);
-    padding:10px 14px;
+    padding:8px 12px;
     position:relative;
   }
 
@@ -607,13 +601,13 @@ const idCardStyles = `
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin-bottom: 20px;
-    gap: 12px;
+    margin-bottom: 12px;
+    gap: 8px;
   }
 
   .qr-frame-lg {
-    width: 160px;
-    height: 160px;
+    width: 110px;
+    height: 110px;
     background: #fff;
     border-radius: 14px;
     padding: 1px;
@@ -666,12 +660,12 @@ const idCardStyles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
-    padding: 12px 20px;
+    gap: 12px;
+    padding: 8px 16px;
     background: var(--gold-pale);
     border: 1px solid rgba(201,146,42,0.3);
-    border-radius: 14px;
-    margin-bottom: 20px;
+    border-radius: 12px;
+    margin-bottom: 12px;
   }
 
   .tier-text-stack {
@@ -698,7 +692,7 @@ const idCardStyles = `
 
   .card-footer {
     background:var(--ink);
-    padding:8px 28px;
+    padding:8px 24px;
     display:flex;
     align-items:center;
     justify-content:space-between;
