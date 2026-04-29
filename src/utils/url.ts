@@ -70,6 +70,7 @@ export const API_ENDPOINTS = {
     SUBSCRIPTION_HISTORY: (userId: string) => `/api/app/subscription/subscription-history/${userId}`,
     ATTENDANCE_STATS: (userId: string) => `/api/app/attendance/attendance-stats/${userId}`,
     ATTENDANCE: (userId: string) => `/api/app/attendance/${userId}`,
+    CONSISTENCY_TRACKER: (userId: string) => `/api/app/dashboard/consistency-tracker/${userId}`,
   }
 } as const;
 

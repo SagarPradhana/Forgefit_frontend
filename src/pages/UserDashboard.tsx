@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
   GlassCard,
@@ -6,7 +6,7 @@ import {
   GlowButton,
   Modal,
 } from "../components/ui/primitives";
-import { userProfile } from "../data/mockData";
+
 import { useAuthStore } from "../store/authStore";
 import {
   CheckCircle2,
@@ -32,18 +32,32 @@ function UserDashboard() {
   const { t } = useTranslation();
   const userName = useAuthStore((s) => s.name);
   const userId = useAuthStore((s) => s.id);
+  const mobile = useAuthStore((s) => s.mobile);
+  const email = useAuthStore((s) => s.email);
+  const profile_image_path = useAuthStore((s) => s.profile_image_path);
+  const metadata = useAuthStore((s) => s.metadata);
+  const latest_subscription_details = useAuthStore((s) => s.latest_subscription_details);
+  const userRole = useAuthStore((s) => s.role);
+  const joining_date = useAuthStore((s) => s.joining_date);
+  const username = useAuthStore((s) => s.username);
+
+  const myDetails = {
+    mobile,
+    email,
+    profile_image_path,
+    metadata,
+    latest_subscription_details,
+    role: userRole,
+    joining_date,
+    username
+  };
   const [workoutDone, setWorkoutDone] = useState(false);
-  const [showExpiryModal, setShowExpiryModal] = useState(userProfile.daysLeft <= 5);
+  const [showExpiryModal, setShowExpiryModal] = useState(false);
   const [idCardOpen, setIdCardOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch my-details for ID Card
-  const { data: myDetailsRes } = useGet(
-    userId ? API_ENDPOINTS.USER.MY_DETAILS(userId) : null
-  );
-  const rawData = myDetailsRes || {};
-  const myDetails = typeof rawData === 'object' && !Array.isArray(rawData) ? rawData : {};
+
 
   // Auto-sync plan on home mount
   const { refetch: syncUserPlan } = useGet(
@@ -59,13 +73,29 @@ function UserDashboard() {
     }
   );
 
+  // Active plan fetch
+  const { data: activePlanRes } = useGet(
+    userId ? API_ENDPOINTS.APP.CURRENT_SUBSCRIPTION(userId) : null
+  );
+  const activePlanData = activePlanRes?.data?.[0];
+
+  // Consistency Tracker fetch
+  const { data: trackerRes } = useGet(
+    userId ? API_ENDPOINTS.APP.CONSISTENCY_TRACKER(userId) : null
+  );
+  const trackerData = trackerRes || {};
+
   const handleManualSync = () => {
     setIsSyncing(true);
     syncUserPlan();
   };
 
-  // Mock Admin-Driven Attendance Status
-  const isPresentToday = true; // This would come from backend/admin state
+  const trackerDays = trackerData.days || [];
+  
+  const isPresentToday = trackerDays.some((day: any) => {
+    const dateObj = new Date(day.date * 1000);
+    return new Date().toLocaleDateString() === dateObj.toLocaleDateString() && day.attended;
+  });
 
   const [exercises, setExercises] = useState([
     { id: 1, name: "Bench Press", sets: "4 Sets", reps: "10-12 Reps", target: "Power", done: false },
@@ -73,16 +103,32 @@ function UserDashboard() {
     { id: 3, name: "Cable Fly", sets: "3 Sets", reps: "15 Reps", target: "Definition", done: false }
   ]);
 
-  // Mock Plan Dates
-  const planInfo = {
-    startDate: "2026-04-01",
-    expiryDate: "2026-05-01",
-    daysRemaining: userProfile.daysLeft
+  // Plan Dates
+  const planInfo = activePlanData ? {
+    startDate: new Date(activePlanData.start_date * 1000).toLocaleDateString(),
+    expiryDate: new Date(activePlanData.end_date * 1000).toLocaleDateString(),
+    daysRemaining: activePlanData.remaining_days,
+    name: activePlanData.subscription_name,
+    status: activePlanData.status
+  } : {
+    startDate: "-",
+    expiryDate: "-",
+    daysRemaining: 0,
+    name: "No Active Plan",
+    status: false
   };
 
-  // Mock Calendar Data
-  const daysInMonth = 30;
-  const attendedDays = [1, 3, 4, 7, 8, 10, 12, 15, 18, 20, 21];
+  // Calendar Data
+  const monthName = trackerData.month ? new Date(trackerData.year, trackerData.month - 1).toLocaleString('default', { month: 'long' }).toUpperCase() : "";
+  const yearName = trackerData.year || "";
+  const firstDayOfMonth = trackerDays.length > 0 ? new Date(trackerDays[0].date * 1000).getDay() : 0;
+  
+  // Set expiry modal if needed
+  useEffect(() => {
+    if (planInfo.daysRemaining > 0 && planInfo.daysRemaining <= 5) {
+      setShowExpiryModal(true);
+    }
+  }, [planInfo.daysRemaining]);
 
   const toggleExercise = (id: number) => {
     setExercises(prev => prev.map(ex => ex.id === id ? { ...ex, done: !ex.done } : ex));
@@ -140,7 +186,7 @@ function UserDashboard() {
             <div className="h-10 w-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
               <Zap size={20} />
             </div>
-            <h3 className="text-xl font-black text-white uppercase tracking-tight">{t("activePlan")}</h3>
+            <h3 className="text-xl font-black text-white uppercase tracking-tight">{t("activePlan")} {planInfo.name !== "No Active Plan" && `- ${planInfo.name}`}</h3>
           </div>
 
           <div className="space-y-6">
@@ -158,7 +204,7 @@ function UserDashboard() {
             <div className="relative h-20 rounded-2xl bg-indigo-500 shadow-lg shadow-indigo-500/20 flex items-center justify-between px-8 overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-full bg-white/10 -skew-x-12 translate-x-8" />
               <div>
-                <p className="text-[10px] font-black text-indigo-100 uppercase tracking-widest opacity-80">Remaining Protocol</p>
+                <p className="text-[10px] font-black text-indigo-100 uppercase tracking-widest opacity-80">Remaining Days</p>
                 <p className="text-3xl font-black text-white italic tracking-tighter">{planInfo.daysRemaining} Days</p>
               </div>
               <Zap size={32} className="text-white/20" />
@@ -191,7 +237,7 @@ function UserDashboard() {
             <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400">
               <Calendar size={20} />
             </div>
-            <h3 className="text-xl font-black text-white uppercase tracking-tight">{t("consistencyTracker")} <span className="text-slate-600 ml-2">APRIL 2026</span></h3>
+            <h3 className="text-xl font-black text-white uppercase tracking-tight">{t("consistencyTracker")} <span className="text-slate-600 ml-2">{monthName} {yearName}</span></h3>
           </div>
         </div>
 
@@ -199,11 +245,15 @@ function UserDashboard() {
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(day => (
             <div key={day} className="text-center text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">{day}</div>
           ))}
-          {Array.from({ length: daysInMonth }).map((_, i) => {
-            const day = i + 1;
-            const wasPresent = attendedDays.includes(day);
-            const isToday = day === 21;
-            const isDone = isToday && isPresentToday;
+          {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+            <div key={`empty-${i}`} />
+          ))}
+          {trackerDays.map((dayData: any, i: number) => {
+            const dateObj = new Date(dayData.date * 1000);
+            const day = dateObj.getDate();
+            const wasPresent = dayData.attended;
+            const isToday = new Date().toLocaleDateString() === dateObj.toLocaleDateString();
+            const isDone = isToday && wasPresent;
 
             return (
               <div
@@ -294,7 +344,7 @@ function UserDashboard() {
           <div className="space-y-2">
             <p className="text-xl font-black text-white italic uppercase tracking-tighter">Membership Cycle Expiring</p>
             <p className="text-sm text-slate-400 leading-relaxed px-6">
-              Your current access protocol is scheduled to terminate in <span className="text-orange-400 font-bold">{userProfile.daysLeft} days</span>. Please process renewal to maintain continuity.
+              Your current access protocol is scheduled to terminate in <span className="text-orange-400 font-bold">{planInfo.daysRemaining} days</span>. Please process renewal to maintain continuity.
             </p>
           </div>
           <GlowButton className="w-full h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest">Execute Immediate Renewal</GlowButton>
