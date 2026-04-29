@@ -91,11 +91,14 @@ function UserDashboard() {
   };
 
   const trackerDays = trackerData.days || [];
-  
-  const isPresentToday = trackerDays.some((day: any) => {
+
+  // Use .filter() to find today's tracker entry from the consistency-tracker API
+  const todayTrackerEntry = trackerDays.filter((day: any) => {
     const dateObj = new Date(day.date * 1000);
-    return new Date().toLocaleDateString() === dateObj.toLocaleDateString() && day.attended;
+    return new Date().toLocaleDateString() === dateObj.toLocaleDateString();
   });
+  const isPresentToday =
+    todayTrackerEntry.length > 0 && todayTrackerEntry[0].attended === true;
 
   const [exercises, setExercises] = useState([
     { id: 1, name: "Bench Press", sets: "4 Sets", reps: "10-12 Reps", target: "Power", done: false },
@@ -117,6 +120,9 @@ function UserDashboard() {
     name: "No Active Plan",
     status: false
   };
+
+  // Subscription expired when status === false
+  const isExpired = planInfo.status === false;
 
   // Calendar Data
   const monthName = trackerData.month ? new Date(trackerData.year, trackerData.month - 1).toLocaleString('default', { month: 'long' }).toUpperCase() : "";
@@ -213,20 +219,63 @@ function UserDashboard() {
         </GlassCard>
 
         {/* --- ATTENDANCE STATUS (Admin Driven) --- */}
-        <GlassCard className={`p-8 border-[1px] flex flex-col justify-center text-center transition-all ${isPresentToday ? "border-emerald-500/20 bg-emerald-500/5" : "border-red-500/20 bg-red-500/5 shadow-lg shadow-red-500/5"}`}>
+        <GlassCard
+          className={`p-8 border-[1px] flex flex-col justify-center text-center transition-all ${
+            isExpired
+              ? "border-orange-500/20 bg-orange-500/5 shadow-lg shadow-orange-500/5"
+              : isPresentToday
+              ? "border-emerald-500/20 bg-emerald-500/5"
+              : "border-red-500/20 bg-red-500/5 shadow-lg shadow-red-500/5"
+          }`}
+        >
           <div className="mb-6">
-            <div className={`h-24 w-24 mx-auto rounded-full flex items-center justify-center transition-all duration-700 shadow-xl ${isPresentToday ? "bg-emerald-500 text-white shadow-emerald-500/20" : "bg-red-500 text-white shadow-red-500/20 animate-pulse"}`}>
-              {isPresentToday ? <CheckCircle2 size={48} /> : <XCircle size={48} />}
+            <div
+              className={`h-24 w-24 mx-auto rounded-full flex items-center justify-center transition-all duration-700 shadow-xl ${
+                isExpired
+                  ? "bg-orange-500 text-white shadow-orange-500/20"
+                  : isPresentToday
+                  ? "bg-emerald-500 text-white shadow-emerald-500/20"
+                  : "bg-red-500 text-white shadow-red-500/20 animate-pulse"
+              }`}
+            >
+              {isExpired ? (
+                <AlertCircle size={48} />
+              ) : isPresentToday ? (
+                <CheckCircle2 size={48} />
+              ) : (
+                <XCircle size={48} />
+              )}
             </div>
             <h3 className="mt-6 text-3xl font-black text-white uppercase italic tracking-tighter">
-              {isPresentToday ? t("verifiedPresent") : t("markedAbsent")}
+              {isExpired
+                ? "Plan Expired"
+                : isPresentToday
+                ? t("verifiedPresent")
+                : t("markedAbsent")}
             </h3>
             <p className="text-sm text-slate-400 mt-2 font-medium">Official Registry Status for Today</p>
           </div>
 
-          <div className={`py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border ${isPresentToday ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"}`}>
-            {isPresentToday ? "Scan Complete • Access Granted" : "Awaiting Scanner Authentication"}
-          </div>
+          {isExpired ? (
+            <div className="space-y-3">
+              <div className="py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border bg-orange-500/10 text-orange-400 border-orange-500/20">
+                Subscription Expired • Access Restricted
+              </div>
+              <p className="text-xs text-slate-500 italic leading-relaxed px-2">
+                Your membership plan has expired. Please renew your subscription to regain gym access.
+              </p>
+            </div>
+          ) : (
+            <div
+              className={`py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border ${
+                isPresentToday
+                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                  : "bg-red-500/10 text-red-400 border-red-500/20"
+              }`}
+            >
+              {isPresentToday ? "Scan Complete • Access Granted" : "Awaiting Scanner Authentication"}
+            </div>
+          )}
         </GlassCard>
       </div>
 

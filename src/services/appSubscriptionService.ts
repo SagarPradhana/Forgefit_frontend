@@ -29,6 +29,7 @@ export interface AppCurrentSubscriptionResponse {
   status: boolean;
   start_date: number;
   end_date: number;
+  remaining_days: number;
   created_date: number;
   updated_date: number;
   subscription_name: string;
