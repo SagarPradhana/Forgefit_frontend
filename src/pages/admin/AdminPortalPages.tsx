@@ -986,11 +986,13 @@ export function AdminPortalPages({ page }: { page: string }) {
         ) : fetchedPayments.length > 0 ? (
           <>
             <Table
-              headers={["Username", "Name", "Mobile", "Timestamp", "Valuation", "Method", "Type", "Status"]}
+              headers={["Username", "Member", "Timestamp", "Valuation", "Method", "Type", "Status"]}
               rows={fetchedPayments.map((p) => [
                 <span key={`${p.id}-user`} className="text-xs font-bold text-white uppercase tracking-tighter italic">#{p.username || 'System'}</span>,
-                <span key={`${p.id}-name`} className="text-xs font-bold text-slate-300 uppercase">{p.Name || '--'}</span>,
-                <span key={`${p.id}-mobile`} className="text-[10px] font-black text-indigo-400 tracking-widest">{p.mobile || '--'}</span>,
+                <div key={`${p.id}-member`} className="flex flex-col gap-0.5">
+                  <span className="text-xs font-bold text-slate-200 uppercase tracking-tight">{(p as any).name || p.Name || '--'}</span>
+                  <span className="text-[10px] font-black text-indigo-400 tracking-widest">{p.mobile || '--'}</span>
+                </div>,
                 <span key={`${p.id}-date`} className="text-xs font-medium text-slate-300">
                   {new Date(p.payment_date * 1000).toLocaleDateString()}
                 </span>,

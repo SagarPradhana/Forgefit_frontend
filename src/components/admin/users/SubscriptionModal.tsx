@@ -10,9 +10,10 @@ interface SubscriptionModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedUser: any;
+  plans: any[];
 }
 
-export const SubscriptionModal = ({ isOpen, onClose, selectedUser }: SubscriptionModalProps) => {
+export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: SubscriptionModalProps) => {
   const [activeTab, setActiveTab] = useState<"add" | "history">("add");
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [joiningDate, setJoiningDate] = useState(new Date().toISOString().split("T")[0]);
@@ -20,9 +21,6 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser }: Subscriptio
   const [duration, setDuration] = useState<number>(1);
   const [endDate, setEndDate] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
-
-  const { data: plansData, loading: plansLoading } = useGet(API_ENDPOINTS.ADMIN.PLANS);
-  const plans = plansData?.data || [];
 
   const { data: historyData, loading: historyLoading, refetch: refetchHistory } = useGet(
     selectedUser ? `${API_ENDPOINTS.ADMIN.SUBSCRIPTION_HISTORY}?user_id=${selectedUser.id}` : null

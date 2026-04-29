@@ -17,8 +17,10 @@ import {
   AlertCircle,
   XCircle,
   QrCode,
-  RefreshCw
+  RefreshCw,
+  Clock,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useGet } from "../hooks/useApi";
 import confetti from "canvas-confetti";
 import { api } from "../utils/httputils";
@@ -34,12 +36,14 @@ function UserDashboard() {
   const [showExpiryModal, setShowExpiryModal] = useState(userProfile.daysLeft <= 5);
   const [idCardOpen, setIdCardOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const navigate = useNavigate();
 
   // Fetch my-details for ID Card
   const { data: myDetailsRes } = useGet(
     userId ? API_ENDPOINTS.USER.MY_DETAILS(userId) : null
   );
-  const myDetails = myDetailsRes?.data?.[0] || myDetailsRes?.data || myDetailsRes || {};
+  const rawData = myDetailsRes || {};
+  const myDetails = typeof rawData === 'object' && !Array.isArray(rawData) ? rawData : {};
 
   // Auto-sync plan on home mount
   const { refetch: syncUserPlan } = useGet(
@@ -111,6 +115,13 @@ function UserDashboard() {
           >
             <RefreshCw size={18} className={isSyncing ? "animate-spin" : ""} />
             {isSyncing ? "Syncing..." : "Re-sync Plan"}
+          </GlowButton>
+          <GlowButton
+            onClick={() => navigate("/user/subscription?history=1")}
+            className="h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all shadow-lg shadow-emerald-500/10"
+          >
+            <Clock size={18} />
+            Sub History
           </GlowButton>
           <GlowButton
             onClick={() => setIdCardOpen(true)}
@@ -294,7 +305,7 @@ function UserDashboard() {
       <IdCardModal
         isOpen={idCardOpen}
         onClose={() => setIdCardOpen(false)}
-        user={{ id: userId || '', role: myDetails.role || 'user' }}
+        user={{ id: userId || '', name: userName || '', ...myDetails }}
         portalType="user"
       />
     </div>

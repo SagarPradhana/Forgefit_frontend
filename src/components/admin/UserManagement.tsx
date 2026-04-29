@@ -5,6 +5,7 @@ import { Search, Grid, List, Plus, Filter } from "lucide-react";
 import { motion } from "framer-motion";
 import { useGet, useMutation } from "../../hooks/useApi";
 import { API_ENDPOINTS } from "../../utils/url";
+import { api } from "../../utils/httputils";
 import { toast } from "../../store/toastStore";
 import { useLocation } from "react-router-dom";
 
@@ -398,9 +399,16 @@ export function UserManagement() {
     deleteDocument(url);
   };
 
-  const handleOpenIdCard = (user: any) => {
-    setSelectedUserForCard(user);
-    setIdCardOpen(true);
+  const handleOpenIdCard = async (user: any) => {
+    try {
+      const res = await api.get(API_ENDPOINTS.USER.MY_DETAILS(user.id));
+      // res is the direct JSON object containing user details and latest_subscription_details
+      const fullUserDetails = { ...user, ...res };
+      setSelectedUserForCard(fullUserDetails);
+      setIdCardOpen(true);
+    } catch (err) {
+      toast.error("Failed to fetch user details for ID Card.");
+    }
   };
 
   const handleDeleteUser = (userId: string) => {
@@ -593,6 +601,7 @@ export function UserManagement() {
         isOpen={subscriptionModalOpen}
         onClose={() => setSubscriptionModalOpen(false)}
         selectedUser={selectedUserForSubscription}
+        plans={plans}
       />
 
       <PasswordResetModal
@@ -606,7 +615,7 @@ export function UserManagement() {
         <IdCardModal
           isOpen={idCardOpen}
           onClose={() => setIdCardOpen(false)}
-          user={{ id: selectedUserForCard.id, name: selectedUserForCard.name, role: selectedUserForCard.role }}
+          user={selectedUserForCard}
           portalType="admin"
         />
       )}

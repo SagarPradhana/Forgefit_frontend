@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useGymStore } from "../../store/gymStore";
 import {
@@ -59,7 +60,17 @@ export function UserPortalPages({ page }: { page: string }) {
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [upgradeDescription, setUpgradeDescription] = useState("");
+  const [historyStatusFilter, setHistoryStatusFilter] = useState<"" | "active" | "expired">("")
 
+  const location = useLocation();
+
+  // Auto-open history modal when navigated with ?history=1 (e.g. from dashboard)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("history") === "1" && page === "subscription") {
+      setHistoryModalOpen(true);
+    }
+  }, [location.search, page]);
   // ── Products State ──
   const [fetchedProducts, setFetchedProducts] = useState<AppProductResponse[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
@@ -220,47 +231,48 @@ export function UserPortalPages({ page }: { page: string }) {
       ts ? new Date(Number(ts) * 1000).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
     return (
-      <div className="space-y-6">
-        <SectionTitle title={t("profile")} subtitle="Your membership profile and health details" />
-
-        {/* Hero */}
-        <GlassCard className="p-6 bg-gradient-to-br from-indigo-500/10 to-orange-500/5 border-indigo-500/20 relative overflow-hidden">
+      <div className="space-y-4 md:space-y-6">
+        {/* Hero Card */}
+        <GlassCard className="p-6 md:p-10 border-indigo-500/20 bg-gradient-to-br from-indigo-500/10 to-transparent relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[100px]" />
-          <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
+          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 relative z-10">
             <div className="relative shrink-0">
               {user.profile_image_path ? (
                 <img src={user.profile_image_path} alt={user.name || ""}
-                  className="h-24 w-24 rounded-2xl object-cover shadow-2xl shadow-indigo-500/30 border-2 border-indigo-500/30" />
+                  className="h-24 w-24 md:h-32 md:w-32 rounded-2xl md:rounded-3xl object-cover shadow-2xl shadow-indigo-500/30 border-2 border-indigo-500/30" />
               ) : (
-                <div className="h-24 w-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-orange-400 flex items-center justify-center text-4xl font-black text-white shadow-2xl shadow-indigo-500/40">
+                <div className="h-24 w-24 md:h-32 md:w-32 rounded-2xl md:rounded-3xl bg-gradient-to-br from-indigo-500 to-orange-400 flex items-center justify-center text-3xl md:text-5xl font-black text-white shadow-2xl shadow-indigo-500/40">
                   {user.name?.[0]?.toUpperCase() || "U"}
                 </div>
               )}
-              <span className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-lg bg-indigo-500 text-[9px] font-black uppercase tracking-widest text-white">
+              <span className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-lg bg-indigo-500 text-[9px] font-black uppercase tracking-widest text-white shadow-lg">
                 {user.role || "member"}
               </span>
             </div>
-            <div className="text-center sm:text-left space-y-1.5">
-              <h2 className="text-2xl font-black text-white uppercase tracking-tighter italic">{user.name}</h2>
+            <div className="text-center md:text-left space-y-2">
+              <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tighter italic leading-none">{user.name}</h2>
               {user.username && <p className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.3em]">{user.username}</p>}
-              <p className="text-xs text-slate-400 uppercase tracking-wide">Gym Member</p>
+              <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">Gym Member</p>
               {user.joining_date && (
-                <p className="text-[10px] text-slate-500 font-bold">Joined {fmtDate(user.joining_date)}</p>
+                <p className="text-[10px] text-slate-500 font-bold">
+                  Member since {fmtDate(user.joining_date)}
+                </p>
               )}
             </div>
           </div>
         </GlassCard>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Contact */}
-          <GlassCard className="p-6 space-y-4">
-            <h3 className="text-sm font-black text-white uppercase tracking-widest border-b border-white/10 pb-3">Contact Details</h3>
+          {/* Contact Info */}
+          <GlassCard className="p-6 space-y-5">
+            <h3 className="text-sm font-black text-white uppercase tracking-widest border-b border-white/10 pb-3">Contact Information</h3>
             {[
-              { label: "Full Name", value: user.name },
-              { label: "Username", value: user.username },
-              { label: "Email", value: user.email },
-              { label: "Mobile", value: user.mobile },
-              { label: "Address", value: user.address },
+              { label: "Full Name",    value: user.name },
+              { label: "Username",     value: user.username },
+              { label: "Email",        value: user.email },
+              { label: "Mobile",       value: user.mobile },
+              { label: "Address",      value: user.address },
+              { label: "Joining Date", value: fmtDate(user.joining_date) },
             ].map(({ label, value }) => (
               <div key={label} className="grid gap-0.5">
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{label}</p>
@@ -270,23 +282,27 @@ export function UserPortalPages({ page }: { page: string }) {
           </GlassCard>
 
           {/* Health & Vitals */}
-          <GlassCard className="p-6 space-y-4">
+          <GlassCard className="p-6 space-y-5">
             <h3 className="text-sm font-black text-white uppercase tracking-widest border-b border-white/10 pb-3">Health & Vitals</h3>
-            {[
-              { label: "Date of Birth", value: fmtDate(user.metadata?.dob) },
-              { label: "Gender", value: user.metadata?.gender },
-              { label: "Height (cm)", value: user.metadata?.height ? `${user.metadata.height} cm` : null },
-              { label: "Weight (kg)", value: user.metadata?.weight ? `${user.metadata.weight} kg` : null },
-              { label: "Fitness Goal", value: user.metadata?.fitness_goal },
-              { label: "Workout Time", value: user.metadata?.workout_time },
-              { label: "Medical Conditions", value: user.metadata?.medical_conditions },
-              { label: "Emergency Contact", value: user.metadata?.emergency_contact },
-            ].map(({ label, value }) => (
-              <div key={label} className="grid gap-0.5">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{label}</p>
-                <p className="text-sm text-white font-bold capitalize">{value || "—"}</p>
-              </div>
-            ))}
+            <div className="space-y-3">
+              {[
+                { label: "Date of Birth",       value: fmtDate(user.metadata?.dob) },
+                { label: "Gender",              value: user.metadata?.gender },
+                { label: "Height",              value: user.metadata?.height ? `${user.metadata.height} cm` : null },
+                { label: "Weight",              value: user.metadata?.weight ? `${user.metadata.weight} kg` : null },
+                { label: "Fitness Goal",        value: user.metadata?.fitness_goal },
+                { label: "Workout Time",        value: user.metadata?.workout_time },
+                { label: "Medical Conditions",  value: user.metadata?.medical_conditions },
+                { label: "Emergency Contact",   value: user.metadata?.emergency_contact },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-indigo-500/30 transition-all group">
+                  <div className="grid gap-0.5 flex-1">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{label}</p>
+                    <p className="text-sm text-white font-bold capitalize group-hover:text-indigo-100 transition-colors">{value || "—"}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </GlassCard>
         </div>
 
@@ -296,12 +312,12 @@ export function UserPortalPages({ page }: { page: string }) {
             <h3 className="text-sm font-black text-white uppercase tracking-widest border-b border-white/10 pb-3 mb-4">Active Subscription</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {[
-                { label: "Plan", value: sub.subscription_name },
-                { label: "Duration", value: sub.duration_in_months ? `${sub.duration_in_months} Months` : null },
-                { label: "Amount", value: sub.amount ? `₹${Number(sub.amount).toLocaleString("en-IN")}` : null },
+                { label: "Plan",       value: sub.subscription_name },
+                { label: "Duration",   value: sub.duration_in_months ? `${sub.duration_in_months} Months` : null },
+                { label: "Amount",     value: sub.amount ? `₹${Number(sub.amount).toLocaleString("en-IN")}` : null },
                 { label: "Start Date", value: fmtDate(sub.start_date) },
-                { label: "End Date", value: fmtDate(sub.end_date) },
-                { label: "Status", value: sub.status === true ? "Active" : sub.status === false ? "Inactive" : String(sub.status ?? "—") },
+                { label: "End Date",   value: fmtDate(sub.end_date) },
+                { label: "Status",     value: sub.status === true ? "Active" : sub.status === false ? "Inactive" : String(sub.status ?? "—") },
               ].map(({ label, value }) => (
                 <div key={label} className="grid gap-0.5">
                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{label}</p>
@@ -492,22 +508,58 @@ export function UserPortalPages({ page }: { page: string }) {
 
         {/* --- HISTORY MODAL --- */}
         <Modal open={historyModalOpen} onClose={() => setHistoryModalOpen(false)} title="Subscription History">
-          <div className="p-4 max-h-[60vh] overflow-y-auto">
-            {subscriptionHistory.length === 0 ? (
-              <EmptyState title="No History" hint="You don't have any past subscriptions." />
-            ) : (
-              <Table
-                headers={["Plan", "Amount", "Duration", "Start Date", "End Date", "Status"]}
-                rows={subscriptionHistory.map((h) => [
-                  "Subscription", // Replace with plan name if API includes it
-                  `₹${h.amount}`,
-                  `${h.duration_in_months} months`,
-                  fmtDate(h.start_date),
-                  fmtDate(h.end_date),
-                  <StatusBadge key={h.id} status={h.status ? "Active" : "Expired"} />
-                ])}
-              />
-            )}
+          <div className="p-4 space-y-4">
+            {/* Filter Pills */}
+            <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
+              {([["", "All"], ["active", "Active"], ["expired", "Expired"]] as const).map(([val, label]) => (
+                <button
+                  key={val}
+                  onClick={() => setHistoryStatusFilter(val)}
+                  className={`flex-1 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                    historyStatusFilter === val
+                      ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div className="max-h-[55vh] overflow-y-auto">
+              {subscriptionHistory.length === 0 ? (
+                <EmptyState title="No History" hint="You don't have any past subscriptions." />
+              ) : (() => {
+                const filtered = subscriptionHistory.filter(h =>
+                  historyStatusFilter === "" ? true
+                  : historyStatusFilter === "active" ? h.status === true
+                  : h.status === false
+                );
+                return filtered.length === 0 ? (
+                  <EmptyState title="No Records" hint={`No ${historyStatusFilter} subscriptions found.`} />
+                ) : (
+                  <div className="space-y-3">
+                    {filtered.map((h) => (
+                      <div key={h.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-indigo-500/20 transition-all group">
+                        <div className="space-y-1">
+                          <p className="text-xs font-black text-white uppercase tracking-tight">
+                            {(h as any).subscription_name || "Subscription"}
+                          </p>
+                          <div className="flex items-center gap-3 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                            <span>{fmtDate(h.start_date)} → {fmtDate(h.end_date)}</span>
+                            <span className="text-indigo-400">{h.duration_in_months} mo</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="text-sm font-black text-emerald-400">₹{Number(h.amount).toLocaleString("en-IN")}</span>
+                          <StatusBadge status={h.status ? "Active" : "Expired"} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         </Modal>
       </div>
