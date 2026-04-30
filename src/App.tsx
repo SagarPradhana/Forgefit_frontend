@@ -1,11 +1,13 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
+import { useGymStore } from "./store/gymStore";
 import DashboardLayout from "./pages/DashboardLayout";
 import { NotFound404, LoadingSpinner } from "./components/ui/primitives";
 import { ToastContainer } from "./components/ui/ToastContainer";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dumbbell } from "lucide-react";
+import { adminAppConfigService } from "./services/adminAppConfigService";
 
 const HomePage = lazy(() =>
   import("./pages/public/HomePage").then((m) => ({ default: m.HomePage })),
@@ -115,6 +117,34 @@ const LoadingScreen = () => (
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
+  const { updateAppConfig, setDashboardColorTheme } = useGymStore();
+
+  // Load app config on app start and apply theme, language, currency, timezone
+  useEffect(() => {
+    const loadAppConfig = async () => {
+      try {
+        const res = await adminAppConfigService.getConfig() as any;
+        if (res && res.id) {
+          // Apply theme based on theme_name
+          if (res.theme_name === "dark") {
+            setDashboardColorTheme("theme1");
+          } else if (res.theme_name === "light") {
+            setDashboardColorTheme("theme5");
+          }
+          
+          // Update app config in store
+          updateAppConfig({
+            timezone: res.timezone || "0",
+            currency: res.currency || "USD",
+            language: res.language || "en",
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load app config:", err);
+      }
+    };
+    loadAppConfig();
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1200);

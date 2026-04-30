@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -14,6 +14,7 @@ import { api } from "../utils/httputils";
 import { API_ENDPOINTS } from "../utils/url";
 import { DateRangeFilter, type DateRange } from "../components/ui/DateRangeFilter";
 import { QRScannerModal } from "../components/admin/users/QRScannerModal";
+import { useGymStore } from "../store/gymStore";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const getMonthRange = () => {
@@ -31,10 +32,11 @@ const toUnix = (d: string, end = false) => {
   end ? dt.setHours(23, 59, 59, 999) : dt.setHours(0, 0, 0, 0);
   return Math.floor(dt.getTime() / 1000);
 };
-const fmt = (n: number) =>
-  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n ?? 0);
 const fmtDate = (ts: number) =>
   ts ? new Date(ts * 1000).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+
+const createFmt = (currency: string) => (n: number) =>
+  new Intl.NumberFormat("en-IN", { style: "currency", currency, maximumFractionDigits: 0 }).format(n ?? 0);
 
 // ─── Badge ────────────────────────────────────────────────────────────────────
 function Badge({ v }: { v: string }) {
@@ -113,7 +115,8 @@ function SkeletonRows({ n = 5 }: { n?: number }) {
 }
 
 // ─── Custom Tooltip for Bar Chart ─────────────────────────────────────────────
-function RevTooltip({ active, payload, label }: any) {
+function RevTooltip({ active, payload, label, currency = "USD" }: any) {
+  const fmt = createFmt(currency);
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-slate-900 border border-white/10 rounded-xl p-3 text-xs">
@@ -173,6 +176,10 @@ export default function AdminDashboard() {
 
   const setLoad = (key: string, val: boolean) =>
     setLoading((prev) => ({ ...prev, [key]: val }));
+
+  const { appConfig } = useGymStore();
+  const currency = appConfig?.currency || "USD";
+  const fmt = createFmt(currency);
 
   // ── Date params helper — uses unix timestamps from DateRange directly ──
   const dateParams = useCallback((range: DateRange) => {
@@ -566,7 +573,7 @@ export default function AdminDashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                 <XAxis dataKey="month_label" stroke="#475569" tick={{ fontSize: 11, fontWeight: 700 }} />
                 <YAxis stroke="#475569" tick={{ fontSize: 10 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
-                <Tooltip content={<RevTooltip />} />
+                <Tooltip content={<RevTooltip currency={currency} />} />
                 <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700, paddingTop: 12 }} />
                 <Bar dataKey="subscription_revenue" name="Subscriptions" fill="#6366f1" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="product_revenue"      name="Products"      fill="#f59e0b" radius={[4, 4, 0, 0]} />

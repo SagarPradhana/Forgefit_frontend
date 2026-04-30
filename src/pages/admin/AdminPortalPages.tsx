@@ -29,6 +29,16 @@ import { API_ENDPOINTS } from "../../utils/url";
 import { api } from "../../utils/httputils";
 import { useTranslation } from "react-i18next";
 import { DateRangeFilter, type DateRange } from "../../components/ui/DateRangeFilter";
+import { getCurrencySymbol, formatCurrency } from "../../utils/currency";
+
+const getDurationLabel = (months: number) => {
+  if (!months) return "1 Month";
+  if (months === 1) return "1 Month";
+  if (months === 3) return "3 Months";
+  if (months === 6) return "6 Months";
+  if (months === 12) return "1 Year";
+  return `${months} Months`;
+};
 
 export function AdminPortalPages({ page }: { page: string }) {
   const { t } = useTranslation();
@@ -41,6 +51,9 @@ export function AdminPortalPages({ page }: { page: string }) {
     updatePublicPageConfig,
     setDesignTheme,
   } = useGymStore();
+
+  const currency = appConfig?.currency || "USD";
+  const currencySymbol = getCurrencySymbol(currency);
 
   const [plans, setPlans] = useState<PlanResponse[]>([]);
   const [plansMeta, setPlansMeta] = useState({
@@ -333,9 +346,9 @@ export function AdminPortalPages({ page }: { page: string }) {
               headers={["Plan Details", "Actual Price", "Valuation", "Duration", "Description", "Actions"]}
               rows={plans.map((p) => [
                 <span className="font-bold text-white uppercase tracking-tight" key={p.id}>{p.name}</span>,
-                <span className="text-slate-400 line-through text-xs" key={`${p.id}-actual`}>${p.actual_price}</span>,
-                <span className="text-emerald-400 font-black" key={`${p.id}-price`}>${p.price}</span>,
-                <span className="text-indigo-300 font-bold" key={`${p.id}-dur`}>{p.duration_in_months} Months</span>,
+                <span className="text-slate-400 line-through text-xs" key={`${p.id}-actual`}>{currencySymbol}{p.actual_price}</span>,
+                <span className="text-emerald-400 font-black" key={`${p.id}-price`}>{currencySymbol}{p.price}</span>,
+                <span className="text-indigo-300 font-bold" key={`${p.id}-dur`}>{getDurationLabel(p.duration_in_months)}</span>,
                 <span className="text-slate-400 text-xs truncate max-w-xs block" key={`${p.id}-desc`}>{p.description}</span>,
                 <div key={`${p.id}-actions`} className="flex gap-4">
                   <button
@@ -454,7 +467,7 @@ export function AdminPortalPages({ page }: { page: string }) {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Actual Price ($)</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Actual Price ({currencySymbol})</label>
                 <input
                   className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
                   placeholder="0"
@@ -466,7 +479,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Strategic Valuation ($)</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Strategic Valuation ({currencySymbol})</label>
                 <input
                   className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
                   placeholder="0"
@@ -478,16 +491,19 @@ export function AdminPortalPages({ page }: { page: string }) {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Duration (Months)</label>
-                <input
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Duration</label>
+                <select
                   className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
-                  placeholder="1"
-                  type="number"
                   value={planForm.duration_in_months}
                   onChange={(e) =>
                     setPlanForm({ ...planForm, duration_in_months: e.target.value })
                   }
-                />
+                >
+                  <option value="1">1 Month</option>
+                  <option value="3">3 Months</option>
+                  <option value="6">6 Months</option>
+                  <option value="12">1 Year</option>
+                </select>
               </div>
             </div>
 
@@ -696,7 +712,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                   </div>
                 </div>,
                 <span key={`${p.id}-cat`} className="text-[10px] font-black uppercase tracking-widest text-slate-400">{p.category}</span>,
-                <span key={`${p.id}-price`} className="text-emerald-400 font-bold">${p.price}</span>,
+                <span key={`${p.id}-price`} className="text-emerald-400 font-bold">{currencySymbol}{p.price}</span>,
                 <div key={`${p.id}-stock`} className="flex flex-col items-center gap-1">
                   <span className={`text-xs font-bold ${p.stock_count < 10 ? 'text-red-400' : 'text-indigo-300'}`}>{p.stock_count}</span>
                   {p.stock_count < 10 && <span className="text-[8px] font-black uppercase text-red-500/80 animate-pulse">Low Stock</span>}
@@ -827,7 +843,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Price ($)</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Price ({currencySymbol})</label>
                 <input
                   className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
                   type="number"
@@ -993,7 +1009,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                 <span key={`${p.id}-date`} className="text-xs font-medium text-slate-300">
                   {new Date(p.payment_date * 1000).toLocaleDateString()}
                 </span>,
-                <span key={`${p.id}-amt`} className="text-emerald-400 font-black italic">${p.amount}</span>,
+                <span key={`${p.id}-amt`} className="text-emerald-400 font-black italic">{currencySymbol}{p.amount}</span>,
                 <span key={`${p.id}-method`} className="text-[10px] font-black uppercase text-indigo-400 tracking-widest">{p.payment_method}</span>,
                 <span key={`${p.id}-type`} className="text-[10px] font-bold text-slate-400 uppercase">{p.purchase_type}</span>,
                 <StatusBadge key={`${p.id}-status`} status={p.status.charAt(0).toUpperCase() + p.status.slice(1) as any} />,
@@ -1108,7 +1124,7 @@ export function AdminPortalPages({ page }: { page: string }) {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Transaction Value ($)</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Transaction Value ({currencySymbol})</label>
                 <input
                   className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
                   type="number"
@@ -1184,7 +1200,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                 >
                   <option value="">Choose Product</option>
                   {fetchedProducts.map((p: any) => (
-                    <option key={p.id} value={p.id}>{p.name} (${p.price})</option>
+                    <option key={p.id} value={p.id}>{p.name} ({currencySymbol}{p.price})</option>
                   ))}
                 </select>
               </div>

@@ -94,15 +94,19 @@ export async function httpFetch(endpoint: string | null | undefined, options: Re
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
+      const errorMessage = 
+        data?.message || 
+        data?.error || 
+        data?.msg ||
+        data?.errors?.[0]?.msg || 
+        data?.errors?.[0]?.message ||
+        `Error (${response.status})`;
+      
+      // Only show toast if not handled by caller
       if (showToast) {
-        const errorMessage = data?.message || data?.error || data?.errors?.[0]?.msg || "Something went wrong";
         toast.error(errorMessage);
       }
       throw data;
-    }
-
-    if (showToast && fetchOptions.method && fetchOptions.method !== "GET") {
-      toast.success(data?.message || "Operation successful");
     }
 
     return data;
