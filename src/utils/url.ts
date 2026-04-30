@@ -81,6 +81,7 @@ export const API_ENDPOINTS = {
     CONSISTENCY_TRACKER: (userId: string) => `/api/app/dashboard/consistency-tracker/${userId}`,
     MY_WORKOUT_PLAN: (userId: string, day: string) => `/api/app/dashboard/my-workout-plan/${userId}/${day}`,
     MY_DIET_PLAN: (userId: string, day: string) => `/api/app/dashboard/my-diet-plan/${userId}/${day}`,
+    SUBSCRIPTION_POPUP: (userId: string) => `/api/app/dashboard/subscription-popup/${userId}`,
     LANGUAGES: "/api/app/languages",
     TIMEZONES: "/api/app/timezones",
   },

@@ -22,6 +22,7 @@ export interface AppConfigData {
   tiktok_url: string;
   youtube_url: string;
   website_url: string;
+  expiry_reminder_days: number;
 }
 
 export interface AppConfigResponse extends Partial<AppConfigData> {

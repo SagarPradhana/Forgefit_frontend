@@ -39,6 +39,7 @@ export function AppConfigTab() {
     tiktok_url: "",
     youtube_url: "",
     website_url: "",
+    expiry_reminder_days: 7,
   });
   const [logoPreview, setLogoPreview] = useState<string>("");
   const [languages, setLanguages] = useState<Record<string, string>>({});
@@ -100,6 +101,7 @@ export function AppConfigTab() {
           tiktok_url: cfg.tiktok_url || "",
           youtube_url: cfg.youtube_url || "",
           website_url: cfg.website_url || "",
+          expiry_reminder_days: Number(cfg.expiry_reminder_days) || 7,
         });
         if (cfg.logo_image_path) setLogoPreview(cfg.logo_image_path);
       }
@@ -194,6 +196,18 @@ export function AppConfigTab() {
               style={{ colorScheme: "dark" }}
               value={formatHoursToTime(config.gym_in_out_limit_in_hrs)}
               onChange={(e) => setConfig({ ...config, gym_in_out_limit_in_hrs: parseTimeToHours(e.target.value) })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Expiry Reminder (Days)</label>
+            <input
+              type="number"
+              className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
+              placeholder="7"
+              min="1"
+              max="30"
+              value={config.expiry_reminder_days || ""}
+              onChange={(e) => setConfig({ ...config, expiry_reminder_days: parseInt(e.target.value) || 7 })}
             />
           </div>
           <div>

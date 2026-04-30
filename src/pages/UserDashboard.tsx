@@ -17,12 +17,11 @@ import {
   XCircle,
   QrCode,
   RefreshCw,
-  Clock,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useGet } from "../hooks/useApi";
-import confetti from "canvas-confetti";
 import { api } from "../utils/httputils";
+import confetti from "canvas-confetti";
 import { API_ENDPOINTS } from "../utils/url";
 import { toast } from "../store/toastStore";
 import { IdCardModal } from "../components/common/IdCardModal";
@@ -55,13 +54,40 @@ function UserDashboard() {
   const [showExpiryModal, setShowExpiryModal] = useState(false);
   const [idCardOpen, setIdCardOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [subscriptionPopupOpen, setSubscriptionPopupOpen] = useState(false);
+  const [subscriptionPopupData, setSubscriptionPopupData] = useState<{
+    subscription_name: string;
+    remaining_days: number;
+    message: string;
+    show_popup: boolean;
+  } | null>(null);
+  const [popupLoaded, setPopupLoaded] = useState(false);
   const navigate = useNavigate();
 
+  // Fetch subscription popup data FIRST
+  useEffect(() => {
+    if (!userId) return;
+    
+    const fetchPopup = async () => {
+      try {
+        const data = await api.get(API_ENDPOINTS.APP.SUBSCRIPTION_POPUP(userId), { showToast: false });
+        if (data?.show_popup) {
+          setSubscriptionPopupData(data);
+          setSubscriptionPopupOpen(true);
+        }
+      } catch (err) {
+        console.error("Popup fetch error:", err);
+      } finally {
+        setPopupLoaded(true);
+      }
+    };
+    
+    fetchPopup();
+  }, [userId]);
 
-
-  // Auto-sync plan on home mount
+  // Auto-sync plan on home mount (only after popup loaded)
   const { refetch: syncUserPlan } = useGet(
-    userId ? `${API_ENDPOINTS.ADMIN.SYNC_SUBSCRIPTIONS}?user_id=${userId}` : null,
+    userId && popupLoaded ? `${API_ENDPOINTS.ADMIN.SYNC_SUBSCRIPTIONS}?user_id=${userId}` : null,
     {
       onSuccess: () => {
         toast.success("Subscription plan synchronized.");
@@ -73,17 +99,17 @@ function UserDashboard() {
     }
   );
 
-  // Active plan fetch — /current-subscription/{userId}
+  // Active plan fetch — /current-subscription/{userId} (only after popup loaded)
   const { data: activePlanRes, loading: planLoading } = useGet(
-    userId ? API_ENDPOINTS.APP.CURRENT_SUBSCRIPTION(userId) : null
+    userId && popupLoaded ? API_ENDPOINTS.APP.CURRENT_SUBSCRIPTION(userId) : null
   );
   const activePlanData =
     activePlanRes?.data?.[0] ??
     (activePlanRes?.start_date != null ? activePlanRes : null);
 
-  // Consistency Tracker fetch — /consistency-tracker/{userId}
+  // Consistency Tracker fetch — /consistency-tracker/{userId} (only after popup loaded)
   const { data: trackerRes, loading: trackerLoading } = useGet(
-    userId ? API_ENDPOINTS.APP.CONSISTENCY_TRACKER(userId) : null
+    userId && popupLoaded ? API_ENDPOINTS.APP.CONSISTENCY_TRACKER(userId) : null
   );
   const trackerData = trackerRes || {};
 
@@ -650,6 +676,63 @@ function UserDashboard() {
               <p className="text-xs text-slate-500 mt-2">No diet assigned for {dayNames[parseInt(dietDay)]}</p>
             </div>
           )}
+        </div>
+      </Modal>
+
+      {/* SUBSCRIPTION POPUP */}
+      <Modal
+        open={subscriptionPopupOpen}
+        onClose={() => setSubscriptionPopupOpen(false)}
+        title="Subscription Alert"
+        footer={
+          <div className="flex gap-3 justify-center w-full">
+            <button
+              onClick={() => {
+                setSubscriptionPopupOpen(false);
+                navigate("/user/subscription");
+              }}
+              className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest bg-indigo-500 hover:bg-indigo-400 text-white transition-all flex items-center gap-2"
+            >
+              <Zap size={16} />
+              Renew Now
+            </button>
+            <button
+              onClick={() => setSubscriptionPopupOpen(false)}
+              className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest bg-white/5 text-slate-400 hover:text-white border border-white/10 hover:border-white/20 transition-all"
+            >
+              Got It
+            </button>
+          </div>
+        }
+      >
+        <div className="text-center py-4">
+          <div className="relative w-24 h-24 mx-auto mb-6">
+            <div className="absolute inset-0 bg-amber-500/20 rounded-full blur-xl animate-pulse" />
+            <div className="relative h-24 w-24 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-xl shadow-amber-500/20">
+              <AlertCircle size={48} className="text-white" />
+            </div>
+          </div>
+          
+          <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-2">
+            {subscriptionPopupData?.subscription_name || "Subscription"}
+          </h3>
+          
+          {subscriptionPopupData?.remaining_days !== undefined && (
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl mb-4">
+              <span className="text-3xl font-black text-amber-400">{subscriptionPopupData.remaining_days}</span>
+              <span className="text-xs font-bold text-amber-300 uppercase tracking-widest">Days Remaining</span>
+            </div>
+          )}
+          
+          <p className="text-sm text-slate-300 leading-relaxed px-4">
+            {subscriptionPopupData?.message || "Your subscription is active. Keep up the great work!"}
+          </p>
+          
+          <div className="mt-6 pt-4 border-t border-white/10">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+              Renew early to avoid interruption
+            </p>
+          </div>
         </div>
       </Modal>
     </div>
