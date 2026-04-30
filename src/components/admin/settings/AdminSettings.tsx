@@ -4,17 +4,16 @@ import { GlassCard, SectionTitle } from "../../ui/primitives";
 import { AppConfigTab } from "./AppConfigTab";
 import { LocationsTab } from "./LocationsTab";
 import { PublicPagesTab } from "./PublicPagesTab";
-import { DesignThemesTab } from "./DesignThemesTab";
 
 export function AdminSettings() {
   const { t } = useTranslation();
-  const [settingsTab, setSettingsTab] = useState<"app" | "locations" | "pages" | "design">("app");
+  const [settingsTab, setSettingsTab] = useState<"app" | "locations" | "pages">("app");
 
   return (
     <GlassCard>
       <SectionTitle
         title={t("settings") || "Settings"}
-        subtitle="Configure your app, locations, public pages, and design themes."
+        subtitle="Configure your app, locations, and public pages."
       />
 
       {/* Tab Navigation */}
@@ -24,7 +23,6 @@ export function AdminSettings() {
             { id: "app", label: "App Config", icon: "⚙️" },
             { id: "locations", label: "Locations", icon: "📍" },
             { id: "pages", label: "Public Pages", icon: "📄" },
-            { id: "design", label: "Design Themes", icon: "🎨" },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -47,7 +45,6 @@ export function AdminSettings() {
         {settingsTab === "app" && <AppConfigTab />}
         {settingsTab === "locations" && <LocationsTab />}
         {settingsTab === "pages" && <PublicPagesTab />}
-        {settingsTab === "design" && <DesignThemesTab />}
       </div>
     </GlassCard>
   );

@@ -1,15 +1,196 @@
-import { useState, useEffect } from "react";
-import { GlowButton, SectionTitle } from "../../ui/primitives";
-import { Trash2, Save } from "lucide-react";
-import { useGymStore } from "../../../store/gymStore";
+import React, { useState, useEffect } from "react";
+import { SectionTitle, Modal } from "../../ui/primitives";
+import { Trash2, Save, Video, Image as ImageIcon, Eye, Download, UploadCloud } from "lucide-react";
 import { toast } from "../../../store/toastStore";
-import { adminPublicPagesService, type FAQ, type Testimonial } from "../../../services/adminPublicPagesService";
+import { adminPublicPagesService, type FAQ, type Testimonial, type PublicBannerType, type PublicBanner, type BannerConfig } from "../../../services/adminPublicPagesService";
+
+const BANNER_CONFIGS: Record<PublicBannerType, BannerConfig> = {
+  common: { type: "common", maxCount: 3, maxSizeMB: 1, allowedTypes: ["image/png", "image/jpg", "image/jpeg"], label: "Home Banners", icon: "🏠" },
+  inspirational: { type: "inspirational", maxCount: 5, maxSizeMB: 1, allowedTypes: ["image/png", "image/jpg", "image/jpeg"], label: "Before/After", icon: "💪" },
+  trainers: { type: "trainers", maxCount: 5, maxSizeMB: 1, allowedTypes: ["image/png", "image/jpg", "image/jpeg"], label: "Trainers", icon: "👨‍🏫" },
+  offers: { type: "offers", maxCount: 3, maxSizeMB: 1, allowedTypes: ["image/png", "image/jpg", "image/jpeg"], label: "Offers", icon: "🏷️" },
+  about: { type: "about", maxCount: 3, maxSizeMB: 1, allowedTypes: ["image/png", "image/jpg", "image/jpeg"], label: "About Us", icon: "📖" },
+  testimonials: { type: "testimonials", maxCount: 1, maxSizeMB: 50, allowedTypes: ["video/mp4", "video/webm"], label: "Testimonials Video", icon: "🎬" },
+};
+
+function BannerItem({ banner, config, onDelete, onPreview }: { banner: PublicBanner; config: BannerConfig; onDelete: () => void; onPreview: () => void }) {
+  const isVideo = config.type === "testimonials";
+  
+  return (
+    <div className="relative group aspect-video rounded-xl overflow-hidden bg-slate-800 border border-white/10">
+      {isVideo ? (
+        <video src={banner.file_path} className="w-full h-full object-cover" />
+      ) : (
+        <img src={banner.file_path} alt={config.label} className="w-full h-full object-cover" />
+      )}
+      
+      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+        <button
+          onClick={onPreview}
+          className="p-2 rounded-lg bg-white/20 hover:bg-white/30 text-white transition-colors"
+          title="Preview"
+        >
+          <Eye size={18} />
+        </button>
+        <a
+          href={banner.file_path}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-2 rounded-lg bg-white/20 hover:bg-white/30 text-white transition-colors"
+          title="Download"
+        >
+          <Download size={18} />
+        </a>
+        <button
+          onClick={onDelete}
+          className="p-2 rounded-lg bg-red-500/80 hover:bg-red-500 text-white transition-colors"
+          title="Delete"
+        >
+          <Trash2 size={18} />
+        </button>
+      </div>
+      
+      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+        <p className="text-[10px] text-white/70 truncate">
+          {new Date(banner.created_date * 1000).toLocaleDateString()}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function BannerSection({ config, banners, onUpload, onDelete }: { config: BannerConfig; banners: PublicBanner[]; onUpload: (file: File) => Promise<void>; onDelete: (id: string) => Promise<void> }) {
+  const [uploading, setUploading] = useState(false);
+  const [previewBanner, setPreviewBanner] = useState<PublicBanner | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const canAddMore = banners.length < config.maxCount;
+  const isVideo = config.type === "testimonials";
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedExt = config.allowedTypes.map(t => t.split("/")[1]);
+    if (!config.allowedTypes.includes(file.type)) {
+      toast.error(`Invalid file type. Allowed: ${allowedExt.join(", ")}`);
+      return;
+    }
+
+    if (file.size > config.maxSizeMB * 1024 * 1024) {
+      toast.error(`File too large. Max size: ${config.maxSizeMB}MB`);
+      return;
+    }
+
+    setUploading(true);
+    try {
+      await onUpload(file);
+      toast.success(`${config.label} uploaded successfully!`);
+    } catch (err) {
+      toast.error("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  return (
+    <>
+      <div className="rounded-2xl bg-gradient-to-br from-white/5 to-white/[0.02] p-6 border border-white/10 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{config.icon}</span>
+            <div>
+              <h4 className="text-base font-black text-white uppercase tracking-tight">{config.label}</h4>
+              <p className="text-[10px] text-slate-500">{banners.length} / {config.maxCount} uploaded</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/5">
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider">
+              {isVideo ? "Video" : "Image"} • {config.maxSizeMB}MB • {config.allowedTypes.map(t => t.split("/")[1].toUpperCase()).join(", ")}
+            </span>
+          </div>
+        </div>
+        
+        {banners.length === 0 && !canAddMore && (
+          <div className="py-12 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-800/50 flex items-center justify-center">
+              <ImageIcon size={32} className="text-slate-600" />
+            </div>
+            <p className="text-sm text-slate-500">No {config.label.toLowerCase()} uploaded yet</p>
+          </div>
+        )}
+
+        <div className={`grid gap-4 ${isVideo ? "grid-cols-1 max-w-md" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-5"}`}>
+          {banners.map((banner) => (
+            <BannerItem
+              key={banner.id}
+              banner={banner}
+              config={config}
+              onDelete={() => onDelete(banner.id)}
+              onPreview={() => setPreviewBanner(banner)}
+            />
+          ))}
+          
+          {canAddMore && (
+            <label className={`relative ${isVideo ? "aspect-video" : "aspect-square"} rounded-2xl border-2 border-dashed border-white/10 hover:border-indigo-500/50 flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-white/5 group`}>
+              <input ref={fileInputRef} type="file" accept={config.allowedTypes.join(",")} className="hidden" onChange={handleFileChange} disabled={uploading} />
+              
+              {uploading ? (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-xs text-indigo-400 font-medium">Uploading...</span>
+                </div>
+              ) : (
+                <>
+                  <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-2 group-hover:bg-indigo-500/20 transition-colors">
+                    {isVideo ? (
+                      <Video size={24} className="text-indigo-400" />
+                    ) : (
+                      <UploadCloud size={24} className="text-indigo-400" />
+                    )}
+                  </div>
+                  <span className="text-xs text-slate-400 font-medium">Click to upload</span>
+                  <span className="text-[10px] text-slate-600">Max {config.maxSizeMB}MB</span>
+                </>
+              )}
+            </label>
+          )}
+        </div>
+      </div>
+
+      {/* Preview Modal */}
+      <Modal
+        open={!!previewBanner}
+        onClose={() => setPreviewBanner(null)}
+        title={previewBanner ? config.label : ""}
+        maxWidth="max-w-3xl"
+      >
+        {previewBanner && (
+          <div className="space-y-4">
+            {previewBanner.type === "testimonials" ? (
+              <video src={previewBanner.file_path} className="w-full rounded-xl" controls />
+            ) : (
+              <img src={previewBanner.file_path} alt={config.label} className="w-full rounded-xl" />
+            )}
+            <div className="flex justify-between items-center text-xs text-slate-500">
+              <span>Created: {new Date(previewBanner.created_date * 1000).toLocaleString()}</span>
+              <a href={previewBanner.file_path} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300">
+                <Download size={14} /> Open Full Size
+              </a>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </>
+  );
+}
 
 export function PublicPagesTab() {
-  const { publicPageConfig, updatePublicPageConfig } = useGymStore();
-  const [form, setForm] = useState(publicPageConfig);
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [banners, setBanners] = useState<Record<PublicBannerType, PublicBanner[]>>({
+    common: [], inspirational: [], trainers: [], offers: [], about: [], testimonials: [],
+  });
 
   useEffect(() => {
     fetchData();
@@ -22,14 +203,43 @@ export function PublicPagesTab() {
       
       const testRes = await adminPublicPagesService.getTestimonials();
       if (testRes?.data) setTestimonials(testRes.data);
+
+      const bannerTypes: PublicBannerType[] = ["common", "inspirational", "trainers", "offers", "about", "testimonials"];
+      const bannerResults: Record<PublicBannerType, PublicBanner[]> = {} as any;
+      
+      for (const type of bannerTypes) {
+        try {
+          const res = await adminPublicPagesService.getBannersByType(type);
+          bannerResults[type] = res?.data || [];
+        } catch {
+          bannerResults[type] = [];
+        }
+      }
+      setBanners(bannerResults);
     } catch (e) {
       console.error(e);
     }
   };
 
-  const handleSave = () => {
-    updatePublicPageConfig(form);
-    toast.success("Public Portal synchronized successfully!");
+  const handleUploadBanner = (type: PublicBannerType) => async (file: File) => {
+    try {
+      await adminPublicPagesService.uploadBanner(file, type);
+      toast.success(`${BANNER_CONFIGS[type].label} uploaded!`);
+      const res = await adminPublicPagesService.getBannersByType(type);
+      setBanners((prev) => ({ ...prev, [type]: res?.data || [] }));
+    } catch (err) {
+      toast.error("Upload failed");
+    }
+  };
+
+  const handleDeleteBanner = (type: PublicBannerType) => async (id: string) => {
+    try {
+      await adminPublicPagesService.deleteBanner(id);
+      toast.success("Deleted successfully");
+      setBanners((prev) => ({ ...prev, [type]: prev[type].filter((b) => b.id !== id) }));
+    } catch (err) {
+      toast.error("Delete failed");
+    }
   };
 
   const handleSaveFaq = async (idx: number) => {
@@ -98,170 +308,46 @@ export function PublicPagesTab() {
 
   return (
     <div className="space-y-8">
-      {/* Home Section */}
-      <div className="rounded-2xl bg-white/5 p-6 border border-white/10 space-y-6">
-        <SectionTitle title="Home / Hero Section" subtitle="The first thing visitors see on your portal" />
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Main Title</label>
-              <input className="w-full rounded-xl bg-white/10 p-3 text-white border border-white/5" value={form.home.heroTitle} onChange={(e) => setForm({ ...form, home: { ...form.home, heroTitle: e.target.value } })} />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Subtitle</label>
-              <textarea rows={3} className="w-full rounded-xl bg-white/10 p-3 text-white border border-white/5" value={form.home.heroSubtitle} onChange={(e) => setForm({ ...form, home: { ...form.home, heroSubtitle: e.target.value } })} />
-            </div>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Hero Image URL</label>
-            <div className="space-y-2">
-              <input className="w-full rounded-xl bg-white/10 p-3 text-white border border-white/5" value={form.home.heroImage} onChange={(e) => setForm({ ...form, home: { ...form.home, heroImage: e.target.value } })} />
-              <div className="flex items-center gap-2">
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="flex-1 text-sm text-slate-300 file:mr-2 file:rounded file:border-0 file:bg-indigo-600 file:px-2 file:py-1 file:text-white file:hover:bg-indigo-700"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = (ev) => {
-                        setForm({ ...form, home: { ...form.home, heroImage: ev.target?.result as string } });
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Features */}
-        <div className="space-y-4 pt-4 border-t border-white/10">
-          <div className="flex items-center justify-between">
-            <h5 className="text-sm font-black text-indigo-400 uppercase tracking-wider">Floating Features</h5>
-            <GlowButton className="px-3 py-1 text-[10px]" onClick={() => setForm({ ...form, home: { ...form.home, features: [...form.home.features, { title: "New Feature", description: "", image: "" }] } })}>
-              + Add Feature
-            </GlowButton>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {form.home.features.map((feat, idx) => (
-              <div key={idx} className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <input className="bg-transparent border-none text-white font-bold text-xs focus:ring-0 w-full" value={feat.title} onChange={(e) => {
-                    const newFeats = [...form.home.features];
-                    newFeats[idx].title = e.target.value;
-                    setForm({ ...form, home: { ...form.home, features: newFeats } });
-                  }} />
-                  <button className="text-red-400/50 hover:text-red-400 shrink-0" onClick={() => {
-                    const newFeats = form.home.features.filter((_, i) => i !== idx);
-                    setForm({ ...form, home: { ...form.home, features: newFeats } });
-                  }}><Trash2 size={14} /></button>
-                </div>
-                <textarea className="w-full rounded-lg bg-black/20 p-2 text-[10px] text-slate-300 border-none" rows={2} placeholder="Description..." value={feat.description} onChange={(e) => {
-                  const newFeats = [...form.home.features];
-                  newFeats[idx].description = e.target.value;
-                  setForm({ ...form, home: { ...form.home, features: newFeats } });
-                }} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* About Section */}
-      <div className="rounded-2xl bg-white/5 p-6 border border-white/10 space-y-6">
-        <SectionTitle title="About Section" subtitle="Share your gym's story and achievements" />
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Main Heading</label>
-              <input className="w-full rounded-xl bg-white/10 p-3 text-white border border-white/5" value={form.about.title} onChange={(e) => setForm({ ...form, about: { ...form.about, title: e.target.value } })} />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Full Narrative</label>
-              <textarea rows={5} className="w-full rounded-xl bg-white/10 p-3 text-white border border-white/5" value={form.about.description} onChange={(e) => setForm({ ...form, about: { ...form.about, description: e.target.value } })} />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">About Image</label>
-              <input className="w-full rounded-xl bg-white/10 p-2 text-xs text-white border border-white/5 mb-2" value={form.about.image} onChange={(e) => setForm({ ...form, about: { ...form.about, image: e.target.value } })} />
-              <input
-                type="file"
-                accept="image/*"
-                className="flex-1 text-[10px] text-slate-300 file:mr-2 file:rounded file:border-0 file:bg-slate-700 file:px-2 file:py-1 file:text-white"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (ev) => {
-                      setForm({ ...form, about: { ...form.about, image: ev.target?.result as string } });
-                    };
-                    reader.readAsDataURL(file);
-                  }
-                }}
-              />
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Metric Counters</h5>
-              <button className="text-indigo-400 hover:text-indigo-300 text-[10px] font-black uppercase" onClick={() => setForm({ ...form, about: { ...form.about, stats: [...form.about.stats, { label: "Stat", value: "0" }] } })}>+ Add Stat</button>
-            </div>
-            <div className="space-y-2">
-              {form.about.stats.map((stat, idx) => (
-                <div key={idx} className="flex gap-2 items-center">
-                  <input className="flex-1 rounded-lg bg-white/5 border border-white/5 p-2 text-xs text-white" value={stat.label} onChange={(e) => {
-                    const newStats = [...form.about.stats];
-                    newStats[idx].label = e.target.value;
-                    setForm({ ...form, about: { ...form.about, stats: newStats } });
-                  }} />
-                  <input className="w-24 rounded-lg bg-indigo-500/10 border border-indigo-500/20 p-2 text-xs text-indigo-400 font-bold" value={stat.value} onChange={(e) => {
-                    const newStats = [...form.about.stats];
-                    newStats[idx].value = e.target.value;
-                    setForm({ ...form, about: { ...form.about, stats: newStats } });
-                  }} />
-                  <button className="text-red-400/50 hover:text-red-400" onClick={() => {
-                    const newStats = form.about.stats.filter((_, i) => i !== idx);
-                    setForm({ ...form, about: { ...form.about, stats: newStats } });
-                  }}><Trash2 size={14} /></button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Services */}
-      <div className="rounded-2xl bg-white/5 p-6 border border-white/10 space-y-6">
-        <div className="flex items-center justify-between">
-          <SectionTitle title="Services Offering" subtitle="Highlight your specialized fitness modules" />
-          <GlowButton className="px-4 py-2 text-xs" onClick={() => setForm({ ...form, services: { ...form.services, services: [...form.services.services, { name: "New Service", description: "", image: "" }] } })}>
-            + Define New Service
-          </GlowButton>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          {form.services.services.map((svc, idx) => (
-            <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/5 group hover:bg-white/[0.08] transition-colors">
-              <div className="flex items-center justify-between mb-3">
-                <input className="bg-transparent border-none text-white font-black uppercase text-sm focus:ring-0 w-full" value={svc.name} onChange={(e) => {
-                  const newSvcs = [...form.services.services];
-                  newSvcs[idx].name = e.target.value;
-                  setForm({ ...form, services: { ...form.services, services: newSvcs } });
-                }} />
-                <button className="text-red-400 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
-                  const newSvcs = form.services.services.filter((_, i) => i !== idx);
-                  setForm({ ...form, services: { ...form.services, services: newSvcs } });
-                }}><Trash2 size={16} /></button>
-              </div>
-              <textarea className="w-full rounded-xl bg-black/20 p-3 text-xs text-slate-400 border-none" rows={2} value={svc.description} onChange={(e) => {
-                const newSvcs = [...form.services.services];
-                newSvcs[idx].description = e.target.value;
-                setForm({ ...form, services: { ...form.services, services: newSvcs } });
-              }} />
-            </div>
-          ))}
-        </div>
+      {/* Public Banners */}
+      <div className="space-y-6">
+        <SectionTitle title="Public Banners" subtitle="Upload images/videos for public pages" />
+        
+        <BannerSection
+          config={BANNER_CONFIGS.common}
+          banners={banners.common}
+          onUpload={handleUploadBanner("common")}
+          onDelete={handleDeleteBanner("common")}
+        />
+        <BannerSection
+          config={BANNER_CONFIGS.inspirational}
+          banners={banners.inspirational}
+          onUpload={handleUploadBanner("inspirational")}
+          onDelete={handleDeleteBanner("inspirational")}
+        />
+        <BannerSection
+          config={BANNER_CONFIGS.trainers}
+          banners={banners.trainers}
+          onUpload={handleUploadBanner("trainers")}
+          onDelete={handleDeleteBanner("trainers")}
+        />
+        <BannerSection
+          config={BANNER_CONFIGS.offers}
+          banners={banners.offers}
+          onUpload={handleUploadBanner("offers")}
+          onDelete={handleDeleteBanner("offers")}
+        />
+        <BannerSection
+          config={BANNER_CONFIGS.about}
+          banners={banners.about}
+          onUpload={handleUploadBanner("about")}
+          onDelete={handleDeleteBanner("about")}
+        />
+        <BannerSection
+          config={BANNER_CONFIGS.testimonials}
+          banners={banners.testimonials}
+          onUpload={handleUploadBanner("testimonials")}
+          onDelete={handleDeleteBanner("testimonials")}
+        />
       </div>
 
       {/* Testimonials & FAQs */}
@@ -321,12 +407,6 @@ export function PublicPagesTab() {
             ))}
           </div>
         </div>
-      </div>
-
-      <div className="flex justify-end pt-4">
-        <GlowButton className="px-12 py-3" onClick={handleSave}>
-          Sync Public Database
-        </GlowButton>
       </div>
     </div>
   );

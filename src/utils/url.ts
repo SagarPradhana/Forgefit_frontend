@@ -91,6 +91,9 @@ export const API_ENDPOINTS = {
     TESTIMONIAL: "/api/public/testimonial",
     TESTIMONIALS: "/api/public/testimonials",
     TESTIMONIAL_DETAIL: (id: string) => `/api/public/testimonial/${id}`,
+    UPLOAD_BANNERS: "/api/public/upload-public-banners-files",
+    BANNERS_DETAILS: (type: string) => `/api/public/public-banners-details?type=${type}`,
+    BANNER_DELETE: (id: string) => `/api/public/public-banners/${id}`,
   }
 } as const;
 
