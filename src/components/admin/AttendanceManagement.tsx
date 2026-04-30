@@ -16,9 +16,20 @@ type AttendanceView = "grid" | "list";
 
 export function AttendanceManagement() {
   const { t } = useTranslation();
+  const toUnix = (d: string, end = false) => {
+    const dt = new Date(d);
+    end ? dt.setHours(23, 59, 59, 999) : dt.setHours(0, 0, 0, 0);
+    return Math.floor(dt.getTime() / 1000);
+  };
+
   const [viewType, setViewType] = useState<AttendanceView>("grid");
   const [searchQuery, setSearchQuery] = useState("");
-  const [dateRange, setDateRange] = useState<DateRange>({ label: "Today" });
+  const today = new Date().toISOString().split('T')[0];
+  const [dateRange, setDateRange] = useState<DateRange>({ 
+    label: "Today", 
+    from_date: toUnix(today, false),
+    to_date: toUnix(today, true)
+  });
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<AttendanceResponse | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -81,7 +92,13 @@ export function AttendanceManagement() {
   useEffect(() => {
     fetchRecords();
     fetchStats();
-  }, [fetchRecords, fetchStats]);
+  }, []);
+
+  // Refetch when filters change
+  useEffect(() => {
+    fetchRecords();
+    fetchStats();
+  }, [searchQuery, dateRange]);
 
   const handleSave = async () => {
     try {

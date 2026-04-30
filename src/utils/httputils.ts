@@ -119,8 +119,23 @@ export async function httpFetch(endpoint: string | null | undefined, options: Re
 }
 
 export const api = {
-  get: (url: string, options?: RequestOptions) =>
-    httpFetch(url, { ...options, method: "GET" }),
+  get: (url: string, params?: any, options?: RequestOptions) => {
+    // Build query string from params
+    let finalUrl = url;
+    if (params && Object.keys(params).length > 0) {
+      const queryString = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== "") {
+          queryString.append(key, String(value));
+        }
+      });
+      const query = queryString.toString();
+      if (query) {
+        finalUrl = `${url}${url.includes("?") ? "&" : "?"}${query}`;
+      }
+    }
+    return httpFetch(finalUrl, { ...options, method: "GET" });
+  },
   post: (url: string, body: any, options?: RequestOptions) =>
     httpFetch(url, { ...options, method: "POST", body: JSON.stringify(body) }),
   put: (url: string, body: any, options?: RequestOptions) =>

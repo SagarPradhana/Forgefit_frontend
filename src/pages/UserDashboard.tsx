@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   Calendar,
   Zap,
-  Circle,
   Dumbbell,
   AlertCircle,
   XCircle,
@@ -53,7 +52,6 @@ function UserDashboard() {
     joining_date,
     username
   };
-  const [workoutDone, setWorkoutDone] = useState(false);
   const [showExpiryModal, setShowExpiryModal] = useState(false);
   const [idCardOpen, setIdCardOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -104,11 +102,25 @@ function UserDashboard() {
   const isPresentToday =
     todayTrackerEntry.length > 0 && todayTrackerEntry[0].attended === true;
 
-  const [exercises, setExercises] = useState([
-    { id: 1, name: "Bench Press", sets: "4 Sets", reps: "10-12 Reps", target: "Power", done: false },
-    { id: 2, name: "Push Ups", sets: "3 Sets", reps: "Failure", target: "Endurance", done: false },
-    { id: 3, name: "Cable Fly", sets: "3 Sets", reps: "15 Reps", target: "Definition", done: false }
-  ]);
+  const [workoutDay, setWorkoutDay] = useState("1");
+  const [dietDay, setDietDay] = useState("1");
+  const [completedExercises, setCompletedExercises] = useState<number[]>([]);
+  const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [workoutModalOpen, setWorkoutModalOpen] = useState(false);
+  const [dietModalOpen, setDietModalOpen] = useState(false);
+
+  const { data: workoutData, loading: workoutLoading } = useGet(
+    userId ? API_ENDPOINTS.APP.MY_WORKOUT_PLAN(userId, workoutDay) : null
+  );
+  
+  const { data: dietData, loading: dietLoading } = useGet(
+    userId ? API_ENDPOINTS.APP.MY_DIET_PLAN(userId, dietDay) : null
+  );
+
+  const workoutPlan = workoutData;
+  const dietPlan = dietData;
+
+  const dayNames = ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
   // Plan Dates
   const planInfo = activePlanData ? {
@@ -140,14 +152,19 @@ function UserDashboard() {
     }
   }, [planInfo.daysRemaining]);
 
-  const toggleExercise = (id: number) => {
-    setExercises(prev => prev.map(ex => ex.id === id ? { ...ex, done: !ex.done } : ex));
+  const toggleExercise = (idx: number) => {
+    if (completedExercises.includes(idx)) {
+      setCompletedExercises(prev => prev.filter(i => i !== idx));
+    } else {
+      setCompletedExercises(prev => [...prev, idx]);
+    }
   };
 
-  const allDone = exercises.every(ex => ex.done);
+  const allDone = workoutPlan?.workout_details?.workouts?.length > 0 && 
+    completedExercises.length === workoutPlan.workout_details.workouts.length;
 
-  const handleCompleteWorkout = () => {
-    setWorkoutDone(true);
+  const handleCompleteSession = () => {
+    setSessionCompleted(true);
     confetti({
       particleCount: 100,
       spread: 70,
@@ -186,6 +203,171 @@ function UserDashboard() {
             <span className="truncate">{t("profile")} ID</span>
           </GlowButton>
         </div>
+      </div>
+
+      {/* --- TODAY WORKOUT & DIET PLANS --- */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Today's Workout Plan */}
+        <GlassCard className="p-6 border-indigo-500/20 bg-gradient-to-br from-indigo-500/5 to-transparent">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                <Dumbbell size={18} />
+              </div>
+              <h3 className="text-sm font-black text-white uppercase tracking-tight">Today's Workout Plan</h3>
+            </div>
+            <select
+              value={workoutDay}
+              onChange={(e) => setWorkoutDay(e.target.value)}
+              className="bg-slate-900/50 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white font-bold focus:border-indigo-500 outline-none"
+            >
+              {dayNames.map((day, i) => i > 0 && <option key={i} value={String(i)}>{day}</option>)}
+            </select>
+          </div>
+          {workoutLoading ? (
+            <div className="animate-pulse space-y-2">
+              <div className="h-4 bg-white/[0.06] rounded w-3/4" />
+              <div className="h-4 bg-white/[0.06] rounded w-1/2" />
+            </div>
+          ) : workoutPlan?.workout_details?.workouts?.length > 0 ? (
+            <div className="space-y-3">
+              <div>
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Plan Name</p>
+                <p className="text-lg font-black text-white italic">{workoutPlan.name || "-"}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Focus</p>
+                <p className="text-sm font-bold text-indigo-400">{workoutPlan.focus || "-"}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Exercises</p>
+                {workoutPlan.workout_details.workouts.map((ex: any, idx: number) => (
+                  <div 
+                    key={idx} 
+                    onClick={() => toggleExercise(idx)}
+                    className={`flex justify-between items-center py-2 px-3 rounded-lg border cursor-pointer transition-all ${
+                      completedExercises.includes(idx)
+                        ? "bg-emerald-500/10 border-emerald-500/30"
+                        : "bg-white/5 border-white/5 hover:border-indigo-500/30"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] ${
+                        completedExercises.includes(idx) 
+                          ? "bg-emerald-500 text-white" 
+                          : "bg-white/10 text-slate-500"
+                      }`}>
+                        {completedExercises.includes(idx) ? "✓" : (idx + 1)}
+                      </div>
+                      <div>
+                        <p className={`text-xs font-bold ${completedExercises.includes(idx) ? "text-emerald-400 line-through" : "text-white"}`}>{ex.name}</p>
+                        <p className="text-[9px] text-slate-500">{ex.target_body_part}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[9px] font-black text-indigo-400">{ex.no_of_sets} Sets</p>
+                      <p className="text-[9px] text-slate-500">{ex.reps} Reps</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {workoutPlan.workout_details.workouts.length > 0 && (
+                <>
+                  <button
+                    onClick={handleCompleteSession}
+                    disabled={sessionCompleted || !allDone}
+                    className={`w-full mt-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                      sessionCompleted
+                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                        : allDone
+                          ? "bg-indigo-500 hover:bg-indigo-400 text-white shadow-lg shadow-indigo-500/20"
+                          : "bg-white/5 text-slate-500 border border-white/10 opacity-50 cursor-not-allowed"
+                    }`}
+                  >
+                    {sessionCompleted ? (
+                      <><CheckCircle2 size={16} /> Session Complete</>
+                    ) : (
+                      <><Zap size={16} fill="currentColor" /> {allDone ? "Complete Session" : "Mark All Exercises"}</>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setWorkoutModalOpen(true)}
+                    className="w-full mt-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white/5 text-slate-400 hover:text-white border border-white/5 hover:border-white/20 transition-all"
+                  >
+                    View All Details
+                  </button>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="py-8 text-center">
+              <p className="text-lg font-black text-slate-600 uppercase italic">Break</p>
+              <p className="text-[10px] text-slate-500 mt-1">No workout assigned for {dayNames[parseInt(workoutDay)]}</p>
+            </div>
+          )}
+        </GlassCard>
+
+        {/* Today's Diet Plan */}
+        <GlassCard className="p-6 border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-transparent">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <Zap size={18} />
+              </div>
+              <h3 className="text-sm font-black text-white uppercase tracking-tight">Today's Diet Plan</h3>
+            </div>
+            <select
+              value={dietDay}
+              onChange={(e) => setDietDay(e.target.value)}
+              className="bg-slate-900/50 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white font-bold focus:border-emerald-500 outline-none"
+            >
+              {dayNames.map((day, i) => i > 0 && <option key={i} value={String(i)}>{day}</option>)}
+            </select>
+          </div>
+          {dietLoading ? (
+            <div className="animate-pulse space-y-2">
+              <div className="h-4 bg-white/[0.06] rounded w-3/4" />
+              <div className="h-4 bg-white/[0.06] rounded w-1/2" />
+            </div>
+          ) : dietPlan?.diet_details?.foods?.length > 0 ? (
+            <div className="space-y-3">
+              <div>
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Plan Name</p>
+                <p className="text-lg font-black text-white italic">{dietPlan.name || "-"}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Focus</p>
+                <p className="text-sm font-bold text-emerald-400">{dietPlan.focus || "-"}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Meals</p>
+                {dietPlan.diet_details.foods.map((food: any, idx: number) => (
+                  <div key={idx} className="flex justify-between items-center py-2 px-3 bg-white/5 rounded-lg border border-white/5">
+                    <div>
+                      <p className="text-xs font-bold text-white">{food.name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[9px] font-black text-emerald-400">{food.weight}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {dietPlan.diet_details.foods.length > 0 && (
+                <button
+                  onClick={() => setDietModalOpen(true)}
+                  className="w-full mt-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white/5 text-slate-400 hover:text-white border border-white/5 hover:border-white/20 transition-all"
+                >
+                  View All Details
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="py-8 text-center">
+              <p className="text-lg font-black text-slate-600 uppercase italic">Break</p>
+              <p className="text-[10px] text-slate-500 mt-1">No diet assigned for {dayNames[parseInt(dietDay)]}</p>
+            </div>
+          )}
+        </GlassCard>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -317,65 +499,6 @@ function UserDashboard() {
         </GlassCard>
       )}
 
-      {/* --- TODAY WORKOUT --- */}
-      <GlassCard className="p-8 border-white/5 bg-gradient-to-br from-slate-950 to-slate-900 group relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] pointer-events-none" />
-
-        <div className="flex justify-between items-start mb-8 relative z-10">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
-              <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">{t("protocolInProgress")}</span>
-            </div>
-            <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">{t("todayWorkout")} <span className="text-indigo-400/50">CHEST & TRICEPS</span></h3>
-          </div>
-          <div className="h-14 w-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-            <Dumbbell size={28} />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 relative z-10">
-          {exercises.map((ex) => (
-            <div
-              key={ex.id}
-              onClick={() => toggleExercise(ex.id)}
-              className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group/item ${ex.done
-                ? "bg-emerald-500/5 border-emerald-500/20 opacity-60"
-                : "bg-white/5 border-white/5 hover:border-white/20"
-                }`}
-            >
-              <div className="flex items-center gap-5">
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all ${ex.done ? "bg-emerald-500/20 text-emerald-400" : "bg-white/10 text-slate-500 group-hover/item:text-indigo-400"
-                  }`}>
-                  {ex.done ? <CheckCircle2 size={20} /> : <Circle size={20} />}
-                </div>
-                <div>
-                  <p className="text-xs font-black text-slate-500 uppercase tracking-widest leading-none mb-1">{ex.target}</p>
-                  <p className={`text-lg font-black italic transition-all ${ex.done ? "text-emerald-400 line-through" : "text-white"}`}>{ex.name}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] font-black uppercase text-indigo-300">{ex.sets}</p>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{ex.reps}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <GlowButton
-          className={`mt-8 w-full h-16 rounded-2xl text-sm font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${workoutDone ? "bg-emerald-500/20 !text-emerald-400 border-emerald-500/30" : ""
-            } ${!allDone && !workoutDone ? "opacity-50 cursor-not-allowed" : ""}`}
-          onClick={handleCompleteWorkout}
-          disabled={workoutDone || !allDone}
-        >
-          {workoutDone ? (
-            <><CheckCircle2 size={24} /> Workout Logged</>
-          ) : (
-            <><Zap size={20} fill="currentColor" /> {allDone ? "Finalize Session" : "Incomplete Session"}</>
-          )}
-        </GlowButton>
-      </GlassCard>
-
       {/* 🚨 CRITICAL ALERT MODAL */}
       <Modal
         open={showExpiryModal}
@@ -403,6 +526,132 @@ function UserDashboard() {
         user={{ id: userId || '', name: userName || '', ...myDetails }}
         portalType="user"
       />
+
+      {/* WORKOUT PLAN MODAL */}
+      <Modal
+        open={workoutModalOpen}
+        onClose={() => setWorkoutModalOpen(false)}
+        title={`${workoutPlan?.name || "Workout Plan"} - ${dayNames[parseInt(workoutDay)]}`}
+        footer={
+          <div className="flex gap-3 justify-end w-full">
+            <button
+              className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+              onClick={() => setWorkoutModalOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+          {workoutPlan?.workout_details?.workouts?.length > 0 ? (
+            <>
+              <div className="grid grid-cols-2 gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                <div>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Type</p>
+                  <p className="text-sm font-bold text-white">{workoutPlan.type || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Focus</p>
+                  <p className="text-sm font-bold text-indigo-400">{workoutPlan.focus || "-"}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Description</p>
+                <p className="text-sm text-slate-300">{workoutPlan.description || "-"}</p>
+              </div>
+              <div className="space-y-3">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Exercises</p>
+                {workoutPlan.workout_details.workouts.map((ex: any, idx: number) => (
+                  <div 
+                    key={idx} 
+                    onClick={() => toggleExercise(idx)}
+                    className={`flex justify-between items-center py-3 px-4 rounded-xl border cursor-pointer transition-all ${
+                      completedExercises.includes(idx)
+                        ? "bg-emerald-500/10 border-emerald-500/30"
+                        : "bg-white/5 border-white/5 hover:border-indigo-500/30"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm ${
+                        completedExercises.includes(idx) 
+                          ? "bg-emerald-500 text-white" 
+                          : "bg-white/10 text-slate-500"
+                      }`}>
+                        {completedExercises.includes(idx) ? "✓" : (idx + 1)}
+                      </div>
+                      <div>
+                        <p className={`text-sm font-bold ${completedExercises.includes(idx) ? "text-emerald-400 line-through" : "text-white"}`}>{ex.name}</p>
+                        <p className="text-xs text-slate-500">{ex.target_body_part}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-black text-indigo-400">{ex.no_of_sets} Sets</p>
+                      <p className="text-xs text-slate-500">{ex.reps} Reps</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="py-12 text-center">
+              <p className="text-xl font-black text-slate-600 uppercase italic">Break</p>
+              <p className="text-xs text-slate-500 mt-2">No workout assigned for {dayNames[parseInt(workoutDay)]}</p>
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* DIET PLAN MODAL */}
+      <Modal
+        open={dietModalOpen}
+        onClose={() => setDietModalOpen(false)}
+        title={`${dietPlan?.name || "Diet Plan"} - ${dayNames[parseInt(dietDay)]}`}
+        footer={
+          <div className="flex gap-3 justify-end w-full">
+            <button
+              className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+              onClick={() => setDietModalOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+          {dietPlan?.diet_details?.foods?.length > 0 ? (
+            <>
+              <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Focus</p>
+                <p className="text-sm font-bold text-emerald-400">{dietPlan.focus || "-"}</p>
+              </div>
+              <div className="space-y-3">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Meals</p>
+                {dietPlan.diet_details.foods.map((food: any, idx: number) => (
+                  <div key={idx} className="flex justify-between items-center py-3 px-4 bg-white/5 rounded-xl border border-white/5">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs font-bold">
+                        {idx + 1}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-white">{food.name}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-black text-emerald-400">{food.weight}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="py-12 text-center">
+              <p className="text-xl font-black text-slate-600 uppercase italic">Break</p>
+              <p className="text-xs text-slate-500 mt-2">No diet assigned for {dayNames[parseInt(dietDay)]}</p>
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -60,52 +60,70 @@ export function PlansManagement() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "workout" | "diet", id: string } | null>(null);
 
-  // === FETCH FUNCTIONS ===
-  const fetchWorkouts = async (p = workoutMeta.page_no || 1) => {
-    setWorkoutsLoading(true);
-    try {
-      const pageSize = 10;
-      const offset = (p - 1) * pageSize;
-      const res = await adminPlansService.getWorkoutPlans({ count: pageSize, offset, search: workoutSearch }) as any;
-      if (res && res.data) {
-        setWorkouts(res.data);
-        setWorkoutMeta({
-          page_no: p,
-          total_count: res.pagination?.total_count || 0,
-          page_size: pageSize,
-          has_next: res.pagination?.has_next || false,
-          has_previous: res.pagination?.has_previous || false
-        });
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setWorkoutsLoading(false);
-    }
-  };
+   // === FETCH FUNCTIONS ===
+   const fetchWorkouts = async (p = workoutMeta.page_no || 1) => {
+     setWorkoutsLoading(true);
+     try {
+       const pageSize = 10;
+       const offset = (p - 1) * pageSize;
+       
+       // Build request params with search filter
+       const params = {
+         count: pageSize,
+         offset,
+         ...(workoutSearch && { search: workoutSearch.trim() }) // Only include search if not empty
+       };
+       
+       const res = await adminPlansService.getWorkoutPlans(params) as any;
+       if (res && res.data) {
+         setWorkouts(res.data);
+         setWorkoutMeta({
+           page_no: p,
+           total_count: res.pagination?.total_count || 0,
+           page_size: pageSize,
+           has_next: res.pagination?.has_next || false,
+           has_previous: res.pagination?.has_previous || false
+         });
+       }
+     } catch (err) {
+       console.error("Error fetching workouts:", err);
+       toast.error("Failed to fetch workout plans");
+     } finally {
+       setWorkoutsLoading(false);
+     }
+   };
 
-  const fetchDiets = async (p = dietMeta.page_no || 1) => {
-    setDietsLoading(true);
-    try {
-      const pageSize = 10;
-      const offset = (p - 1) * pageSize;
-      const res = await adminPlansService.getDietPlans({ count: pageSize, offset, search: dietSearch }) as any;
-      if (res && res.data) {
-        setDiets(res.data);
-        setDietMeta({
-          page_no: p,
-          total_count: res.pagination?.total_count || 0,
-          page_size: pageSize,
-          has_next: res.pagination?.has_next || false,
-          has_previous: res.pagination?.has_previous || false
-        });
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setDietsLoading(false);
-    }
-  };
+   const fetchDiets = async (p = dietMeta.page_no || 1) => {
+     setDietsLoading(true);
+     try {
+       const pageSize = 10;
+       const offset = (p - 1) * pageSize;
+       
+       // Build request params with search filter
+       const params = {
+         count: pageSize,
+         offset,
+         ...(dietSearch && { search: dietSearch.trim() }) // Only include search if not empty
+       };
+       
+       const res = await adminPlansService.getDietPlans(params) as any;
+       if (res && res.data) {
+         setDiets(res.data);
+         setDietMeta({
+           page_no: p,
+           total_count: res.pagination?.total_count || 0,
+           page_size: pageSize,
+           has_next: res.pagination?.has_next || false,
+           has_previous: res.pagination?.has_previous || false
+         });
+       }
+     } catch (err) {
+       console.error("Error fetching diets:", err);
+       toast.error("Failed to fetch diet plans");
+     } finally {
+       setDietsLoading(false);
+     }
+   };
 
   const fetchUsers = async (s = userSearch) => {
     try {
@@ -118,28 +136,38 @@ export function PlansManagement() {
     }
   };
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (assignModalOpen) fetchUsers(userSearch);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [userSearch]);
+   useEffect(() => {
+     const timer = setTimeout(() => {
+       if (assignModalOpen) fetchUsers(userSearch);
+     }, 400);
+     return () => clearTimeout(timer);
+   }, [userSearch, assignModalOpen]);
 
-  useEffect(() => {
-    const currentSearch = activeTab === "workout" ? workoutSearch : dietSearch;
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set("tab", activeTab);
-    if (currentSearch) newParams.set("search", currentSearch);
-    else newParams.delete("search");
-    
-    setSearchParams(newParams, { replace: true });
+   // Handle search and tab changes with debouncing
+   useEffect(() => {
+     const currentSearch = activeTab === "workout" ? workoutSearch : dietSearch;
+     
+     // Update URL params whenever search or tab changes
+     const newParams = new URLSearchParams(searchParams);
+     newParams.set("tab", activeTab);
+     if (currentSearch) {
+       newParams.set("search", currentSearch);
+     } else {
+       newParams.delete("search");
+     }
+     setSearchParams(newParams, { replace: true });
 
-    const timer = setTimeout(() => {
-      if (activeTab === "workout") fetchWorkouts(1);
-      else fetchDiets(1);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [workoutSearch, dietSearch, activeTab]);
+     // Debounce API call to avoid too many requests
+     const timer = setTimeout(() => {
+       if (activeTab === "workout") {
+         fetchWorkouts(1); // Reset to page 1 on search/tab change
+       } else {
+         fetchDiets(1); // Reset to page 1 on search/tab change
+       }
+     }, 500);
+
+     return () => clearTimeout(timer);
+   }, [workoutSearch, dietSearch, activeTab, searchParams, setSearchParams]);
 
   // === EVENT HANDLERS ===
   const handleSaveWorkout = async () => {
@@ -221,26 +249,56 @@ export function PlansManagement() {
           subtitle="Manage workout routines and dietary protocols for members."
         />
         
-        <div className="flex p-1 bg-slate-900/50 rounded-2xl border border-white/5 w-max">
+        {/* Improved Tab Navigation */}
+        <div className="flex gap-2 p-1.5 bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl border border-white/10 w-max backdrop-blur-sm">
           <button
             onClick={() => setActiveTab("workout")}
-            className={`px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 ${
+            className={`relative px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 ease-out overflow-hidden group ${
               activeTab === "workout"
-                ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/25"
-                : "text-slate-400 hover:text-white hover:bg-white/5"
+                ? "text-white"
+                : "text-slate-400 hover:text-slate-300"
             }`}
           >
-            Workout Plans
+            {/* Background glow effect */}
+            {activeTab === "workout" && (
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-xl opacity-90 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
+            )}
+            {/* Hover effect for inactive */}
+            {activeTab !== "workout" && (
+              <div className="absolute inset-0 bg-indigo-500/0 group-hover:bg-indigo-500/10 rounded-xl transition-colors duration-300 -z-10" />
+            )}
+            {/* Active indicator shadow */}
+            {activeTab === "workout" && (
+              <div className="absolute inset-0 rounded-xl shadow-lg shadow-indigo-500/50 -z-10" />
+            )}
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              💪 Workout Plans
+            </span>
           </button>
+          
           <button
             onClick={() => setActiveTab("diet")}
-            className={`px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 ${
+            className={`relative px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-300 ease-out overflow-hidden group ${
               activeTab === "diet"
-                ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25"
-                : "text-slate-400 hover:text-white hover:bg-white/5"
+                ? "text-white"
+                : "text-slate-400 hover:text-slate-300"
             }`}
           >
-            Diet Plans
+            {/* Background glow effect */}
+            {activeTab === "diet" && (
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-xl opacity-90 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
+            )}
+            {/* Hover effect for inactive */}
+            {activeTab !== "diet" && (
+              <div className="absolute inset-0 bg-emerald-500/0 group-hover:bg-emerald-500/10 rounded-xl transition-colors duration-300 -z-10" />
+            )}
+            {/* Active indicator shadow */}
+            {activeTab === "diet" && (
+              <div className="absolute inset-0 rounded-xl shadow-lg shadow-emerald-500/50 -z-10" />
+            )}
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              🥗 Diet Plans
+            </span>
           </button>
         </div>
       </div>
@@ -248,29 +306,65 @@ export function PlansManagement() {
       {/* WORKOUT PLANS TAB */}
       {activeTab === "workout" && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-            <div className="relative group flex-1 md:w-64 max-w-sm">
-              <div className="absolute inset-0 bg-indigo-500/5 rounded-xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-400 transition-colors" size={16} />
+          {/* Search & Create Section */}
+          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+            {/* Search Input with Improved Design */}
+            <div className="relative group flex-1 sm:flex-none sm:min-w-64">
+              {/* Animated background blur */}
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-indigo-400/5 rounded-xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
+              
+              {/* Search Icon */}
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors duration-300 pointer-events-none" size={18} />
+              
+              {/* Input Field */}
               <input
                 type="text"
-                placeholder="Search workout plans..."
+                placeholder="Search by name, type, focus..."
                 value={workoutSearch}
                 onChange={(e) => setWorkoutSearch(e.target.value)}
-                className="relative w-full bg-slate-900/50 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white outline-none focus:border-indigo-500/50 focus:bg-slate-900/80 transition-all placeholder:text-slate-500"
+                className="relative w-full bg-slate-900/40 border border-indigo-500/20 hover:border-indigo-500/40 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white outline-none focus:border-indigo-500/60 focus:bg-slate-900/60 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 placeholder:text-slate-500"
               />
+              
+              {/* Clear button when search is active */}
+              {workoutSearch && (
+                <button
+                  onClick={() => setWorkoutSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-400 transition-colors p-1"
+                  aria-label="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+              
+              {/* Loading indicator */}
+              {workoutsLoading && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="animate-spin h-4 w-4 border-2 border-indigo-500 border-t-transparent rounded-full" />
+                </div>
+              )}
             </div>
+            
+            {/* Create Button */}
             <GlowButton
               onClick={() => {
                 setWorkoutForm({ name: "", type: "", description: "", focus: "", workout_details: [] });
                 setEditWorkoutId(null);
                 setWorkoutModalOpen(true);
               }}
-              className="px-6 py-2.5 flex items-center justify-center rounded-xl font-black uppercase tracking-widest text-xs"
+              className="px-6 py-3.5 flex items-center justify-center gap-2 rounded-xl font-black uppercase tracking-widest text-xs whitespace-nowrap"
             >
-              Add +
+              <Plus size={16} />
+              Add New Plan
             </GlowButton>
           </div>
+
+          {/* Results Count */}
+          {!workoutsLoading && workouts.length > 0 && (
+            <div className="text-xs text-slate-400 font-medium uppercase tracking-wide">
+              Showing {workouts.length} of {workoutMeta.total_count} plans
+              {workoutSearch && <span className="text-indigo-400 ml-2">• Filtered: "{workoutSearch}"</span>}
+            </div>
+          )}
 
           {workoutsLoading ? (
             <div className="space-y-4">
@@ -333,10 +427,35 @@ export function PlansManagement() {
                     </button>
                   </div>
                 ])}
-              />
+               />
+             </div>
+           ) : (
+             <EmptyState title="No Workout Plans" hint="Create your first workout strategy to begin." />
+           )}
+
+          {/* Pagination Controls */}
+          {workouts.length > 0 && (
+            <div className="flex items-center justify-between pt-4 border-t border-white/5">
+              <div className="text-xs text-slate-400 font-medium uppercase tracking-wide">
+                Page {workoutMeta.page_no} of {Math.ceil(workoutMeta.total_count / workoutMeta.page_size)}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => fetchWorkouts(workoutMeta.page_no - 1)}
+                  disabled={!workoutMeta.has_previous}
+                  className="px-4 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 disabled:bg-slate-900/50 disabled:text-slate-600 text-indigo-400 hover:text-indigo-300 disabled:hover:text-slate-600 transition-all text-xs font-bold uppercase tracking-wider disabled:cursor-not-allowed"
+                >
+                  ← Previous
+                </button>
+                <button
+                  onClick={() => fetchWorkouts(workoutMeta.page_no + 1)}
+                  disabled={!workoutMeta.has_next}
+                  className="px-4 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 disabled:bg-slate-900/50 disabled:text-slate-600 text-indigo-400 hover:text-indigo-300 disabled:hover:text-slate-600 transition-all text-xs font-bold uppercase tracking-wider disabled:cursor-not-allowed"
+                >
+                  Next →
+                </button>
+              </div>
             </div>
-          ) : (
-            <EmptyState title="No Workout Plans" hint="Create your first workout strategy to begin." />
           )}
         </div>
       )}
@@ -344,29 +463,65 @@ export function PlansManagement() {
       {/* DIET PLANS TAB */}
       {activeTab === "diet" && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-            <div className="relative group flex-1 md:w-64 max-w-sm">
-              <div className="absolute inset-0 bg-emerald-500/5 rounded-xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-400 transition-colors" size={16} />
+          {/* Search & Create Section */}
+          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+            {/* Search Input with Improved Design */}
+            <div className="relative group flex-1 sm:flex-none sm:min-w-64">
+              {/* Animated background blur */}
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-emerald-400/5 rounded-xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
+              
+              {/* Search Icon */}
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-400 transition-colors duration-300 pointer-events-none" size={18} />
+              
+              {/* Input Field */}
               <input
                 type="text"
-                placeholder="Search diet plans..."
+                placeholder="Search by name, focus area..."
                 value={dietSearch}
                 onChange={(e) => setDietSearch(e.target.value)}
-                className="relative w-full bg-slate-900/50 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white outline-none focus:border-emerald-500/50 focus:bg-slate-900/80 transition-all placeholder:text-slate-500"
+                className="relative w-full bg-slate-900/40 border border-emerald-500/20 hover:border-emerald-500/40 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white outline-none focus:border-emerald-500/60 focus:bg-slate-900/60 focus:ring-2 focus:ring-emerald-500/20 transition-all duration-300 placeholder:text-slate-500"
               />
+              
+              {/* Clear button when search is active */}
+              {dietSearch && (
+                <button
+                  onClick={() => setDietSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-400 transition-colors p-1"
+                  aria-label="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+              
+              {/* Loading indicator */}
+              {dietsLoading && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="animate-spin h-4 w-4 border-2 border-emerald-500 border-t-transparent rounded-full" />
+                </div>
+              )}
             </div>
+            
+            {/* Create Button */}
             <GlowButton
-              className="from-emerald-600 to-teal-500 shadow-emerald-500/20 hover:shadow-emerald-500/40 px-6 py-2.5 flex items-center justify-center rounded-xl font-black uppercase tracking-widest text-xs"
+              className="from-emerald-600 to-teal-500 shadow-emerald-500/20 hover:shadow-emerald-500/40 px-6 py-3.5 flex items-center justify-center gap-2 rounded-xl font-black uppercase tracking-widest text-xs whitespace-nowrap"
               onClick={() => {
                 setDietForm({ name: "", focus: "", diet_details: [] });
                 setEditDietId(null);
                 setDietModalOpen(true);
               }}
             >
-              Add +
+              <Plus size={16} />
+              Add New Plan
             </GlowButton>
           </div>
+
+          {/* Results Count */}
+          {!dietsLoading && diets.length > 0 && (
+            <div className="text-xs text-slate-400 font-medium uppercase tracking-wide">
+              Showing {diets.length} of {dietMeta.total_count} plans
+              {dietSearch && <span className="text-emerald-400 ml-2">• Filtered: "{dietSearch}"</span>}
+            </div>
+          )}
 
           {dietsLoading ? (
             <div className="space-y-4">
@@ -422,11 +577,36 @@ export function PlansManagement() {
                       <Trash2 size={16} />
                     </button>
                   </div>
-                ])}
-              />
+                 ])}
+               />
+             </div>
+           ) : (
+             <EmptyState title="No Diet Plans" hint="Formulate a nutritional strategy to start." />
+           )}
+
+          {/* Pagination Controls */}
+          {diets.length > 0 && (
+            <div className="flex items-center justify-between pt-4 border-t border-white/5">
+              <div className="text-xs text-slate-400 font-medium uppercase tracking-wide">
+                Page {dietMeta.page_no} of {Math.ceil(dietMeta.total_count / dietMeta.page_size)}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => fetchDiets(dietMeta.page_no - 1)}
+                  disabled={!dietMeta.has_previous}
+                  className="px-4 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 disabled:bg-slate-900/50 disabled:text-slate-600 text-emerald-400 hover:text-emerald-300 disabled:hover:text-slate-600 transition-all text-xs font-bold uppercase tracking-wider disabled:cursor-not-allowed"
+                >
+                  ← Previous
+                </button>
+                <button
+                  onClick={() => fetchDiets(dietMeta.page_no + 1)}
+                  disabled={!dietMeta.has_next}
+                  className="px-4 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 disabled:bg-slate-900/50 disabled:text-slate-600 text-emerald-400 hover:text-emerald-300 disabled:hover:text-slate-600 transition-all text-xs font-bold uppercase tracking-wider disabled:cursor-not-allowed"
+                >
+                  Next →
+                </button>
+              </div>
             </div>
-          ) : (
-            <EmptyState title="No Diet Plans" hint="Formulate a nutritional strategy to start." />
           )}
         </div>
       )}
@@ -499,7 +679,7 @@ export function PlansManagement() {
               <button
                 onClick={() => setWorkoutForm({
                   ...workoutForm,
-                  workout_details: [...workoutForm.workout_details, { day: `Day ${workoutForm.workout_details.length + 1}`, workouts: [] }]
+                  workout_details: [...workoutForm.workout_details, { day: String(workoutForm.workout_details.length + 1), workouts: [] }]
                 })}
                 className="group flex items-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 px-4 py-2 rounded-xl border border-indigo-500/20 transition-all hover:scale-105 active:scale-95"
               >
@@ -522,17 +702,25 @@ export function PlansManagement() {
                   </button>
                   
                   <div className="w-full md:w-1/2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Cycle Name</label>
-                    <input
-                      className="w-full bg-transparent border-b border-white/10 py-2 text-white focus:border-indigo-500 outline-none text-base font-black uppercase tracking-tight mt-1 transition-colors"
-                      value={dayDetail.day}
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Day Identifier</label>
+                    <select
+                      className="w-full bg-transparent border-b border-white/10 py-2 text-white focus:border-indigo-500 outline-none text-base font-black mt-1 transition-colors"
+                      value={dayDetail.day || ""}
                       onChange={(e) => {
                         const newDetails = [...workoutForm.workout_details];
                         newDetails[dIndex].day = e.target.value;
                         setWorkoutForm({ ...workoutForm, workout_details: newDetails });
                       }}
-                      placeholder="e.g. MONDAY (PUSH DAY)"
-                    />
+                    >
+                      <option value="" className="bg-slate-900 text-slate-500">Select Day</option>
+                      <option value={1} className="bg-slate-900 text-white">Monday</option>
+                      <option value={2} className="bg-slate-900 text-white">Tuesday</option>
+                      <option value={3} className="bg-slate-900 text-white">Wednesday</option>
+                      <option value={4} className="bg-slate-900 text-white">Thursday</option>
+                      <option value={5} className="bg-slate-900 text-white">Friday</option>
+                      <option value={6} className="bg-slate-900 text-white">Saturday</option>
+                      <option value={7} className="bg-slate-900 text-white">Sunday</option>
+                    </select>
                   </div>
 
                   <div className="space-y-3">
@@ -691,7 +879,7 @@ export function PlansManagement() {
               <button
                 onClick={() => setDietForm({
                   ...dietForm,
-                  diet_details: [...dietForm.diet_details, { day: `Day ${dietForm.diet_details.length + 1}`, foods: [] }]
+                  diet_details: [...dietForm.diet_details, { day: String(dietForm.diet_details.length + 1), foods: [] }]
                 })}
                 className="group flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 px-4 py-2 rounded-xl border border-emerald-500/20 transition-all hover:scale-105 active:scale-95"
               >
@@ -715,16 +903,24 @@ export function PlansManagement() {
                   
                   <div className="w-full md:w-1/2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Day Identifier</label>
-                    <input
-                      className="w-full bg-transparent border-b border-white/10 py-2 text-white focus:border-emerald-500 outline-none text-base font-black uppercase tracking-tight mt-1 transition-colors"
-                      value={dayDetail.day}
+                    <select
+                      className="w-full bg-transparent border-b border-white/10 py-2 text-white focus:border-emerald-500 outline-none text-base font-black mt-1 transition-colors"
+                      value={dayDetail.day || ""}
                       onChange={(e) => {
                         const newDetails = [...dietForm.diet_details];
                         newDetails[dIndex].day = e.target.value;
                         setDietForm({ ...dietForm, diet_details: newDetails });
                       }}
-                      placeholder="e.g. MONDAY"
-                    />
+                    >
+                      <option value="" className="bg-slate-900 text-slate-500">Select Day</option>
+                      <option value={1} className="bg-slate-900 text-white">Monday</option>
+                      <option value={2} className="bg-slate-900 text-white">Tuesday</option>
+                      <option value={3} className="bg-slate-900 text-white">Wednesday</option>
+                      <option value={4} className="bg-slate-900 text-white">Thursday</option>
+                      <option value={5} className="bg-slate-900 text-white">Friday</option>
+                      <option value={6} className="bg-slate-900 text-white">Saturday</option>
+                      <option value={7} className="bg-slate-900 text-white">Sunday</option>
+                    </select>
                   </div>
 
                   <div className="space-y-3">

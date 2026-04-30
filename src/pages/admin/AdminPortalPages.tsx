@@ -247,21 +247,15 @@ export function AdminPortalPages({ page }: { page: string }) {
 
   useEffect(() => {
     if (page === "subscriptions") {
-      fetchPlans(1);
+      const timer = setTimeout(() => fetchPlans(1), 300);
+      return () => clearTimeout(timer);
     } else if (page === "products") {
-      fetchProducts(1);
+      const timer = setTimeout(() => fetchProducts(1), 300);
+      return () => clearTimeout(timer);
     } else if (page === "payments") {
       fetchPayments(1);
     }
-  }, [page, paymentStatus, paymentDateRange]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (page === "subscriptions") fetchPlans(1);
-      if (page === "products") fetchProducts(1);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [planSearch, productSearch, productCategory]);
+  }, [page, paymentStatus, paymentDateRange, planSearch, productSearch, productCategory]);
 
   // Sync config form with store changes
   useEffect(() => {

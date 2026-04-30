@@ -25,7 +25,7 @@ export function AppConfigTab() {
     gym_in_out_limit_in_hrs: 0,
     theme_name: "",
     description: "",
-    timezone: "",
+    timezone: "0",
     currency: "",
     language: "",
     country: "",
@@ -83,10 +83,10 @@ export function AppConfigTab() {
           id: cfg.id,
           brand_name: cfg.brand_name || "",
           logo_image_path: cfg.logo_image_path || "",
-          gym_in_out_limit_in_hrs: Number(cfg.gym_in_out_limit_in_hrs) || 0,
+          gym_in_out_limit_in_hrs: Math.round((Number(cfg.gym_in_out_limit_in_hrs) || 0) * 100) / 100,
           theme_name: cfg.theme_name || "",
           description: cfg.description || "",
-          timezone: cfg.timezone || "",
+          timezone: String(cfg.timezone) || "0",
           currency: cfg.currency || "",
           language: cfg.language || "",
           country: cfg.country || "",
@@ -197,15 +197,15 @@ export function AppConfigTab() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Timezone</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Timezone (UTC Offset)</label>
             <select
               className="w-full rounded bg-white/10 p-2 text-white border border-white/10 [&>option]:bg-slate-900"
               value={config.timezone || ""}
               onChange={(e) => setConfig({ ...config, timezone: e.target.value })}
             >
               <option value="">Select Timezone</option>
-              {Object.keys(timezones).map((tz) => (
-                <option key={tz} value={tz}>{tz}</option>
+              {Object.entries(timezones).map(([tz, offset]) => (
+                <option key={tz} value={String(offset)}>UTC{offset >= 0 ? `+${offset}` : offset} - {tz}</option>
               ))}
             </select>
           </div>

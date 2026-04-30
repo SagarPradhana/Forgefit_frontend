@@ -132,11 +132,22 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const monthRange = getMonthRange();
 
-  // Global date range (for most sections) — default: This Month
-  const [dateRange, setDateRange] = useState<DateRange>({ label: "This Month" });
+  // Global date range (for most sections) — default: This Month with proper dates
+  const [dateRange, setDateRange] = useState<DateRange>(() => {
+    const fromUnix = toUnix(new Date(monthRange.from), false);
+    const toUnixVal = toUnix(new Date(monthRange.to), true);
+    return { label: "This Month", from_date: fromUnix, to_date: toUnixVal };
+  });
 
   // Attendance date range (default today)
-  const [attRange, setAttRange] = useState<DateRange>({ label: "Today" });
+  const [attRange, setAttRange] = useState<DateRange>(() => {
+    const todayStr = today();
+    return { 
+      label: "Today", 
+      from_date: toUnix(new Date(todayStr), false),
+      to_date: toUnix(new Date(todayStr), true)
+    };
+  });
 
   // Monthly revenue months param
   const [revenueMonths, setRevenueMonths] = useState(6);
@@ -244,11 +255,64 @@ export default function AdminDashboard() {
   }, [revenueMonths]);
 
   // ── Effects ──
-  useEffect(() => { fetchStats(); fetchInquiries(); fetchPayments(); fetchSubscriptions(); fetchProducts(); }, [fetchStats, fetchInquiries, fetchPayments, fetchSubscriptions, fetchProducts]);
-  useEffect(() => { fetchAttendance(); }, [fetchAttendance]);
-  useEffect(() => { fetchMonthlyRevenue(); }, [fetchMonthlyRevenue]);
+  // Single effect - fetches on mount with initial dateRange values
+  useEffect(() => {
+    const from = dateRange.from_date;
+    const to = dateRange.to_date;
+    
+    // Build params with dates
+    const p = new URLSearchParams();
+    if (from) p.set("from_date", String(from));
+    if (to) p.set("to_date", String(to));
+    const paramsStr = p.toString();
 
-  const refreshAll = () => { fetchStats(); fetchInquiries(); fetchPayments(); fetchSubscriptions(); fetchProducts(); fetchAttendance(); fetchMonthlyRevenue(); };
+    // All APIs use dateParams internally which handles the dates
+    const fetchData = async () => {
+      setLoad("stats", true);
+      setLoad("inquiries", true);
+      setLoad("payments", true);
+      setLoad("subscriptions", true);
+      setLoad("products", true);
+      setLoad("attendance", true);
+      setLoad("revenue", true);
+      
+      try {
+        const [statsRes, inqRes, payRes, subRes, prodRes, attRes, revRes] = await Promise.all([
+          api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_STATS}?${paramsStr}`),
+          api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_INQUIRIES}?${paramsStr}`),
+          api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_PAYMENTS}?${paramsStr}`),
+          api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_SUBSCRIPTIONS}?${paramsStr}`),
+          api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_PRODUCTS}?${paramsStr}`),
+          api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_ATTENDANCE}?from_date=${attRange.from_date}&to_date=${attRange.to_date}`),
+          api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_MONTHLY_REVENUE}?months=${revenueMonths}`)
+        ]);
+        
+        if (statsRes?.code === 200) setStats({ total_users: statsRes.total_users, total_trainers: statsRes.total_trainers, total_admins: statsRes.total_admins, total_members: statsRes.total_members, total_active_subscriptions: statsRes.total_active_subscriptions, total_expired_subscriptions: statsRes.total_expired_subscriptions, new_registrations: statsRes.new_registrations, upcoming_renewals: statsRes.upcoming_renewals, total_revenue: statsRes.total_revenue });
+        if (inqRes?.data) setInquiries(inqRes.data);
+        if (payRes?.data) setPayments(payRes.data);
+        if (subRes?.data) setSubscriptions(subRes.data);
+        if (prodRes?.data) setProducts(prodRes.data);
+        if (attRes?.data) setAttendance(attRes.data);
+        if (revRes?.data) setMonthlyRevenue(revRes.data);
+      } catch (e) { console.error(e); }
+      finally { 
+        setLoad("stats", false); setLoad("inquiries", false); setLoad("payments", false);
+        setLoad("subscriptions", false); setLoad("products", false); setLoad("attendance", false); setLoad("revenue", false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
+  const refreshAll = () => { 
+    fetchStats();
+    fetchInquiries();
+    fetchPayments();
+    fetchSubscriptions();
+    fetchProducts();
+    fetchAttendance();
+    fetchMonthlyRevenue();
+  };
 
   const isAnyLoading = Object.values(loading).some(Boolean);
 

@@ -2,7 +2,6 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useState, useEffect } from "react";
 import {
-  Bell,
   Box,
   ChevronLeft,
   CreditCard,
@@ -17,13 +16,14 @@ import {
   Menu,
   X,
   ClipboardList,
+  Calendar,
+  MessageSquare,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { Helmet } from "react-helmet-async";
 import LanguageSwitcher from "../components/ui/LanguageSwitcher";
-import { useNotificationStore } from "../store/notificationStore";
-import { NotificationModal } from "../components/ui/NotificationModal";
+
 import { useGymStore } from "../store/gymStore";
 import { api } from "../utils/httputils";
 import { API_ENDPOINTS } from "../utils/url";
@@ -350,14 +350,14 @@ export function Sidebar({
       ? [
         { name: "dashboard", icon: LayoutDashboard, label: t("dashboard") },
         { name: "users", icon: Users, label: t("users") },
-        { name: "attendance", icon: Bell, label: t("attendance") },
+        { name: "attendance", icon: Calendar, label: t("attendance") },
         { name: "subscriptions", icon: CreditCard, label: t("subscription") },
         { name: "payments", icon: CreditCard, label: t("payments") },
         { name: "products", icon: Box, label: t("products") },
         { name: "plans", icon: ClipboardList, label: t("plans") || "Plans" },
         { name: "revenueops", icon: TrendingUp, label: "RevenueOps" },
         { name: "settings", icon: Settings, label: t("settings") },
-        { name: "inquiries", icon: Bell, label: t("inquiries") },
+        { name: "inquiries", icon: MessageSquare, label: t("inquiries") },
       ]
       : [
         { name: "dashboard", icon: LayoutDashboard, label: t("dashboard") },
@@ -511,10 +511,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { dashboardColorTheme: colorTheme, setDashboardColorTheme: setColorTheme } = useGymStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
-  const [notiModalOpen, setNotiModalOpen] = useState(false);
-  const { notifications } = useNotificationStore();
-  const unreadCount = notifications?.filter?.(n => !n?.read)?.length;
-
+  
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const { t } = useTranslation();
   const { logout } = useAuthStore();
@@ -620,24 +617,6 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <div
                   className={`flex items-center gap-1.5 lg:gap-3 rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-gray-100/70" : "bg-slate-950/70"} px-2 lg:px-3 py-1.5 lg:py-2 shadow-inner`}
                 >
-                    <div
-                      className="relative cursor-pointer p-1 lg:p-1.5 hover:bg-white/5 rounded-lg transition-colors"
-                      onClick={() => setNotiModalOpen(true)}
-                    >
-                      <Bell
-                        size={isMobile ? 16 : 18}
-                        className={
-                          systemTheme === "light"
-                            ? "text-orange-500"
-                            : "text-orange-300"
-                        }
-                      />
-                      {unreadCount > 0 && (
-                        <span className="absolute top-1 right-1 h-3 min-w-[12px] px-0.5 flex items-center justify-center bg-red-500 text-white text-[7px] font-black rounded-full animate-pulse">
-                          {unreadCount}
-                        </span>
-                      )}
-                    </div>
                     <button
                       type="button"
                       onClick={nextColorTheme}
@@ -765,11 +744,6 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
           </motion.div>
         </motion.div>
       </div>
-
-      <NotificationModal
-        isOpen={notiModalOpen}
-        onClose={() => setNotiModalOpen(false)}
-      />
     </div>
   );
 }
