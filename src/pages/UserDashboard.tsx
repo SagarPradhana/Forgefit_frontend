@@ -128,8 +128,9 @@ function UserDashboard() {
   const isPresentToday =
     todayTrackerEntry.length > 0 && todayTrackerEntry[0].attended === true;
 
-  const [workoutDay, setWorkoutDay] = useState("1");
-  const [dietDay, setDietDay] = useState("1");
+  const todayDay = String(new Date().getDay() || 7);
+  const [workoutDay, setWorkoutDay] = useState(todayDay);
+  const [dietDay, setDietDay] = useState(todayDay);
   const [completedExercises, setCompletedExercises] = useState<number[]>([]);
   const [sessionCompleted, setSessionCompleted] = useState(false);
   const [workoutModalOpen, setWorkoutModalOpen] = useState(false);
