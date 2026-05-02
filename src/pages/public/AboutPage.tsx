@@ -61,7 +61,14 @@ const approachCards = [
   },
 ];
 
+import { useGymStore } from "../../store/gymStore";
+
 export function AboutPage() {
+  const { publicAppConfig, publicBanners } = useGymStore();
+  const brandName = publicAppConfig?.brand_name || "ForgeFit";
+  
+  const aboutBanners = publicBanners["about"] || [];
+  const displayHeroImage = aboutBanners[0]?.file_path || heroImage;
   return (
     <PublicLayout>
       <motion.div
@@ -94,7 +101,7 @@ export function AboutPage() {
               transition={{ delay: 0.4 }}
               className="max-w-2xl text-sm sm:text-base leading-7 text-slate-300"
             >
-              ForgeFit blends expert coaching, modern equipment, and a
+              {brandName} blends expert coaching, modern equipment, and a
               supportive community to help you achieve a stronger body, sharper
               mind, and healthier lifestyle. We design every detail so you can
               focus on staying consistent and feeling great.
@@ -140,12 +147,12 @@ export function AboutPage() {
             className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl"
           >
             <motion.img
-              src={heroImage}
+              src={displayHeroImage}
               alt="Gym training experience"
               className="h-full w-full object-cover transition-transform duration-700 hover:scale-110"
             />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent px-6 py-5 text-slate-100">
-              <p className="text-sm font-semibold">ForgeFit Studio</p>
+              <p className="text-sm font-semibold">{brandName} Studio</p>
               <p className="text-xs text-slate-300">
                 Exceptional coaching and inspiring workouts in every session.
               </p>
@@ -163,7 +170,7 @@ export function AboutPage() {
               <GlassCard className="space-y-4 h-full relative overflow-hidden group">
                 <div className="absolute inset-0 bg-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <p className="text-sm leading-7 text-slate-300 relative z-10">
-                  At ForgeFit, we believe fitness is more than a workout—it is a
+                  At {brandName}, we believe fitness is more than a workout—it is a
                   way to build confidence, resilience, and daily energy. We create
                   training programs rooted in science, recovery, and personal
                   accountability so every member feels supported from day one.
@@ -282,24 +289,26 @@ export function AboutPage() {
               subtitle="Skilled coaches who guide you through every workout."
             />
             <div className="grid gap-5 md:grid-cols-3">
-              {[
+              {(publicBanners["trainers"]?.length > 0 ? publicBanners["trainers"] : [
                 { name: "Maya", title: "Strength Coach" },
                 { name: "Noah", title: "Performance Trainer" },
                 { name: "Ava", title: "Recovery Specialist" },
-              ].map((trainer, i) => (
+              ]).slice(0, 3).map((trainer: any, i: number) => (
                 <motion.div
-                  key={trainer.name}
+                  key={trainer.name || i}
                   initial={{ y: 30, opacity: 0 }}
                   whileInView={{ y: 0, opacity: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
                 >
                   <GlassCard className="text-center p-6 group hover:border-orange-500/30 transition-all">
-                    <div className="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-to-br from-white/10 to-white/5 border border-white/10 group-hover:scale-105 group-hover:border-orange-500/50 transition-all duration-300" />
+                    <div className="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-to-br from-white/10 to-white/5 border border-white/10 group-hover:scale-105 group-hover:border-orange-500/50 transition-all duration-300 overflow-hidden">
+                      {trainer.file_path && <img src={trainer.file_path} alt={trainer.name} className="h-full w-full object-cover" />}
+                    </div>
                     <h3 className="text-lg font-semibold text-white transition-colors group-hover:text-orange-300">
-                      {trainer.name}
+                      {trainer.name || "Elite Trainer"}
                     </h3>
-                    <p className="mt-1 text-sm text-slate-400">{trainer.title}</p>
+                    <p className="mt-1 text-sm text-slate-400">{trainer.title || trainer.type || "Fitness Expert"}</p>
                   </GlassCard>
                 </motion.div>
               ))}
@@ -327,7 +336,7 @@ export function AboutPage() {
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-3 relative z-10">
-                <CommonButton type="button" className="pulse-glow-hover">Join ForgeFit</CommonButton>
+                <CommonButton type="button" className="pulse-glow-hover">Join {brandName}</CommonButton>
                 <CommonButton
                   type="button"
                   variant="ghost"

@@ -3,14 +3,25 @@ import { useState } from "react";
 import {
   GlassCard,
   GlowButton,
-  SectionTitle,
 } from "../../components/ui/primitives";
 import { PublicLayout } from "../../layouts/PublicLayout";
 import { Phone, Mail, MapPin, Clock, Sparkles } from "lucide-react";
 import { AnimatedSection } from "../../components/common/AnimatedSection";
 import { appInquiryService } from "../../services/appInquiryService";
 
+import { useGymStore } from "../../store/gymStore";
+
 export function ContactPage() {
+  const { publicAppConfig, publicLocations } = useGymStore();
+  const brandName = publicAppConfig?.brand_name || "ForgeFit";
+
+  const mainLocation = publicLocations[0];
+  const contactPhone = mainLocation?.phone || publicAppConfig?.phone || "+91 98765 43210";
+  const contactEmail = mainLocation?.email || publicAppConfig?.email || "support@forgefit.com";
+  const contactAddress = mainLocation?.address || "Ahmedabad, Gujarat, India";
+  const workingHoursFrom = mainLocation?.working_hours_from_time || "06:00";
+  const workingHoursTo = mainLocation?.working_hours_to_time || "22:00";
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -28,10 +39,17 @@ export function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
     setSuccess(false);
 
+    // Validate phone number format (at least 7 digits)
+    const phoneDigits = formData.phone.replace(/\D/g, "");
+    if (phoneDigits.length < 7) {
+      setError("Please enter a valid phone number (at least 7 digits).");
+      return;
+    }
+
+    setLoading(true);
     try {
       await appInquiryService.createContactInquiry(formData);
       setSuccess(true);
@@ -49,22 +67,22 @@ export function ContactPage() {
         <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-slate-950/90 via-slate-900/90 to-slate-950/90 p-6 sm:p-8 shadow-2xl">
           <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,_rgba(249,115,22,0.18),_transparent_35%)]" />
           <div className="relative z-10 max-w-3xl text-center mx-auto">
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="text-sm uppercase tracking-[0.3em] text-orange-300"
             >
               Get in touch
             </motion.p>
-            <motion.h1 
+            <motion.h1
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
               className="mt-4 text-3xl sm:text-4xl md:text-5xl font-bold text-white"
             >
-              Contact ForgeFit
+              Contact {brandName}
             </motion.h1>
-            <motion.p 
+            <motion.p
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -95,7 +113,7 @@ export function ContactPage() {
                       programs, and memberships.
                     </p>
                   </div>
-                  <motion.div 
+                  <motion.div
                     whileHover={{ rotate: 180, scale: 1.1 }}
                     className="rounded-3xl border border-white/10 bg-orange-500/10 px-4 py-3 text-orange-300 transition-colors group-hover:bg-orange-500/20"
                   >
@@ -104,7 +122,7 @@ export function ContactPage() {
                 </div>
 
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                  <motion.div 
+                  <motion.div
                     whileHover={{ y: -5 }}
                     className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4 group/item hover:border-orange-500/50 transition-all"
                   >
@@ -114,12 +132,12 @@ export function ContactPage() {
                         Call us
                       </span>
                     </div>
-                    <p className="mt-3 text-sm text-slate-300">+91 98765 43210</p>
+                    <p className="mt-3 text-sm text-slate-300">{contactPhone}</p>
                     <p className="mt-1 text-xs text-slate-500">
-                      Available 7AM - 10PM
+                      Available {workingHoursFrom} - {workingHoursTo}
                     </p>
                   </motion.div>
-                  <motion.div 
+                  <motion.div
                     whileHover={{ y: -5 }}
                     className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4 group/item hover:border-indigo-500/50 transition-all"
                   >
@@ -130,7 +148,7 @@ export function ContactPage() {
                       </span>
                     </div>
                     <p className="mt-3 text-sm text-slate-300">
-                      support@forgefit.com
+                      {contactEmail}
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
                       Response within 24 hours
@@ -157,15 +175,11 @@ export function ContactPage() {
                 <div className="mt-6 space-y-3 text-sm text-slate-300">
                   <div className="flex items-center gap-3 group/loc">
                     <MapPin size={18} className="text-green-400 group-hover/loc:scale-110 transition-transform" />
-                    Ahmedabad, Gujarat, India
+                    {contactAddress}
                   </div>
                   <div className="flex items-center gap-3 group/loc">
                     <Clock size={18} className="text-slate-400 group-hover/loc:rotate-12 transition-transform" />
-                    Mon - Fri: 6:00 AM – 10:00 PM
-                  </div>
-                  <div className="flex items-center gap-3 group/loc">
-                    <Clock size={18} className="text-slate-400 group-hover/loc:rotate-12 transition-transform" />
-                    Sat - Sun: 7:00 AM – 8:00 PM
+                    Mon - Sun: {workingHoursFrom} – {workingHoursTo}
                   </div>
                 </div>
               </GlassCard>
@@ -253,17 +267,17 @@ export function ContactPage() {
                   />
                 </motion.div>
 
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }} 
-                  whileInView={{ opacity: 1, y: 0 }} 
-                  viewport={{ once: true }} 
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
                   transition={{ delay: 0.4 }}
                   className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pt-2"
                 >
                   <p className="text-xs text-slate-400">
                     We will get back to you as soon as possible.
                   </p>
-                  <GlowButton 
+                  <GlowButton
                     type="submit"
                     disabled={loading}
                     whileHover={{ scale: 1.05 }}
@@ -324,7 +338,7 @@ export function ContactPage() {
               </h2>
               <p className="mt-4 text-sm leading-7 text-slate-300 relative z-10">
                 Reach out now and book your first session, even if you just want
-                to learn more about what ForgeFit offers.
+                to learn more about what {brandName} offers.
               </p>
               <GlowButton className="mt-6 px-10 py-4 relative z-10 transition-transform hover:scale-105 active:scale-95 pulse-glow-hover">Get Started</GlowButton>
             </GlassCard>

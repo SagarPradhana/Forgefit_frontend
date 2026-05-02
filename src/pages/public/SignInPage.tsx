@@ -19,6 +19,7 @@ export function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   const { mutate: performLogin, loading } = useMutation("post", {
     onSuccess: (response) => {
@@ -35,8 +36,20 @@ export function SignInPage() {
     },
   });
 
+  const validate = () => {
+    const newErrors: { email?: string; password?: string } = {};
+    if (!email.trim()) {
+      newErrors.email = "Username, email, or phone is required";
+    }
+    if (!password) {
+      newErrors.password = "Password is required";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleRealSignIn = async () => {
-    if (!email || !password) return;
+    if (!validate()) return;
 
     let login_type: "email" | "phone" | "username" = "username";
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -53,6 +66,11 @@ export function SignInPage() {
       password: password,
       login_type: login_type,
     });
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleRealSignIn();
   };
 
   return (
@@ -141,18 +159,21 @@ export function SignInPage() {
             </motion.div>
 
             {/* FORM */}
-            <div className="space-y-5">
+            <form onSubmit={handleFormSubmit} className="space-y-5" noValidate>
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
               >
                 <InputField
-                  placeholder="Email address"
+                  placeholder="Username / Email / Phone"
                   value={email}
-                  onChange={(e: any) => setEmail(e)}
-                  className="bg-white/5 focus:bg-white/10 transition-all border-white/10 focus:border-indigo-400"
+                  onChange={(e: any) => { setEmail(e); if (errors.email) setErrors(prev => ({ ...prev, email: undefined })); }}
+                  className={`bg-white/5 focus:bg-white/10 transition-all border-white/10 focus:border-indigo-400 ${errors.email ? "!border-red-500" : ""}`}
                 />
+                {errors.email && (
+                  <p className="mt-1.5 text-xs text-red-400 font-medium">{errors.email}</p>
+                )}
               </motion.div>
 
               <motion.div
@@ -165,8 +186,8 @@ export function SignInPage() {
                   placeholder="Password"
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e: any) => setPassword(e)}
-                  className="pr-12 bg-white/5 focus:bg-white/10 transition-all border-white/10 focus:border-indigo-400"
+                  onChange={(e: any) => { setPassword(e); if (errors.password) setErrors(prev => ({ ...prev, password: undefined })); }}
+                  className={`pr-12 bg-white/5 focus:bg-white/10 transition-all border-white/10 focus:border-indigo-400 ${errors.password ? "!border-red-500" : ""}`}
                 />
                 <button
                   type="button"
@@ -175,6 +196,9 @@ export function SignInPage() {
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
+                {errors.password && (
+                  <p className="mt-1.5 text-xs text-red-400 font-medium">{errors.password}</p>
+                )}
               </motion.div>
 
               {/* FORGOT */}
@@ -185,7 +209,7 @@ export function SignInPage() {
                 className="flex justify-end"
               >
                 <Link to="/forgot-password">
-                  <button className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors font-medium">
+                  <button type="button" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors font-medium">
                     Forgot password?
                   </button>
                 </Link>
@@ -197,6 +221,7 @@ export function SignInPage() {
                 transition={{ delay: 0.6 }}
               >
                 <CommonButton
+                  type="submit"
                   className="w-full h-12 text-base font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] pulse-glow-hover"
                   disabled={loading}
                   onClick={handleRealSignIn}
@@ -217,7 +242,7 @@ export function SignInPage() {
               >
                 Don't have an account? <Link to="/contact" className="text-orange-400 hover:underline font-medium">Join us</Link>
               </motion.p>
-            </div>
+            </form>
           </CommonCard>
         </motion.div>
       </div>

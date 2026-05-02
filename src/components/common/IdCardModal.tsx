@@ -35,9 +35,14 @@ interface IdCardModalProps {
   };
 }
 
+import { useGymStore } from '../../store/gymStore';
+
 export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user, portalType }) => {
   const { t } = useTranslation();
   const cardRef = useRef<HTMLDivElement>(null);
+  const { publicAppConfig } = useGymStore();
+  const brandName = publicAppConfig?.brand_name || "ForgeFit";
+  const brandLogo = publicAppConfig?.logo_image_path;
 
   const handlePrint = () => {
     const printContent = cardRef.current;
@@ -49,7 +54,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user,
     printWindow.document.write(`
       <html>
         <head>
-          <title>ForgeFit - ID Card - ${user.name}</title>
+          <title>{brandName} - ID Card - ${user.name}</title>
           <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
           <style>
             body { margin: 0; padding: 20px; display: flex; justify-content: center; }
@@ -77,7 +82,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user,
     if (cardRef.current) {
       const dataUrl = await htmlToImage.toPng(cardRef.current, { quality: 1.0, pixelRatio: 2 });
       const link = document.createElement('a');
-      link.download = `ForgeFit_ID_${(user.name || 'Member').replace(/\s+/g, '_')}.png`;
+      link.download = `${brandName.replace(/\s+/g, '_')}_ID_${(user.name || 'Member').replace(/\s+/g, '_')}.png`;
       link.href = dataUrl;
       link.click();
     }
@@ -116,7 +121,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user,
     >
       <div className="flex flex-col items-center py-6">
         <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-8">
-          ForgeFit Gym Portal · Member ID Card
+          {brandName} Gym Portal · Member ID Card
         </div>
 
         {/* Action Buttons at Top (Accessibility Fix) */}
@@ -146,21 +151,25 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user,
               {/* Logo */}
               <div className="logo-row">
                 <div className="logo-left">
-                  <div className="flame-wrap">
-                    <svg width="26" height="28" viewBox="0 0 26 28" fill="none">
-                      <path d="M13 1C11.5 5 9.5 7 10.5 11C8.5 9 8.5 6 9.5 4C6 8 5 13 8 16.5C6.5 15.5 5.5 13.5 6 12C4 15 5 20 9.5 21.5C8 21 7 19 7.5 17.5C6 20 7 24.5 11.5 26L14.5 26C19 24.5 20 20 18.5 17.5C19 19 18 21 16.5 21.5C21 20 22 15 20 12C20.5 13.5 19.5 15.5 18 16.5C21 13 20 8 16.5 4C17.5 6 17.5 9 15.5 11C16.5 7 14.5 5 13 1Z" fill="url(#fg)" />
-                      <defs>
-                        <linearGradient id="fg" x1="13" y1="1" x2="13" y2="26" gradientUnits="userSpaceOnUse">
-                          <stop offset="0%" stopColor="#fbbf24" />
-                          <stop offset="55%" stopColor="#f07040" />
-                          <stop offset="100%" stopColor="#e8501a" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
+                  <div className="flame-wrap overflow-hidden">
+                    {brandLogo ? (
+                      <img src={brandLogo} alt="Logo" className="h-full w-full object-contain" />
+                    ) : (
+                      <svg width="26" height="28" viewBox="0 0 26 28" fill="none">
+                        <path d="M13 1C11.5 5 9.5 7 10.5 11C8.5 9 8.5 6 9.5 4C6 8 5 13 8 16.5C6.5 15.5 5.5 13.5 6 12C4 15 5 20 9.5 21.5C8 21 7 19 7.5 17.5C6 20 7 24.5 11.5 26L14.5 26C19 24.5 20 20 18.5 17.5C19 19 18 21 16.5 21.5C21 20 22 15 20 12C20.5 13.5 19.5 15.5 18 16.5C21 13 20 8 16.5 4C17.5 6 17.5 9 15.5 11C16.5 7 14.5 5 13 1Z" fill="url(#fg)" />
+                        <defs>
+                          <linearGradient id="fg" x1="13" y1="1" x2="13" y2="26" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stopColor="#fbbf24" />
+                            <stop offset="55%" stopColor="#f07040" />
+                            <stop offset="100%" stopColor="#e8501a" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
+                    )}
                   </div>
                   <div className="logo-text-block">
-                    <div className="logo-wordmark">Forge<em>Fit</em></div>
-                    <div className="logo-sub">Strength · Performance · Results</div>
+                    <div className="logo-wordmark">{brandName}</div>
+                    <div className="logo-sub">{publicAppConfig?.description || "Strength · Performance · Results"}</div>
                   </div>
                 </div>
                 <div className="id-badge">{(user.role?.toUpperCase() || 'USER')}</div>
@@ -285,7 +294,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user,
 
             {/* ── FOOTER STRIP ── */}
             <div className="card-footer">
-              <div className="footer-text">forgefit.in &nbsp;·&nbsp; strength begins here</div>
+              <div className="footer-text">{(publicAppConfig as any)?.website || 'gymportal.in'} &nbsp;·&nbsp; strength begins here</div>
               <div className="footer-dots">
                 <div className="footer-dot"></div>
                 <div className="footer-dot"></div>

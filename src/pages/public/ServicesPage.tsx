@@ -33,7 +33,17 @@ const benefits = [
   { icon: Dumbbell, label: "Modern Equipment" },
 ];
 
+import { useGymStore } from "../../store/gymStore";
+
 export function ServicesPage() {
+  const { publicAppConfig, publicFaqs } = useGymStore();
+  const brandName = publicAppConfig?.brand_name || "ForgeFit";
+  
+  const displayFaqs = publicFaqs.length > 0 ? publicFaqs : [
+    { question: "What are your operating hours?", answer: "We are open 24/7 for all premium and VIP members. Basic members have access from 5 AM to 11 PM." },
+    { question: "Do you offer personal training?", answer: "Yes, we have a team of certified personal trainers ready to help you reach your goals." },
+    { question: "Can I freeze my membership?", answer: "Members can freeze their accounts for up to 3 months per year for medical or travel reasons." },
+  ];
   return (
     <PublicLayout>
       <motion.div
@@ -67,7 +77,7 @@ export function ServicesPage() {
               transition={{ delay: 0.4 }}
               className="max-w-2xl text-sm sm:text-base leading-7 text-slate-300"
             >
-              ForgeFit combines expert coaching, premium equipment, and a welcoming gym experience so every member can train with confidence and stay motivated.
+              {brandName} combines expert coaching, premium equipment, and a welcoming gym experience so every member can train with confidence and stay motivated.
             </motion.p>
             <div className="flex flex-wrap gap-3">
               <CommonButton type="button" className="pulse-glow-hover">Explore Memberships</CommonButton>
@@ -236,6 +246,28 @@ export function ServicesPage() {
         </AnimatedSection>
 
         <AnimatedSection>
+          <section className="space-y-8">
+            <SectionTitle title="Frequently Asked Questions" subtitle="Quick answers to common membership questions." />
+            <div className="grid gap-4 md:grid-cols-2">
+              {displayFaqs.map((faq, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <GlassCard className="p-6 h-full hover:border-indigo-500/30 transition-colors group">
+                    <h3 className="text-base font-semibold text-white group-hover:text-orange-300 transition-colors">{faq.question}</h3>
+                    <p className="mt-3 text-sm text-slate-300 leading-relaxed">{faq.answer}</p>
+                  </GlassCard>
+                </motion.div>
+              ))}
+            </div>
+          </section>
+        </AnimatedSection>
+
+        <AnimatedSection>
           <section>
             <GlassCard className="rounded-[2rem] p-8 text-center relative overflow-hidden group">
               <div className="absolute inset-0 bg-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -245,7 +277,7 @@ export function ServicesPage() {
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-300 relative z-10">
                 Whether you want fat loss, muscle gain, or more endurance, our
-                team will guide you with a plan that fits your life.
+                team will guide you with a plan that fits your life at {brandName}.
               </p>
               <div className="mt-6 flex flex-wrap justify-center gap-3 relative z-10">
                 <CommonButton type="button" className="pulse-glow-hover">Book a Free Consultation</CommonButton>

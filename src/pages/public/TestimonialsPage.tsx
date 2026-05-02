@@ -27,7 +27,18 @@ const caseStudies = [
   },
 ];
 
+import { useGymStore } from "../../store/gymStore";
+
 export function TestimonialsPage() {
+  const { publicAppConfig, publicTestimonials, publicBanners } = useGymStore();
+  const brandName = publicAppConfig?.brand_name || "ForgeFit";
+
+  const displayTestimonials = publicTestimonials.length > 0
+    ? publicTestimonials.map(t => ({ quote: t.note, name: t.name }))
+    : testimonials;
+
+  const videoBanners = publicBanners["testimonials"] || [];
+  const latestVideo = videoBanners[0];
   return (
     <PublicLayout>
       <motion.div
@@ -38,14 +49,14 @@ export function TestimonialsPage() {
         <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8 text-center shadow-2xl">
           <div className="absolute inset-x-0 top-0 h-36 bg-[radial-gradient(circle_at_top,_rgba(249,115,22,0.18),_transparent_40%)]" />
           <div className="relative z-10 space-y-5">
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="text-sm uppercase tracking-[0.3em] text-orange-300"
             >
               Member Success
             </motion.p>
-            <motion.h1 
+            <motion.h1
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
@@ -53,14 +64,14 @@ export function TestimonialsPage() {
             >
               Real People. Real Transformations.
             </motion.h1>
-            <motion.p 
+            <motion.p
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
               className="mx-auto max-w-2xl text-sm sm:text-base leading-7 text-slate-300"
             >
               Hear from members who changed their habits, improved their
-              fitness, and found a stronger version of themselves at ForgeFit.
+              fitness, and found a stronger version of themselves at {brandName}.
             </motion.p>
             <div className="grid gap-3 sm:grid-cols-3">
               {[
@@ -90,12 +101,12 @@ export function TestimonialsPage() {
         <section>
           <SectionTitle
             title="What Our Members Say"
-            subtitle="Real feedback from people who love the ForgeFit experience."
+            subtitle={`Real feedback from people who love the ${brandName} experience.`}
           />
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {testimonials.map((item, index) => (
-              <motion.div 
-                key={item.name}
+            {displayTestimonials.map((item, index) => (
+              <motion.div
+                key={item.name + index}
                 initial={{ y: 40, opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
                 viewport={{ once: true }}
@@ -105,19 +116,12 @@ export function TestimonialsPage() {
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 text-orange-400">
                       {[...Array(5)].map((_, i) => (
-                        <motion.div
+                        <Star
                           key={i}
-                          initial={{ scale: 0 }}
-                          whileInView={{ scale: 1 }}
-                          viewport={{ once: true }}
-                          transition={{ delay: (index * 0.1) + (i * 0.1) }}
-                        >
-                          <Star
-                            size={16}
-                            className="sm:w-5 sm:h-5"
-                            fill="currentColor"
-                          />
-                        </motion.div>
+                          size={16}
+                          className="sm:w-5 sm:h-5"
+                          fill="currentColor"
+                        />
                       ))}
                     </div>
                     <p className="text-sm sm:text-base leading-7 text-slate-200 italic">
@@ -132,7 +136,7 @@ export function TestimonialsPage() {
                       </p>
                       <p className="text-xs text-slate-400">Gym Member</p>
                     </div>
-                    <motion.div 
+                    <motion.div
                       whileHover={{ scale: 1.1, rotate: 5 }}
                       className="h-12 w-12 rounded-full bg-gradient-to-br from-white/10 to-white/5 border border-white/10 text-orange-300 grid place-items-center text-xl font-bold transition-all duration-300 group-hover:border-orange-500/50"
                     >
@@ -162,10 +166,10 @@ export function TestimonialsPage() {
                 >
                   <GlassCard className="overflow-hidden p-0 group">
                     <div className="relative h-56 overflow-hidden">
-                      <motion.div 
+                      <motion.div
                         whileHover={{ scale: 1.1 }}
                         transition={{ duration: 0.7 }}
-                        className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1558611848-73f7eb4001c4?auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center" 
+                        className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1558611848-73f7eb4001c4?auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center"
                       />
                       <div className="absolute inset-0 bg-slate-950/70 group-hover:bg-slate-950/40 transition-colors duration-500" />
                       <div className="relative z-10 flex h-full flex-col justify-end p-5 text-white">
@@ -193,32 +197,40 @@ export function TestimonialsPage() {
               title="Watch Our Members"
               subtitle="See the experience in action with real video stories."
             />
-            <GlassCard className="relative overflow-hidden p-0 group cursor-pointer">
-              <div className="relative h-64 overflow-hidden">
-                <motion.div 
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 1 }}
-                  className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1526401485004-1590fbb9d7a6?auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center" 
+            <GlassCard className="relative overflow-hidden p-0 group cursor-pointer aspect-video md:aspect-[21/9]">
+              {latestVideo?.file_path?.endsWith('.mp4') ? (
+                <video
+                  src={latestVideo.file_path}
+                  controls
+                  className="h-full w-full object-cover"
                 />
-                <div className="absolute inset-0 bg-slate-950/70 group-hover:bg-slate-950/50 transition-colors" />
-                <div className="relative z-10 flex h-full flex-col items-center justify-center gap-4 text-center text-white px-6">
-                  <motion.div 
-                    whileHover={{ scale: 1.2, rotate: 90 }}
-                    className="flex h-16 w-16 items-center justify-center rounded-full border border-white/20 bg-white/10 text-orange-300 shadow-lg"
-                  >
-                    <PlayCircle className="h-10 w-10" />
-                  </motion.div>
-                  <div>
-                    <p className="text-lg font-semibold">
-                      Member Story Spotlight
-                    </p>
-                    <p className="mt-2 text-sm text-slate-300 max-w-xl">
-                      Tune in to a short testimonial and feel the difference
-                      ForgeFit members experience every day.
-                    </p>
+              ) : (
+                <div className="relative h-64 sm:h-full overflow-hidden">
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 1 }}
+                    className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1526401485004-1590fbb9d7a6?auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center"
+                  />
+                  <div className="absolute inset-0 bg-slate-950/70 group-hover:bg-slate-950/50 transition-colors" />
+                  <div className="relative z-10 flex h-full flex-col items-center justify-center gap-4 text-center text-white px-6">
+                    <motion.div
+                      whileHover={{ scale: 1.2, rotate: 90 }}
+                      className="flex h-16 w-16 items-center justify-center rounded-full border border-white/20 bg-white/10 text-orange-300 shadow-lg"
+                    >
+                      <PlayCircle className="h-10 w-10" />
+                    </motion.div>
+                    <div>
+                      <p className="text-lg font-semibold">
+                        Member Story Spotlight
+                      </p>
+                      <p className="mt-2 text-sm text-slate-300 max-w-xl">
+                        Tune in to a short testimonial and feel the difference
+                        {brandName} members experience every day.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </GlassCard>
           </section>
         </AnimatedSection>
@@ -231,7 +243,7 @@ export function TestimonialsPage() {
                 { value: 500, label: "Happy Members", suffix: "+" },
                 { value: 1200, label: "Transformations", suffix: "+" },
                 { value: 95, label: "Success Rate", suffix: "%" },
-              ].map((stat, i) => (
+              ].map((stat) => (
                 <GlassCard key={stat.label} className="p-6 text-center hover:border-orange-500/50 transition-colors">
                   <p className="text-3xl font-bold text-orange-400">
                     <Counter from={0} to={stat.value} suffix={stat.suffix} />
@@ -251,7 +263,7 @@ export function TestimonialsPage() {
                 Your story starts here
               </p>
               <h2 className="mt-4 text-2xl sm:text-3xl font-bold text-white relative z-10">
-                Be the next member to transform with ForgeFit.
+                Be the next member to transform with {brandName}.
               </h2>
               <p className="mt-4 text-sm leading-7 text-slate-300 relative z-10">
                 Join today and take the first step toward stronger habits, better

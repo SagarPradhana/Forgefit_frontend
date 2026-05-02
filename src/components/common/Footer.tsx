@@ -40,27 +40,31 @@ const footerSections = [
   },
 ];
 
-const socialLinks = [
-  { icon: FacebookIcon, href: "#", label: "Facebook" },
-  { icon: InstagramIcon, href: "#", label: "Instagram" },
-  { icon: TwitterIcon, href: "#", label: "Twitter" },
-  { icon: YoutubeIcon, href: "#", label: "YouTube" },
-  { icon: LinkedinIcon, href: "#", label: "LinkedIn" },
-];
-
-const contactInfo = [
-  {
-    icon: MapPin,
-    label: "Address",
-    value: "Ahmedabad, Gujarat, India",
-  },
-  { icon: Phone, label: "Phone", value: "+91 98765 43210" },
-  { icon: Mail, label: "Email", value: "support@forgefit.com" },
-];
+import { useGymStore } from "../../store/gymStore";
 
 export function Footer() {
+  const { publicAppConfig, publicLocations } = useGymStore();
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+
+  const contact = publicLocations[0];
+  const contactInfo = [
+    {
+      icon: MapPin,
+      label: "Address",
+      value: contact?.address || "Ahmedabad, Gujarat, India",
+    },
+    { icon: Phone, label: "Phone", value: contact?.phone || "+91 98765 43210" },
+    { icon: Mail, label: "Email", value: contact?.email || "support@forgefit.com" },
+  ];
+
+  const socialLinks = [
+    { icon: FacebookIcon, href: publicAppConfig?.facebook_url || "#", label: "Facebook" },
+    { icon: InstagramIcon, href: publicAppConfig?.instagram_url || "#", label: "Instagram" },
+    { icon: TwitterIcon, href: publicAppConfig?.twitter_url || "#", label: "Twitter" },
+    { icon: YoutubeIcon, href: publicAppConfig?.youtube_url || "#", label: "YouTube" },
+    { icon: LinkedinIcon, href: publicAppConfig?.linkedin_url || "#", label: "LinkedIn" },
+  ];
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,15 +107,18 @@ export function Footer() {
               <div className="flex items-center gap-3">
                 <motion.div 
                   whileHover={{ rotate: 180 }}
-                  className="p-2 bg-gradient-to-br from-indigo-500 to-orange-400 rounded-lg shadow-glow"
+                  className="p-2 bg-gradient-to-br from-indigo-500 to-orange-400 rounded-lg shadow-glow overflow-hidden flex items-center justify-center"
                 >
-                  <Dumbbell className="w-6 h-6 text-white" />
+                  {publicAppConfig?.logo_image_path ? (
+                    <img src={publicAppConfig.logo_image_path} alt={publicAppConfig.brand_name} className="w-6 h-6 object-contain" />
+                  ) : (
+                    <Dumbbell className="w-6 h-6 text-white" />
+                  )}
                 </motion.div>
-                <h3 className="text-2xl font-bold text-white tracking-tight">ForgeFit</h3>
+                <h3 className="text-2xl font-bold text-white tracking-tight">{publicAppConfig?.brand_name || "ForgeFit"}</h3>
               </div>
               <p className="text-slate-400 max-w-md leading-relaxed">
-                Transform your body, elevate your mind. Join our community of
-                fitness enthusiasts and achieve your goals with expert guidance.
+                {publicAppConfig?.description || "Transform your body, elevate your mind. Join our community of fitness enthusiasts and achieve your goals with expert guidance."}
               </p>
 
               {/* Contact Info */}
@@ -253,7 +260,7 @@ export function Footer() {
             transition={{ duration: 1, delay: 0.5 }}
             className="flex flex-col sm:flex-row justify-between items-center gap-6 text-slate-500 text-xs font-medium tracking-wide"
           >
-            <p>&copy; {new Date().getFullYear()} ForgeFit. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} {publicAppConfig?.brand_name || "ForgeFit"}. All rights reserved.</p>
             <div className="flex gap-8">
               <a href="#" className="hover:text-indigo-400 transition-colors uppercase">
                 Privacy Policy

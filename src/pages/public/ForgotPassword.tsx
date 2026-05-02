@@ -11,6 +11,22 @@ import { Link } from "react-router-dom";
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!email.trim()) {
+      setError("Please enter your email address.");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    setSubmitted(true);
+  };
 
   return (
     <PublicLayout>
@@ -44,21 +60,26 @@ export function ForgotPasswordPage() {
                   Enter your email and we’ll send you a reset link.
                 </p>
 
-                {/* FORM */}
-                <div className="space-y-4">
-                  <InputField
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e: any) => setEmail(e.target.value)}
-                  />
+              {/* FORM */}
+                <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                  <div>
+                    <InputField
+                      placeholder="Enter your email"
+                      value={email}
+                      onChange={(e: any) => setEmail(e)}
+                    />
+                    {error && (
+                      <p className="mt-1.5 text-xs text-red-400 font-medium">{error}</p>
+                    )}
+                  </div>
 
                   <CommonButton
+                    type="submit"
                     className="w-full h-11"
-                    onClick={() => setSubmitted(true)}
                   >
                     Send Reset Link
                   </CommonButton>
-                </div>
+                </form>
               </>
             ) : (
               <>

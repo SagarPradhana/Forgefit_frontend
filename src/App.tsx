@@ -7,7 +7,6 @@ import { NotFound404, LoadingSpinner } from "./components/ui/primitives";
 import { ToastContainer } from "./components/ui/ToastContainer";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dumbbell } from "lucide-react";
-import { adminAppConfigService } from "./services/adminAppConfigService";
 
 const HomePage = lazy(() =>
   import("./pages/public/HomePage").then((m) => ({ default: m.HomePage })),
@@ -54,6 +53,31 @@ const UserPortalPages = lazy(() =>
   })),
 );
 
+/** Returns true if the stored JWT token exists and has not expired. */
+function isTokenValid(token: string | null): boolean {
+  if (!token) return false;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    // exp is in seconds; Date.now() is in ms
+    return typeof payload.exp === "number" && payload.exp * 1000 > Date.now();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Wraps public pages. If the user already has a valid session they are
+ * redirected straight to their dashboard — same experience as a native app.
+ */
+function AuthRedirect({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, role, token } = useAuthStore();
+  if (isAuthenticated && isTokenValid(token)) {
+    const dest = role === "admin" ? "/admin/dashboard" : "/user/dashboard";
+    return <Navigate to={dest} replace />;
+  }
+  return <>{children}</>;
+}
+
 function ProtectedRole({
   expectedRole,
   children,
@@ -61,8 +85,8 @@ function ProtectedRole({
   expectedRole: "admin" | "user";
   children: React.ReactNode;
 }) {
-  const { role, isAuthenticated } = useAuthStore();
-  if (!isAuthenticated || role !== expectedRole)
+  const { role, isAuthenticated, token } = useAuthStore();
+  if (!isAuthenticated || !isTokenValid(token) || role !== expectedRole)
     return <Navigate to="/auth" replace />;
   return <>{children}</>;
 }
@@ -82,7 +106,7 @@ function RoleRoute({ role }: { role: "admin" | "user" }) {
   );
 }
 
-const LoadingScreen = () => (
+const LoadingScreen = ({ brandName }: { brandName: string }) => (
   <motion.div
     initial={{ opacity: 1 }}
     exit={{ opacity: 0 }}
@@ -100,7 +124,7 @@ const LoadingScreen = () => (
           <Dumbbell size={32} className="text-white" />
         </span>
         <h1 className="text-4xl font-bold tracking-tighter text-white">
-          Forge<span className="text-orange-400">Fit</span>
+          {brandName}
         </h1>
       </div>
       <div className="h-1 w-48 overflow-hidden rounded-full bg-white/10">
@@ -117,34 +141,35 @@ const LoadingScreen = () => (
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
-  const { updateAppConfig, setDashboardColorTheme } = useGymStore();
+  const { updateAppConfig, setDashboardColorTheme, fetchPublicData, publicAppConfig } = useGymStore();
 
-  // Load app config on app start and apply theme, language, currency, timezone
+  const brandName = publicAppConfig?.brand_name || "ForgeFit";
+
   useEffect(() => {
-    const loadAppConfig = async () => {
-      try {
-        const res = await adminAppConfigService.getConfig() as any;
-        if (res && res.id) {
-          // Apply theme based on theme_name
-          if (res.theme_name === "dark") {
-            setDashboardColorTheme("theme1");
-          } else if (res.theme_name === "light") {
-            setDashboardColorTheme("theme5");
-          }
-          
-          // Update app config in store
-          updateAppConfig({
-            timezone: res.timezone || "0",
-            currency: res.currency || "USD",
-            language: res.language || "en",
-          });
-        }
-      } catch (err) {
-        console.error("Failed to load app config:", err);
-      }
-    };
-    loadAppConfig();
+    fetchPublicData();
   }, []);
+
+  // Update app config and theme based on public data
+  useEffect(() => {
+    if (publicAppConfig) {
+      if (publicAppConfig.theme_name === "dark") {
+        setDashboardColorTheme("theme1");
+      } else if (publicAppConfig.theme_name === "light") {
+        setDashboardColorTheme("theme5");
+      }
+
+      updateAppConfig({
+        name: publicAppConfig.brand_name,
+        logo: publicAppConfig.logo_image_path,
+        description: publicAppConfig.description,
+        contactEmail: publicAppConfig.email,
+        contactPhone: publicAppConfig.phone,
+        timezone: publicAppConfig.timezone,
+        currency: publicAppConfig.currency,
+        language: publicAppConfig.language,
+      });
+    }
+  }, [publicAppConfig]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1200);
@@ -164,20 +189,20 @@ export default function App() {
   return (
     <div className="relative min-h-screen bg-slate-950 overflow-x-hidden">
       <AnimatePresence>
-        {isLoading && <LoadingScreen key="loader" />}
+        {isLoading && <LoadingScreen key="loader" brandName={brandName} />}
       </AnimatePresence>
       <div className="cursor-glow" />
       <ToastContainer />
       <Suspense fallback={<LoadingSpinner />}>
         <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/services" element={<ServicesPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/testimonials" element={<TestimonialsPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/signin" element={<SignInPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/" element={<AuthRedirect><HomePage /></AuthRedirect>} />
+          <Route path="/about" element={<AuthRedirect><AboutPage /></AuthRedirect>} />
+          <Route path="/services" element={<AuthRedirect><ServicesPage /></AuthRedirect>} />
+          <Route path="/pricing" element={<AuthRedirect><PricingPage /></AuthRedirect>} />
+          <Route path="/testimonials" element={<AuthRedirect><TestimonialsPage /></AuthRedirect>} />
+          <Route path="/contact" element={<AuthRedirect><ContactPage /></AuthRedirect>} />
+          <Route path="/signin" element={<AuthRedirect><SignInPage /></AuthRedirect>} />
+          <Route path="/forgot-password" element={<AuthRedirect><ForgotPasswordPage /></AuthRedirect>} />
           <Route path="/auth" element={<Navigate to="/signin" replace />} />
           <Route path="/admin/:page" element={<RoleRoute role="admin" />} />
           <Route path="/user/:page" element={<RoleRoute role="user" />} />

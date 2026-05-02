@@ -5,6 +5,7 @@ import {
   type User,
   userManagementSeed,
 } from '../data/mockData';
+import { publicAppService, type AppConfig as PublicAppConfig, type FAQ, type Testimonial, type PublicBanner, type Location, type SubscriptionPlan } from '../services/publicAppService';
 
 type PlanEntity = {
   id: string;
@@ -178,6 +179,16 @@ type GymState = {
   updatePublicPageConfig: (config: Partial<PublicPageConfig>) => void;
   setDesignTheme: (themeId: string) => void;
   setDashboardColorTheme: (themeId: "theme1" | "theme2" | "theme3" | "theme4" | "theme5") => void;
+  
+  // Public Data
+  publicAppConfig: PublicAppConfig | null;
+  publicFaqs: FAQ[];
+  publicTestimonials: Testimonial[];
+  publicBanners: Record<string, PublicBanner[]>;
+  publicLocations: Location[];
+  publicSubscriptionPlans: SubscriptionPlan[];
+  isLoadingPublicData: boolean;
+  fetchPublicData: () => Promise<void>;
 };
 
 export const useGymStore = create<GymState>((set) => ({
@@ -377,4 +388,47 @@ export const useGymStore = create<GymState>((set) => ({
   setDesignTheme: (themeId) => set(() => ({ currentDesignTheme: themeId })),
   dashboardColorTheme: "theme1",
   setDashboardColorTheme: (themeId) => set(() => ({ dashboardColorTheme: themeId })),
+
+  // Public Data Initial State
+  publicAppConfig: null,
+  publicFaqs: [],
+  publicTestimonials: [],
+  publicBanners: {},
+  publicLocations: [],
+  publicSubscriptionPlans: [],
+  isLoadingPublicData: false,
+  fetchPublicData: async () => {
+    set({ isLoadingPublicData: true });
+    try {
+      const [configRes, faqRes, testimonialRes, locationRes, plansRes] = await Promise.all([
+        publicAppService.getAppConfig().catch(() => null),
+        publicAppService.getFAQs({ count: 1000 }).catch(() => ({ data: [] })),
+        publicAppService.getTestimonials({ count: 1000 }).catch(() => ({ data: [] })),
+        publicAppService.getLocations({ count: 1000 }).catch(() => ({ data: [] })),
+        publicAppService.getSubscriptionPlans({ count: 1000 }).catch(() => ({ data: [] })),
+      ]);
+
+      const bannerTypes = ["common", "inspirational", "trainers", "offers", "about", "testimonials"];
+      const bannersPromises = bannerTypes.map(type => publicAppService.getBanners(type).catch(() => ({ data: [] })));
+      const bannersResponses = await Promise.all(bannersPromises);
+      
+      const bannersMap: Record<string, PublicBanner[]> = {};
+      bannerTypes.forEach((type, index) => {
+        bannersMap[type] = bannersResponses[index]?.data || [];
+      });
+
+      set({
+        publicAppConfig: configRes?.data || configRes || null, // Handle different response wrappers
+        publicFaqs: faqRes?.data || [],
+        publicTestimonials: testimonialRes?.data || [],
+        publicLocations: locationRes?.data || [],
+        publicSubscriptionPlans: plansRes?.data || [],
+        publicBanners: bannersMap,
+        isLoadingPublicData: false,
+      });
+    } catch (error) {
+      console.error("Error fetching public data:", error);
+      set({ isLoadingPublicData: false });
+    }
+  },
 }));

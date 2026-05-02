@@ -95,6 +95,7 @@ export const API_ENDPOINTS = {
     UPLOAD_BANNERS: "/api/public/upload-public-banners-files",
     BANNERS_DETAILS: (type: string) => `/api/public/public-banners-details?type=${type}`,
     BANNER_DELETE: (id: string) => `/api/public/public-banners/${id}`,
+    PUBLIC_APP_CONFIG: "/api/public/public-app-config",
   }
 } as const;
 

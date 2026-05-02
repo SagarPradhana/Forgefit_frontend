@@ -424,6 +424,20 @@ export function AdminPortalPages({ page }: { page: string }) {
               </GlowButton>
               <GlowButton
                 onClick={async () => {
+                  // Validate plan form
+                  if (!planForm.name.trim()) {
+                    toast.error("Plan name is required");
+                    return;
+                  }
+                  if (!planForm.price || Number(planForm.price) <= 0) {
+                    toast.error("Valuation price must be greater than 0");
+                    return;
+                  }
+                  if (planForm.actual_price && Number(planForm.actual_price) < Number(planForm.price)) {
+                    toast.error("Actual price cannot be less than the selling price");
+                    return;
+                  }
+
                   const payload = {
                     name: planForm.name,
                     description: planForm.description,
@@ -788,6 +802,20 @@ export function AdminPortalPages({ page }: { page: string }) {
               <GlowButton className="bg-gray-600" onClick={() => setProductModalOpen(false)}>Abort</GlowButton>
               <GlowButton
                 onClick={async () => {
+                  // Validate product form
+                  if (!productForm.name.trim()) {
+                    toast.error("Product name is required");
+                    return;
+                  }
+                  if (!productForm.price || Number(productForm.price) < 0) {
+                    toast.error("Product price must be 0 or greater");
+                    return;
+                  }
+                  if (productForm.stock === "" || Number(productForm.stock) < 0) {
+                    toast.error("Stock count must be 0 or greater");
+                    return;
+                  }
+
                   const payload = {
                     name: productForm.name,
                     category: productForm.category,

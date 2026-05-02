@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { Dumbbell, Flame, Trophy, Users, Star } from "lucide-react";
 import { PublicLayout } from "../../layouts/PublicLayout";
 import { GlowButton, GlassCard } from "../../components/ui/primitives";
-import { useTheme } from "../../components/ui/ThemeProvider";
 import { motion } from "framer-motion";
 import { AnimatedSection } from "../../components/common/AnimatedSection";
 import { Counter } from "../../components/common/Counter";
@@ -60,9 +59,18 @@ const testimonials = [
   { quote: "Best gym environment I've ever trained in.", name: "Mei" },
 ];
 
-export function HomePage() {
-  const { currentTheme } = useTheme();
+import { useGymStore } from "../../store/gymStore";
+import { BannerCarousel } from "../../components/common/BannerCarousel";
 
+export function HomePage() {
+  const { publicAppConfig, publicBanners, publicTestimonials } = useGymStore();
+
+  const homeBanners = publicBanners["common"] || [];
+  const displayTestimonials = publicTestimonials.length > 0
+    ? publicTestimonials.slice(0, 3).map(t => ({ quote: t.note, name: t.name }))
+    : testimonials;
+
+  const brandName = publicAppConfig?.brand_name || "ForgeFit";
   return (
     <PublicLayout>
       <div className="relative isolate space-y-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -117,7 +125,7 @@ export function HomePage() {
                 className="max-w-2xl text-sm sm:text-base leading-7 text-slate-300"
               >
                 Train with expert coaches, track your performance, and unlock
-                results faster with ForgeFit’s complete fitness experience.
+                results faster with {brandName}’s complete fitness experience.
               </motion.p>
             </div>
 
@@ -188,24 +196,15 @@ export function HomePage() {
             initial={{ x: 80, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
-            className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/80 shadow-2xl"
+            className="relative h-[400px] sm:h-[500px]"
           >
-            <motion.div
-              animate={{ translateY: [-6, 0, -6] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <img
-                src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?auto=format&fit=crop&w=1200&q=80"
-                alt="Gym workout"
-                className="h-full w-full object-cover"
-              />
-            </motion.div>
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+            <BannerCarousel banners={homeBanners} className="h-full" />
+
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1.4, duration: 0.6 }}
-              className="absolute bottom-5 left-5 right-5 rounded-3xl border border-white/10 bg-black/50 p-5 backdrop-blur-sm"
+              className="absolute bottom-5 left-5 right-5 rounded-3xl border border-white/10 bg-black/50 p-5 backdrop-blur-sm z-10"
             >
               <p className="text-sm uppercase tracking-[0.3em] text-orange-300">
                 Featured program
@@ -225,7 +224,7 @@ export function HomePage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between overflow-hidden">
             <div>
               <p className="text-sm uppercase tracking-[0.3em] text-orange-300">
-                {"Why choose ForgeFit".split("").map((char, i) => (
+                {`Why choose ${brandName}`.split("").map((char, i) => (
                   <motion.span
                     key={i}
                     initial={{ opacity: 0 }}
@@ -317,18 +316,18 @@ export function HomePage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {trainers.map((trainer) => (
-                <GlassCard key={trainer.name} className="overflow-hidden p-0 group">
+              {(publicBanners["trainers"]?.length > 0 ? publicBanners["trainers"] : trainers).slice(0, 3).map((trainer: any, idx: number) => (
+                <GlassCard key={trainer.id || idx} className="overflow-hidden p-0 group">
                   <div className="relative h-64 overflow-hidden">
                     <img
-                      src={`${trainer.image}?auto=format&fit=crop&w=900&q=80`}
-                      alt={trainer.name}
+                      src={trainer.file_path || `${trainer.image}?auto=format&fit=crop&w=900&q=80`}
+                      alt={trainer.name || "Trainer"}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-transparent to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-                      <p className="text-lg font-semibold">{trainer.name}</p>
-                      <p className="text-sm text-slate-300">{trainer.role}</p>
+                      <p className="text-lg font-semibold">{trainer.name || "Elite Trainer"}</p>
+                      <p className="text-sm text-slate-300">{trainer.role || "Fitness Expert"}</p>
                     </div>
                     <div className="absolute inset-0 bg-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                   </div>
@@ -359,17 +358,17 @@ export function HomePage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
-              {[
+              {(publicBanners["inspirational"]?.length > 0 ? publicBanners["inspirational"] : [
                 "https://images.unsplash.com/photo-1517832207067-4db24a2ae47c",
                 "https://images.unsplash.com/photo-1526401281623-5c45e2b8c430",
                 "https://images.unsplash.com/photo-1549187774-b4e9a35c5f22",
-              ].map((src, index) => (
+              ]).slice(0, 3).map((item: any, index: number) => (
                 <div
                   key={index}
                   className="group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/70"
                 >
                   <img
-                    src={`${src}?auto=format&fit=crop&w=900&q=80`}
+                    src={item.file_path || `${item}?auto=format&fit=crop&w=900&q=80`}
                     alt="Transformation"
                     className="h-64 w-full object-cover transition duration-500 group-hover:scale-105"
                   />
@@ -400,7 +399,7 @@ export function HomePage() {
             </div>
 
             <div className="grid gap-4 lg:grid-cols-3">
-              {testimonials.map((item, i) => (
+              {displayTestimonials.map((item, i) => (
                 <motion.div
                   key={item.name}
                   initial={{ y: 20, opacity: 0 }}
@@ -408,18 +407,10 @@ export function HomePage() {
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
                 >
-                  <GlassCard className="p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg group">
+                  <GlassCard className="p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg group h-full">
                     <div className="flex gap-2 text-orange-400 mb-4">
                       {[...Array(5)].map((_, index) => (
-                        <motion.div
-                          key={index}
-                          initial={{ scale: 0 }}
-                          whileInView={{ scale: 1 }}
-                          viewport={{ once: true }}
-                          transition={{ delay: (i * 0.1) + (index * 0.1) }}
-                        >
-                          <Star size={16} fill="currentColor" />
-                        </motion.div>
+                        <Star key={index} size={16} fill="currentColor" />
                       ))}
                     </div>
                     <p className="text-sm leading-7 text-slate-300 italic">
@@ -445,11 +436,11 @@ export function HomePage() {
               Start Your Fitness Journey Today
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-300">
-              Join ForgeFit and get access to expert coaching, premium training,
+              Join {brandName} and get access to expert coaching, premium training,
               and a community that helps you stay consistent.
             </p>
             <Link to="/contact">
-              <GlowButton className="mt-8 px-8 py-3 transition-transform hover:scale-105 active:scale-95 pulse-glow-hover">Join ForgeFit</GlowButton>
+              <GlowButton className="mt-8 px-8 py-3 transition-transform hover:scale-105 active:scale-95 pulse-glow-hover">Join {brandName}</GlowButton>
             </Link>
           </section>
         </AnimatedSection>

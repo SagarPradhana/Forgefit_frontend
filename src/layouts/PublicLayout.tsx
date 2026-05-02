@@ -136,11 +136,14 @@ function MobileMenu({
   );
 }
 
+import { useGymStore } from "../store/gymStore";
+
 // ?? MAIN LAYOUT
 export function PublicLayout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { t } = useTranslation();
+  const { publicAppConfig } = useGymStore();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -167,15 +170,23 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                 initial={{ rotate: -5 }}
                 animate={{ rotate: 0 }}
                 transition={{ duration: 0.6, ease: "easeOut" }}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-gradient-to-br from-indigo-500/50 via-violet-500/35 to-orange-400/45 shadow-[0_0_25px_rgba(99,102,241,0.45)] group-hover:shadow-glow transition-all"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-gradient-to-br from-indigo-500/50 via-violet-500/35 to-orange-400/45 shadow-[0_0_25px_rgba(99,102,241,0.45)] group-hover:shadow-glow transition-all overflow-hidden"
               >
-                <Dumbbell size={18} />
+                {publicAppConfig?.logo_image_path ? (
+                  <img src={publicAppConfig.logo_image_path} alt={publicAppConfig.brand_name} className="h-full w-full object-cover" />
+                ) : (
+                  <Dumbbell size={18} />
+                )}
               </motion.span>
               <span className="text-sm sm:text-lg font-semibold tracking-tight">
-                Forge
-                <span className="bg-gradient-to-r from-indigo-300 via-white to-orange-300 bg-clip-text text-transparent">
-                  Fit
-                </span>
+                {publicAppConfig?.brand_name || (
+                  <>
+                    Forge
+                    <span className="bg-gradient-to-r from-indigo-300 via-white to-orange-300 bg-clip-text text-transparent">
+                      Fit
+                    </span>
+                  </>
+                )}
               </span>
             </Link>
 

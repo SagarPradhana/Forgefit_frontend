@@ -12,7 +12,18 @@ import { AnimatedSection } from "../../components/common/AnimatedSection";
 import { Counter } from "../../components/common/Counter";
 
 export function PricingPage() {
-  const plans = useGymStore((s) => s.plans);
+  const { publicSubscriptionPlans } = useGymStore();
+  
+  const plans = publicSubscriptionPlans.length > 0 
+    ? publicSubscriptionPlans.map(p => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        duration: `${p.duration_in_months} Month${p.duration_in_months > 1 ? 's' : ''}`,
+        features: p.description.split(',').map(f => f.trim()), // Assuming features are comma-separated in description
+      }))
+    : useGymStore((s) => s.plans);
+
   const allFeatures = Array.from(
     new Set(plans.flatMap((plan) => plan.features)),
   );

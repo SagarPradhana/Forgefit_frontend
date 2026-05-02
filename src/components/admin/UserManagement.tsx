@@ -39,7 +39,6 @@ export function UserManagement() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [modalStep, setModalStep] = useState<ModalStep>("role");
-  const [photoPreview, setPhotoPreview] = useState<string>("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [loadingStatusId, setLoadingStatusId] = useState<string | null>(null);
@@ -147,10 +146,9 @@ export function UserManagement() {
       setModalOpen(false);
       setPage(1);
       toast.success("User created successfully");
-      
+
       // Show success popup with user details
       const userData = {
-        username: formData.username || "",
         role: formData.role,
         email: formData.email || "",
         mobile: formData.mobile,
@@ -160,7 +158,7 @@ export function UserManagement() {
       };
       setUserCreatedData(userData);
       setShowUserCreatedModal(true);
-      
+
       refetchUsers();
     }
   });
@@ -289,7 +287,6 @@ export function UserManagement() {
       amount: 0,
       profilePhoto: ""
     });
-    setPhotoPreview("");
     setEditingUserId(null);
     setModalStep("role");
     setModalOpen(true);
@@ -325,7 +322,6 @@ export function UserManagement() {
       end_date: user.end_date || 0,
       profilePhoto: user.profile_image_path || user.metadata?.profile_image_path || "",
     });
-    setPhotoPreview(user.profile_image_path || user.metadata?.profile_image_path || "");
     setEditingUserId(user.id);
     setModalStep("role");
     setModalOpen(true);
@@ -334,9 +330,37 @@ export function UserManagement() {
 
   const handleNextStep = () => {
     if (modalStep === "role") {
-      if (!formData.name || !formData.mobile) {
+      if (!formData.name.trim() || !formData.mobile.trim()) {
         toast.error("Please fill in all mandatory account details");
         return;
+      }
+      // Validate phone format (at least 7 digits)
+      const phoneDigits = formData.mobile.replace(/\D/g, "");
+      if (phoneDigits.length < 7) {
+        toast.error("Please enter a valid mobile number (at least 7 digits)");
+        return;
+      }
+      // Validate email format if provided
+      if (formData.email && formData.email.trim()) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email.trim())) {
+          toast.error("Please enter a valid email address");
+          return;
+        }
+      }
+      // Validate password strength for new users
+      if (!editingUserId) {
+        const pwd = formData.password || "";
+        if (pwd.trim()) {
+          if (pwd.length < 8) {
+            toast.error("Password must be at least 8 characters");
+            return;
+          }
+          if (!/[a-zA-Z]/.test(pwd) || !/[0-9]/.test(pwd)) {
+            toast.error("Password must contain both letters and numbers");
+            return;
+          }
+        }
       }
       setModalStep("details");
       return;
@@ -404,7 +428,7 @@ export function UserManagement() {
     } else {
       // Store password temporarily for success popup
       tempPasswordRef.current = rawPayload.password || "Password@123";
-      
+
       // Create payload — includes password, no subscription fields
       const createPayload = {
         mobile: rawPayload.mobile,
@@ -475,11 +499,10 @@ export function UserManagement() {
           subtitle="Manage gym members, trainers, and employees"
         />
         {roleFilter && (
-          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-            roleFilter === "admin"   ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30" :
+          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${roleFilter === "admin" ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30" :
             roleFilter === "trainer" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" :
-                                       "bg-sky-500/20 text-sky-300 border-sky-500/30"
-          }`}>
+              "bg-sky-500/20 text-sky-300 border-sky-500/30"
+            }`}>
             {roleFilter === "admin" ? "Admins" : roleFilter === "trainer" ? "Trainers" : "Users"}
             <button
               onClick={() => setRoleFilter("")}
