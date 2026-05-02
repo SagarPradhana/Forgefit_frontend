@@ -12,6 +12,7 @@ import { API_ENDPOINTS } from "../../utils/url";
 import { api } from "../../utils/httputils";
 import { GlassCard, SectionTitle } from "../ui/primitives";
 import { DateRangeFilter, type DateRange } from "../ui/DateRangeFilter";
+import { useGymStore } from "../../store/gymStore";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface RevenueStats {
@@ -58,11 +59,11 @@ const PAYMENT_METHODS = ["cash", "card", "upi", "other"];
 const PAGE_SIZE = 10;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-const fmt = (n: number) =>
-  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
-
 const fmtDate = (ts: number) =>
   ts ? new Date(ts * 1000).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+
+const createFmt = (currency: string) => (n: number) =>
+  new Intl.NumberFormat("en-IN", { style: "currency", currency, maximumFractionDigits: 0 }).format(n);
 
 const toUnix = (dateStr: string, endOfDay = false) => {
   if (!dateStr) return undefined;
@@ -73,9 +74,10 @@ const toUnix = (dateStr: string, endOfDay = false) => {
 };
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
-function StatCard({ label, value, icon: Icon, color, delay }: {
-  label: string; value: number; icon: any; color: string; delay: number;
+function StatCard({ label, value, icon: Icon, color, delay, currency = "USD" }: {
+  label: string; value: number; icon: any; color: string; delay: number; currency?: string;
 }) {
+  const fmt = createFmt(currency);
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -94,7 +96,8 @@ function StatCard({ label, value, icon: Icon, color, delay }: {
 }
 
 // ─── Custom Tooltip for Bar Chart ─────────────────────────────────────────────
-function RevTooltip({ active, payload, label }: any) {
+function RevTooltip({ active, payload, label, currency = "USD" }: any) {
+  const fmt = createFmt(currency);
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-slate-900 border border-white/10 rounded-xl p-3 text-xs">
@@ -145,6 +148,11 @@ export function RevenueOps() {
   const [monthlyRevenue, setMonthlyRevenue] = useState<any[]>([]);
   const [revenueMonths, setRevenueMonths] = useState(6);
   const [revenueLoading, setRevenueLoading] = useState(false);
+
+  const { appConfig } = useGymStore();
+  const currency = appConfig?.currency || "USD";
+  const fmt = (n: number) =>
+    new Intl.NumberFormat("en-IN", { style: "currency", currency, maximumFractionDigits: 0 }).format(n);
 
   // Debounce search
   useEffect(() => {
@@ -266,10 +274,10 @@ export function RevenueOps() {
       {/* ── Stats Cards ── */}
       {stats && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Total Revenue"        value={stats.total_revenue}        icon={TrendingUp}  color="bg-indigo-500"  delay={0}    />
-          <StatCard label="Subscription Revenue" value={stats.subscription_revenue} icon={CreditCard}  color="bg-violet-500"  delay={0.05} />
-          <StatCard label="Product Revenue"      value={stats.product_revenue}      icon={ShoppingBag} color="bg-amber-500"   delay={0.1}  />
-          <StatCard label="Renewal Revenue"      value={stats.renewal_revenue}      icon={RefreshCw}   color="bg-emerald-500" delay={0.15} />
+          <StatCard label="Total Revenue"        value={stats.total_revenue}        icon={TrendingUp}  color="bg-indigo-500"  delay={0}    currency={currency} />
+          <StatCard label="Subscription Revenue" value={stats.subscription_revenue} icon={CreditCard}  color="bg-violet-500"  delay={0.05} currency={currency} />
+          <StatCard label="Product Revenue"      value={stats.product_revenue}      icon={ShoppingBag} color="bg-amber-500"   delay={0.1}  currency={currency} />
+          <StatCard label="Renewal Revenue"      value={stats.renewal_revenue}      icon={RefreshCw}   color="bg-emerald-500" delay={0.15} currency={currency} />
         </div>
       )}
 
@@ -303,7 +311,7 @@ export function RevenueOps() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                 <XAxis dataKey="month_label" stroke="#475569" tick={{ fontSize: 11, fontWeight: 700 }} />
                 <YAxis stroke="#475569" tick={{ fontSize: 10 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
-                <Tooltip content={<RevTooltip />} />
+                <Tooltip content={<RevTooltip currency={currency} />} />
                 <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700, paddingTop: 12 }} />
                 <Bar dataKey="subscription_revenue" name="Subscriptions" fill="#6366f1" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="product_revenue"      name="Products"      fill="#f59e0b" radius={[4, 4, 0, 0]} />

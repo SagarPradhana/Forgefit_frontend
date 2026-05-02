@@ -214,9 +214,9 @@ export const useGymStore = create<GymState>((set) => ({
       { id: "1", name: "Main Branch - Downtown", address: "123 Fitness St, Downtown", phone: "+1 555-0101" },
       { id: "2", name: "Westside Branch", address: "456 West Blvd, Westside", phone: "+1 555-0102" },
     ],
-    timezone: "UTC+0",
+    timezone: "0",
     currency: "USD",
-    language: "English",
+    language: "en",
     socialLinks: {
       facebook: "https://facebook.com/fithub",
       instagram: "https://instagram.com/fithub",

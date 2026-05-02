@@ -28,18 +28,19 @@ import { appInquiryService } from "../../services/appInquiryService";
 import { appProductService, type AppProductResponse } from "../../services/appProductService";
 import { appPaymentService, type AppPaymentResponse } from "../../services/appPaymentService";
 import { DateRangeFilter, type DateRange } from "../../components/ui/DateRangeFilter";
+import { getCurrencySymbol } from "../../utils/currency";
 
 
 export function UserPortalPages({ page }: { page: string }) {
   const { t } = useTranslation();
-  const flags = useGymStore(
-    (s) =>
-      s.featureFlags[1] ?? {
-        showProducts: true,
-        allowUpgrade: true,
-        showOffers: true,
-      },
-  );
+  const { appConfig, featureFlags } = useGymStore();
+  const currency = appConfig?.currency || "USD";
+  const currencySymbol = getCurrencySymbol(currency);
+  const flags = featureFlags[1] ?? {
+    showProducts: true,
+    allowUpgrade: true,
+    showOffers: true,
+  };
 
   // --- STATE HOOKS (MUST BE TOP LEVEL) ---
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -314,7 +315,7 @@ export function UserPortalPages({ page }: { page: string }) {
               {[
                 { label: "Plan",       value: sub.subscription_name },
                 { label: "Duration",   value: sub.duration_in_months ? `${sub.duration_in_months} Months` : null },
-                { label: "Amount",     value: sub.amount ? `₹${Number(sub.amount).toLocaleString("en-IN")}` : null },
+                { label: "Amount",     value: sub.amount ? `${currencySymbol}${Number(sub.amount).toLocaleString("en-IN")}` : null },
                 { label: "Start Date", value: fmtDate(sub.start_date) },
                 { label: "End Date",   value: fmtDate(sub.end_date) },
                 { label: "Status",     value: sub.status === true ? "Active" : sub.status === false ? "Inactive" : String(sub.status ?? "—") },
@@ -473,7 +474,7 @@ export function UserPortalPages({ page }: { page: string }) {
                 </div>
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-slate-400">Monthly Commitment</span>
-                  <span className="text-white font-black italic">${selectedPlanForUpgrade?.price || "0"}.00</span>
+                  <span className="text-white font-black italic">{currencySymbol}{selectedPlanForUpgrade?.price || "0"}.00</span>
                 </div>
                 <div className="h-px bg-white/10" />
                 <div className="flex justify-between items-center">
@@ -547,11 +548,11 @@ export function UserPortalPages({ page }: { page: string }) {
                           </p>
                           <div className="flex items-center gap-3 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
                             <span>{fmtDate(h.start_date)} → {fmtDate(h.end_date)}</span>
-                            <span className="text-indigo-400">{h.duration_in_months} mo</span>
+                            <span className="text-indigo-400">{h.duration_in_months} {h.duration_in_months === 1 ? "Month" : "Months"}</span>
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-1">
-                          <span className="text-sm font-black text-emerald-400">₹{Number(h.amount).toLocaleString("en-IN")}</span>
+                          <span className="text-sm font-black text-emerald-400">{currencySymbol}{Number(h.amount).toLocaleString("en-IN")}</span>
                           <StatusBadge status={h.status ? "Active" : "Expired"} />
                         </div>
                       </div>
@@ -686,7 +687,7 @@ export function UserPortalPages({ page }: { page: string }) {
 
   if (page === "payments") {
     const fmtCurrency = (n: number) =>
-      new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n ?? 0);
+      new Intl.NumberFormat("en-IN", { style: "currency", currency, maximumFractionDigits: 0 }).format(n ?? 0);
     const fmtPayDate = (ts: number) =>
       ts ? new Date(ts * 1000).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 

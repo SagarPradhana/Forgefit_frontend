@@ -18,6 +18,7 @@ import { DeleteUserModal } from "./users/DeleteUserModal";
 import { SubscriptionModal } from "./users/SubscriptionModal";
 import { PasswordResetModal } from "./users/PasswordResetModal";
 import { IdCardModal } from "../common/IdCardModal";
+import { UserCreationSuccessModal } from "./users/UserCreationSuccessModal";
 
 // Types
 import type { ViewType, ModalStep, UserFormData } from "./users/types";
@@ -69,6 +70,18 @@ export function UserManagement() {
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [selectedUserForReset, setSelectedUserForReset] = useState<any>(null);
 
+  // User Created Success Modal State
+  const [showUserCreatedModal, setShowUserCreatedModal] = useState(false);
+  const [userCreatedData, setUserCreatedData] = useState<{
+    username?: string;
+    role: string;
+    email?: string;
+    mobile: string;
+    name: string;
+    joining_date: number;
+    password: string;
+  } | null>(null);
+
   // ID Card Modal State
   const [idCardOpen, setIdCardOpen] = useState(false);
   const [selectedUserForCard, setSelectedUserForCard] = useState<any>(null);
@@ -80,6 +93,9 @@ export function UserManagement() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
+
+  // Temp storage for user creation data for popup
+  const tempPasswordRef = useRef<string>("");
 
   // --- API Fetching ---
   const usersApiUrl = useMemo(() => {
@@ -131,6 +147,20 @@ export function UserManagement() {
       setModalOpen(false);
       setPage(1);
       toast.success("User created successfully");
+      
+      // Show success popup with user details
+      const userData = {
+        username: formData.username || "",
+        role: formData.role,
+        email: formData.email || "",
+        mobile: formData.mobile,
+        name: formData.name,
+        joining_date: formData.joining_date,
+        password: tempPasswordRef.current || formData.password || "Password@123"
+      };
+      setUserCreatedData(userData);
+      setShowUserCreatedModal(true);
+      
       refetchUsers();
     }
   });
@@ -372,6 +402,9 @@ export function UserManagement() {
       };
       editUser(API_ENDPOINTS.ADMIN.USER_EDIT(editingUserId), editPayload);
     } else {
+      // Store password temporarily for success popup
+      tempPasswordRef.current = rawPayload.password || "Password@123";
+      
       // Create payload — includes password, no subscription fields
       const createPayload = {
         mobile: rawPayload.mobile,
@@ -598,6 +631,12 @@ export function UserManagement() {
         onClose={() => setResetModalOpen(false)}
         userId={selectedUserForReset?.id}
         userName={selectedUserForReset?.name}
+      />
+
+      <UserCreationSuccessModal
+        isOpen={showUserCreatedModal}
+        onClose={() => setShowUserCreatedModal(false)}
+        userData={userCreatedData}
       />
 
       {selectedUserForCard && (

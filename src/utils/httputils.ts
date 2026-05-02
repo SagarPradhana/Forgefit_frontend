@@ -94,15 +94,19 @@ export async function httpFetch(endpoint: string | null | undefined, options: Re
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
+      const errorMessage = 
+        data?.message || 
+        data?.error || 
+        data?.msg ||
+        data?.errors?.[0]?.msg || 
+        data?.errors?.[0]?.message ||
+        `Error (${response.status})`;
+      
+      // Only show toast if not handled by caller
       if (showToast) {
-        const errorMessage = data?.message || data?.error || data?.errors?.[0]?.msg || "Something went wrong";
         toast.error(errorMessage);
       }
       throw data;
-    }
-
-    if (showToast && fetchOptions.method && fetchOptions.method !== "GET") {
-      toast.success(data?.message || "Operation successful");
     }
 
     return data;
@@ -119,8 +123,23 @@ export async function httpFetch(endpoint: string | null | undefined, options: Re
 }
 
 export const api = {
-  get: (url: string, options?: RequestOptions) =>
-    httpFetch(url, { ...options, method: "GET" }),
+  get: (url: string, params?: any, options?: RequestOptions) => {
+    // Build query string from params
+    let finalUrl = url;
+    if (params && Object.keys(params).length > 0) {
+      const queryString = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== "") {
+          queryString.append(key, String(value));
+        }
+      });
+      const query = queryString.toString();
+      if (query) {
+        finalUrl = `${url}${url.includes("?") ? "&" : "?"}${query}`;
+      }
+    }
+    return httpFetch(finalUrl, { ...options, method: "GET" });
+  },
   post: (url: string, body: any, options?: RequestOptions) =>
     httpFetch(url, { ...options, method: "POST", body: JSON.stringify(body) }),
   put: (url: string, body: any, options?: RequestOptions) =>

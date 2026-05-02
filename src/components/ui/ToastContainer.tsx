@@ -14,13 +14,14 @@ export function ToastContainer() {
             initial={{ opacity: 0, y: -20, x: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className={`pointer-events-auto flex items-center gap-3 min-w-[320px] max-w-md p-4 rounded-xl border shadow-2xl backdrop-blur-md ${
+            className={`pointer-events-auto flex items-center gap-3 min-w-[320px] max-w-md p-4 rounded-xl border shadow-2xl backdrop-blur-md cursor-pointer ${
               toast.type === "success"
                 ? "bg-white dark:bg-slate-900 border-emerald-500/50 text-emerald-900 dark:text-emerald-50"
                 : toast.type === "info"
                 ? "bg-white dark:bg-slate-900 border-indigo-500/50 text-indigo-900 dark:text-indigo-50"
                 : "bg-white dark:bg-slate-900 border-red-500/50 text-red-900 dark:text-red-50"
             }`}
+            onClick={() => removeToast(toast.id)}
           >
             <div className={`p-2 rounded-lg ${
               toast.type === "success" 
@@ -41,7 +42,10 @@ export function ToastContainer() {
               <p className="text-[13px] font-medium opacity-90">{toast.message}</p>
             </div>
             <button
-              onClick={() => removeToast(toast.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                removeToast(toast.id);
+              }}
               className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg transition-colors"
             >
               <X size={16} className="text-gray-500" />

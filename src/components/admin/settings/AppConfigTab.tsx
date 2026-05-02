@@ -3,6 +3,21 @@ import { GlowButton } from "../../ui/primitives";
 import { toast } from "../../../store/toastStore";
 import { adminAppConfigService, type AppConfigData } from "../../../services/adminAppConfigService";
 
+const formatHoursToTime = (hours: number): string => {
+  if (!hours || isNaN(hours)) return "00:00";
+  const h = Math.floor(hours);
+  const m = Math.round((hours - h) * 60);
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+};
+
+const parseTimeToHours = (timeStr: string): number => {
+  if (!timeStr) return 0;
+  const [hStr, mStr] = timeStr.split(':');
+  const h = parseInt(hStr, 10) || 0;
+  const m = parseInt(mStr, 10) || 0;
+  return Number((h + (m / 60)).toFixed(2));
+};
+
 export function AppConfigTab() {
   const [loading, setLoading] = useState(false);
   const [config, setConfig] = useState<AppConfigData>({
@@ -10,7 +25,7 @@ export function AppConfigTab() {
     gym_in_out_limit_in_hrs: 0,
     theme_name: "",
     description: "",
-    timezone: "",
+    timezone: "0",
     currency: "",
     language: "",
     country: "",
@@ -24,12 +39,36 @@ export function AppConfigTab() {
     tiktok_url: "",
     youtube_url: "",
     website_url: "",
+    expiry_reminder_days: 7,
   });
   const [logoPreview, setLogoPreview] = useState<string>("");
+  const [languages, setLanguages] = useState<Record<string, string>>({});
+  const [timezones, setTimezones] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchConfig();
+    fetchDropdownData();
   }, []);
+
+  const fetchDropdownData = async () => {
+    try {
+      const langRes = await adminAppConfigService.getLanguages();
+      if (langRes?.data) {
+        setLanguages(langRes.data);
+      } else if (langRes && typeof langRes === 'object') {
+        setLanguages(langRes);
+      }
+
+      const tzRes = await adminAppConfigService.getTimezones();
+      if (tzRes?.data && !tzRes["Africa/Abidjan"]) {
+        setTimezones(tzRes.data);
+      } else if (tzRes && typeof tzRes === 'object') {
+        setTimezones(tzRes);
+      }
+    } catch (e) {
+      console.error("Failed to fetch dropdown data:", e);
+    }
+  };
 
   const fetchConfig = async () => {
     try {
@@ -45,10 +84,10 @@ export function AppConfigTab() {
           id: cfg.id,
           brand_name: cfg.brand_name || "",
           logo_image_path: cfg.logo_image_path || "",
-          gym_in_out_limit_in_hrs: Number(cfg.gym_in_out_limit_in_hrs) || 0,
+          gym_in_out_limit_in_hrs: Math.round((Number(cfg.gym_in_out_limit_in_hrs) || 0) * 100) / 100,
           theme_name: cfg.theme_name || "",
           description: cfg.description || "",
-          timezone: cfg.timezone || "",
+          timezone: String(cfg.timezone) || "0",
           currency: cfg.currency || "",
           language: cfg.language || "",
           country: cfg.country || "",
@@ -62,6 +101,7 @@ export function AppConfigTab() {
           tiktok_url: cfg.tiktok_url || "",
           youtube_url: cfg.youtube_url || "",
           website_url: cfg.website_url || "",
+          expiry_reminder_days: Number(cfg.expiry_reminder_days) || 7,
         });
         if (cfg.logo_image_path) setLogoPreview(cfg.logo_image_path);
       }
@@ -149,53 +189,91 @@ export function AppConfigTab() {
         <h4 className="text-lg font-semibold text-white">Global Settings</h4>
         <div className="grid gap-4 md:grid-cols-3">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Gym In/Out Limit (Hrs)</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Gym In/Out Limit (HH:MM)</label>
+            <input
+              type="time"
+              className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
+              style={{ colorScheme: "dark" }}
+              value={formatHoursToTime(config.gym_in_out_limit_in_hrs)}
+              onChange={(e) => setConfig({ ...config, gym_in_out_limit_in_hrs: parseTimeToHours(e.target.value) })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Expiry Reminder (Days)</label>
             <input
               type="number"
               className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
-              value={config.gym_in_out_limit_in_hrs || 0}
-              onChange={(e) => setConfig({ ...config, gym_in_out_limit_in_hrs: Number(e.target.value) })}
+              placeholder="7"
+              min="1"
+              max="30"
+              value={config.expiry_reminder_days || ""}
+              onChange={(e) => setConfig({ ...config, expiry_reminder_days: parseInt(e.target.value) || 7 })}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Timezone</label>
-            <input
-              className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
+            <label className="block text-sm font-medium text-slate-300 mb-1">Timezone (UTC Offset)</label>
+            <select
+              className="w-full rounded bg-white/10 p-2 text-white border border-white/10 [&>option]:bg-slate-900"
               value={config.timezone || ""}
               onChange={(e) => setConfig({ ...config, timezone: e.target.value })}
-            />
+            >
+              <option value="">Select Timezone</option>
+              {Object.entries(timezones).map(([tz, offset]) => (
+                <option key={tz} value={String(offset)}>UTC{offset >= 0 ? `+${offset}` : offset} - {tz}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Currency</label>
-            <input
-              className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
+            <select
+              className="w-full rounded bg-white/10 p-2 text-white border border-white/10 [&>option]:bg-slate-900"
               value={config.currency || ""}
               onChange={(e) => setConfig({ ...config, currency: e.target.value })}
-            />
+            >
+              <option value="">Select Currency</option>
+              {["USD", "EUR", "GBP", "INR", "AUD", "CAD", "JPY", "CNY"].map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Language</label>
-            <input
-              className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
+            <select
+              className="w-full rounded bg-white/10 p-2 text-white border border-white/10 [&>option]:bg-slate-900"
               value={config.language || ""}
               onChange={(e) => setConfig({ ...config, language: e.target.value })}
-            />
+            >
+              <option value="">Select Language</option>
+              {Object.entries(languages).map(([code, name]) => (
+                <option key={code} value={code}>{name as string}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Country</label>
-            <input
-              className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
+            <select
+              className="w-full rounded bg-white/10 p-2 text-white border border-white/10 [&>option]:bg-slate-900"
               value={config.country || ""}
               onChange={(e) => setConfig({ ...config, country: e.target.value })}
-            />
+            >
+              <option value="">Select Country</option>
+              {["United States", "United Kingdom", "India", "Australia", "Canada", "Germany", "France", "Japan", "China", "Brazil", "South Africa"].map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Theme Name</label>
-            <input
-              className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
+            <select
+              className="w-full rounded bg-white/10 p-2 text-white border border-white/10 [&>option]:bg-slate-900"
               value={config.theme_name || ""}
               onChange={(e) => setConfig({ ...config, theme_name: e.target.value })}
-            />
+            >
+              <option value="">Select Theme</option>
+              <option value="system">System</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
           </div>
         </div>
       </div>

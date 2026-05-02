@@ -32,6 +32,7 @@ const resources = {
       "payments": "Payments",
       "features": "Features",
       "notifications": "Notifications",
+      "plans": "Plans",
 
       // Dashboard
       "totalUsers": "Total Users",
@@ -139,6 +140,7 @@ const resources = {
       "payments": "भुगतान",
       "features": "सुविधाएं",
       "notifications": "सूचनाएं",
+      "plans": "योजनाएं",
 
       // Dashboard
       "totalUsers": "कुल उपयोगकर्ता",
@@ -246,6 +248,7 @@ const resources = {
       "payments": "ଦେୟ",
       "features": "ବୈଶିଷ୍ଟ୍ୟଗୁଡ଼ିକ",
       "notifications": "ବିଜ୍ଞପ୍ତିଗୁଡ଼ିକ",
+      "plans": "ଯୋଜନା",
 
       // Dashboard
       "totalUsers": "ମୋଟ ଉପଯୋଗକର୍ତ୍ତା",

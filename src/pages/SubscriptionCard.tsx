@@ -3,6 +3,17 @@ import { Check, Zap, ShieldCheck, Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { GlassCard, GlowButton } from "../components/ui/primitives";
 import clsx from "clsx";
+import { useGymStore } from "../store/gymStore";
+import { getCurrencySymbol } from "../utils/currency";
+
+const getDurationLabel = (months: number) => {
+  if (!months) return "1 Month";
+  if (months === 1) return "1 Month";
+  if (months === 3) return "3 Months";
+  if (months === 6) return "6 Months";
+  if (months === 12) return "1 Year";
+  return `${months} Months`;
+};
 
 export function SubscriptionCard({
   plan,
@@ -11,6 +22,9 @@ export function SubscriptionCard({
   highlight,
 }: any) {
   const { t } = useTranslation();
+  const { appConfig } = useGymStore();
+  const currency = appConfig?.currency || "USD";
+  const currencySymbol = getCurrencySymbol(currency);
   const isCurrent = plan.name === currentPlan;
 
   // Dynamic styling based on plan type
@@ -68,14 +82,14 @@ export function SubscriptionCard({
             </div>
             <div>
               <h3 className="text-lg font-black text-white uppercase tracking-tighter leading-none">{plan.name}</h3>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{t("membershipCycle")}</p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{plan.duration_in_months} {plan.duration_in_months === 1 ? "Month" : "Months"}</p>
             </div>
           </div>
 
           <div className="mb-8">
             <div className="flex items-baseline gap-1">
-              <span className="text-4xl font-black text-white italic tracking-tighter">${plan.price}</span>
-              <span className="text-sm font-black text-slate-500 uppercase tracking-widest">/month</span>
+              <span className="text-4xl font-black text-white italic tracking-tighter">{currencySymbol}{plan.price}</span>
+              <span className="text-sm font-black text-slate-500 uppercase tracking-widest">/{getDurationLabel(plan.duration_in_months)}</span>
             </div>
             <p className="text-[11px] font-medium text-slate-400 mt-2 leading-relaxed">
               Unlock professional gym equipment and specialized training zones with this tier.
