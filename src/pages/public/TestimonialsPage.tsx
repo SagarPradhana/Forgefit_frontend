@@ -33,7 +33,10 @@ export function TestimonialsPage() {
   const brandName = publicAppConfig?.brand_name || "ForgeFit";
 
   const displayTestimonials = publicTestimonials.length > 0
-    ? publicTestimonials.map(t => ({ quote: t.note || (t as any).content || (t as any).message || "", name: t.name }))
+    ? publicTestimonials.map((t) => ({
+      quote: t.note?.trim() || `${t.name} is part of the ${brandName} community.`,
+      name: t.name,
+    }))
     : testimonials;
 
   const videoBanners = publicBanners["testimonials"] || [];
@@ -81,7 +84,7 @@ export function TestimonialsPage() {
                 <div className="absolute inset-0 bg-slate-900 animate-pulse flex items-center justify-center rounded-2xl">
                   <div className="w-12 h-12 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin" />
                 </div>
-              ) : latestVideo?.file_path?.endsWith('.mp4') ? (
+              ) : latestVideo?.file_path?.match(/\.(mp4|webm|ogg)(\?.*)?$/i) ? (
                 <video
                   src={latestVideo.file_path}
                   controls

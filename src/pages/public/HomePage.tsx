@@ -24,18 +24,23 @@ const trainers = [
 
 import { useGymStore } from "../../store/gymStore";
 import { BannerCarousel } from "../../components/common/BannerCarousel";
+import { formatCurrency } from "../../utils/currency";
 
 export function HomePage() {
-  const { publicAppConfig, publicBanners, isLoadingPublicData } = useGymStore();
+  const { publicAppConfig, publicBanners, publicLocations, publicSubscriptionPlans, publicTestimonials, isLoadingPublicData } = useGymStore();
 
   const homeBanners = publicBanners["home"] || publicBanners["common"] || [];
+  const offersBanners = publicBanners["offers"] || [];
+  const mainLocation = publicLocations[0];
+  const featuredPlans = publicSubscriptionPlans.slice(0, 3);
+  const featuredTestimonials = publicTestimonials.filter((item) => item.note?.trim()).slice(0, 3);
 
   const brandName = publicAppConfig?.brand_name || "ForgeFit";
   return (
     <PublicLayout>
       <div className="relative isolate min-h-screen bg-[#0a0a0c]">
         {/* Hero Section - Scoped Full Screen Background */}
-        <section className="relative h-screen min-h-[700px] flex items-center overflow-hidden">
+        <section className="relative min-h-screen min-h-[700px] flex items-start lg:items-center overflow-hidden pt-28 sm:pt-32 lg:pt-24 pb-16 sm:pb-24">
           {/* Background Carousel (Scoped to this section) */}
           <div className="absolute inset-0 z-0">
             <BannerCarousel banners={homeBanners} isLoading={isLoadingPublicData} />
@@ -45,7 +50,7 @@ export function HomePage() {
           </div>
 
           {/* Hero Content Overlay */}
-          <div className="relative z-20 w-full px-4 sm:px-8 md:pl-[clamp(2rem,6vw,7rem)] md:pr-4 max-w-[900px]">
+          <div className="relative z-20 w-full px-4 sm:px-8 md:pl-[clamp(2rem,6vw,7rem)] md:pr-4 max-w-[960px]">
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -93,7 +98,7 @@ export function HomePage() {
               transition={{ delay: 0.9, duration: 0.8 }}
               className="text-lg md:text-xl text-white/75 max-w-[480px] mb-12 leading-[1.75] font-medium"
             >
-              Experience the pinnacle of fitness at {brandName}. We combine elite coaching, cutting-edge equipment, and a powerful community to help you break through your limits.
+              {publicAppConfig?.description || `Experience the pinnacle of fitness at ${brandName}. We combine elite coaching, cutting-edge equipment, and a powerful community to help you break through your limits.`}
             </motion.p>
 
             <div className="flex flex-wrap gap-6 mb-16">
@@ -127,7 +132,7 @@ export function HomePage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1.3 }}
-              className="flex items-center gap-8 border-t border-white/10 pt-10"
+              className="flex items-center gap-8 border-t border-white/10 pt-8 sm:pt-10"
             >
               <div className="grid grid-cols-2 sm:flex sm:items-center gap-6 sm:gap-8 w-full sm:w-auto">
                 <div className="relative">
@@ -146,18 +151,70 @@ export function HomePage() {
                 </div>
               </div>
             </motion.div>
+            {mainLocation && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.45 }}
+                className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4"
+              >
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 backdrop-blur-md">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/45 font-bold mb-2">Location</p>
+                  <p className="text-sm text-white/85">{mainLocation.address}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 backdrop-blur-md">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/45 font-bold mb-2">Hours</p>
+                  <p className="text-sm text-white/85">{mainLocation.working_hours_from_time} - {mainLocation.working_hours_to_time}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 backdrop-blur-md">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/45 font-bold mb-2">Contact</p>
+                  <p className="text-sm text-white/85">{mainLocation.phone}</p>
+                </div>
+              </motion.div>
+            )}
           </div>
 
           {/* Scroll Indicator */}
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 opacity-50 hidden sm:flex"
+            className="absolute bottom-8 sm:bottom-12 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 opacity-50 hidden xl:flex"
           >
             <div className="w-[1.5px] h-10 bg-gradient-to-b from-[#e8521a] to-transparent" />
             <span className="text-[9px] uppercase tracking-[0.4em] font-black text-white">SCROLL</span>
           </motion.div>
         </section>
+
+        {featuredPlans.length > 0 && (
+          <section className="py-16 sm:py-24 border-t border-white/5">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-12">
+                <div>
+                  <span className="hero-badge">Memberships</span>
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mt-4 uppercase">PLANS BUILT FOR REAL GOALS</h2>
+                </div>
+                <Link to="/pricing">
+                  <button className="text-orange-400 font-bold uppercase tracking-widest text-sm hover:text-orange-300 transition-colors">
+                    View Pricing
+                  </button>
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {featuredPlans.map((plan) => (
+                  <div key={plan.id} className="glass-panel p-8">
+                    <p className="text-orange-400 text-xs font-black uppercase tracking-[0.2em] mb-3">{plan.name}</p>
+                    <div className="flex items-end gap-2 mb-4">
+                      <p className="text-4xl font-black text-white">{formatCurrency(plan.price, publicAppConfig?.currency || "INR")}</p>
+                      <p className="text-slate-500 text-xs uppercase tracking-widest">/ {plan.duration_in_months} month{plan.duration_in_months > 1 ? "s" : ""}</p>
+                    </div>
+                    <p className="text-slate-400 text-sm leading-relaxed">{plan.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Features Bento Section */}
         <section className="py-16 sm:py-24 bg-slate-950/50 relative">
@@ -270,10 +327,38 @@ export function HomePage() {
           </div>
         </section>
 
+        {featuredTestimonials.length > 0 && (
+          <section className="py-16 sm:py-24 border-t border-white/5">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-12 sm:mb-16">
+                <span className="hero-badge">Testimonials</span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mt-4 uppercase">VOICES FROM THE FLOOR</h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {featuredTestimonials.map((item) => (
+                  <div key={item.id} className="glass-panel p-8">
+                    <p className="text-slate-300 text-base leading-relaxed mb-6">"{item.note}"</p>
+                    <p className="text-orange-400 text-sm font-bold uppercase tracking-widest">{item.name}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* CTA Section */}
         <section className="py-16 sm:py-24 relative px-4 overflow-hidden">
           <div className="mx-auto max-w-5xl">
             <div className="relative glass-panel p-8 sm:p-12 md:p-20 text-center overflow-hidden border-orange-500/30">
+              {offersBanners[0]?.file_path && (
+                <img
+                  src={offersBanners[0].file_path}
+                  alt="Offers"
+                  className="absolute inset-0 h-full w-full object-cover opacity-20"
+                />
+              )}
+              <div className="absolute inset-0 bg-slate-950/70" />
               <div className="absolute top-0 right-0 -mr-20 -mt-20 w-48 sm:w-64 h-48 sm:h-64 bg-orange-500/20 blur-[100px] rounded-full" />
               <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-48 sm:w-64 h-48 sm:h-64 bg-indigo-500/20 blur-[100px] rounded-full" />
 

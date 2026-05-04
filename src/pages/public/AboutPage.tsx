@@ -39,8 +39,10 @@ import { useGymStore } from "../../store/gymStore";
 import { Link } from "react-router-dom";
 
 export function AboutPage() {
-  const { publicAppConfig, publicBanners, isLoadingPublicData } = useGymStore();
+  const { publicAppConfig, publicBanners, publicLocations, isLoadingPublicData } = useGymStore();
   const brandName = publicAppConfig?.brand_name || "ForgeFit";
+  const mainLocation = publicLocations[0];
+  const aboutBanner = publicBanners["about"]?.[0]?.file_path || publicBanners["common"]?.[0]?.file_path || "/assets/redesign/interior.png";
 
   return (
     <PublicLayout>
@@ -75,20 +77,26 @@ export function AboutPage() {
                   <p className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest">Active Athletes</p>
                 </div>
               </div>
+              {mainLocation && (
+                <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 mx-4 sm:mx-0">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-orange-400 font-bold mb-2">Based In</p>
+                  <p className="text-white text-sm">{mainLocation.address}</p>
+                </div>
+              )}
             </div>
 
             <div className="relative px-4 sm:px-0 mt-12 lg:mt-0">
               <div className="image-glow-wrap aspect-[4/3] sm:aspect-square">
                 <img
-                  src="/assets/redesign/interior.png"
+                  src={aboutBanner}
                   alt="Gym Interior"
                   className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
                 />
               </div>
               <div className="absolute -bottom-6 sm:-bottom-8 right-0 sm:-right-8 glass-panel p-4 sm:p-6 max-w-[200px] sm:max-w-[280px] shadow-2xl z-10">
                 <Sparkles className="text-orange-400 mb-2" size={20} />
-                <p className="text-white font-bold text-xs sm:text-sm">State-of-the-Art Recovery</p>
-                <p className="text-slate-400 text-[10px] sm:text-xs mt-1">Access to infrared saunas and expert physio support.</p>
+                <p className="text-white font-bold text-xs sm:text-sm">{mainLocation?.gym_open_status ? "Gym Open Today" : "Check Working Hours"}</p>
+                <p className="text-slate-400 text-[10px] sm:text-xs mt-1">{mainLocation ? `${mainLocation.working_hours_from_time} - ${mainLocation.working_hours_to_time}` : "Access to infrared saunas and expert physio support."}</p>
               </div>
             </div>
           </section>

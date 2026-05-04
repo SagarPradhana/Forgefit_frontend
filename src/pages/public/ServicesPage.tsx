@@ -17,8 +17,10 @@ import { useGymStore } from "../../store/gymStore";
 import { Link } from "react-router-dom";
 
 export function ServicesPage() {
-  const { publicAppConfig, publicFaqs } = useGymStore();
+  const { publicAppConfig, publicFaqs, publicBanners, publicLocations } = useGymStore();
   const brandName = publicAppConfig?.brand_name || "ForgeFit";
+  const mainLocation = publicLocations[0];
+  const servicesBanner = publicBanners["inspirational"]?.[0]?.file_path || publicBanners["common"]?.[0]?.file_path || "/assets/redesign/interior.png";
 
   const displayFaqs = publicFaqs.length > 0 ? publicFaqs : [
     { question: "What are your operating hours?", answer: "We are open 24/7 for all premium and VIP members. Basic members have access from 5 AM to 11 PM." },
@@ -94,14 +96,18 @@ export function ServicesPage() {
           <section className="mb-32">
             <div className="relative h-[500px] rounded-[2.5rem] overflow-hidden group">
               <img
-                src="/assets/redesign/interior.png"
+                src={servicesBanner}
                 alt="Gym Interior"
                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
               <div className="absolute bottom-0 left-0 p-12 max-w-3xl">
                 <h2 className="text-4xl md:text-5xl font-black text-white mb-6 uppercase">PREMIUM ENVIRONMENT</h2>
-                <p className="text-slate-300 text-lg leading-relaxed mb-8">Access to 24/7 world-class facilities, specialized recovery zones, and a motivating community that pushes you to be your best every single day.</p>
+                <p className="text-slate-300 text-lg leading-relaxed mb-8">
+                  {mainLocation
+                    ? `Train at our ${mainLocation.address} facility with working hours from ${mainLocation.working_hours_from_time} to ${mainLocation.working_hours_to_time}.`
+                    : "Access to 24/7 world-class facilities, specialized recovery zones, and a motivating community that pushes you to be your best every single day."}
+                </p>
                 <div className="flex flex-wrap gap-4">
                   {facilities.slice(0, 4).map((f, i) => (
                     <span key={i} className="px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-xs font-bold text-white uppercase tracking-widest">{f}</span>

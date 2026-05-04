@@ -4,19 +4,22 @@ import { PublicLayout } from "../../layouts/PublicLayout";
 import { useGymStore } from "../../store/gymStore";
 import { Check, Crown, ShieldCheck, Users } from "lucide-react";
 import { Counter } from "../../components/common/Counter";
+import { getCurrencySymbol } from "../../utils/currency";
 
 export function PricingPage() {
-  const { publicSubscriptionPlans } = useGymStore();
+  const { publicSubscriptionPlans, publicAppConfig, plans: fallbackPlans } = useGymStore();
+  const currencySymbol = getCurrencySymbol(publicAppConfig?.currency || "INR");
 
   const plans = publicSubscriptionPlans.length > 0
-    ? publicSubscriptionPlans.map(p => ({
+    ? publicSubscriptionPlans.map((p) => ({
       id: p.id,
       name: p.name,
       price: p.price,
-      duration: `${p.duration_in_months} Month${p.duration_in_months > 1 ? 's' : ''}`,
-      features: p.description.split(',').map(f => f.trim()), // Assuming features are comma-separated in description
+      actualPrice: p.actual_price,
+      duration: `${p.duration_in_months} Month${p.duration_in_months > 1 ? "s" : ""}`,
+      features: p.description.includes(",") ? p.description.split(",").map((f) => f.trim()) : [p.description],
     }))
-    : useGymStore((s) => s.plans);
+    : fallbackPlans.map((plan) => ({ ...plan, actualPrice: undefined as number | undefined }));
 
   const allFeatures = Array.from(
     new Set(plans.flatMap((plan) => plan.features)),
@@ -25,7 +28,6 @@ export function PricingPage() {
   return (
     <PublicLayout>
       <div className="relative isolate min-h-screen overflow-hidden">
-        {/* Animated Background Mesh */}
         <div className="bg-mesh" />
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
@@ -65,13 +67,16 @@ export function PricingPage() {
                     </div>
                   )}
 
-                  <div className={`glass-panel p-8 h-full flex flex-col relative overflow-hidden transition-all duration-500 ${isPopular ? 'border-orange-500/40 ring-1 ring-orange-500/20 shadow-glow' : ''}`}>
+                  <div className={`glass-panel p-8 h-full flex flex-col relative overflow-hidden transition-all duration-500 ${isPopular ? "border-orange-500/40 ring-1 ring-orange-500/20 shadow-glow" : ""}`}>
                     {isPopular && <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 blur-3xl -mr-16 -mt-16 rounded-full" />}
 
                     <div className="mb-8">
                       <p className="text-orange-400 text-xs font-black uppercase tracking-[0.2em] mb-4">{plan.name}</p>
+                      {typeof plan.actualPrice === "number" && plan.actualPrice > plan.price && (
+                        <p className="text-slate-500 text-sm line-through mb-2">{currencySymbol}{plan.actualPrice.toLocaleString("en-IN")}</p>
+                      )}
                       <div className="flex items-baseline gap-1">
-                        <span className="text-5xl font-black text-white">₹<Counter from={0} to={plan.price} /></span>
+                        <span className="text-5xl font-black text-white">{currencySymbol}<Counter from={0} to={plan.price} /></span>
                         <span className="text-slate-500 text-sm font-bold uppercase tracking-widest">/ {plan.duration}</span>
                       </div>
                     </div>
@@ -88,7 +93,7 @@ export function PricingPage() {
                     </div>
 
                     <Link to="/signin">
-                      <button className={`w-full py-4 rounded-xl font-black uppercase tracking-widest text-sm transition-all duration-300 ${isPopular ? 'btn-premium' : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'}`}>
+                      <button className={`w-full py-4 rounded-xl font-black uppercase tracking-widest text-sm transition-all duration-300 ${isPopular ? "btn-premium" : "bg-white/5 border border-white/10 text-white hover:bg-white/10"}`}>
                         Select Plan
                       </button>
                     </Link>
@@ -98,7 +103,6 @@ export function PricingPage() {
             })}
           </div>
 
-          {/* Comparison Table */}
           <section className="py-20 border-t border-white/5">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">FEATURE COMPARISON</h2>
@@ -110,7 +114,7 @@ export function PricingPage() {
                   <thead>
                     <tr className="bg-white/5">
                       <th className="px-8 py-6 text-xs font-black text-slate-400 uppercase tracking-widest border-b border-white/5">Features</th>
-                      {plans.map(plan => (
+                      {plans.map((plan) => (
                         <th key={plan.id} className="px-8 py-6 text-xs font-black text-white uppercase tracking-widest border-b border-white/5 text-center">{plan.name}</th>
                       ))}
                     </tr>
@@ -119,14 +123,14 @@ export function PricingPage() {
                     {allFeatures.map((feature, i) => (
                       <tr key={i} className="hover:bg-white/[0.02] transition-colors">
                         <td className="px-8 py-5 text-sm font-bold text-slate-300">{feature}</td>
-                        {plans.map(plan => (
+                        {plans.map((plan) => (
                           <td key={plan.id} className="px-8 py-5 text-center">
                             {plan.features.includes(feature) ? (
                               <div className="inline-flex w-6 h-6 items-center justify-center rounded-full bg-orange-500/20 text-orange-400">
                                 <Check size={14} />
                               </div>
                             ) : (
-                              <span className="text-slate-600">—</span>
+                              <span className="text-slate-600">-</span>
                             )}
                           </td>
                         ))}
@@ -138,7 +142,6 @@ export function PricingPage() {
             </div>
           </section>
 
-          {/* FAQ or Trust Section */}
           <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="stat-card">
               <ShieldCheck className="h-8 w-8 text-orange-400 mx-auto mb-4" />

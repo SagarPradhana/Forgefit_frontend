@@ -1,19 +1,13 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import {
-  GlassCard,
-  GlowButton,
-} from "../../components/ui/primitives";
 import { PublicLayout } from "../../layouts/PublicLayout";
-import { Phone, Mail, MapPin, Clock, Sparkles } from "lucide-react";
-import { AnimatedSection } from "../../components/common/AnimatedSection";
+import { Phone, Mail, MapPin } from "lucide-react";
 import { appInquiryService } from "../../services/appInquiryService";
 
 import { useGymStore } from "../../store/gymStore";
 
 export function ContactPage() {
-  const { publicAppConfig, publicLocations } = useGymStore();
-  const brandName = publicAppConfig?.brand_name || "ForgeFit";
+  const { publicAppConfig, publicLocations, publicBanners } = useGymStore();
 
   const mainLocation = publicLocations[0];
   const contactPhone = mainLocation?.phone || publicAppConfig?.phone || "+91 98765 43210";
@@ -21,6 +15,7 @@ export function ContactPage() {
   const contactAddress = mainLocation?.address || "Ahmedabad, Gujarat, India";
   const workingHoursFrom = mainLocation?.working_hours_from_time || "06:00";
   const workingHoursTo = mainLocation?.working_hours_to_time || "22:00";
+  const contactBanner = publicBanners["common"]?.[0]?.file_path || "/assets/redesign/interior.png";
 
   const [formData, setFormData] = useState({
     name: "",
@@ -229,7 +224,7 @@ export function ContactPage() {
           <section className="mb-24">
             <div className="relative h-[400px] rounded-[2.5rem] overflow-hidden group">
               <img 
-                src="/assets/redesign/interior.png" 
+                src={contactBanner} 
                 alt="Gym Map" 
                 className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000"
               />
