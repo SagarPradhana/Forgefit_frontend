@@ -117,7 +117,7 @@ export function HomePage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1.3 }}
-              className="flex items-center gap-8 border-t border-white/10 pt-8 sm:pt-10"
+              className="flex items-center gap-8 border-t border-white/10"
             >
               <div className="grid grid-cols-2 sm:flex sm:items-center gap-6 sm:gap-8 w-full sm:w-auto">
                 <div className="relative">

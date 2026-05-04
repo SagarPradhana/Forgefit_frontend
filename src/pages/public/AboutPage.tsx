@@ -50,7 +50,7 @@ export function AboutPage() {
   return (
     <PublicLayout>
       <div className="relative isolate min-h-screen overflow-hidden">
-        <section className="relative min-h-[70vh] overflow-hidden pt-24 sm:pt-28">
+        <section className="relative min-h-[70vh] overflow-hidden pt-6 sm:pt-12">
           <div className="absolute inset-0">
             <BannerCarousel banners={aboutBanners} isLoading={isLoadingPublicData} />
             <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/55 to-black/25" />
