@@ -19,7 +19,7 @@ export function ServicesPage() {
   const { publicAppConfig, publicFaqs, publicBanners, publicLocations } = useGymStore();
   const brandName = publicAppConfig?.brand_name || "ForgeFit";
   const mainLocation = publicLocations[0];
-  const servicesBanner = publicBanners["inspirational"]?.[0]?.file_path || publicBanners["common"]?.[0]?.file_path;
+  const servicesBanner = publicBanners["about"]?.[0]?.file_path || publicBanners["inspirational"]?.[0]?.file_path || publicBanners["common"]?.[0]?.file_path;
   const displayFaqs = publicFaqs;
   return (
     <PublicLayout>
