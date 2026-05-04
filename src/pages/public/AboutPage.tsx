@@ -37,23 +37,28 @@ const trustItems = [
 
 import { useGymStore } from "../../store/gymStore";
 import { Link } from "react-router-dom";
+import { BannerCarousel } from "../../components/common/BannerCarousel";
+import { NoDataFound } from "../../components/ui/NoDataFound";
 
 export function AboutPage() {
   const { publicAppConfig, publicBanners, publicLocations, isLoadingPublicData } = useGymStore();
   const brandName = publicAppConfig?.brand_name || "ForgeFit";
   const mainLocation = publicLocations[0];
-  const aboutBanner = publicBanners["about"]?.[0]?.file_path || publicBanners["common"]?.[0]?.file_path || "/assets/redesign/interior.png";
+  const aboutBanners = publicBanners["about"] || [];
+  const trainerBanners = publicBanners["trainers"] || [];
 
   return (
     <PublicLayout>
       <div className="relative isolate min-h-screen overflow-hidden">
-        {/* Animated Background Mesh */}
-        <div className="bg-mesh" />
+        <section className="relative min-h-[70vh] overflow-hidden pt-24 sm:pt-28">
+          <div className="absolute inset-0">
+            <BannerCarousel banners={aboutBanners} isLoading={isLoadingPublicData} />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/55 to-black/25" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/15 to-transparent" />
+          </div>
 
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
-          {/* Mission & Story Section */}
-          <section className="grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-16 items-center mb-16 sm:mb-24">
-            <div className="text-center lg:text-left">
+          <div className="relative z-10 mx-auto flex min-h-[70vh] max-w-7xl items-center px-4 sm:px-6 lg:px-8 py-16">
+            <div className="max-w-4xl text-center lg:text-left">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -64,10 +69,10 @@ export function AboutPage() {
               <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-white mb-6 sm:mb-8 uppercase leading-[0.9]">
                 ENGINEERED FOR <br /><span className="text-cinematic">GREATNESS.</span>
               </h1>
-              <p className="text-slate-400 text-base sm:text-lg leading-relaxed mb-8 px-4 sm:px-0">
+              <p className="text-slate-300 text-base sm:text-lg leading-relaxed mb-8 max-w-3xl">
                 {publicAppConfig?.description || `${brandName} isn't just a gym; it's a performance laboratory. Founded on the principles of science-based training and elite-level recovery, we provide the tools and atmosphere for those who refuse to settle for average.`}
               </p>
-              <div className="grid grid-cols-2 gap-4 sm:gap-6 px-4 sm:px-0">
+              <div className="grid grid-cols-2 gap-4 sm:gap-6">
                 <div className="stat-card py-4 sm:py-6">
                   <p className="text-2xl sm:text-4xl font-extrabold text-white"><Counter to={10} suffix="+" /></p>
                   <p className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">Years Experience</p>
@@ -78,22 +83,21 @@ export function AboutPage() {
                 </div>
               </div>
               {mainLocation && (
-                <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 mx-4 sm:mx-0">
+                <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-orange-400 font-bold mb-2">Based In</p>
                   <p className="text-white text-sm">{mainLocation.address}</p>
                 </div>
               )}
             </div>
+          </div>
+        </section>
 
-            <div className="relative px-4 sm:px-0 mt-12 lg:mt-0">
-              <div className="image-glow-wrap aspect-[4/3] sm:aspect-square">
-                <img
-                  src={aboutBanner}
-                  alt="Gym Interior"
-                  className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
-                />
-              </div>
-              <div className="absolute -bottom-6 sm:-bottom-8 right-0 sm:-right-8 glass-panel p-4 sm:p-6 max-w-[200px] sm:max-w-[280px] shadow-2xl z-10">
+        <div className="bg-mesh" />
+
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
+          <section className="mb-16 sm:mb-24">
+            <div className="max-w-3xl mx-auto text-center">
+              <div className="glass-panel p-6 sm:p-8 inline-block">
                 <Sparkles className="text-orange-400 mb-2" size={20} />
                 <p className="text-white font-bold text-xs sm:text-sm">{mainLocation?.gym_open_status ? "Gym Open Today" : "Check Working Hours"}</p>
                 <p className="text-slate-400 text-[10px] sm:text-xs mt-1">{mainLocation ? `${mainLocation.working_hours_from_time} - ${mainLocation.working_hours_to_time}` : "Access to infrared saunas and expert physio support."}</p>
@@ -131,32 +135,31 @@ export function AboutPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {isLoadingPublicData ? (
                 Array.from({ length: 3 }).map((_, i) => (
-                  <div key={`skeleton-${i}`} className="group relative overflow-hidden rounded-3xl aspect-[3/4] bg-slate-900 animate-pulse">
+                  <div key={`skeleton-${i}`} className="group relative overflow-hidden rounded-3xl h-[320px] md:h-[380px] bg-slate-900 animate-pulse">
                     <div className="absolute bottom-0 left-0 p-8 w-full">
                       <div className="h-3 w-1/3 bg-slate-800 rounded mb-2"></div>
                       <div className="h-8 w-2/3 bg-slate-800 rounded"></div>
                     </div>
                   </div>
                 ))
-              ) : (
-                (publicBanners["trainers"]?.length > 0 ? publicBanners["trainers"] : [
-                  { name: "Maya", role: "Strength Coach" },
-                  { name: "Noah", role: "Performance Trainer" },
-                  { name: "Ava", role: "Recovery Specialist" },
-                ]).slice(0, 3).map((trainer: any, i: number) => (
-                  <div key={i} className="group relative overflow-hidden rounded-3xl aspect-[3/4]">
+              ) : trainerBanners.length > 0 ? (
+                trainerBanners.slice(0, 3).map((trainer, i) => (
+                  <div key={i} className="group relative overflow-hidden rounded-3xl h-[320px] md:h-[380px]">
                     <img
-                      src={trainer.file_path || (i === 0 ? "/assets/redesign/trainer.png" : `https://images.unsplash.com/photo-${i === 1 ? '1517836357463-d25dfeac3438' : '1518609878373-06d740f60d8b'}?auto=format&fit=crop&w=900&q=80`)}
-                      alt={trainer.name}
+                      src={trainer.file_path}
+                      alt={`Coach ${i + 1}`}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
                     <div className="absolute bottom-0 left-0 p-8 w-full transform transition-transform duration-500 translate-y-4 group-hover:translate-y-0">
-                      <p className="text-orange-400 text-xs font-black uppercase tracking-[0.2em] mb-1">{trainer.role || "Elite Coach"}</p>
-                      {/* <h3 className="text-2xl font-black text-white">{trainer.name}</h3> */}
+                      <p className="text-orange-400 text-xs font-black uppercase tracking-[0.2em] mb-1">Coaching Team</p>
                     </div>
                   </div>
                 ))
+              ) : (
+                <div className="md:col-span-3">
+                  <NoDataFound title="No Coach Images" subtitle="Upload trainer banners to show the coaching gallery here." />
+                </div>
               )}
             </div>
           </section>

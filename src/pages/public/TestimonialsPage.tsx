@@ -1,32 +1,11 @@
 import { motion } from "framer-motion";
-import { testimonials } from "../../data/mockData";
 import { PublicLayout } from "../../layouts/PublicLayout";
 import { Star, PlayCircle } from "lucide-react";
 import { Counter } from "../../components/common/Counter";
 
-const caseStudies = [
-  {
-    title: "Arianna",
-    subtitle: "Lean muscle transformation",
-    description:
-      "6 weeks of consistent training and tailored nutrition helped Arianna gain strength and confidence.",
-  },
-  {
-    title: "Daniel",
-    subtitle: "Performance upgrade",
-    description:
-      "Upgraded his routine with guided coaching and hit new personal bests every month.",
-  },
-  {
-    title: "Mei",
-    subtitle: "Sustainable fat loss",
-    description:
-      "Smart training and recovery helped Mei stay motivated and achieve lasting results.",
-  },
-];
-
 import { useGymStore } from "../../store/gymStore";
 import { Link } from "react-router-dom";
+import { NoDataFound } from "../../components/ui/NoDataFound";
 
 export function TestimonialsPage() {
   const { publicAppConfig, publicTestimonials, publicBanners, isLoadingPublicData } = useGymStore();
@@ -34,12 +13,14 @@ export function TestimonialsPage() {
 
   const displayTestimonials = publicTestimonials.length > 0
     ? publicTestimonials.map((t) => ({
-      quote: t.note?.trim() || `${t.name} is part of the ${brandName} community.`,
-      name: t.name,
+      quote: t.note?.trim(),
+      id: t.id,
     }))
-    : testimonials;
+    .filter((item) => item.quote)
+    : [];
 
   const videoBanners = publicBanners["testimonials"] || [];
+  const inspirationalBanners = publicBanners["inspirational"] || [];
   const latestVideo = videoBanners[0];
   return (
     <PublicLayout>
@@ -91,24 +72,16 @@ export function TestimonialsPage() {
                   className="w-full h-full object-cover rounded-2xl"
                 />
               ) : (
-                <div className="relative h-full w-full overflow-hidden rounded-2xl">
-                  <img
-                    src="/assets/redesign/testimonials.png"
-                    alt="Transformation Spotlight"
-                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-6">
+                <div className="relative h-full w-full overflow-hidden rounded-2xl bg-slate-950 flex items-center justify-center">
+                  <div className="text-center px-6">
                     <motion.div
                       whileHover={{ scale: 1.1, rotate: 90 }}
-                      className="w-20 h-20 rounded-full bg-orange-500/20 backdrop-blur-md border border-orange-500/40 flex items-center justify-center text-orange-400 cursor-pointer shadow-glow"
+                      className="mx-auto mb-6 w-20 h-20 rounded-full bg-orange-500/20 backdrop-blur-md border border-orange-500/40 flex items-center justify-center text-orange-400 shadow-glow"
                     >
                       <PlayCircle size={48} />
                     </motion.div>
-                    <div className="text-center">
-                      <h3 className="text-2xl font-black text-white uppercase tracking-tight">MEMBER SPOTLIGHT</h3>
-                      <p className="text-slate-300 text-sm">Experience the {brandName} transformation in 60 seconds.</p>
-                    </div>
+                    <h3 className="text-2xl font-black text-white uppercase tracking-tight">NO TESTIMONIAL VIDEO</h3>
+                    <p className="text-slate-300 text-sm mt-2">Upload a testimonials video banner to show it here.</p>
                   </div>
                 </div>
               )}
@@ -140,10 +113,10 @@ export function TestimonialsPage() {
                     </div>
                   </div>
                 ))
-              ) : (
+              ) : displayTestimonials.length > 0 ? (
                 displayTestimonials.map((item, index) => (
                   <motion.div
-                    key={index}
+                    key={item.id || index}
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -158,45 +131,42 @@ export function TestimonialsPage() {
                       <p className="text-slate-300 text-base leading-relaxed italic mb-8 flex-grow">
                         "{item.quote}"
                       </p>
-                      <div className="flex items-center gap-4 border-t border-white/5 pt-6">
-                        <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-400 font-black text-xs">
-                          {item.name.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="text-white font-bold text-sm uppercase tracking-tight">{item.name}</p>
-                          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Athlete Member</p>
-                        </div>
-                      </div>
                     </div>
                   </motion.div>
                 ))
+              ) : (
+                <div className="md:col-span-3">
+                  <NoDataFound title="No Testimonials" subtitle="Create testimonials from the admin public pages to show them here." />
+                </div>
               )}
             </div>
           </section>
 
-          {/* Transformation Stories */}
+          {/* Before / After */}
           <section className="py-24 border-t border-white/5">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight">THE BLUEPRINT</h2>
+              <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight">BEFORE / AFTER</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {caseStudies.map((story, i) => (
-                <div key={i} className="group relative overflow-hidden rounded-3xl aspect-[3/4]">
-                  <img
-                    src={`https://images.unsplash.com/photo-${i === 0 ? '1558611848-73f7eb4001c4' : i === 1 ? '1554284126-aa88f22d8b3e' : '1550345332-09e3ac987658'}?auto=format&fit=crop&w=900&q=80`}
-                    alt={story.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 p-8 w-full transform transition-transform duration-500 translate-y-4 group-hover:translate-y-0">
-                    <p className="text-orange-400 text-xs font-black uppercase tracking-[0.2em] mb-1">{story.subtitle}</p>
-                    <h3 className="text-2xl font-black text-white mb-2">{story.title}</h3>
-                    <p className="text-slate-400 text-xs leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500">{story.description}</p>
+            {inspirationalBanners.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {inspirationalBanners.map((banner, i) => (
+                  <div key={banner.id || i} className="group relative overflow-hidden rounded-3xl h-[320px] md:h-[420px]">
+                    <img
+                      src={banner.file_path}
+                      alt={`Before After ${i + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 p-8 w-full">
+                      <p className="text-orange-400 text-xs font-black uppercase tracking-[0.2em] mb-1">Transformation Story</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <NoDataFound title="No Before/After Gallery" subtitle="Upload inspirational banners to show the before/after section." />
+            )}
           </section>
 
           {/* Final CTA */}

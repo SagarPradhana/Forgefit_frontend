@@ -32,12 +32,8 @@ export function BannerCarousel({ banners, className = "", isLoading = false }: B
 
   if (!banners || banners.length === 0) {
     return (
-      <div className={`absolute inset-0 bg-slate-950 ${className}`}>
-        <img
-          src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?auto=format&fit=crop&w=2000&q=80"
-          alt="Default banner"
-          className="h-full w-full object-cover opacity-20"
-        />
+      <div className={`absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 ${className}`}>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(232,82,26,0.16),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(99,102,241,0.14),transparent_30%)]" />
       </div>
     );
   }
@@ -46,7 +42,7 @@ export function BannerCarousel({ banners, className = "", isLoading = false }: B
   const prev = () => setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
 
   return (
-    <div 
+    <div
       className={`absolute inset-0 z-0 group ${className}`}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
@@ -72,10 +68,10 @@ export function BannerCarousel({ banners, className = "", isLoading = false }: B
         </motion.div>
       </AnimatePresence>
 
-      {/* Slide Counter (Top-Right) */}
+      {/* Slide Counter (Top-Right)
       <div className="absolute top-24 right-8 z-30 font-mono text-[13px] tracking-widest text-white/50">
         <span className="text-white">{(currentIndex + 1).toString().padStart(2, '0')}</span> / {banners.length.toString().padStart(2, '0')}
-      </div>
+      </div> */}
 
       {/* Arrow Navigation (Hover Only) */}
       {banners.length > 1 && (
@@ -102,11 +98,10 @@ export function BannerCarousel({ banners, className = "", isLoading = false }: B
             <button
               key={i}
               onClick={(e) => { e.preventDefault(); setCurrentIndex(i); }}
-              className={`transition-all duration-350 ease-in-out ${
-                i === currentIndex 
-                  ? "w-8 h-2 bg-[#e8521a] rounded-[4px]" 
-                  : "w-2 h-2 bg-white/30 rounded-full hover:bg-white/50"
-              }`}
+              className={`transition-all duration-350 ease-in-out ${i === currentIndex
+                ? "w-8 h-2 bg-[#e8521a] rounded-[4px]"
+                : "w-2 h-2 bg-white/30 rounded-full hover:bg-white/50"
+                }`}
             />
           ))}
         </div>

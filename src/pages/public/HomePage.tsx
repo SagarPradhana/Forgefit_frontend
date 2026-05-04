@@ -4,33 +4,18 @@ import { PublicLayout } from "../../layouts/PublicLayout";
 import { motion } from "framer-motion";
 import { Counter } from "../../components/common/Counter";
 
-const trainers = [
-  {
-    name: "Maya",
-    role: "Strength Coach",
-    image: "https://images.unsplash.com/photo-1599058917212-d750089bc07e",
-  },
-  {
-    name: "Noah",
-    role: "Performance Trainer",
-    image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438",
-  },
-  {
-    name: "Ava",
-    role: "Recovery Specialist",
-    image: "https://images.unsplash.com/photo-1518609878373-06d740f60d8b",
-  },
-];
-
 import { useGymStore } from "../../store/gymStore";
 import { BannerCarousel } from "../../components/common/BannerCarousel";
 import { formatCurrency } from "../../utils/currency";
+import { NoDataFound } from "../../components/ui/NoDataFound";
 
 export function HomePage() {
-  const { publicAppConfig, publicBanners, publicLocations, publicSubscriptionPlans, publicTestimonials, isLoadingPublicData } = useGymStore();
+  const { publicAppConfig, publicBanners, publicLocations, publicSubscriptionPlans, publicTestimonials, publicFaqs, isLoadingPublicData } = useGymStore();
 
   const homeBanners = publicBanners["home"] || publicBanners["common"] || [];
   const offersBanners = publicBanners["offers"] || [];
+  const trainerBanners = publicBanners["trainers"] || [];
+  const inspirationalBanners = publicBanners["inspirational"] || [];
   const mainLocation = publicLocations[0];
   const featuredPlans = publicSubscriptionPlans.slice(0, 3);
   const featuredTestimonials = publicTestimonials.filter((item) => item.note?.trim()).slice(0, 3);
@@ -136,18 +121,18 @@ export function HomePage() {
             >
               <div className="grid grid-cols-2 sm:flex sm:items-center gap-6 sm:gap-8 w-full sm:w-auto">
                 <div className="relative">
-                  <p className="text-3xl sm:text-4xl font-extrabold text-white"><Counter to={2.8} suffix="K+" duration={1500} /></p>
-                  <p className="text-[10px] sm:text-[11px] text-white/50 uppercase tracking-[0.08em] mt-1 sm:mt-2 font-bold">Active Members</p>
+                  <p className="text-3xl sm:text-4xl font-extrabold text-white"><Counter to={publicSubscriptionPlans.length || 0} duration={1200} /></p>
+                  <p className="text-[10px] sm:text-[11px] text-white/50 uppercase tracking-[0.08em] mt-1 sm:mt-2 font-bold">Membership Plans</p>
                 </div>
                 <div className="hidden sm:block w-[1px] h-8 bg-white/15" />
                 <div className="relative">
-                  <p className="text-3xl sm:text-4xl font-extrabold text-white"><Counter to={45} suffix="+" duration={1500} /></p>
-                  <p className="text-[10px] sm:text-[11px] text-white/50 uppercase tracking-[0.08em] mt-1 sm:mt-2 font-bold">Elite Coaches</p>
+                  <p className="text-3xl sm:text-4xl font-extrabold text-white"><Counter to={trainerBanners.length || 0} duration={1200} /></p>
+                  <p className="text-[10px] sm:text-[11px] text-white/50 uppercase tracking-[0.08em] mt-1 sm:mt-2 font-bold">Trainer Images</p>
                 </div>
                 <div className="hidden sm:block w-[1px] h-8 bg-white/15" />
                 <div className="relative col-span-2 sm:col-auto">
-                  <p className="text-3xl sm:text-4xl font-extrabold text-white"><Counter to={98} suffix="%" duration={1500} /></p>
-                  <p className="text-[10px] sm:text-[11px] text-white/50 uppercase tracking-[0.08em] mt-1 sm:mt-2 font-bold">Success Rate</p>
+                  <p className="text-3xl sm:text-4xl font-extrabold text-white"><Counter to={publicFaqs.length || 0} duration={1200} /></p>
+                  <p className="text-[10px] sm:text-[11px] text-white/50 uppercase tracking-[0.08em] mt-1 sm:mt-2 font-bold">FAQs Available</p>
                 </div>
               </div>
             </motion.div>
@@ -233,9 +218,6 @@ export function HomePage() {
                   <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 uppercase">ELITE FACILITIES</h3>
                   <p className="text-slate-400 text-sm sm:text-base leading-relaxed">Train in a space that inspires greatness at {brandName}. Our facility features premium equipment from top global brands, specialized recovery zones, and an atmosphere that screams high-performance.</p>
                 </div>
-                <div className="mt-8 hidden sm:block">
-                  <img src="/assets/redesign/interior.png" className="rounded-xl w-full h-40 object-cover opacity-50 group-hover:opacity-80 transition-opacity" />
-                </div>
               </div>
 
               <div className="bento-item bento-item-2 glass-panel p-6 sm:p-8 group">
@@ -297,33 +279,61 @@ export function HomePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {isLoadingPublicData ? (
                 Array.from({ length: 3 }).map((_, idx) => (
-                  <div key={`skeleton-${idx}`} className="group relative overflow-hidden rounded-3xl aspect-[3/4] bg-slate-900 animate-pulse">
+                  <div key={`skeleton-${idx}`} className="group relative overflow-hidden rounded-3xl h-[320px] md:h-[380px] bg-slate-900 animate-pulse">
                     <div className="absolute bottom-0 left-0 p-6 sm:p-8 w-full">
                       <div className="h-3 w-1/3 bg-slate-800 rounded mb-2"></div>
                       <div className="h-6 w-2/3 bg-slate-800 rounded"></div>
                     </div>
                   </div>
                 ))
-              ) : (
-                (publicBanners["trainers"]?.length > 0 ? publicBanners["trainers"] : trainers).slice(0, 3).map((trainer: any, idx: number) => (
-                  <div key={trainer.id || idx} className="group relative overflow-hidden rounded-3xl aspect-[3/4]">
+              ) : trainerBanners.length > 0 ? (
+                trainerBanners.slice(0, 3).map((trainer, idx) => (
+                  <div key={trainer.id || idx} className="group relative overflow-hidden rounded-3xl h-[320px] md:h-[380px]">
                     <img
-                      src={trainer.file_path || (idx === 0 ? "/assets/redesign/trainer.png" : trainer.image)}
-                      alt={trainer.name}
+                      src={trainer.file_path}
+                      alt={`Trainer ${idx + 1}`}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
                     <div className="absolute bottom-0 left-0 p-6 sm:p-8 w-full transform transition-transform duration-500 translate-y-4 group-hover:translate-y-0">
-                      <p className="text-orange-400 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] mb-1">{trainer.role || "Elite Coach"}</p>
-                      {/* <h3 className="text-xl sm:text-2xl font-black text-white">{trainer.name || "Alex Forge"}</h3> */}
+                      <p className="text-orange-400 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] mb-1">Coaching Team</p>
                       <div className="mt-4 pt-4 border-t border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 hidden sm:block">
-                        <p className="text-slate-400 text-sm">Specializing in high-performance strength and metabolic conditioning.</p>
+                        <p className="text-slate-400 text-sm">Meet the trainers and coaching visuals managed from the admin public pages.</p>
                       </div>
                     </div>
                   </div>
                 ))
+              ) : (
+                <div className="lg:col-span-3">
+                  <NoDataFound title="No Trainer Images" subtitle="Upload trainer banners from the admin public pages to show them here." />
+                </div>
               )}
             </div>
+          </div>
+        </section>
+
+        <section className="py-16 sm:py-24 border-t border-white/5">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12 sm:mb-16">
+              <span className="hero-badge">Before / After</span>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mt-4 uppercase">REAL TRANSFORMATION GALLERY</h2>
+            </div>
+
+            {inspirationalBanners.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {inspirationalBanners.map((banner, index) => (
+                  <div key={banner.id || index} className="overflow-hidden rounded-3xl border border-white/10 bg-white/5">
+                    <img
+                      src={banner.file_path}
+                      alt={`Transformation ${index + 1}`}
+                      className="h-[320px] w-full object-cover transition-transform duration-700 hover:scale-105"
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <NoDataFound title="No Before/After Images" subtitle="Upload inspirational banners to show transformation images here." />
+            )}
           </div>
         </section>
 
@@ -347,30 +357,39 @@ export function HomePage() {
           </section>
         )}
 
-        {/* CTA Section */}
+        <section className="py-16 sm:py-24 border-t border-white/5">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12 sm:mb-16">
+              <span className="hero-badge">Offers</span>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mt-4 uppercase">CURRENT OFFERS & PROMOTIONS</h2>
+            </div>
+
+            {offersBanners.length > 0 ? (
+              <div className="relative h-[320px] sm:h-[420px] lg:h-[520px] overflow-hidden rounded-[2rem] border border-white/10">
+                <BannerCarousel banners={offersBanners} isLoading={isLoadingPublicData} />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent pointer-events-none z-10" />
+              </div>
+            ) : (
+              <NoDataFound title="No Offer Banners" subtitle="Upload offer banners to show the offers carousel here." />
+            )}
+          </div>
+        </section>
+
         <section className="py-16 sm:py-24 relative px-4 overflow-hidden">
           <div className="mx-auto max-w-5xl">
             <div className="relative glass-panel p-8 sm:p-12 md:p-20 text-center overflow-hidden border-orange-500/30">
-              {offersBanners[0]?.file_path && (
-                <img
-                  src={offersBanners[0].file_path}
-                  alt="Offers"
-                  className="absolute inset-0 h-full w-full object-cover opacity-20"
-                />
-              )}
               <div className="absolute inset-0 bg-slate-950/70" />
               <div className="absolute top-0 right-0 -mr-20 -mt-20 w-48 sm:w-64 h-48 sm:h-64 bg-orange-500/20 blur-[100px] rounded-full" />
               <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-48 sm:w-64 h-48 sm:h-64 bg-indigo-500/20 blur-[100px] rounded-full" />
 
               <div className="relative z-10">
                 <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-white mb-6 uppercase leading-tight">READY TO UNLEASH <br /><span className="text-cinematic">YOUR POWER?</span></h2>
-                <p className="text-base sm:text-lg text-slate-400 mb-8 sm:mb-10 max-w-2xl mx-auto">Stop waiting for the "perfect time". The perfect time is now. Join {brandName} and start writing your success story today.</p>
+                <p className="text-base sm:text-lg text-slate-400 mb-8 sm:mb-10 max-w-2xl mx-auto">Stop waiting for the perfect time. Join {brandName} and start your next chapter today.</p>
                 <Link to="/contact">
                   <button className="btn-premium px-8 sm:px-12 py-4 sm:py-5 text-lg sm:text-xl w-full sm:w-auto">
                     JOIN THE ELITE NOW
                   </button>
                 </Link>
-                <p className="mt-6 text-slate-500 text-[10px] sm:text-sm font-medium uppercase tracking-widest">NO COMMITMENT • 7-DAY FREE PASS • PRO GEAR</p>
               </div>
             </div>
           </div>
