@@ -5,22 +5,49 @@ interface UseGetOptions {
   enabled?: boolean;
   onSuccess?: (data: any) => void;
   onError?: (error: any) => void;
+  useCache?: boolean;
 }
 
+const apiCache: Record<string, { data: any; timestamp: number }> = {};
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export function useGet<T = any>(url: string | null | undefined, options: UseGetOptions = {}) {
-  const { enabled = true } = options;
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(enabled);
+  const { enabled = true, useCache = false } = options;
+  
+  const getCachedData = () => {
+    if (useCache && url && apiCache[url]) {
+      if (Date.now() - apiCache[url].timestamp < CACHE_DURATION) {
+        return apiCache[url].data;
+      }
+    }
+    return null;
+  };
+
+  const [data, setData] = useState<T | null>(getCachedData);
+  const [loading, setLoading] = useState<boolean>(enabled && !getCachedData());
   const [error, setError] = useState<any>(null);
 
   // Use a ref for options to avoid infinite loops when anonymous functions are passed
   const optionsRef = useRef(options);
   optionsRef.current = options;
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (ignoreCache = false) => {
+    if (!ignoreCache && useCache && url) {
+      const cached = getCachedData();
+      if (cached) {
+        setData(cached);
+        setLoading(false);
+        if (optionsRef.current.onSuccess) optionsRef.current.onSuccess(cached);
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const result = await api.get(url);
+      if (useCache && url) {
+        apiCache[url] = { data: result, timestamp: Date.now() };
+      }
       setData(result);
       if (optionsRef.current.onSuccess) optionsRef.current.onSuccess(result);
       setError(null);
@@ -30,7 +57,7 @@ export function useGet<T = any>(url: string | null | undefined, options: UseGetO
     } finally {
       setLoading(false);
     }
-  }, [url]);
+  }, [url, useCache]);
 
   useEffect(() => {
     if (enabled && url) {
@@ -38,7 +65,7 @@ export function useGet<T = any>(url: string | null | undefined, options: UseGetO
     }
   }, [enabled, url, fetchData]);
 
-  return { data, loading, error, refetch: fetchData };
+  return { data, loading, error, refetch: () => fetchData(true) };
 }
 
 interface UseMutationOptions {

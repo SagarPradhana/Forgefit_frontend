@@ -39,7 +39,7 @@ import { useGymStore } from "../../store/gymStore";
 import { Link } from "react-router-dom";
 
 export function AboutPage() {
-  const { publicAppConfig, publicBanners } = useGymStore();
+  const { publicAppConfig, publicBanners, isLoadingPublicData } = useGymStore();
   const brandName = publicAppConfig?.brand_name || "ForgeFit";
 
   return (
@@ -121,24 +121,35 @@ export function AboutPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {(publicBanners["trainers"]?.length > 0 ? publicBanners["trainers"] : [
-                { name: "Maya", role: "Strength Coach" },
-                { name: "Noah", role: "Performance Trainer" },
-                { name: "Ava", role: "Recovery Specialist" },
-              ]).slice(0, 3).map((trainer: any, i: number) => (
-                <div key={i} className="group relative overflow-hidden rounded-3xl aspect-[3/4]">
-                  <img
-                    src={trainer.file_path || (i === 0 ? "/assets/redesign/trainer.png" : `https://images.unsplash.com/photo-${i === 1 ? '1517836357463-d25dfeac3438' : '1518609878373-06d740f60d8b'}?auto=format&fit=crop&w=900&q=80`)}
-                    alt={trainer.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 p-8 w-full transform transition-transform duration-500 translate-y-4 group-hover:translate-y-0">
-                    <p className="text-orange-400 text-xs font-black uppercase tracking-[0.2em] mb-1">{trainer.role || "Elite Coach"}</p>
-                    <h3 className="text-2xl font-black text-white">{trainer.name}</h3>
+              {isLoadingPublicData ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={`skeleton-${i}`} className="group relative overflow-hidden rounded-3xl aspect-[3/4] bg-slate-900 animate-pulse">
+                    <div className="absolute bottom-0 left-0 p-8 w-full">
+                      <div className="h-3 w-1/3 bg-slate-800 rounded mb-2"></div>
+                      <div className="h-8 w-2/3 bg-slate-800 rounded"></div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                (publicBanners["trainers"]?.length > 0 ? publicBanners["trainers"] : [
+                  { name: "Maya", role: "Strength Coach" },
+                  { name: "Noah", role: "Performance Trainer" },
+                  { name: "Ava", role: "Recovery Specialist" },
+                ]).slice(0, 3).map((trainer: any, i: number) => (
+                  <div key={i} className="group relative overflow-hidden rounded-3xl aspect-[3/4]">
+                    <img
+                      src={trainer.file_path || (i === 0 ? "/assets/redesign/trainer.png" : `https://images.unsplash.com/photo-${i === 1 ? '1517836357463-d25dfeac3438' : '1518609878373-06d740f60d8b'}?auto=format&fit=crop&w=900&q=80`)}
+                      alt={trainer.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 p-8 w-full transform transition-transform duration-500 translate-y-4 group-hover:translate-y-0">
+                      <p className="text-orange-400 text-xs font-black uppercase tracking-[0.2em] mb-1">{trainer.role || "Elite Coach"}</p>
+                      <h3 className="text-2xl font-black text-white">{trainer.name}</h3>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </section>
 

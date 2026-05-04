@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'user';
+export type Role = 'admin' | 'user' | 'trainer';
 export type Status = 'Active' | 'Expired' | 'Pending' | 'Paid';
 
 export const stats = [

@@ -73,13 +73,21 @@ export function Sidebar({
         { name: "settings", icon: Settings, label: t("settings") },
         { name: "inquiries", icon: MessageSquare, label: t("inquiries") },
       ]
-      : [
-        { name: "dashboard", icon: LayoutDashboard, label: t("dashboard") },
-        { name: "subscription", icon: CreditCard, label: t("subscription") },
-        { name: "attendance", icon: Users, label: t("attendance") },
-        { name: "payments", icon: CreditCard, label: t("payments") },
-        { name: "products", icon: Box, label: t("products") },
-      ];
+      : role === "trainer"
+        ? [
+          { name: "dashboard", icon: LayoutDashboard, label: t("dashboard") },
+          { name: "users", icon: Users, label: t("users") },
+          { name: "attendance", icon: Calendar, label: t("attendance") },
+          { name: "workouts", icon: ClipboardList, label: "Workouts" },
+          { name: "diets", icon: ClipboardList, label: "Diet Plans" },
+        ]
+        : [
+          { name: "dashboard", icon: LayoutDashboard, label: t("dashboard") },
+          { name: "subscription", icon: CreditCard, label: t("subscription") },
+          { name: "attendance", icon: Users, label: t("attendance") },
+          { name: "payments", icon: CreditCard, label: t("payments") },
+          { name: "products", icon: Box, label: t("products") },
+        ];
 
   const { publicAppConfig } = useGymStore();
 
@@ -292,7 +300,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
       className={`relative h-screen min-h-screen overflow-hidden overflow-x-hidden text-white`}
     >
       <Helmet>
-        <title>{`${role === 'admin' ? 'Admin' : 'Member'} Portal | ${publicAppConfig?.brand_name || 'ForgeFit'}`}</title>
+        <title>{`${role === 'admin' ? 'Admin' : role === 'trainer' ? 'Trainer' : 'Member'} Portal | ${publicAppConfig?.brand_name || 'ForgeFit'}`}</title>
       </Helmet>
       {/* 🔥 ENHANCED ANIMATED BACKGROUND */}
       <AnimatedBackground colorTheme={colorTheme} />

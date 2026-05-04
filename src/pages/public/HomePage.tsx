@@ -26,7 +26,7 @@ import { useGymStore } from "../../store/gymStore";
 import { BannerCarousel } from "../../components/common/BannerCarousel";
 
 export function HomePage() {
-  const { publicAppConfig, publicBanners } = useGymStore();
+  const { publicAppConfig, publicBanners, isLoadingPublicData } = useGymStore();
 
   const homeBanners = publicBanners["home"] || publicBanners["common"] || [];
 
@@ -38,7 +38,7 @@ export function HomePage() {
         <section className="relative h-screen min-h-[700px] flex items-center overflow-hidden">
           {/* Background Carousel (Scoped to this section) */}
           <div className="absolute inset-0 z-0">
-            <BannerCarousel banners={homeBanners} />
+            <BannerCarousel banners={homeBanners} isLoading={isLoadingPublicData} />
             {/* Cinematic Overlays */}
             <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent z-10 pointer-events-none" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0c] via-transparent to-transparent z-10 pointer-events-none" />
@@ -238,23 +238,34 @@ export function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {(publicBanners["trainers"]?.length > 0 ? publicBanners["trainers"] : trainers).slice(0, 3).map((trainer: any, idx: number) => (
-                <div key={trainer.id || idx} className="group relative overflow-hidden rounded-3xl aspect-[3/4]">
-                  <img
-                    src={trainer.file_path || (idx === 0 ? "/assets/redesign/trainer.png" : trainer.image)}
-                    alt={trainer.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 p-6 sm:p-8 w-full transform transition-transform duration-500 translate-y-4 group-hover:translate-y-0">
-                    <p className="text-orange-400 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] mb-1">{trainer.role || "Elite Coach"}</p>
-                    <h3 className="text-xl sm:text-2xl font-black text-white">{trainer.name || "Alex Forge"}</h3>
-                    <div className="mt-4 pt-4 border-t border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 hidden sm:block">
-                      <p className="text-slate-400 text-sm">Specializing in high-performance strength and metabolic conditioning.</p>
+              {isLoadingPublicData ? (
+                Array.from({ length: 3 }).map((_, idx) => (
+                  <div key={`skeleton-${idx}`} className="group relative overflow-hidden rounded-3xl aspect-[3/4] bg-slate-900 animate-pulse">
+                    <div className="absolute bottom-0 left-0 p-6 sm:p-8 w-full">
+                      <div className="h-3 w-1/3 bg-slate-800 rounded mb-2"></div>
+                      <div className="h-6 w-2/3 bg-slate-800 rounded"></div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                (publicBanners["trainers"]?.length > 0 ? publicBanners["trainers"] : trainers).slice(0, 3).map((trainer: any, idx: number) => (
+                  <div key={trainer.id || idx} className="group relative overflow-hidden rounded-3xl aspect-[3/4]">
+                    <img
+                      src={trainer.file_path || (idx === 0 ? "/assets/redesign/trainer.png" : trainer.image)}
+                      alt={trainer.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 p-6 sm:p-8 w-full transform transition-transform duration-500 translate-y-4 group-hover:translate-y-0">
+                      <p className="text-orange-400 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] mb-1">{trainer.role || "Elite Coach"}</p>
+                      <h3 className="text-xl sm:text-2xl font-black text-white">{trainer.name || "Alex Forge"}</h3>
+                      <div className="mt-4 pt-4 border-t border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 hidden sm:block">
+                        <p className="text-slate-400 text-sm">Specializing in high-performance strength and metabolic conditioning.</p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </section>

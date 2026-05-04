@@ -142,7 +142,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { t } = useTranslation();
-  const { publicAppConfig } = useGymStore();
+  const { publicAppConfig, isLoadingPublicData } = useGymStore();
   const location = useLocation();
 
   useEffect(() => {
@@ -171,7 +171,9 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                 transition={{ duration: 0.6, ease: "easeOut" }}
                 className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-gradient-to-br from-indigo-500/50 via-violet-500/35 to-orange-400/45 shadow-[0_0_25px_rgba(99,102,241,0.45)] group-hover:shadow-glow transition-all overflow-hidden"
               >
-                {publicAppConfig?.logo_image_path ? (
+                {isLoadingPublicData ? (
+                  <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                ) : publicAppConfig?.logo_image_path ? (
                   <img src={publicAppConfig.logo_image_path} alt={publicAppConfig.brand_name} className="h-full w-full object-cover" />
                 ) : (
                   <Dumbbell size={18} />

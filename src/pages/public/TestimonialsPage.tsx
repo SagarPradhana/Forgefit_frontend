@@ -29,7 +29,7 @@ import { useGymStore } from "../../store/gymStore";
 import { Link } from "react-router-dom";
 
 export function TestimonialsPage() {
-  const { publicAppConfig, publicTestimonials, publicBanners } = useGymStore();
+  const { publicAppConfig, publicTestimonials, publicBanners, isLoadingPublicData } = useGymStore();
   const brandName = publicAppConfig?.brand_name || "ForgeFit";
 
   const displayTestimonials = publicTestimonials.length > 0
@@ -76,8 +76,12 @@ export function TestimonialsPage() {
 
           {/* Video / Hero Visual */}
           <section className="mb-32">
-            <div className="glass-panel p-4 relative overflow-hidden group aspect-video md:aspect-[21/9]">
-              {latestVideo?.file_path?.endsWith('.mp4') ? (
+            <div className="glass-panel p-4 relative overflow-hidden group aspect-video md:aspect-[21/9] rounded-2xl">
+              {isLoadingPublicData ? (
+                <div className="absolute inset-0 bg-slate-900 animate-pulse flex items-center justify-center rounded-2xl">
+                  <div className="w-12 h-12 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin" />
+                </div>
+              ) : latestVideo?.file_path?.endsWith('.mp4') ? (
                 <video
                   src={latestVideo.file_path}
                   controls
@@ -115,35 +119,55 @@ export function TestimonialsPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {displayTestimonials.map((item, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <div className="glass-panel p-8 h-full flex flex-col group hover:bg-orange-500/5 transition-all">
-                    <div className="flex gap-1 mb-6">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={14} className="text-orange-400" fill="currentColor" />
-                      ))}
+              {isLoadingPublicData ? (
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={`skeleton-${index}`} className="glass-panel p-8 h-full flex flex-col bg-slate-900 animate-pulse rounded-2xl">
+                    <div className="h-4 w-24 bg-slate-800 rounded mb-6"></div>
+                    <div className="flex-grow space-y-3 mb-8">
+                      <div className="h-4 w-full bg-slate-800 rounded"></div>
+                      <div className="h-4 w-full bg-slate-800 rounded"></div>
+                      <div className="h-4 w-2/3 bg-slate-800 rounded"></div>
                     </div>
-                    <p className="text-slate-300 text-base leading-relaxed italic mb-8 flex-grow">
-                      "{item.quote}"
-                    </p>
                     <div className="flex items-center gap-4 border-t border-white/5 pt-6">
-                      <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-400 font-black text-xs">
-                        {item.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="text-white font-bold text-sm uppercase tracking-tight">{item.name}</p>
-                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Athlete Member</p>
+                      <div className="w-10 h-10 rounded-full bg-slate-800"></div>
+                      <div className="space-y-2">
+                        <div className="h-3 w-20 bg-slate-800 rounded"></div>
+                        <div className="h-2 w-16 bg-slate-800 rounded"></div>
                       </div>
                     </div>
                   </div>
-                </motion.div>
-              ))}
+                ))
+              ) : (
+                displayTestimonials.map((item, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <div className="glass-panel p-8 h-full flex flex-col group hover:bg-orange-500/5 transition-all">
+                      <div className="flex gap-1 mb-6">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} size={14} className="text-orange-400" fill="currentColor" />
+                        ))}
+                      </div>
+                      <p className="text-slate-300 text-base leading-relaxed italic mb-8 flex-grow">
+                        "{item.quote}"
+                      </p>
+                      <div className="flex items-center gap-4 border-t border-white/5 pt-6">
+                        <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-400 font-black text-xs">
+                          {item.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="text-white font-bold text-sm uppercase tracking-tight">{item.name}</p>
+                          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Athlete Member</p>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
             </div>
           </section>
 

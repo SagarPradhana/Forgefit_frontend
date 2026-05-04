@@ -126,7 +126,7 @@ export function UserManagement() {
     }
   );
 
-  const { data: rolesData } = useGet(API_ENDPOINTS.ADMIN.ROLES);
+  const { data: rolesData } = useGet(API_ENDPOINTS.ADMIN.ROLES, { useCache: true });
   const roles = useMemo<string[]>(() => {
     if (!rolesData?.data) return ["admin", "trainer", "user"];
     // Extract unique roles from data
@@ -134,10 +134,9 @@ export function UserManagement() {
     return unique.length > 0 ? unique : ["admin", "trainer", "user"];
   }, [rolesData]);
 
-  const { data: plansData } = useGet(API_ENDPOINTS.ADMIN.PLANS);
+  const { data: plansData } = useGet(API_ENDPOINTS.ADMIN.PLANS, { useCache: true });
   const plans = plansData?.data || [];
-
-  const { data: trainersData } = useGet(API_ENDPOINTS.ADMIN.TRAINER_LIST);
+  const { data: trainersData } = useGet(API_ENDPOINTS.ADMIN.TRAINER_LIST, { useCache: true });
   const trainers = trainersData?.data || [];
 
   // --- Mutations ---

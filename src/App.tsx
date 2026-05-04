@@ -53,6 +53,12 @@ const UserPortalPages = lazy(() =>
   })),
 );
 
+const TrainerPortalPages = lazy(() =>
+  import("./pages/trainer/TrainerPortalPages").then((m) => ({
+    default: m.TrainerPortalPages,
+  })),
+);
+
 /** Returns true if the stored JWT token exists and has not expired. */
 function isTokenValid(token: string | null): boolean {
   if (!token) return false;
@@ -72,7 +78,10 @@ function isTokenValid(token: string | null): boolean {
 function AuthRedirect({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, role, token } = useAuthStore();
   if (isAuthenticated && isTokenValid(token)) {
-    const dest = role === "admin" ? "/admin/dashboard" : "/user/dashboard";
+    const dest = 
+      role === "admin" ? "/admin/dashboard" : 
+      role === "trainer" ? "/trainer/dashboard" : 
+      "/user/dashboard";
     return <Navigate to={dest} replace />;
   }
   return <>{children}</>;
@@ -82,7 +91,7 @@ function ProtectedRole({
   expectedRole,
   children,
 }: {
-  expectedRole: "admin" | "user";
+  expectedRole: "admin" | "user" | "trainer";
   children: React.ReactNode;
 }) {
   const { role, isAuthenticated, token } = useAuthStore();
@@ -91,13 +100,15 @@ function ProtectedRole({
   return <>{children}</>;
 }
 
-function RoleRoute({ role }: { role: "admin" | "user" }) {
+function RoleRoute({ role }: { role: "admin" | "user" | "trainer" }) {
   const { page = "dashboard" } = useParams();
   return (
     <ProtectedRole expectedRole={role}>
       <DashboardLayout>
         {role === "admin" ? (
           <AdminPortalPages page={page} />
+        ) : role === "trainer" ? (
+          <TrainerPortalPages page={page} />
         ) : (
           <UserPortalPages page={page} />
         )}
@@ -203,6 +214,7 @@ export default function App() {
           <Route path="/forgot-password" element={<AuthRedirect><ForgotPasswordPage /></AuthRedirect>} />
           <Route path="/auth" element={<Navigate to="/signin" replace />} />
           <Route path="/admin/:page" element={<RoleRoute role="admin" />} />
+          <Route path="/trainer/:page" element={<RoleRoute role="trainer" />} />
           <Route path="/user/:page" element={<RoleRoute role="user" />} />
           <Route path="*" element={<NotFound404 />} />
         </Routes>

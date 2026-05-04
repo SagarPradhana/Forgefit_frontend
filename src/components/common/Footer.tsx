@@ -43,7 +43,7 @@ const footerSections = [
 import { useGymStore } from "../../store/gymStore";
 
 export function Footer() {
-  const { publicAppConfig, publicLocations } = useGymStore();
+  const { publicAppConfig, publicLocations, isLoadingPublicData } = useGymStore();
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
@@ -98,7 +98,9 @@ export function Footer() {
                   whileHover={{ rotate: 180 }}
                   className="p-2 bg-gradient-to-br from-indigo-500 to-orange-400 rounded-lg shadow-glow overflow-hidden flex items-center justify-center"
                 >
-                  {publicAppConfig?.logo_image_path ? (
+                  {isLoadingPublicData ? (
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  ) : publicAppConfig?.logo_image_path ? (
                     <img src={publicAppConfig.logo_image_path} alt={publicAppConfig.brand_name} className="w-6 h-6 object-contain" />
                   ) : (
                     <Dumbbell className="w-6 h-6 text-white" />

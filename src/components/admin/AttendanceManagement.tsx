@@ -53,7 +53,7 @@ export function AttendanceManagement() {
     avg_time_hours: 0
   });
 
-  const { data: usersDropdownData } = useGet(API_ENDPOINTS.ADMIN.GET_USERS_DROPDOWN);
+  const { data: usersDropdownData } = useGet(API_ENDPOINTS.ADMIN.GET_USERS_DROPDOWN, { useCache: true });
   const members = useMemo(() => usersDropdownData?.data || [], [usersDropdownData]);
 
   const fetchRecords = useCallback(async () => {

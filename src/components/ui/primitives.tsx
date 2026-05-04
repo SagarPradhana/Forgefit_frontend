@@ -7,10 +7,8 @@ import { createPortal } from "react-dom";
 export function GlassCard({
   className,
   children,
-}: {
-  className?: string;
-  children: ReactNode;
-}) {
+  ...props
+}: import("framer-motion").HTMLMotionProps<"div">) {
   return (
     <motion.div
       className={clsx(
@@ -19,6 +17,7 @@ export function GlassCard({
         "[.light_&]:border-slate-200 [.light_&]:bg-white/95 [.light_&]:shadow-slate-300/30",
         className,
       )}
+      {...props}
     >
       {children}
     </motion.div>

@@ -101,7 +101,8 @@ function UserDashboard() {
 
   // Active plan fetch — /current-subscription/{userId} (only after popup loaded)
   const { data: activePlanRes, loading: planLoading } = useGet(
-    userId && popupLoaded ? API_ENDPOINTS.APP.CURRENT_SUBSCRIPTION(userId) : null
+    userId && popupLoaded ? API_ENDPOINTS.APP.CURRENT_SUBSCRIPTION(userId) : null,
+    { useCache: true }
   );
   const activePlanData =
     activePlanRes?.data?.[0] ??
@@ -109,7 +110,8 @@ function UserDashboard() {
 
   // Consistency Tracker fetch — /consistency-tracker/{userId} (only after popup loaded)
   const { data: trackerRes, loading: trackerLoading } = useGet(
-    userId && popupLoaded ? API_ENDPOINTS.APP.CONSISTENCY_TRACKER(userId) : null
+    userId && popupLoaded ? API_ENDPOINTS.APP.CONSISTENCY_TRACKER(userId) : null,
+    { useCache: true }
   );
   const trackerData = trackerRes || {};
 
@@ -137,11 +139,13 @@ function UserDashboard() {
   const [dietModalOpen, setDietModalOpen] = useState(false);
 
   const { data: workoutData, loading: workoutLoading } = useGet(
-    userId ? API_ENDPOINTS.APP.MY_WORKOUT_PLAN(userId, workoutDay) : null
+    userId ? API_ENDPOINTS.APP.MY_WORKOUT_PLAN(userId, workoutDay) : null,
+    { useCache: true }
   );
   
   const { data: dietData, loading: dietLoading } = useGet(
-    userId ? API_ENDPOINTS.APP.MY_DIET_PLAN(userId, dietDay) : null
+    userId ? API_ENDPOINTS.APP.MY_DIET_PLAN(userId, dietDay) : null,
+    { useCache: true }
   );
 
   const workoutPlan = workoutData;

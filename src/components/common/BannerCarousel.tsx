@@ -6,9 +6,10 @@ import type { PublicBanner } from "../../services/publicAppService";
 interface BannerCarouselProps {
   banners: PublicBanner[];
   className?: string;
+  isLoading?: boolean;
 }
 
-export function BannerCarousel({ banners, className = "" }: BannerCarouselProps) {
+export function BannerCarousel({ banners, className = "", isLoading = false }: BannerCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -19,6 +20,15 @@ export function BannerCarousel({ banners, className = "" }: BannerCarouselProps)
     }, 5000);
     return () => clearInterval(timer);
   }, [banners.length, isPaused]);
+
+  if (isLoading) {
+    return (
+      <div className={`absolute inset-0 bg-slate-950 flex items-center justify-center ${className}`}>
+        <div className="absolute inset-0 bg-slate-900 animate-pulse" />
+        <div className="w-16 h-16 border-4 border-[#e8521a]/20 border-t-[#e8521a] rounded-full animate-spin z-10" />
+      </div>
+    );
+  }
 
   if (!banners || banners.length === 0) {
     return (

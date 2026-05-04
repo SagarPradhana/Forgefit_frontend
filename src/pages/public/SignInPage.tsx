@@ -74,7 +74,7 @@ export function SignInPage() {
     handleRealSignIn();
   };
 
-  const { publicAppConfig } = useGymStore();
+  const { publicAppConfig, isLoadingPublicData } = useGymStore();
   const brandName = publicAppConfig?.brand_name || "ForgeFit";
 
   return (
@@ -92,7 +92,9 @@ export function SignInPage() {
               whileHover={{ rotate: 180 }}
               className="h-12 w-12 flex items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-orange-400 shadow-lg shadow-indigo-500/20 overflow-hidden"
             >
-              {publicAppConfig?.logo_image_path ? (
+              {isLoadingPublicData ? (
+                <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              ) : publicAppConfig?.logo_image_path ? (
                 <img src={publicAppConfig.logo_image_path} alt={brandName} className="h-full w-full object-cover" />
               ) : (
                 <Dumbbell className="text-white" />
