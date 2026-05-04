@@ -45,7 +45,7 @@ export function HomePage() {
           </div>
 
           {/* Hero Content Overlay */}
-          <div className="relative z-20 w-full pl-[clamp(1.5rem,6vw,7rem)] max-w-[900px]">
+          <div className="relative z-20 w-full px-4 sm:px-8 md:pl-[clamp(2rem,6vw,7rem)] md:pr-4 max-w-[900px]">
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -225,7 +225,7 @@ export function HomePage() {
         {/* Coaches Section */}
         <section className="py-16 sm:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-12 sm:mb-16 gap-6">
+            <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-12 sm:mb-16 gap-6">
               <div className="max-w-2xl text-center md:text-left">
                 <span className="hero-badge">Elite Team</span>
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mt-4 uppercase">MEET THE ARCHITECTS OF TRANSFORMATION</h2>
@@ -258,7 +258,7 @@ export function HomePage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
                     <div className="absolute bottom-0 left-0 p-6 sm:p-8 w-full transform transition-transform duration-500 translate-y-4 group-hover:translate-y-0">
                       <p className="text-orange-400 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] mb-1">{trainer.role || "Elite Coach"}</p>
-                      <h3 className="text-xl sm:text-2xl font-black text-white">{trainer.name || "Alex Forge"}</h3>
+                      {/* <h3 className="text-xl sm:text-2xl font-black text-white">{trainer.name || "Alex Forge"}</h3> */}
                       <div className="mt-4 pt-4 border-t border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 hidden sm:block">
                         <p className="text-slate-400 text-sm">Specializing in high-performance strength and metabolic conditioning.</p>
                       </div>

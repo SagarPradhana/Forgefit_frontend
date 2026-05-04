@@ -85,7 +85,7 @@ export function AboutPage() {
                   className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
                 />
               </div>
-              <div className="absolute -bottom-6 sm:-bottom-8 -right-4 sm:-right-8 glass-panel p-4 sm:p-6 max-w-[200px] sm:max-w-[280px] shadow-2xl">
+              <div className="absolute -bottom-6 sm:-bottom-8 right-0 sm:-right-8 glass-panel p-4 sm:p-6 max-w-[200px] sm:max-w-[280px] shadow-2xl z-10">
                 <Sparkles className="text-orange-400 mb-2" size={20} />
                 <p className="text-white font-bold text-xs sm:text-sm">State-of-the-Art Recovery</p>
                 <p className="text-slate-400 text-[10px] sm:text-xs mt-1">Access to infrared saunas and expert physio support.</p>
@@ -114,7 +114,7 @@ export function AboutPage() {
 
           {/* Meet the Trainers Section */}
           <section className="py-24 border-t border-white/5">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-6">
               <div className="max-w-2xl">
                 <h2 className="text-4xl md:text-5xl font-black text-white uppercase leading-[0.9]">ELITE <span className="text-cinematic">COACHING</span> TEAM</h2>
               </div>
@@ -145,7 +145,7 @@ export function AboutPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
                     <div className="absolute bottom-0 left-0 p-8 w-full transform transition-transform duration-500 translate-y-4 group-hover:translate-y-0">
                       <p className="text-orange-400 text-xs font-black uppercase tracking-[0.2em] mb-1">{trainer.role || "Elite Coach"}</p>
-                      <h3 className="text-2xl font-black text-white">{trainer.name}</h3>
+                      {/* <h3 className="text-2xl font-black text-white">{trainer.name}</h3> */}
                     </div>
                   </div>
                 ))

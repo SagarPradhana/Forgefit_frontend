@@ -280,8 +280,8 @@
     padding: 4px 12px;
   }
   
-  h1 { font-size: 3.5rem !important; line-height: 1 !important; }
-  .text-6xl, .text-8xl, .text-9xl { font-size: 3.5rem !important; }
+  h1 { font-size: clamp(2.5rem, 10vw, 3.5rem) !important; line-height: 1 !important; }
+  .text-6xl, .text-8xl, .text-9xl { font-size: clamp(2.5rem, 10vw, 3.5rem) !important; }
   
   .section-padding { padding-top: 4rem; padding-bottom: 4rem; }
 }

@@ -276,14 +276,14 @@ export function Footer() {
             className="flex flex-col sm:flex-row justify-between items-center gap-6 text-slate-500 text-xs font-medium tracking-wide"
           >
             <p>&copy; {new Date().getFullYear()} {publicAppConfig?.brand_name || "ForgeFit"}. All rights reserved.</p>
-            <div className="flex gap-8">
-              <a href="#" className="hover:text-indigo-400 transition-colors uppercase">
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
+              <a href="#" className="hover:text-indigo-400 transition-colors uppercase text-center">
                 Privacy Policy
               </a>
-              <a href="#" className="hover:text-indigo-400 transition-colors uppercase">
+              <a href="#" className="hover:text-indigo-400 transition-colors uppercase text-center">
                 Terms of Service
               </a>
-              <a href="#" className="hover:text-indigo-400 transition-colors uppercase">
+              <a href="#" className="hover:text-indigo-400 transition-colors uppercase text-center">
                 Cookies
               </a>
             </div>
