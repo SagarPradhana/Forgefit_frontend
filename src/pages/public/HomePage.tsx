@@ -10,7 +10,7 @@ import { formatCurrency } from "../../utils/currency";
 import { NoDataFound } from "../../components/ui/NoDataFound";
 
 export function HomePage() {
-  const { publicAppConfig, publicBanners, publicLocations, publicSubscriptionPlans, publicTestimonials, publicFaqs, isLoadingPublicData } = useGymStore();
+  const { publicAppConfig, publicBanners, publicLocations, publicSubscriptionPlans, publicTestimonials, isLoadingPublicData } = useGymStore();
 
   const homeBanners = publicBanners["home"] || publicBanners["common"] || [];
   const offersBanners = publicBanners["offers"] || [];
@@ -121,18 +121,18 @@ export function HomePage() {
             >
               <div className="grid grid-cols-2 sm:flex sm:items-center gap-6 sm:gap-8 w-full sm:w-auto">
                 <div className="relative">
-                  <p className="text-3xl sm:text-4xl font-extrabold text-white"><Counter to={publicSubscriptionPlans.length || 0} duration={1200} /></p>
+                  <p className="text-3xl sm:text-4xl font-extrabold text-white"><Counter to={20} suffix="+" duration={1200} /></p>
                   <p className="text-[10px] sm:text-[11px] text-white/50 uppercase tracking-[0.08em] mt-1 sm:mt-2 font-bold">Membership Plans</p>
                 </div>
                 <div className="hidden sm:block w-[1px] h-8 bg-white/15" />
                 <div className="relative">
-                  <p className="text-3xl sm:text-4xl font-extrabold text-white"><Counter to={trainerBanners.length || 0} duration={1200} /></p>
-                  <p className="text-[10px] sm:text-[11px] text-white/50 uppercase tracking-[0.08em] mt-1 sm:mt-2 font-bold">Trainer Images</p>
+                  <p className="text-3xl sm:text-4xl font-extrabold text-white"><Counter to={200} suffix="+" duration={1200} /></p>
+                  <p className="text-[10px] sm:text-[11px] text-white/50 uppercase tracking-[0.08em] mt-1 sm:mt-2 font-bold">Trainers</p>
                 </div>
                 <div className="hidden sm:block w-[1px] h-8 bg-white/15" />
                 <div className="relative col-span-2 sm:col-auto">
-                  <p className="text-3xl sm:text-4xl font-extrabold text-white"><Counter to={publicFaqs.length || 0} duration={1200} /></p>
-                  <p className="text-[10px] sm:text-[11px] text-white/50 uppercase tracking-[0.08em] mt-1 sm:mt-2 font-bold">FAQs Available</p>
+                  <p className="text-3xl sm:text-4xl font-extrabold text-white"><Counter to={5} suffix="+" duration={1200} /></p>
+                  <p className="text-[10px] sm:text-[11px] text-white/50 uppercase tracking-[0.08em] mt-1 sm:mt-2 font-bold">Experience</p>
                 </div>
               </div>
             </motion.div>
@@ -160,14 +160,14 @@ export function HomePage() {
           </div>
 
           {/* Scroll Indicator */}
-          <motion.div
+          {/* <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
             className="absolute bottom-8 sm:bottom-12 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 opacity-50 hidden xl:flex"
           >
             <div className="w-[1.5px] h-10 bg-gradient-to-b from-[#e8521a] to-transparent" />
             <span className="text-[9px] uppercase tracking-[0.4em] font-black text-white">SCROLL</span>
-          </motion.div>
+          </motion.div> */}
         </section>
 
         {featuredPlans.length > 0 && (
