@@ -49,6 +49,7 @@ export interface PublicBanner {
 
 export interface Location {
   id: string;
+  name: string;
   latitude: number;
   longitude: number;
   radius: number;
@@ -80,26 +81,26 @@ export interface SubscriptionPlan {
 
 export const publicAppService = {
   getAppConfig: async () => {
-    return api.get(API_ENDPOINTS.PUBLIC.PUBLIC_APP_CONFIG);
+    return api.get(API_ENDPOINTS.PUBLIC.PUBLIC_APP_CONFIG, {}, { showToast: false });
   },
 
   getFAQs: async (params?: any) => {
-    return api.get(API_ENDPOINTS.PUBLIC.FAQ, params);
+    return api.get(API_ENDPOINTS.PUBLIC.FAQ, params, { showToast: false });
   },
 
   getTestimonials: async (params?: any) => {
-    return api.get(API_ENDPOINTS.PUBLIC.TESTIMONIALS, params);
+    return api.get(API_ENDPOINTS.PUBLIC.TESTIMONIALS, params, { showToast: false });
   },
 
   getBanners: async (type: string) => {
-    return api.get(API_ENDPOINTS.PUBLIC.BANNERS_DETAILS(type));
+    return api.get(API_ENDPOINTS.PUBLIC.BANNERS_DETAILS(type), {}, { showToast: false });
   },
 
   getLocations: async (params?: any) => {
-    return api.get(API_ENDPOINTS.ADMIN.LOCATION, params);
+    return api.get(API_ENDPOINTS.ADMIN.LOCATION, params, { showToast: false });
   },
 
   getSubscriptionPlans: async (params?: any) => {
-    return api.get(API_ENDPOINTS.ADMIN.PLANS, params);
+    return api.get(API_ENDPOINTS.ADMIN.PLANS, params, { showToast: false });
   }
 };

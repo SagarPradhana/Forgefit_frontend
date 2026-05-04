@@ -47,17 +47,6 @@ export function Footer() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
-  const contact = publicLocations[0];
-  const contactInfo = [
-    {
-      icon: MapPin,
-      label: "Address",
-      value: contact?.address || "Ahmedabad, Gujarat, India",
-    },
-    { icon: Phone, label: "Phone", value: contact?.phone || "+91 98765 43210" },
-    { icon: Mail, label: "Email", value: contact?.email || "support@forgefit.com" },
-  ];
-
   const socialLinks = [
     { icon: FacebookIcon, href: publicAppConfig?.facebook_url || "#", label: "Facebook" },
     { icon: InstagramIcon, href: publicAppConfig?.instagram_url || "#", label: "Instagram" },
@@ -121,28 +110,52 @@ export function Footer() {
                 {publicAppConfig?.description || "Transform your body, elevate your mind. Join our community of fitness enthusiasts and achieve your goals with expert guidance."}
               </p>
 
-              {/* Contact Info */}
-              <div className="space-y-4">
-                {contactInfo.map((item, i) => (
-                  <motion.div 
-                    key={item.label} 
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.2 + i * 0.1 }}
-                    className="flex items-start gap-4 group cursor-default"
-                  >
-                    <div className="p-2 rounded-lg bg-white/5 border border-white/10 text-indigo-400 transition-colors group-hover:bg-indigo-500/20 group-hover:text-white">
-                      <item.icon className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wider text-slate-500 mb-0.5">
-                        {item.label}
+              {/* Locations Section */}
+              <div className="space-y-8 mt-8">
+                {publicLocations.length > 0 ? (
+                  publicLocations.map((loc, i) => (
+                    <motion.div 
+                      key={loc.id || i} 
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.2 + i * 0.1 }}
+                      className="space-y-3 relative pl-6 border-l border-white/10 group"
+                    >
+                      <div className="absolute top-0 left-0 w-[2px] h-0 bg-orange-500 group-hover:h-full transition-all duration-500" />
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500 mb-2">
+                        {loc.name || `Studio ${i + 1}`}
                       </p>
-                      <p className="text-slate-300 text-sm">{item.value}</p>
+                      <div className="flex items-start gap-3">
+                        <MapPin className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                        <p className="text-slate-400 text-sm leading-tight">{loc.address}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Phone className="w-4 h-4 text-indigo-400 shrink-0" />
+                        <p className="text-slate-400 text-sm">{loc.phone}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Mail className="w-4 h-4 text-indigo-400 shrink-0" />
+                        <p className="text-slate-400 text-sm">{loc.email}</p>
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-4">
+                      <MapPin className="w-4 h-4 text-indigo-400" />
+                      <p className="text-slate-300 text-sm">Ahmedabad, Gujarat, India</p>
                     </div>
-                  </motion.div>
-                ))}
+                    <div className="flex items-center gap-4">
+                      <Phone className="w-4 h-4 text-indigo-400" />
+                      <p className="text-slate-300 text-sm">+91 98765 43210</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <Mail className="w-4 h-4 text-indigo-400" />
+                      <p className="text-slate-300 text-sm">support@forgefit.com</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

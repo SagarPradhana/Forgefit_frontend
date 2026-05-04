@@ -418,11 +418,11 @@ export const useGymStore = create<GymState>((set) => ({
       });
 
       set({
-        publicAppConfig: configRes?.data || configRes || null, // Handle different response wrappers
-        publicFaqs: faqRes?.data || [],
-        publicTestimonials: testimonialRes?.data || [],
-        publicLocations: locationRes?.data || [],
-        publicSubscriptionPlans: plansRes?.data || [],
+        publicAppConfig: configRes?.data || configRes || null,
+        publicFaqs: Array.isArray(faqRes) ? faqRes : (faqRes?.data || []),
+        publicTestimonials: Array.isArray(testimonialRes) ? testimonialRes : (testimonialRes?.data || []),
+        publicLocations: Array.isArray(locationRes) ? locationRes : (locationRes?.data || []),
+        publicSubscriptionPlans: Array.isArray(plansRes) ? plansRes : (plansRes?.data || []),
         publicBanners: bannersMap,
         isLoadingPublicData: false,
       });

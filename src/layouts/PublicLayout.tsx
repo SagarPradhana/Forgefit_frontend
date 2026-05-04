@@ -18,6 +18,7 @@ import { ThemeProvider } from "../components/ui/ThemeProvider";
 import { Footer } from "../components/common/Footer";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "../components/ui/LanguageSwitcher";
+import "../styles/public_redesign.css";
 
 // ?? ANIMATED NAV COMPONENT
 function AnimatedNav() {
@@ -155,12 +156,12 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
   return (
     <ThemeProvider>
-      <div className="flex flex-col min-h-screen bg-hero-gradient text-white">
+      <div className="flex flex-col min-h-screen bg-hero-gradient text-white public-redesign">
         <motion.header
           initial={{ y: -60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className={`sticky top-0 z-20 border-b border-white/10 transition-all duration-300 ${
+          className={`fixed top-0 left-0 right-0 z-50 border-b border-white/10 transition-all duration-300 ${
             isScrolled ? "bg-slate-950/80 backdrop-blur-md py-2" : "bg-slate-950/60 backdrop-blur-xl py-4"
           }`}
         >
@@ -214,7 +215,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           onClose={() => setMobileMenuOpen(false)}
         />
 
-        <main className="flex-grow mx-auto w-full max-w-[1600px] px-4 sm:px-6 py-6 sm:py-10">
+        <main className="flex-grow mx-auto w-full max-w-[1600px] px-4 sm:px-6 py-6 sm:py-10 pt-24 lg:pt-32">
           {children}
         </main>
 
