@@ -66,7 +66,7 @@ export function ContactPage() {
       <div className="relative isolate min-h-screen overflow-hidden">
         {/* Animated Background Mesh */}
         <div className="bg-mesh" />
-        
+
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
           <section className="text-center mb-16 sm:mb-20">
             <motion.div

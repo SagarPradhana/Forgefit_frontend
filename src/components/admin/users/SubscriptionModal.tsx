@@ -95,7 +95,7 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
       <motion.div
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        className="relative z-[101] w-full max-w-4xl bg-slate-950/80 border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden backdrop-blur-2xl"
+        className="relative z-[101] w-full max-w-4xl bg-gradient-to-br from-[#0c0c1e] via-[#1a1a2e] to-[#0c0c1e] border border-white/15 rounded-[2.5rem] shadow-[0_0_80px_-20px_rgba(99,102,241,0.3)] overflow-hidden backdrop-blur-2xl"
       >
         <div className="p-10 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-indigo-500/10 to-transparent">
           <div className="flex items-center gap-6">
@@ -138,7 +138,7 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
                     >
                       <option value="" className="bg-slate-900">Select Strategic Tier...</option>
                       {plans.map((p: any) => (
-                        <option key={p.id} value={p.id} className="bg-slate-900">{p.name} — ${p.price}</option>
+                        <option key={p.id} value={p.id} className="bg-slate-900">{p.name} — ₹{p.price}</option>
                       ))}
                     </select>
                     <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 group-hover:text-indigo-400 transition-colors">
@@ -171,7 +171,7 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
                    
                    <div className="flex items-center justify-between relative z-10">
                      <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Base Valuation</span>
-                     <span className="text-2xl font-black text-white italic">${amount}</span>
+                     <span className="text-2xl font-black text-white italic">₹{amount}</span>
                    </div>
                    <div className="flex items-center justify-between relative z-10">
                      <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Calculated Span</span>
@@ -187,7 +187,7 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
                         <span className="text-[8px] text-slate-500 font-bold uppercase mt-0.5 whitespace-nowrap">Standard Membership Rate</span>
                      </div>
                      <div className="flex items-center gap-2 bg-indigo-500/5 px-4 py-2 rounded-xl border border-indigo-500/10">
-                        <span className="text-indigo-400 font-black italic">$</span>
+                        <span className="text-indigo-400 font-black italic">₹</span>
                         <span className="text-indigo-100 font-black text-xl">{amount}</span>
                      </div>
                    </div>
@@ -269,7 +269,7 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
                             </div>
                           </td>
                           <td className="px-8 py-5">
-                             <span className="text-indigo-400 font-black text-sm italic">${sub.amount}</span>
+                             <span className="text-indigo-400 font-black text-sm italic">₹{sub.amount}</span>
                           </td>
                           <td className="px-8 py-5 text-center">
                             <span className="bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-400/5">

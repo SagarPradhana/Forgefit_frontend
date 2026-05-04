@@ -70,7 +70,7 @@ export const NotificationModal = ({ isOpen, onClose, selectedId }: NotificationM
         initial={{ scale: 0.95, opacity: 0, y: 30 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 30 }}
-        className="relative w-full max-w-xl bg-slate-900/40 border border-white/10 backdrop-blur-[40px] rounded-[32px] overflow-hidden shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)]"
+        className="relative w-full max-w-xl bg-gradient-to-br from-slate-900 via-indigo-950/50 to-slate-900 border border-white/10 backdrop-blur-[40px] rounded-[32px] overflow-hidden shadow-[0_0_80px_-20px_rgba(99,102,241,0.3)]"
       >
         {/* Decorative elements */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />

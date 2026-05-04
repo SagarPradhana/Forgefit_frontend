@@ -23,7 +23,7 @@ export function SubscriptionCard({
 }: any) {
   const { t } = useTranslation();
   const { appConfig } = useGymStore();
-  const currency = appConfig?.currency || "USD";
+  const currency = appConfig?.currency || "INR";
   const currencySymbol = getCurrencySymbol(currency);
   const isCurrent = plan.name === currentPlan;
 

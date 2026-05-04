@@ -18,7 +18,10 @@ const parseTimeToHours = (timeStr: string): number => {
   return Number((h + (m / 60)).toFixed(2));
 };
 
+import { useGymStore } from "../../../store/gymStore";
+
 export function AppConfigTab() {
+  const { fetchPublicData } = useGymStore();
   const [loading, setLoading] = useState(false);
   const [config, setConfig] = useState<AppConfigData>({
     brand_name: "",
@@ -119,7 +122,8 @@ export function AppConfigTab() {
       
       await adminAppConfigService.saveConfig(payload);
       toast.success("App configuration saved successfully!");
-      fetchConfig();
+      await fetchConfig();
+      await fetchPublicData(); // Refresh global public state
     } catch (err) {
       console.error(err);
       toast.error("Failed to save app configuration.");
@@ -135,7 +139,8 @@ export function AppConfigTab() {
     try {
       await adminAppConfigService.uploadLogo(file);
       toast.success("Logo uploaded successfully!");
-      fetchConfig();
+      await fetchConfig();
+      await fetchPublicData(); // Refresh global public state
     } catch (err) {
       console.error(err);
       toast.error("Failed to upload logo.");
@@ -260,19 +265,6 @@ export function AppConfigTab() {
               {["United States", "United Kingdom", "India", "Australia", "Canada", "Germany", "France", "Japan", "China", "Brazil", "South Africa"].map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Theme Name</label>
-            <select
-              className="w-full rounded bg-white/10 p-2 text-white border border-white/10 [&>option]:bg-slate-900"
-              value={config.theme_name || ""}
-              onChange={(e) => setConfig({ ...config, theme_name: e.target.value })}
-            >
-              <option value="">Select Theme</option>
-              <option value="system">System</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
             </select>
           </div>
         </div>

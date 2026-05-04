@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
-  TrendingUp, DollarSign, CreditCard, ShoppingBag,
+  TrendingUp, IndianRupee, CreditCard, ShoppingBag,
   RefreshCw, Search, ChevronLeft, ChevronRight,
   Users, Mail, Phone, CheckCircle, XCircle, Filter,
 } from "lucide-react";
@@ -74,7 +74,7 @@ const toUnix = (dateStr: string, endOfDay = false) => {
 };
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
-function StatCard({ label, value, icon: Icon, color, delay, currency = "USD" }: {
+function StatCard({ label, value, icon: Icon, color, delay, currency = "INR" }: {
   label: string; value: number; icon: any; color: string; delay: number; currency?: string;
 }) {
   const fmt = createFmt(currency);
@@ -96,7 +96,7 @@ function StatCard({ label, value, icon: Icon, color, delay, currency = "USD" }: 
 }
 
 // ─── Custom Tooltip for Bar Chart ─────────────────────────────────────────────
-function RevTooltip({ active, payload, label, currency = "USD" }: any) {
+function RevTooltip({ active, payload, label, currency = "INR" }: any) {
   const fmt = createFmt(currency);
   if (!active || !payload?.length) return null;
   return (
@@ -150,7 +150,7 @@ export function RevenueOps() {
   const [revenueLoading, setRevenueLoading] = useState(false);
 
   const { appConfig } = useGymStore();
-  const currency = appConfig?.currency || "USD";
+  const currency = appConfig?.currency || "INR";
   const fmt = (n: number) =>
     new Intl.NumberFormat("en-IN", { style: "currency", currency, maximumFractionDigits: 0 }).format(n);
 
@@ -240,7 +240,7 @@ export function RevenueOps() {
     : Math.ceil(paymentsTotal / PAGE_SIZE);
 
   const tabs: { id: Tab; label: string; icon: any }[] = [
-    { id: "all",           label: "All Payments",    icon: DollarSign },
+    { id: "all",           label: "All Payments",    icon: IndianRupee },
     { id: "subscriptions", label: "Subscriptions",   icon: CreditCard },
     { id: "products",      label: "Products",        icon: ShoppingBag },
     { id: "inquiries",     label: "Inquiries",       icon: Mail },
@@ -395,7 +395,7 @@ export function RevenueOps() {
                 <tr>
                   <td colSpan={6} className="px-4 py-16 text-center">
                     <div className="flex flex-col items-center gap-3 text-slate-500">
-                      <DollarSign size={40} className="opacity-20" />
+                      <IndianRupee size={40} className="opacity-20" />
                       <p className="text-sm font-bold">No payment records found</p>
                     </div>
                   </td>

@@ -23,7 +23,7 @@ export const DeleteUserModal = ({ isOpen, onClose, onConfirm }: DeleteUserModalP
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="relative z-10 w-full max-w-md mx-4 bg-gradient-to-br from-slate-900/98 to-slate-800/98 border border-white/20 rounded-2xl shadow-2xl p-6"
+        className="relative z-10 w-full max-w-md mx-4 bg-gradient-to-br from-slate-900 to-red-950/20 border border-white/20 rounded-2xl shadow-[0_0_50px_-10px_rgba(239,68,68,0.2)] p-6"
       >
         <div className="flex items-center gap-3 text-red-400 mb-4">
             <Trash2 size={24} />

@@ -60,22 +60,22 @@ export const attendanceHistory = [
 ];
 
 export const payments = [
-  { id: 'TXN-1001', user: 'Sophia Carter', amount: '$59', date: '2026-03-01', status: 'Paid' },
-  { id: 'TXN-1002', user: 'Sophia Carter', amount: '$59', date: '2026-04-01', status: 'Pending' },
-  { id: 'TXN-1003', user: 'Noah Kent', amount: '$99', date: '2026-04-10', status: 'Paid' },
-  { id: 'TXN-1004', user: 'Amira Lopez', amount: '$35', date: '2026-04-12', status: 'Pending' },
+  { id: 'TXN-1001', user: 'Sophia Carter', amount: '₹59', date: '2026-03-01', status: 'Paid' },
+  { id: 'TXN-1002', user: 'Sophia Carter', amount: '₹59', date: '2026-04-01', status: 'Pending' },
+  { id: 'TXN-1003', user: 'Noah Kent', amount: '₹99', date: '2026-04-10', status: 'Paid' },
+  { id: 'TXN-1004', user: 'Amira Lopez', amount: '₹35', date: '2026-04-12', status: 'Pending' },
 ];
 
 export const products = [
-  { name: 'Whey Pro Isolate', category: 'Supplements', price: '$42' },
-  { name: 'PowerLift Gloves', category: 'Gear', price: '$18' },
-  { name: 'Recovery Foam Roller', category: 'Mobility', price: '$24' },
+  { name: 'Whey Pro Isolate', category: 'Supplements', price: '₹42' },
+  { name: 'PowerLift Gloves', category: 'Gear', price: '₹18' },
+  { name: 'Recovery Foam Roller', category: 'Mobility', price: '₹24' },
 ];
 
 export const adminMetrics = {
   users: 2840,
   subscriptions: 2195,
-  revenue: '$184,320',
+  revenue: '₹184,320',
 };
 
 export const expiringUsers = [

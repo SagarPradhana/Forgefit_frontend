@@ -18,6 +18,7 @@ import {
   ClipboardList,
   Calendar,
   MessageSquare,
+  Sparkles,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -28,303 +29,16 @@ import { useGymStore } from "../store/gymStore";
 import { api } from "../utils/httputils";
 import { API_ENDPOINTS } from "../utils/url";
 
-// Custom hook to detect system theme preference
-function useSystemTheme() {
-  const [systemTheme, setSystemTheme] = useState<"light" | "dark">("dark");
 
-  useEffect(() => {
-    // Check initial theme
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    setSystemTheme(mediaQuery.matches ? "dark" : "light");
 
-    // Listen for changes
-    const handler = (e: MediaQueryListEvent) => {
-      setSystemTheme(e.matches ? "dark" : "light");
-    };
-
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
-  }, []);
-
-  return systemTheme;
-}
-
-// Color themes with light and dark variants
-const themeStyles = {
-  theme1: {
-    label: "Theme 1 - Blue & Emerald",
-    light: {
-      background:
-        "radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.15), transparent 50%), radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.12), transparent 50%)",
-      accent: "from-blue-600 to-emerald-500",
-      navGradient:
-        "linear-gradient(135deg, rgba(59,130,246,0.3), rgba(16,185,129,0.25))",
-      textColor: "text-slate-900",
-      bgColor: "bg-slate-50",
-      cardBg: "bg-white/90",
-      sidebarBg: "bg-white/80",
-      borderColor: "border-slate-200/60",
-      shadowColor: "shadow-slate-200/50",
-      particleColor: "bg-slate-400/30",
-    },
-    dark: {
-      background:
-        "radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.15), transparent 40%), radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.1), transparent 40%)",
-      accent: "from-blue-500 to-emerald-400",
-      navGradient:
-        "linear-gradient(135deg, rgba(59,130,246,0.25), rgba(16,185,129,0.2))",
-      textColor: "text-white",
-      bgColor: "bg-slate-950",
-      cardBg: "bg-slate-900/80",
-      sidebarBg: "bg-white/5",
-      borderColor: "border-white/10",
-      shadowColor: "shadow-xl",
-      particleColor: "bg-white/20",
-    },
-  },
-  theme2: {
-    label: "Theme 2 - Purple & Pink",
-    light: {
-      background:
-        "radial-gradient(circle at 20% 30%, rgba(168, 85, 247, 0.12), transparent 50%), radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.1), transparent 50%)",
-      accent: "from-purple-600 to-pink-500",
-      navGradient:
-        "linear-gradient(135deg, rgba(168,85,247,0.3), rgba(236,72,153,0.25))",
-      textColor: "text-slate-900",
-      bgColor: "bg-slate-50",
-      cardBg: "bg-white/90",
-      sidebarBg: "bg-white/80",
-      borderColor: "border-slate-200/60",
-      shadowColor: "shadow-slate-200/50",
-      particleColor: "bg-slate-400/30",
-    },
-    dark: {
-      background:
-        "radial-gradient(circle at 20% 30%, rgba(168, 85, 247, 0.18), transparent 40%), radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.13), transparent 40%)",
-      accent: "from-purple-500 to-pink-400",
-      navGradient:
-        "linear-gradient(135deg, rgba(168,85,247,0.25), rgba(236,72,153,0.2))",
-      textColor: "text-white",
-      bgColor: "bg-slate-950",
-      cardBg: "bg-slate-900/80",
-      sidebarBg: "bg-white/5",
-      borderColor: "border-white/10",
-      shadowColor: "shadow-xl",
-      particleColor: "bg-white/20",
-    },
-  },
-  theme3: {
-    label: "Theme 3 - Green & Cyan",
-    light: {
-      background:
-        "radial-gradient(circle at 20% 30%, rgba(16, 185, 129, 0.12), transparent 50%), radial-gradient(circle at 80% 70%, rgba(34, 211, 238, 0.1), transparent 50%)",
-      accent: "from-emerald-600 to-cyan-500",
-      navGradient:
-        "linear-gradient(135deg, rgba(16,185,129,0.3), rgba(34,211,238,0.25))",
-      textColor: "text-slate-900",
-      bgColor: "bg-slate-50",
-      cardBg: "bg-white/90",
-      sidebarBg: "bg-white/80",
-      borderColor: "border-slate-200/60",
-      shadowColor: "shadow-slate-200/50",
-      particleColor: "bg-slate-400/30",
-    },
-    dark: {
-      background:
-        "radial-gradient(circle at 20% 30%, rgba(16, 185, 129, 0.15), transparent 40%), radial-gradient(circle at 80% 70%, rgba(34, 211, 238, 0.12), transparent 40%)",
-      accent: "from-emerald-500 to-cyan-400",
-      navGradient:
-        "linear-gradient(135deg, rgba(16,185,129,0.25), rgba(34,211,238,0.2))",
-      textColor: "text-white",
-      bgColor: "bg-slate-950",
-      cardBg: "bg-slate-900/80",
-      sidebarBg: "bg-white/5",
-      borderColor: "border-white/10",
-      shadowColor: "shadow-xl",
-      particleColor: "bg-white/20",
-    },
-  },
-  theme4: {
-    label: "Theme 4 - Orange & Blue",
-    light: {
-      background:
-        "radial-gradient(circle at 20% 30%, rgba(249, 115, 22, 0.12), transparent 50%), radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.1), transparent 50%)",
-      accent: "from-orange-600 to-blue-500",
-      navGradient:
-        "linear-gradient(135deg, rgba(249,115,22,0.3), rgba(59,130,246,0.25))",
-      textColor: "text-slate-900",
-      bgColor: "bg-slate-50",
-      cardBg: "bg-white/90",
-      sidebarBg: "bg-white/80",
-      borderColor: "border-slate-200/60",
-      shadowColor: "shadow-slate-200/50",
-      particleColor: "bg-slate-400/30",
-    },
-    dark: {
-      background:
-        "radial-gradient(circle at 20% 30%, rgba(249, 115, 22, 0.18), transparent 40%), radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.13), transparent 40%)",
-      accent: "from-orange-500 to-blue-400",
-      navGradient:
-        "linear-gradient(135deg, rgba(249,115,22,0.25), rgba(59,130,246,0.2))",
-      textColor: "text-white",
-      bgColor: "bg-slate-950",
-      cardBg: "bg-slate-900/80",
-      sidebarBg: "bg-white/5",
-      borderColor: "border-white/10",
-      shadowColor: "shadow-xl",
-      particleColor: "bg-white/20",
-    },
-  },
-  theme5: {
-    label: "Theme 5 - Amber & Sky",
-    light: {
-      background:
-        "radial-gradient(circle at 20% 30%, rgba(245, 158, 11, 0.12), transparent 50%), radial-gradient(circle at 80% 70%, rgba(34, 211, 238, 0.1), transparent 50%)",
-      accent: "from-amber-600 to-sky-500",
-      navGradient:
-        "linear-gradient(135deg, rgba(245,158,11,0.3), rgba(34,211,238,0.25))",
-      textColor: "text-slate-900",
-      bgColor: "bg-slate-50",
-      cardBg: "bg-white/90",
-      sidebarBg: "bg-white/80",
-      borderColor: "border-slate-200/60",
-      shadowColor: "shadow-slate-200/50",
-      particleColor: "bg-slate-400/30",
-    },
-    dark: {
-      background:
-        "radial-gradient(circle at 20% 30%, rgba(245, 158, 11, 0.18), transparent 40%), radial-gradient(circle at 80% 70%, rgba(34, 211, 238, 0.13), transparent 40%)",
-      accent: "from-amber-500 to-sky-400",
-      navGradient:
-        "linear-gradient(135deg, rgba(245,158,11,0.25), rgba(34,211,238,0.2))",
-      textColor: "text-white",
-      bgColor: "bg-slate-950",
-      cardBg: "bg-slate-900/80",
-      sidebarBg: "bg-white/5",
-      borderColor: "border-white/10",
-      shadowColor: "shadow-xl",
-      particleColor: "bg-white/20",
-    },
-  },
-};
-
-// Enhanced Background Component
-function AnimatedBackground({
-  colorTheme,
-  systemTheme,
-}: {
-  colorTheme: keyof typeof themeStyles;
-  systemTheme: "light" | "dark";
-}) {
-  const currentTheme = themeStyles[colorTheme][systemTheme];
-  const isLight = systemTheme === "light";
-
-  return (
-    <div className="absolute inset-0 -z-10 overflow-hidden">
-      {/* Base gradient background */}
-      <div
-        className="absolute inset-0"
-        style={{ backgroundImage: currentTheme.background }}
-      />
-
-      {/* Animated gradient overlay */}
-      <motion.div
-        className="absolute inset-0 opacity-40"
-        animate={{
-          background: isLight
-            ? [
-              "radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.25), transparent 60%)",
-              "radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.2), transparent 60%)",
-              "radial-gradient(circle at 40% 80%, rgba(59, 130, 246, 0.25), transparent 60%)",
-              "radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.2), transparent 60%)",
-            ]
-            : [
-              "radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3), transparent 50%)",
-              "radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.2), transparent 50%)",
-              "radial-gradient(circle at 40% 80%, rgba(120, 119, 198, 0.3), transparent 50%)",
-              "radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.2), transparent 50%)",
-            ],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-      />
-
-      {/* Floating particles */}
-      <div className="absolute inset-0">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className={`absolute w-1 h-1 rounded-full ${currentTheme.particleColor}`}
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -20, 0],
-              opacity: [0.2, 0.8, 0.2],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Geometric patterns */}
-      <motion.div
-        className="absolute inset-0 opacity-10"
-        animate={{
-          rotate: 360,
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-      >
-        <svg
-          className="w-full h-full"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-        >
-          <defs>
-            <pattern
-              id="grid"
-              width="10"
-              height="10"
-              patternUnits="userSpaceOnUse"
-            >
-              <path
-                d={`M 10 0 L 0 0 0 10`}
-                fill="none"
-                stroke={isLight ? "rgba(0,0,0,0.1)" : "white"}
-                strokeWidth="0.1"
-              />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
-      </motion.div>
-
-      {/* Base overlay */}
-      <div className={`absolute inset-0 -z-20 ${currentTheme.bgColor}`} />
-    </div>
-  );
-}
+import { themeStyles, AnimatedBackground } from "../components/ui/AnimatedBackground";
 
 export function Sidebar({
   colorTheme,
-  systemTheme,
   isMobile,
   onClose,
 }: {
   colorTheme: keyof typeof themeStyles;
-  systemTheme: "light" | "dark";
   isMobile: boolean;
   onClose?: () => void;
 }) {
@@ -342,8 +56,8 @@ export function Sidebar({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-  const currentTheme = themeStyles[colorTheme][systemTheme];
-  const isLight = systemTheme === "light";
+  const currentTheme = themeStyles[colorTheme];
+
 
   const links =
     role === "admin"
@@ -367,13 +81,19 @@ export function Sidebar({
         { name: "products", icon: Box, label: t("products") },
       ];
 
+  const { publicAppConfig } = useGymStore();
+
   return (
     <motion.aside
       animate={{
         width: collapsed ? 80 : 240,
       }}
       initial={false}
-      className={`relative flex h-full flex-col rounded-2xl ${currentTheme.borderColor} ${currentTheme.sidebarBg} backdrop-blur-3xl p-4 shadow-2xl overflow-x-hidden select-none transition-colors duration-300`}
+      className={`relative flex h-full flex-col rounded-2xl border ${currentTheme.borderColor} backdrop-blur-3xl p-4 overflow-x-hidden select-none transition-all duration-500`}
+      style={{
+        background: currentTheme.sidebarGradient,
+        boxShadow: `0 25px 50px -12px ${currentTheme.glow || 'rgba(0,0,0,0.5)'}`
+      }}
     >
       {/* 🔥 LOGO */}
       <motion.div
@@ -384,30 +104,43 @@ export function Sidebar({
       >
         <div className={`flex items-center ${collapsed ? "flex-col gap-2" : "gap-2"}`}>
           <div
-            className={`h-11 w-11 flex items-center justify-center rounded-2xl bg-gradient-to-br ${currentTheme.accent} shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all duration-300`}
+            className={`h-11 w-11 flex items-center justify-center rounded-2xl bg-gradient-to-br ${currentTheme.accent} shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all duration-300 relative overflow-hidden`}
           >
-            <motion.div
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <Dumbbell size={20} className="text-white" />
-            </motion.div>
+            {publicAppConfig?.logo_image_path ? (
+              <img src={publicAppConfig.logo_image_path} alt={publicAppConfig.brand_name} className="h-full w-full object-cover" />
+            ) : (
+              <>
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <Dumbbell size={20} className="text-white" />
+                </motion.div>
+                <motion.div
+                  className="absolute -top-1 -right-1 text-yellow-300"
+                  animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                >
+                  <Sparkles size={12} fill="currentColor" />
+                </motion.div>
+              </>
+            )}
           </div>
           {!collapsed && (
             <motion.span
               key="brand-name"
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className={`font-black text-lg tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}
+              className={`font-black text-lg tracking-tight text-white`}
             >
-              ForgeFit
+              {publicAppConfig?.brand_name || "ForgeFit"}
             </motion.span>
           )}
         </div>
 
         {/* COLLAPSE/CLOSE BUTTON */}
         <button
-          className={`${isMobile ? "inline-flex" : "hidden md:inline-flex"} h-9 w-9 items-center justify-center rounded-xl bg-slate-500/5 hover:bg-slate-500/10 ${isLight ? "text-slate-600 hover:text-indigo-600" : "text-slate-400 hover:text-white"} transition-all duration-200`}
+          className={`${isMobile ? "inline-flex" : "hidden md:inline-flex"} h-9 w-9 items-center justify-center rounded-xl bg-slate-500/5 hover:bg-slate-500/10 text-slate-400 hover:text-white transition-all duration-200`}
           onClick={() => {
             if (isMobile && onClose) {
               onClose();
@@ -440,7 +173,7 @@ export function Sidebar({
               onClick={() => {
                 if (isMobile && onClose) onClose();
               }}
-              className={`relative flex ${collapsed ? "justify-center" : "items-center gap-3 px-3"} py-2.5 rounded-xl transition-all duration-200 hover:scale-105 group overflow-hidden ${isActive ? "text-white" : isLight ? "text-slate-600 hover:text-indigo-600" : "text-slate-400 hover:text-white"}`}
+              className={`relative flex ${collapsed ? "justify-center" : "items-center gap-3 px-3"} py-2.5 rounded-xl transition-all duration-200 hover:scale-105 group overflow-hidden ${isActive ? "text-white" : "text-slate-400 hover:text-white"}`}
             >
               {/* ACTIVE BG */}
               {isActive && (
@@ -485,9 +218,7 @@ export function Sidebar({
             logout();
             navigate("/");
           }}
-          className={`group w-full flex ${collapsed ? "justify-center px-0" : "items-center gap-3 px-4"} py-3 rounded-xl transition-all duration-300 hover:scale-[1.02] border border-transparent ${isLight
-            ? "text-red-600 hover:bg-red-50 hover:border-red-100"
-            : "text-red-400 hover:bg-red-500/10 hover:border-red-500/20 shadow-lg shadow-red-500/0 hover:shadow-red-500/5"} shadow-sm`}
+          className={`group w-full flex ${collapsed ? "justify-center px-0" : "items-center gap-3 px-4"} py-3 rounded-xl transition-all duration-300 hover:scale-[1.02] border border-transparent text-red-400 hover:bg-red-500/10 hover:border-red-500/20 shadow-lg shadow-red-500/0 hover:shadow-red-500/5 shadow-sm`}
         >
           <LogOut size={20} className="shrink-0 transition-transform group-hover:-translate-x-1" />
           {!collapsed && (
@@ -507,11 +238,11 @@ export function Sidebar({
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { role, name: authName, id: userId, setUserData } = useAuthStore();
-  const systemTheme = useSystemTheme();
-  const { dashboardColorTheme: colorTheme, setDashboardColorTheme: setColorTheme } = useGymStore();
+  const { dashboardColorTheme: colorTheme, setDashboardColorTheme: setColorTheme, publicAppConfig } = useGymStore();
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
-  
+
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const { t } = useTranslation();
   const { logout } = useAuthStore();
@@ -544,7 +275,8 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("click", closeMenu);
   }, [profileMenuOpen]);
 
-  const currentTheme = themeStyles?.[colorTheme]?.[systemTheme];
+  const currentTheme = themeStyles?.[colorTheme];
+
   const colorThemeKeys = Object?.keys?.(themeStyles) as Array<
     keyof typeof themeStyles
   >;
@@ -557,13 +289,13 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className={`relative h-screen min-h-screen overflow-hidden overflow-x-hidden ${systemTheme} ${systemTheme === "light" ? "text-slate-900" : "text-white"}`}
+      className={`relative h-screen min-h-screen overflow-hidden overflow-x-hidden text-white`}
     >
       <Helmet>
-        <title>{`${role === 'admin' ? 'Admin' : 'Member'} Portal | ${authName || 'ForgeFit'}`}</title>
+        <title>{`${role === 'admin' ? 'Admin' : 'Member'} Portal | ${publicAppConfig?.brand_name || 'ForgeFit'}`}</title>
       </Helmet>
       {/* 🔥 ENHANCED ANIMATED BACKGROUND */}
-      <AnimatedBackground colorTheme={colorTheme} systemTheme={systemTheme} />
+      <AnimatedBackground colorTheme={colorTheme} />
 
       {/* MOBILE SIDEBAR OVERLAY */}
       {sidebarOpen && (
@@ -583,7 +315,6 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
           <div className="h-full p-2 md:p-4 lg:p-0">
             <Sidebar
               colorTheme={colorTheme}
-              systemTheme={systemTheme}
               isMobile={isMobile}
               onClose={() => setSidebarOpen(false)}
             />
@@ -615,20 +346,18 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                 </button>
 
                 <div
-                  className={`flex items-center gap-1.5 lg:gap-3 rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-gray-100/70" : "bg-slate-950/70"} px-2 lg:px-3 py-1.5 lg:py-2 shadow-inner`}
+                  className={`flex items-center gap-1.5 lg:gap-3 rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} bg-slate-950/70 px-2 lg:px-3 py-1.5 lg:py-2`}
+                  style={{ boxShadow: `inset 0 2px 10px 0 ${currentTheme.glow}11` }}
                 >
-                    <button
-                      type="button"
-                      onClick={nextColorTheme}
-                      className={`inline-flex h-8 w-8 md:h-9 md:w-9 lg:h-10 lg:w-10 items-center justify-center rounded-full border transition-all hover:scale-105 ${systemTheme === "light"
-                        ? "border-gray-300/50 bg-gray-200/30 text-gray-600 hover:bg-gray-300/50"
-                        : "border-white/15 bg-white/5 text-slate-100 hover:bg-white/10"
-                        }`}
-                      title={`Switch theme`}
-                    >
-                      <Palette size={isMobile ? 14 : 18} />
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={nextColorTheme}
+                    className={`inline-flex h-8 w-8 md:h-9 md:w-9 lg:h-10 lg:w-10 items-center justify-center rounded-full border transition-all hover:scale-110 border-white/15 bg-white/5 text-slate-100 hover:bg-white/10`}
+                    title={`Switch color palette`}
+                  >
+                    <Palette size={isMobile ? 14 : 18} />
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center gap-2 lg:gap-4 overflow-visible shrink-0 relative">
@@ -644,7 +373,8 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                     }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`group relative inline-flex items-center gap-1.5 md:gap-2 lg:gap-3 rounded-xl lg:rounded-2xl border ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-white shadow-sm" : "bg-slate-900 border-white/5 shadow-2xl"} pl-1.5 pr-2 md:pl-2 md:pr-3 lg:pl-2 lg:pr-4 py-1 backdrop-blur-xl cursor-pointer transition-all duration-300 hover:border-indigo-500/50`}
+                    className={`group relative inline-flex items-center gap-1.5 md:gap-2 lg:gap-3 rounded-xl lg:rounded-2xl border ${currentTheme.borderColor} bg-slate-900/60 border-white/5 shadow-2xl pl-1.5 pr-2 md:pl-2 md:pr-3 lg:pl-2 lg:pr-4 py-1 backdrop-blur-2xl cursor-pointer transition-all duration-500 hover:border-indigo-500/50`}
+                    style={{ boxShadow: profileMenuOpen ? `0 0 25px -5px ${currentTheme.glow}44` : '' }}
                   >
                     {/* Premium Avatar Circle */}
                     <div className="relative h-7 w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 rounded-lg lg:rounded-xl bg-gradient-to-br from-indigo-500 to-emerald-400 p-[1px] md:p-[2px] shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/40 transition-shadow">
@@ -677,12 +407,12 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className={`absolute right-0 mt-2 w-64 rounded-2xl border-2 ${currentTheme.borderColor} ${systemTheme === 'light' ? 'bg-white text-slate-900' : 'bg-slate-950 text-white'} shadow-[0_20px_50px_rgba(0,0,0,0.8)] p-3 z-[1000] ring-1 ring-white/10`}
+                        className={`absolute right-0 mt-2 w-64 rounded-2xl border-2 ${currentTheme.borderColor} bg-slate-950 text-white shadow-[0_20px_50px_rgba(0,0,0,0.8)] p-3 z-[1000] ring-1 ring-white/10`}
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="px-3 py-3 border-b border-white/10 mb-2">
                           <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 leading-none">Accessing Account</p>
-                          <p className={`text-[13px] font-black truncate uppercase tracking-tight ${systemTheme === 'light' ? 'text-indigo-600' : 'text-indigo-400'}`}>
+                          <p className={`text-[13px] font-black truncate uppercase tracking-tight text-indigo-400`}>
                             {authName || "User Account"}
                           </p>
                         </div>
@@ -693,9 +423,9 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                               navigate(`/${role}/profile`);
                               setProfileMenuOpen(false);
                             }}
-                            className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-indigo-500/10 transition-all group ${systemTheme === 'light' ? 'text-slate-600 hover:text-indigo-600' : 'text-slate-300 hover:text-white'}`}
+                            className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-indigo-500/10 transition-all group text-slate-300 hover:text-white`}
                           >
-                            <User size={16} className={`${systemTheme === 'light' ? 'text-indigo-600' : 'text-indigo-400'}`} />
+                            <User size={16} className={`text-indigo-400`} />
                             <span className="text-[11px] font-black uppercase tracking-widest">My Profile</span>
                           </button>
 
@@ -704,9 +434,9 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                               navigate(`/${role}/change-password`);
                               setProfileMenuOpen(false);
                             }}
-                            className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-amber-500/10 transition-all group ${systemTheme === 'light' ? 'text-slate-600 hover:text-amber-600' : 'text-slate-300 hover:text-white'}`}
+                            className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-amber-500/10 transition-all group text-slate-300 hover:text-white`}
                           >
-                            <Settings size={16} className={`${systemTheme === 'light' ? 'text-amber-600' : 'text-amber-400'}`} />
+                            <Settings size={16} className={`text-amber-400`} />
                             <span className="text-[11px] font-black uppercase tracking-widest">Change Password</span>
                           </button>
                         </div>
@@ -736,7 +466,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className={`flex-1 min-h-0 overflow-hidden rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} ${systemTheme === "light" ? "bg-gradient-to-b from-gray-50/80 to-white/60" : "bg-gradient-to-b from-white/5 to-white/0"} backdrop-blur-xl shadow-inner`}
+            className={`flex-1 min-h-0 overflow-hidden rounded-2xl lg:rounded-3xl ${currentTheme.borderColor} bg-gradient-to-b from-white/5 to-white/0 backdrop-blur-xl shadow-inner`}
           >
             <div className="custom-scrollbar h-full min-h-0 overflow-y-auto p-4 lg:p-6">
               {children}

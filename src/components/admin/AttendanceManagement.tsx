@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { GlassCard, SectionTitle, Table, CommonButton, Modal } from "../ui/primitives";
-import { Grid, List, Search, UserCheck, Clock, Filter, CheckCircle2, Edit2, Trash2, Plus, Users } from "lucide-react";
+import { Grid, List, Search, UserCheck, Clock, Filter, CheckCircle2, Edit2, Trash2, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { adminAttendanceService, type AttendanceResponse, type AttendanceRequest } from "../../services/adminAttendanceService";
 import { useEffect, useCallback, useMemo } from "react";
@@ -25,8 +25,8 @@ export function AttendanceManagement() {
   const [viewType, setViewType] = useState<AttendanceView>("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const today = new Date().toISOString().split('T')[0];
-  const [dateRange, setDateRange] = useState<DateRange>({ 
-    label: "Today", 
+  const [dateRange, setDateRange] = useState<DateRange>({
+    label: "Today",
     from_date: toUnix(today, false),
     to_date: toUnix(today, true)
   });
@@ -46,11 +46,11 @@ export function AttendanceManagement() {
 
   const [records, setRecords] = useState<AttendanceResponse[]>([]);
   const [loading, setLoading] = useState(false);
-  const [stats, setStats] = useState({ 
-    total_checkins_today: 0, 
-    present_now: 0, 
-    checked_out_today: 0, 
-    avg_time_hours: 0 
+  const [stats, setStats] = useState({
+    total_checkins_today: 0,
+    present_now: 0,
+    checked_out_today: 0,
+    avg_time_hours: 0
   });
 
   const { data: usersDropdownData } = useGet(API_ENDPOINTS.ADMIN.GET_USERS_DROPDOWN);
@@ -76,7 +76,7 @@ export function AttendanceManagement() {
   const fetchStats = useCallback(async () => {
     try {
       const from = dateRange.from_date ?? Math.floor(new Date().setHours(0, 0, 0, 0) / 1000);
-      const to   = dateRange.to_date   ?? Math.floor(new Date().setHours(23, 59, 59, 999) / 1000);
+      const to = dateRange.to_date ?? Math.floor(new Date().setHours(23, 59, 59, 999) / 1000);
       const res = await adminAttendanceService.getStats(from, to) as any;
       if (res) {
         setStats({
@@ -137,7 +137,7 @@ export function AttendanceManagement() {
     setEditingRecord(r);
     setForm({
       user_id: r.user_id,
-      userName: r.user_name || "", 
+      userName: r.user_name || "",
       date: new Date(r.date * 1000).toISOString().split('T')[0],
       checkIn: new Date(r.check_in * 1000).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' }),
       checkOut: r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' }) : "",

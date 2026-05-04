@@ -52,7 +52,7 @@ export function AdminPortalPages({ page }: { page: string }) {
     setDesignTheme,
   } = useGymStore();
 
-  const currency = appConfig?.currency || "USD";
+  const currency = appConfig?.currency || "INR";
   const currencySymbol = getCurrencySymbol(currency);
 
   const [plans, setPlans] = useState<PlanResponse[]>([]);
@@ -105,7 +105,7 @@ export function AdminPortalPages({ page }: { page: string }) {
     contactAddress: appConfig.contactAddress,
     locations: appConfig.locations || [],
     timezone: appConfig.timezone || "UTC+0",
-    currency: appConfig.currency || "USD",
+    currency: appConfig.currency || "INR",
     language: appConfig.language || "English",
     facebook: appConfig.socialLinks.facebook,
     instagram: appConfig.socialLinks.instagram,
@@ -281,7 +281,7 @@ export function AdminPortalPages({ page }: { page: string }) {
       contactAddress: appConfig.contactAddress,
       locations: appConfig.locations || [],
       timezone: appConfig.timezone || "UTC+0",
-      currency: appConfig.currency || "USD",
+      currency: appConfig.currency || "INR",
       language: appConfig.language || "English",
       facebook: appConfig.socialLinks.facebook,
       instagram: appConfig.socialLinks.instagram,

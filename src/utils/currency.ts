@@ -1,4 +1,4 @@
-export const getCurrencySymbol = (currencyCode: string = "USD"): string => {
+export const getCurrencySymbol = (currencyCode: string = "INR"): string => {
   const symbols: Record<string, string> = {
     USD: "$",
     EUR: "€",
@@ -9,10 +9,10 @@ export const getCurrencySymbol = (currencyCode: string = "USD"): string => {
     JPY: "¥",
     CNY: "¥",
   };
-  return symbols[currencyCode] || "$";
+  return symbols[currencyCode] || "₹";
 };
 
-export const formatCurrency = (amount: number, currencyCode: string = "USD"): string => {
+export const formatCurrency = (amount: number, currencyCode: string = "INR"): string => {
   const symbol = getCurrencySymbol(currencyCode);
   return `${symbol}${Number(amount).toLocaleString("en-IN")}`;
 };

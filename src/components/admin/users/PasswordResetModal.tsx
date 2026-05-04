@@ -77,7 +77,7 @@ export const PasswordResetModal = ({
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] border border-white/10 bg-slate-900 shadow-2xl"
+        className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] border border-white/15 bg-gradient-to-br from-slate-900 to-[#1e1b4b] shadow-[0_0_50px_-10px_rgba(99,102,241,0.25)]"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-orange-500/10 pointer-events-none" />
         

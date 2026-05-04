@@ -5,7 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 import {
-  Users, CreditCard, UserPlus, RefreshCw, DollarSign, Calendar,
+  Users, CreditCard, UserPlus, RefreshCw, IndianRupee, Calendar,
   ShoppingBag, Mail, Bell, CheckCircle, XCircle, Activity,
   ChevronRight, TrendingUp, Clock, Camera,
 } from "lucide-react";
@@ -115,7 +115,7 @@ function SkeletonRows({ n = 5 }: { n?: number }) {
 }
 
 // ─── Custom Tooltip for Bar Chart ─────────────────────────────────────────────
-function RevTooltip({ active, payload, label, currency = "USD" }: any) {
+function RevTooltip({ active, payload, label, currency = "INR" }: any) {
   const fmt = createFmt(currency);
   if (!active || !payload?.length) return null;
   return (
@@ -178,7 +178,7 @@ export default function AdminDashboard() {
     setLoading((prev) => ({ ...prev, [key]: val }));
 
   const { appConfig } = useGymStore();
-  const currency = appConfig?.currency || "USD";
+  const currency = appConfig?.currency || "INR";
   const fmt = createFmt(currency);
 
   // ── Date params helper — uses unix timestamps from DateRange directly ──
@@ -395,7 +395,7 @@ export default function AdminDashboard() {
         <StatCard label="Active Subscriptions" value={stats?.total_active_subscriptions} icon={CreditCard}  color="bg-violet-500"  delay={0.05} subLabel="Expired" subValue={stats?.total_expired_subscriptions} />
         <StatCard label="New Registrations"    value={stats?.new_registrations}           icon={UserPlus}    color="bg-sky-500"     delay={0.1}  />
         <StatCard label="Upcoming Renewals"    value={stats?.upcoming_renewals}           icon={Clock}       color="bg-amber-500"   delay={0.15} />
-        <StatCard label="Total Revenue"        value={stats?.total_revenue != null ? fmt(stats.total_revenue) : "—"} icon={DollarSign} color="bg-emerald-500" delay={0.2} />
+        <StatCard label="Total Revenue"        value={stats?.total_revenue != null ? fmt(stats.total_revenue) : "—"} icon={IndianRupee} color="bg-emerald-500" delay={0.2} />
       </div>
 
       {/* ── [ROW 2] Recent Inquiries (4 tabs) ── */}

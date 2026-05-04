@@ -134,7 +134,7 @@ export function Modal({
         initial={{ opacity: 0, scale: 0.95, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         className={clsx(
-          "w-full rounded-2xl border border-white/10 bg-slate-900 shadow-2xl relative overflow-hidden",
+          "w-full rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 shadow-[0_0_50px_-12px_rgba(99,102,241,0.25)] relative overflow-hidden",
           maxWidth,
           className
         )}
@@ -196,7 +196,7 @@ export function ConfirmationModal({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
-      <GlassCard className="w-full max-w-md dark:border-amber-300/25 dark:bg-slate-900/70 [.light_&]:border-amber-500/30 [.light_&]:bg-white">
+      <GlassCard className="w-full max-w-md dark:border-white/10 dark:bg-gradient-to-br dark:from-slate-900 dark:to-indigo-950/90 shadow-[0_0_40px_-10px_rgba(99,102,241,0.2)] [.light_&]:border-amber-500/30 [.light_&]:bg-white">
         <h3 className="mb-2 text-lg font-semibold dark:text-white [.light_&]:text-slate-900">{title}</h3>
         <p className="mb-5 text-sm dark:text-slate-300 [.light_&]:text-slate-600">{description}</p>
         <div className="flex justify-end gap-2">

@@ -71,7 +71,7 @@ export function PricingPage() {
                     <div className="mb-8">
                       <p className="text-orange-400 text-xs font-black uppercase tracking-[0.2em] mb-4">{plan.name}</p>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-5xl font-black text-white">$<Counter from={0} to={plan.price} /></span>
+                        <span className="text-5xl font-black text-white">₹<Counter from={0} to={plan.price} /></span>
                         <span className="text-slate-500 text-sm font-bold uppercase tracking-widest">/ {plan.duration}</span>
                       </div>
                     </div>

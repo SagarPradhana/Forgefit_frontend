@@ -155,6 +155,7 @@ type GymState = {
   designThemes: DesignTheme[];
   currentDesignTheme: string;
   dashboardColorTheme: "theme1" | "theme2" | "theme3" | "theme4" | "theme5";
+
   // Actions
   addUser: (user: Omit<User, "id">) => void;
   updateUser: (id: number, user: Partial<User>) => void;
@@ -226,7 +227,7 @@ export const useGymStore = create<GymState>((set) => ({
       { id: "2", name: "Westside Branch", address: "456 West Blvd, Westside", phone: "+1 555-0102" },
     ],
     timezone: "0",
-    currency: "USD",
+    currency: "INR",
     language: "en",
     socialLinks: {
       facebook: "https://facebook.com/fithub",
@@ -259,18 +260,18 @@ export const useGymStore = create<GymState>((set) => ({
       title: "Our Services",
       description: "Comprehensive fitness solutions tailored to your needs",
       services: [
-        { name: "Personal Training", description: "One-on-one sessions with certified trainers", image: "/personal-training.jpg", price: "$50/session" },
-        { name: "Group Classes", description: "High-energy group fitness classes", image: "/group-classes.jpg", price: "$20/class" },
-        { name: "Nutrition Counseling", description: "Expert guidance on nutrition and diet", image: "/nutrition.jpg", price: "$30/session" },
+        { name: "Personal Training", description: "One-on-one sessions with certified trainers", image: "/personal-training.jpg", price: "₹50/session" },
+        { name: "Group Classes", description: "High-energy group fitness classes", image: "/group-classes.jpg", price: "₹20/class" },
+        { name: "Nutrition Counseling", description: "Expert guidance on nutrition and diet", image: "/nutrition.jpg", price: "₹30/session" },
       ],
     },
     pricing: {
       title: "Membership Plans",
       subtitle: "Choose the perfect plan for your fitness journey",
       plans: [
-        { name: "Basic", price: "$29/month", features: ["Gym Access", "Locker Room", "Basic Equipment"] },
-        { name: "Premium", price: "$49/month", features: ["All Basic Features", "Group Classes", "Personal Training (2x/month)"] },
-        { name: "VIP", price: "$79/month", features: ["All Premium Features", "Unlimited Personal Training", "Nutrition Counseling"] },
+        { name: "Basic", price: "₹29/month", features: ["Gym Access", "Locker Room", "Basic Equipment"] },
+        { name: "Premium", price: "₹49/month", features: ["All Basic Features", "Group Classes", "Personal Training (2x/month)"] },
+        { name: "VIP", price: "₹79/month", features: ["All Premium Features", "Unlimited Personal Training", "Nutrition Counseling"] },
       ],
     },
     testimonials: {
@@ -417,8 +418,12 @@ export const useGymStore = create<GymState>((set) => ({
         bannersMap[type] = bannersResponses[index]?.data || [];
       });
 
+      const publicAppConfigData = (configRes?.brand_name !== undefined)
+        ? configRes
+        : (Array.isArray(configRes?.data) ? configRes.data[0] : (configRes?.data || configRes || null));
+
       set({
-        publicAppConfig: configRes?.data || configRes || null,
+        publicAppConfig: publicAppConfigData,
         publicFaqs: Array.isArray(faqRes) ? faqRes : (faqRes?.data || []),
         publicTestimonials: Array.isArray(testimonialRes) ? testimonialRes : (testimonialRes?.data || []),
         publicLocations: Array.isArray(locationRes) ? locationRes : (locationRes?.data || []),

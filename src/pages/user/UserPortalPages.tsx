@@ -34,7 +34,7 @@ import { getCurrencySymbol } from "../../utils/currency";
 export function UserPortalPages({ page }: { page: string }) {
   const { t } = useTranslation();
   const { appConfig, featureFlags } = useGymStore();
-  const currency = appConfig?.currency || "USD";
+  const currency = appConfig?.currency || "INR";
   const currencySymbol = getCurrencySymbol(currency);
   const flags = featureFlags[1] ?? {
     showProducts: true,

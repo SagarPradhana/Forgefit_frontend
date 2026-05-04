@@ -106,7 +106,7 @@ function RoleRoute({ role }: { role: "admin" | "user" }) {
   );
 }
 
-const LoadingScreen = ({ brandName }: { brandName: string }) => (
+const LoadingScreen = ({ brandName, logoPath }: { brandName: string; logoPath?: string }) => (
   <motion.div
     initial={{ opacity: 1 }}
     exit={{ opacity: 0 }}
@@ -120,8 +120,12 @@ const LoadingScreen = ({ brandName }: { brandName: string }) => (
       className="flex flex-col items-center gap-6"
     >
       <div className="flex items-center gap-4">
-        <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/20 bg-gradient-to-br from-indigo-500 via-purple-500 to-orange-400 shadow-glow">
-          <Dumbbell size={32} className="text-white" />
+        <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/20 bg-gradient-to-br from-indigo-500 via-purple-500 to-orange-400 shadow-glow overflow-hidden">
+          {logoPath ? (
+            <img src={logoPath} alt={brandName} className="h-full w-full object-cover" />
+          ) : (
+            <Dumbbell size={32} className="text-white" />
+          )}
         </span>
         <h1 className="text-4xl font-bold tracking-tighter text-white">
           {brandName}
@@ -141,7 +145,7 @@ const LoadingScreen = ({ brandName }: { brandName: string }) => (
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
-  const { updateAppConfig, setDashboardColorTheme, fetchPublicData, publicAppConfig } = useGymStore();
+  const { updateAppConfig, fetchPublicData, publicAppConfig } = useGymStore();
 
   const brandName = publicAppConfig?.brand_name || "ForgeFit";
 
@@ -149,15 +153,9 @@ export default function App() {
     fetchPublicData();
   }, []);
 
-  // Update app config and theme based on public data
+  // Update app config based on public data
   useEffect(() => {
     if (publicAppConfig) {
-      if (publicAppConfig.theme_name === "dark") {
-        setDashboardColorTheme("theme1");
-      } else if (publicAppConfig.theme_name === "light") {
-        setDashboardColorTheme("theme5");
-      }
-
       updateAppConfig({
         name: publicAppConfig.brand_name,
         logo: publicAppConfig.logo_image_path,
@@ -173,7 +171,7 @@ export default function App() {
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1200);
-    
+
     const handleMouseMove = (e: MouseEvent) => {
       document.documentElement.style.setProperty("--mouse-x", `${e.clientX}px`);
       document.documentElement.style.setProperty("--mouse-y", `${e.clientY}px`);
@@ -189,7 +187,7 @@ export default function App() {
   return (
     <div className="relative min-h-screen bg-slate-950 overflow-x-hidden">
       <AnimatePresence>
-        {isLoading && <LoadingScreen key="loader" brandName={brandName} />}
+        {isLoading && <LoadingScreen key="loader" brandName={brandName} logoPath={publicAppConfig?.logo_image_path} />}
       </AnimatePresence>
       <div className="cursor-glow" />
       <ToastContainer />

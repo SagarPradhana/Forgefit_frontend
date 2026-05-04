@@ -66,9 +66,9 @@ export const UserModal = ({
           y: isOpen ? 0 : 30,
         }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="relative z-[9999] w-full max-w-2xl mx-4 bg-slate-950/95 border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-fit backdrop-blur-xl mb-10"
+        className="relative z-[9999] w-full max-w-2xl mx-4 bg-gradient-to-br from-slate-900 to-indigo-950/90 border border-white/10 rounded-2xl shadow-[0_0_50px_-10px_rgba(99,102,241,0.2)] flex flex-col max-h-fit backdrop-blur-xl mb-10"
       >
-        <div className="relative border-b border-white/15 bg-slate-900 flex-shrink-0 rounded-t-2xl overflow-hidden">
+        <div className="relative border-b border-white/15 bg-white/5 flex-shrink-0 rounded-t-2xl overflow-hidden">
           <div className="py-2 bg-gradient-to-r from-indigo-600 to-orange-400 flex justify-center">
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">
               Step {getStepNumber()}

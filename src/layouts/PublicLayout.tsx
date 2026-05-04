@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useState, useEffect } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { motion, useScroll, useSpring } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Dumbbell,
   Home,
@@ -55,9 +55,8 @@ function AnimatedNav() {
             )}
 
             <span
-              className={`flex items-center gap-2 transition-colors ${
-                isActive ? "text-white" : "text-slate-300 hover:text-white"
-              }`}
+              className={`flex items-center gap-2 transition-colors ${isActive ? "text-white" : "text-slate-300 hover:text-white"
+                }`}
             >
               <Icon size={16} />
               {label}
@@ -115,11 +114,10 @@ function MobileMenu({
                 to={path}
                 onClick={onClose}
                 end={path === "/"}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                  isActive
-                    ? "bg-gradient-to-r from-indigo-500/30 to-orange-400/30 border border-white/10 text-white"
-                    : "text-slate-300 hover:bg-white/5"
-                }`}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${isActive
+                  ? "bg-gradient-to-r from-indigo-500/30 to-orange-400/30 border border-white/10 text-white"
+                  : "text-slate-300 hover:bg-white/5"
+                  }`}
               >
                 <Icon size={18} />
                 <span>{label}</span>
@@ -139,12 +137,13 @@ function MobileMenu({
 
 import { useGymStore } from "../store/gymStore";
 
-// ?? MAIN LAYOUT
+
 export function PublicLayout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { t } = useTranslation();
   const { publicAppConfig } = useGymStore();
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -161,13 +160,12 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           initial={{ y: -60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className={`fixed top-0 left-0 right-0 z-50 border-b border-white/10 transition-all duration-300 ${
-            isScrolled ? "bg-slate-950/80 backdrop-blur-md py-2" : "bg-slate-950/60 backdrop-blur-xl py-4"
-          }`}
+          className={`fixed top-0 left-0 right-0 z-50 border-b border-white/10 transition-all duration-300 ${isScrolled ? "bg-slate-950/80 backdrop-blur-md py-2" : "bg-slate-950/60 backdrop-blur-xl py-4"
+            }`}
         >
           <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between px-4 sm:px-6">
             <Link to="/" className="flex items-center gap-3 flex-shrink-0 group">
-              <motion.span 
+              <motion.span
                 initial={{ rotate: -5 }}
                 animate={{ rotate: 0 }}
                 transition={{ duration: 0.6, ease: "easeOut" }}
@@ -215,7 +213,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           onClose={() => setMobileMenuOpen(false)}
         />
 
-        <main className="flex-grow mx-auto w-full max-w-[1600px] px-4 sm:px-6 py-6 sm:py-10 pt-24 lg:pt-32">
+        <main className={`flex-grow mx-auto w-full max-w-[1600px] ${location.pathname === "/" ? "" : "px-4 sm:px-6 py-6 sm:py-10 pt-24 lg:pt-32"}`}>
           {children}
         </main>
 
@@ -224,3 +222,4 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     </ThemeProvider>
   );
 }
+

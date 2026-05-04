@@ -11,6 +11,7 @@ import { useAuthStore } from "../../store/authStore";
 import { Dumbbell, Loader2, Eye, EyeOff, Sparkles } from "lucide-react";
 import { useMutation } from "../../hooks/useApi";
 import { API_ENDPOINTS } from "../../utils/url";
+import { useGymStore } from "../../store/gymStore";
 
 export function SignInPage() {
   const navigate = useNavigate();
@@ -73,27 +74,34 @@ export function SignInPage() {
     handleRealSignIn();
   };
 
+  const { publicAppConfig } = useGymStore();
+  const brandName = publicAppConfig?.brand_name || "ForgeFit";
+
   return (
     <PublicLayout>
       <div className="min-h-[80vh] grid md:grid-cols-2 items-center gap-10 overflow-hidden">
         {/* 🔥 LEFT SIDE (VISUAL SECTION) */}
-        <motion.div 
+        <motion.div
           initial={{ x: -60, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="hidden md:flex flex-col justify-center space-y-6"
         >
           <div className="flex items-center gap-3">
-            <motion.div 
+            <motion.div
               whileHover={{ rotate: 180 }}
-              className="h-12 w-12 flex items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-orange-400 shadow-lg shadow-indigo-500/20"
+              className="h-12 w-12 flex items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-orange-400 shadow-lg shadow-indigo-500/20 overflow-hidden"
             >
-              <Dumbbell className="text-white" />
+              {publicAppConfig?.logo_image_path ? (
+                <img src={publicAppConfig.logo_image_path} alt={brandName} className="h-full w-full object-cover" />
+              ) : (
+                <Dumbbell className="text-white" />
+              )}
             </motion.div>
-            <h2 className="text-2xl font-bold tracking-tight">ForgeFit</h2>
+            <h2 className="text-2xl font-bold tracking-tight">{brandName}</h2>
           </div>
 
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
@@ -105,7 +113,7 @@ export function SignInPage() {
             </span>
           </motion.h1>
 
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
@@ -136,7 +144,7 @@ export function SignInPage() {
         </motion.div>
 
         {/* 💎 RIGHT SIDE (FORM) */}
-        <motion.div 
+        <motion.div
           initial={{ x: 60, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
@@ -146,7 +154,7 @@ export function SignInPage() {
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-opacity">
               <Sparkles className="text-orange-400 h-12 w-12" />
             </div>
-            
+
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -202,7 +210,7 @@ export function SignInPage() {
               </motion.div>
 
               {/* FORGOT */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
@@ -234,7 +242,7 @@ export function SignInPage() {
                 </CommonButton>
               </motion.div>
 
-              <motion.p 
+              <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.7 }}

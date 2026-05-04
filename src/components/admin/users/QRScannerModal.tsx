@@ -186,7 +186,7 @@ export function QRScannerModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                initial={{ opacity: 0, scale: 0.95 }}
                animate={{ opacity: 1, scale: 1 }}
                exit={{ opacity: 0, scale: 0.95 }}
-               className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/95 backdrop-blur-md rounded-b-2xl p-6"
+               className="absolute inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950/90 to-slate-950 backdrop-blur-md rounded-b-2xl p-6"
              >
                 {scanStatus === "processing" && (
                    <div className="flex flex-col items-center justify-center w-full">
