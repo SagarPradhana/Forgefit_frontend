@@ -144,11 +144,11 @@ export function AboutPage() {
                 ))
               ) : trainerBanners.length > 0 ? (
                 trainerBanners.slice(0, 3).map((trainer, i) => (
-                  <div key={i} className="group relative overflow-hidden rounded-3xl h-[320px] md:h-[380px]">
+                  <div key={i} className="group relative overflow-hidden rounded-3xl h-[320px] md:h-[380px] bg-white/5 border border-white/10">
                     <img
                       src={trainer.file_path}
                       alt={`Coach ${i + 1}`}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      className="w-full h-full object-contain p-4 transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
                     <div className="absolute bottom-0 left-0 p-8 w-full transform transition-transform duration-500 translate-y-4 group-hover:translate-y-0">

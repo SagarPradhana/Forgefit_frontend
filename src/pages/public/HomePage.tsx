@@ -288,18 +288,15 @@ export function HomePage() {
                 ))
               ) : trainerBanners.length > 0 ? (
                 trainerBanners.slice(0, 3).map((trainer, idx) => (
-                  <div key={trainer.id || idx} className="group relative overflow-hidden rounded-3xl h-[320px] md:h-[380px]">
+                  <div key={trainer.id || idx} className="group relative overflow-hidden rounded-3xl h-[320px] md:h-[380px] bg-white/5 border border-white/10">
                     <img
                       src={trainer.file_path}
                       alt={`Trainer ${idx + 1}`}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      className="w-full h-full object-contain p-4 transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
                     <div className="absolute bottom-0 left-0 p-6 sm:p-8 w-full transform transition-transform duration-500 translate-y-4 group-hover:translate-y-0">
                       <p className="text-orange-400 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] mb-1">Coaching Team</p>
-                      <div className="mt-4 pt-4 border-t border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 hidden sm:block">
-                        <p className="text-slate-400 text-sm">Meet the trainers and coaching visuals managed from the admin public pages.</p>
-                      </div>
                     </div>
                   </div>
                 ))
@@ -365,9 +362,9 @@ export function HomePage() {
             </div>
 
             {offersBanners.length > 0 ? (
-              <div className="relative h-[320px] sm:h-[420px] lg:h-[520px] overflow-hidden rounded-[2rem] border border-white/10">
-                <BannerCarousel banners={offersBanners} isLoading={isLoadingPublicData} />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent pointer-events-none z-10" />
+              <div className="relative h-[320px] sm:h-[420px] lg:h-[520px] overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/40">
+                <BannerCarousel banners={offersBanners} isLoading={isLoadingPublicData} imageFit="contain" />
+                <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-950/35 to-transparent pointer-events-none z-10" />
               </div>
             ) : (
               <NoDataFound title="No Offer Banners" subtitle="Upload offer banners to show the offers carousel here." />

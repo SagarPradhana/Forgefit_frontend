@@ -141,18 +141,21 @@ export function UserManagement() {
 
   // --- Mutations ---
   const { mutate: createUser, loading: creating } = useMutation("post", {
-    onSuccess: () => {
+    onSuccess: (res) => {
       setModalOpen(false);
       setPage(1);
       toast.success("User created successfully");
 
+      const responseUser = Array.isArray(res?.data) ? res.data[0] : (res?.data || res);
+
       // Show success popup with user details
       const userData = {
+        username: responseUser?.username || responseUser?.user_name || responseUser?.member_id || "",
         role: formData.role,
-        email: formData.email || "",
-        mobile: formData.mobile,
-        name: formData.name,
-        joining_date: formData.joining_date,
+        email: responseUser?.email || formData.email || "",
+        mobile: responseUser?.mobile || responseUser?.phone || formData.mobile,
+        name: responseUser?.name || formData.name,
+        joining_date: responseUser?.joining_date || formData.joining_date,
         password: tempPasswordRef.current || formData.password || "Password@123"
       };
       setUserCreatedData(userData);

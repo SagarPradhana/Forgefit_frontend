@@ -7,9 +7,10 @@ interface BannerCarouselProps {
   banners: PublicBanner[];
   className?: string;
   isLoading?: boolean;
+  imageFit?: "cover" | "contain";
 }
 
-export function BannerCarousel({ banners, className = "", isLoading = false }: BannerCarouselProps) {
+export function BannerCarousel({ banners, className = "", isLoading = false, imageFit = "cover" }: BannerCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -42,11 +43,19 @@ export function BannerCarousel({ banners, className = "", isLoading = false }: B
   const prev = () => setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
 
   return (
-    <div
+    <motion.div
+      whileHover={{ y: -4, scale: 1.01 }}
+      transition={{ type: "spring", stiffness: 220, damping: 20 }}
       className={`absolute inset-0 z-0 group ${className}`}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
+      <motion.div
+        initial={{ opacity: 0 }}
+        whileHover={{ opacity: 1 }}
+        transition={{ duration: 0.35 }}
+        className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.10),transparent_55%)]"
+      />
       <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex}
@@ -59,11 +68,15 @@ export function BannerCarousel({ banners, className = "", isLoading = false }: B
           {/* Ken Burns Effect Image */}
           <motion.img
             initial={{ scale: 1 }}
-            animate={{ scale: 1.08 }}
+            animate={{ scale: imageFit === "cover" ? 1.08 : 1 }}
+            whileHover={{
+              scale: imageFit === "cover" ? 1.12 : 1.03,
+              filter: "brightness(1.06) saturate(1.08)",
+            }}
             transition={{ duration: 6, ease: "linear" }}
             src={banners[currentIndex].file_path}
             alt={`Banner ${currentIndex + 1}`}
-            className="h-full w-full object-cover"
+            className={`h-full w-full ${imageFit === "contain" ? "object-contain p-4" : "object-cover"}`}
           />
         </motion.div>
       </AnimatePresence>
@@ -119,6 +132,6 @@ export function BannerCarousel({ banners, className = "", isLoading = false }: B
           />
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

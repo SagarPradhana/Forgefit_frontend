@@ -12,6 +12,7 @@ import {
   Phone,
   Menu,
   X,
+  MessageCircle,
 } from "lucide-react";
 import { CommonButton } from "../components/ui/primitives";
 import { ThemeProvider } from "../components/ui/ThemeProvider";
@@ -137,6 +138,30 @@ function MobileMenu({
 
 import { useGymStore } from "../store/gymStore";
 
+function FloatingWhatsAppButton() {
+  const { publicAppConfig } = useGymStore();
+  const whatsappNumber = (publicAppConfig?.whatsapp || "").replace(/[^\d]/g, "");
+
+  if (!whatsappNumber) return null;
+
+  return (
+    <motion.a
+      href={`https://wa.me/${whatsappNumber}`}
+      target="_blank"
+      rel="noreferrer"
+      drag
+      dragMomentum={false}
+      dragElastic={0.08}
+      whileHover={{ scale: 1.08 }}
+      whileTap={{ scale: 0.95 }}
+      className="fixed bottom-6 right-6 z-[70] flex h-16 w-16 cursor-grab items-center justify-center rounded-full border border-white/15 bg-[#25D366] text-white shadow-[0_16px_40px_rgba(37,211,102,0.35)] active:cursor-grabbing"
+      aria-label="Chat on WhatsApp"
+      title="Chat on WhatsApp"
+    >
+      <MessageCircle size={28} />
+    </motion.a>
+  );
+}
 
 export function PublicLayout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -219,6 +244,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
 
+        <FloatingWhatsAppButton />
         <Footer />
       </div>
     </ThemeProvider>
