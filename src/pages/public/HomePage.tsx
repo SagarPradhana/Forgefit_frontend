@@ -18,7 +18,7 @@ export function HomePage() {
   const inspirationalBanners = publicBanners["inspirational"] || [];
   const mainLocation = publicLocations[0];
   const featuredPlans = publicSubscriptionPlans.slice(0, 3);
-  const featuredTestimonials = publicTestimonials.filter((item) => item.note?.trim()).slice(0, 3);
+  const featuredTestimonials = publicTestimonials.filter((item) => item.note?.trim() || item.name?.trim()).slice(0, 3);
 
   const brandName = publicAppConfig?.brand_name || "ForgeFit";
   return (
@@ -345,7 +345,9 @@ export function HomePage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {featuredTestimonials.map((item) => (
                   <div key={item.id} className="glass-panel p-8">
-                    <p className="text-slate-300 text-base leading-relaxed mb-6">"{item.note}"</p>
+                    {item.note && (
+                      <p className="text-slate-300 text-base leading-relaxed mb-6">"{item.note}"</p>
+                    )}
                     <p className="text-orange-400 text-sm font-bold uppercase tracking-widest">{item.name}</p>
                   </div>
                 ))}

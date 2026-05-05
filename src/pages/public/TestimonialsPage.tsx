@@ -14,9 +14,10 @@ export function TestimonialsPage() {
   const displayTestimonials = publicTestimonials.length > 0
     ? publicTestimonials.map((t) => ({
       quote: t.note?.trim(),
+      name: t.name,
       id: t.id,
     }))
-    .filter((item) => item.quote)
+    .filter((item) => item.quote || item.name)
     : [];
 
   const videoBanners = publicBanners["testimonials"] || [];
@@ -128,8 +129,13 @@ export function TestimonialsPage() {
                           <Star key={i} size={14} className="text-orange-400" fill="currentColor" />
                         ))}
                       </div>
-                      <p className="text-slate-300 text-base leading-relaxed italic mb-8 flex-grow">
-                        "{item.quote}"
+                      {item.quote && (
+                        <p className="text-slate-300 text-base leading-relaxed italic mb-8 flex-grow">
+                          "{item.quote}"
+                        </p>
+                      )}
+                      <p className="text-orange-400 text-sm font-bold uppercase tracking-widest mt-auto">
+                        {item.name}
                       </p>
                     </div>
                   </motion.div>
