@@ -3,6 +3,7 @@ import { Edit2, Calendar, ToggleRight, ToggleLeft, Trash2, FileText, Mail, Phone
 import type { ViewType } from "./types";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useAuthStore } from "../../../store/authStore";
 
 interface UserListViewProps {
   viewType: ViewType;
@@ -24,6 +25,7 @@ interface UserListViewProps {
   onResetPassword: (user: any) => void;
   onOpenIdCard: (user: any) => void;
   lastUserElementRef: (node: HTMLDivElement) => void;
+  portalType?: "admin" | "trainer";
 }
 
 export const UserListView = ({
@@ -46,8 +48,10 @@ export const UserListView = ({
   onResetPassword,
   onOpenIdCard,
   lastUserElementRef,
+  portalType = "admin",
 }: UserListViewProps) => {
   const { t } = useTranslation();
+  const { id: currentUserId } = useAuthStore();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
   useEffect(() => {
@@ -55,6 +59,8 @@ export const UserListView = ({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+  
+  const isCurrentUser = (userId: string) => userId === currentUserId;
   if (viewType === "grid") {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-8">
@@ -82,7 +88,7 @@ export const UserListView = ({
                   </div>
                   <div className="min-w-0">
                     <h3 className="truncate text-xs md:text-sm font-black text-white uppercase tracking-tight">{user.name}</h3>
-                    <p className="text-[10px] font-bold text-indigo-400">#{user.username || 'N/A'}</p>
+                    <p className="text-[10px] font-bold text-indigo-400">#{user.member_id || user.username || 'N/A'}</p>
                     <p className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest">{user.role}</p>
                   </div>
                 </div>
@@ -100,10 +106,13 @@ export const UserListView = ({
 
                 {/* Unified Premium Action Zone */}
                 <div className="mt-auto pt-4 md:pt-5 border-t border-white/5 grid grid-cols-4 gap-1.5 md:gap-2">
+                  {portalType !== "trainer" && (
+                    <>
                   <button
+                    disabled={isCurrentUser(user.id)}
                     onClick={() => onEdit(user)}
-                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-indigo-500/20 text-indigo-400 border border-white/5 hover:border-indigo-500/30 transition-all group"
-                    title="Edit Member Information"
+                    className={`flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 transition-all group ${isCurrentUser(user.id) ? "opacity-40 cursor-not-allowed" : "hover:bg-indigo-500/20 text-indigo-400 hover:border-indigo-500/30"}`}
+                    title={isCurrentUser(user.id) ? "Cannot edit your own profile" : "Edit Member Information"}
                   >
                     <Edit2 size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
                     <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Edit</span>
@@ -148,15 +157,6 @@ export const UserListView = ({
                     )}
                   </button>
                   <button
-                    onClick={() => onOpenIdCard(user)}
-                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-white/5 hover:border-emerald-500/30 transition-all group"
-                    title="View Identity Card"
-                  >
-                    <Contact size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">ID Card</span>
-                  </button>
-
-                  <button
                     onClick={() => onResetPassword(user)}
                     className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-slate-600/20 text-slate-400 border border-white/5 hover:border-slate-500/30 transition-all group"
                     title="Security Override"
@@ -178,6 +178,16 @@ export const UserListView = ({
                         <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Drop</span>
                       </>
                     )}
+                  </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => onOpenIdCard(user)}
+                    className={`flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl transition-all group ${portalType === "trainer" ? "col-span-4" : ""} bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-white/5 hover:border-emerald-500/30`}
+                    title="View Identity Card"
+                  >
+                    <Contact size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">ID Card</span>
                   </button>
                 </div>
               </div>
@@ -233,9 +243,9 @@ export const UserListView = ({
                         </div>
                         <div className="min-w-0">
                           <p className="font-black text-white text-base uppercase tracking-tight truncate leading-tight mb-1 group-hover:text-indigo-200 transition-colors">{user.name}</p>
-                          <p className="text-[10px] font-black text-indigo-400 mb-1">#{user.member_id || 'N/A'}</p>
+                          <p className="text-[10px] font-black text-indigo-400 mb-1">#{user.member_id || user.username || 'N/A'}</p>
                           <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded-md bg-white/5 text-[9px] text-slate-500 font-bold uppercase tracking-widest border border-white/5 group-hover:text-slate-300 transition-colors">ID: {user.id?.slice(0, 8)}</span>
+                            <span className="px-2 py-0.5 rounded-md bg-white/5 text-[9px] text-slate-500 font-bold uppercase tracking-widest border border-white/5 group-hover:text-slate-300 transition-colors">ID: {user.member_id || user.id?.slice(0, 8)}</span>
                             <span className="text-[9px] font-black text-indigo-400/80 uppercase tracking-tighter italic">{user.role}</span>
                           </div>
                         </div>
@@ -265,10 +275,13 @@ export const UserListView = ({
                     </td>
                     <td className="py-5 px-8 text-right">
                       <div className="flex items-center justify-end gap-2 group-hover:scale-105 transition-transform origin-right">
-                        <button
+                        {portalType !== "trainer" && (
+                        <>
+                         <button
+                          disabled={isCurrentUser(user.id)}
                           onClick={() => onEdit(user)}
-                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-indigo-500 text-indigo-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-indigo-500/40 group/btn"
-                          title="Edit Operational Data"
+                          className={`h-10 w-10 flex items-center justify-center rounded-xl border transition-all shadow-xl group/btn ${isCurrentUser(user.id) ? "bg-white/5 text-slate-600 border-white/5 cursor-not-allowed" : "bg-white/[0.07] hover:bg-indigo-500 text-indigo-400 hover:text-white border-white/5 hover:shadow-indigo-500/40"}`}
+                          title={isCurrentUser(user.id) ? "Cannot edit your own profile" : "Edit Operational Data"}
                         >
                           <Edit2 size={16} />
                         </button>
@@ -294,14 +307,6 @@ export const UserListView = ({
                           <FileText size={16} />
                         </button>
                         <button
-                          onClick={() => onOpenIdCard(user)}
-                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-emerald-500 text-emerald-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-emerald-500/40"
-                          title="View Identity Card Protocol"
-                        >
-                          <Contact size={16} />
-                        </button>
-
-                        <button
                           onClick={() => onResetPassword(user)}
                           className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-slate-600 text-slate-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-slate-500/40"
                           title="Reset Security Protocol"
@@ -322,6 +327,15 @@ export const UserListView = ({
                           title="Terminate Access"
                         >
                           {deletingRecord && loadingDeleteId === user.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                        </button>
+                        </>
+                        )}
+                        <button
+                          onClick={() => onOpenIdCard(user)}
+                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-emerald-500 text-emerald-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-emerald-500/40"
+                          title="View Identity Card Protocol"
+                        >
+                          <Contact size={16} />
                         </button>
                       </div>
                     </td>
@@ -346,7 +360,7 @@ export const UserListView = ({
                   </div>
                   <div className="min-w-0">
                     <p className="font-black text-white text-sm uppercase tracking-tight truncate">{user.name}</p>
-                    <p className="text-[9px] text-indigo-400 font-black uppercase tracking-widest">{user.role}</p>
+                    <p className="text-[9px] text-indigo-400 font-black uppercase tracking-widest">#{user.member_id || user.username || 'N/A'}</p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 mb-4">
@@ -358,26 +372,30 @@ export const UserListView = ({
                     <Phone size={10} className="text-slate-400" />
                     <span className="text-[10px] text-slate-400">{user.mobile || user.phone || 'N/A'}</span>
                   </div>
+                  <div className="px-3 py-1 rounded-lg bg-white/5 border border-white/5 flex items-center gap-2">
+                    <span className="text-[10px] text-indigo-400 font-black">#{user.member_id || user.username || 'N/A'}</span>
+                  </div>
                 </div>
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${user.is_active !== false ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700/20 text-slate-500'}`}>
                       {user.is_active !== false ? 'Active' : 'Suspended'}
                     </span>
+                    {portalType !== "trainer" && (
                     <div className="flex gap-2">
-                      <button onClick={() => onEdit(user)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-lg"><Edit2 size={18} /></button>
+                      <button disabled={isCurrentUser(user.id)} onClick={() => onEdit(user)} className={`h-10 w-10 flex items-center justify-center rounded-xl shadow-lg ${isCurrentUser(user.id) ? "bg-slate-500/10 text-slate-600 border border-slate-500/20 cursor-not-allowed" : "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"}`}><Edit2 size={18} /></button>
                       <button onClick={() => onOpenSubscription(user)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 shadow-lg"><CreditCard size={18} /></button>
                       <button onClick={() => onOpenAttendance(user)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-lg"><Clock size={18} /></button>
                     </div>
+                    )}
                   </div>
                   
                   <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/5">
                     <div className="flex gap-2">
+                      {portalType !== "trainer" && (
+                      <>
                       <button onClick={() => onOpenDocs(user)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-lg" title="Docs"><FileText size={18} /></button>
-                      <button onClick={() => onOpenIdCard(user)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-lg" title="ID Card"><Contact size={18} /></button>
                       <button onClick={() => onResetPassword(user)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-500/10 text-slate-400 border border-slate-500/20 shadow-lg" title="Reset"><Key size={18} /></button>
-                    </div>
-                    <div className="flex gap-2">
                       <button 
                         disabled={statusUpdating && loadingStatusId === user.id}
                         onClick={() => onToggleStatus(user.id, user.is_active !== false)}
@@ -392,6 +410,9 @@ export const UserListView = ({
                       >
                         {statusUpdating && loadingDeleteId === user.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
                       </button>
+                      </>
+                      )}
+                      <button onClick={() => onOpenIdCard(user)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-lg" title="ID Card"><Contact size={18} /></button>
                     </div>
                   </div>
                 </div>

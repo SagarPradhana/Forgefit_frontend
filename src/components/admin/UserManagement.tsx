@@ -24,7 +24,7 @@ import { UserCreationSuccessModal } from "./users/UserCreationSuccessModal";
 // Types
 import type { ViewType, ModalStep, UserFormData } from "./users/types";
 
-export function UserManagement() {
+export function UserManagement({ portalType = "admin" }: { portalType?: "admin" | "trainer" }) {
   const { t } = useTranslation();
   const location = useLocation();
 
@@ -606,6 +606,7 @@ export function UserManagement() {
         onResetPassword={(user) => { setSelectedUserForReset(user); setResetModalOpen(true); }}
         onOpenIdCard={handleOpenIdCard}
         lastUserElementRef={lastUserElementRef}
+        portalType={portalType}
       />
 
       <UserModal

@@ -8,7 +8,7 @@ import {
   GlowButton,
 } from "../../components/ui/primitives";
 import { UserManagement } from "../../components/admin/UserManagement";
-import { AttendanceManagement } from "../../components/admin/AttendanceManagement";
+import { TrainerAttendance } from "../../components/trainer/TrainerAttendance";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import { Users, ClipboardList, Activity, Clock, ChevronRight, QrCode, Dumbbell, Zap } from "lucide-react";
@@ -31,6 +31,14 @@ const TrainerDashboard = () => {
   );
   
   const stats = statsData || { total_assigned_users: 0, new_assigned_users: 0, avg_session_time_minutes: 0 };
+
+  const formatSessionTime = (minutes: number) => {
+    if (!minutes || minutes === 0) return "0m";
+    const hrs = Math.floor(minutes / 60);
+    const mins = Math.round(minutes % 60);
+    if (hrs === 0) return `${mins}m`;
+    return `${hrs}h ${mins}m`;
+  };
 
   const { data: trainerUsersData } = useGet(
     userId ? `${API_ENDPOINTS.ADMIN.TRAINER_USERS}?count=100&offset=0` : null,
@@ -77,15 +85,16 @@ const TrainerDashboard = () => {
       {/* ── STATS GRID ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {[
-          { label: "Total Assigned Users", value: stats.total_assigned_users, icon: Users, color: "bg-indigo-500", delay: 0.1 },
-          { label: "Avg Session Time", value: `${stats.avg_session_time_minutes}m`, icon: Clock, color: "bg-purple-500", delay: 0.2 },
+          { label: "Total Assigned Users", value: stats.total_assigned_users, icon: Users, color: "bg-indigo-500", delay: 0.1, action: () => navigate("/trainer/users") },
+          { label: "Avg Session Time", value: formatSessionTime(stats.avg_session_time_minutes), icon: Clock, color: "bg-purple-500", delay: 0.2, action: null },
         ].map((stat, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: stat.delay }}
-            className="group relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 p-6 hover:border-white/20 transition-all cursor-pointer"
+            onClick={stat.action || undefined}
+            className={`group relative overflow-hidden rounded-3xl bg-white/5 border border-white/10 p-6 hover:border-white/20 transition-all ${stat.action ? "cursor-pointer" : ""}`}
           >
             <div className={`absolute -top-10 -right-10 w-24 h-24 rounded-full blur-3xl opacity-10 ${stat.color}`} />
             <div className={`h-10 w-10 rounded-xl ${stat.color} bg-opacity-20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
@@ -194,8 +203,8 @@ export function TrainerPortalPages({ page }: { page: string }) {
   const { t } = useTranslation();
 
   if (page === "dashboard") return <TrainerDashboard />;
-  if (page === "users") return <UserManagement />;
-  if (page === "attendance") return <AttendanceManagement />;
+  if (page === "users") return <UserManagement portalType="trainer" />;
+  if (page === "attendance") return <TrainerAttendance />;
 
   if (page === "workouts") {
     return (

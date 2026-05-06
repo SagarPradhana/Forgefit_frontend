@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { GlassCard, SectionTitle, Table, CommonButton, Modal } from "../ui/primitives";
-import { Grid, List, Search, UserCheck, Clock, Filter, CheckCircle2, Edit2, Trash2, Plus } from "lucide-react";
+import { Grid, List, Search, Clock, Edit2, Trash2, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { adminAttendanceService, type AttendanceResponse, type AttendanceRequest } from "../../services/adminAttendanceService";
 import { useEffect, useCallback, useMemo } from "react";
@@ -46,12 +46,6 @@ export function AttendanceManagement() {
 
   const [records, setRecords] = useState<AttendanceResponse[]>([]);
   const [loading, setLoading] = useState(false);
-  const [stats, setStats] = useState({
-    total_checkins_today: 0,
-    present_now: 0,
-    checked_out_today: 0,
-    avg_time_hours: 0
-  });
 
   const { data: usersDropdownData } = useGet(API_ENDPOINTS.ADMIN.GET_USERS_DROPDOWN, { useCache: true });
   const members = useMemo(() => usersDropdownData?.data || [], [usersDropdownData]);
@@ -73,31 +67,13 @@ export function AttendanceManagement() {
     }
   }, [searchQuery, dateRange]);
 
-  const fetchStats = useCallback(async () => {
-    try {
-      const from = dateRange.from_date ?? Math.floor(new Date().setHours(0, 0, 0, 0) / 1000);
-      const to = dateRange.to_date ?? Math.floor(new Date().setHours(23, 59, 59, 999) / 1000);
-      const res = await adminAttendanceService.getStats(from, to) as any;
-      if (res) {
-        setStats({
-          total_checkins_today: res.total_checkins_today ?? res.data?.total_checkins_today ?? 0,
-          present_now: res.present_now ?? res.data?.present_now ?? 0,
-          checked_out_today: res.checked_out_today ?? res.data?.checked_out_today ?? 0,
-          avg_time_hours: res.avg_time_hours ?? res.data?.avg_time_hours ?? 0,
-        });
-      }
-    } catch (err) { console.error(err); }
-  }, [dateRange]);
-
   useEffect(() => {
     fetchRecords();
-    fetchStats();
   }, []);
 
   // Refetch when filters change
   useEffect(() => {
     fetchRecords();
-    fetchStats();
   }, [searchQuery, dateRange]);
 
   const handleSave = async () => {
@@ -191,14 +167,6 @@ export function AttendanceManagement() {
             ))}
           </div>
         </div>
-      </div>
-
-      {/* Stat cards — driven by selectedDate */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title={t("totalCheckins")} value={`${stats.total_checkins_today ?? 0}`} icon={<UserCheck className="text-emerald-400" />} />
-        <StatCard title={t("presentNow")} value={`${stats.present_now ?? 0}`} icon={<CheckCircle2 className="text-blue-400" />} />
-        <StatCard title={t("checkedOut")} value={`${stats.checked_out_today ?? 0}`} icon={<Clock className="text-amber-400" />} />
-        <StatCard title={t("avgTime")} value={`${stats.avg_time_hours ?? 0}h`} icon={<Filter className="text-purple-400" />} />
       </div>
 
       <GlassCard>
@@ -373,22 +341,6 @@ export function AttendanceManagement() {
       >
         <p className="text-slate-300">Are you sure you want to delete this attendance log? This will remove the record permanently from the member's history.</p>
       </Modal>
-    </div>
-  );
-}
-
-function StatCard({ title, value, icon }: { title: string; value: string; icon: React.ReactNode }) {
-  return (
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-white/20 transition-all hover:-translate-y-1">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">{title}</p>
-          <h4 className="text-3xl font-black text-white">{value}</h4>
-        </div>
-        <div className="p-3 bg-white/5 rounded-2xl border border-white/10 shadow-inner">
-          {icon}
-        </div>
-      </div>
     </div>
   );
 }
