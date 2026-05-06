@@ -1,5 +1,5 @@
 export type ViewType = "grid" | "list";
-export type UserRole = "user" | "admin" | "trainee" | "employee";
+export type UserRole = "user" | "admin" | "trainer" | "trainee" | "employee";
 export type ModalStep =
   | "role"
   | "details"
@@ -17,6 +17,9 @@ export interface UserMetadata {
   medical_conditions: string;
   workout_time: string;
   emergency_contact: string;
+  specialization?: string;
+  experience?: number;
+  certifications?: string;
 }
 
 export interface UserFormData {

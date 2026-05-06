@@ -1328,4 +1328,3 @@ export function AdminPortalPages({ page }: { page: string }) {
     </>
   );
 }
-}

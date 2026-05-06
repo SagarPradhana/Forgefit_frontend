@@ -23,6 +23,7 @@ interface UserModalProps {
   getModalTitle: () => string;
   getStepNumber: () => string;
   isFinalStep: boolean;
+  portalType?: "admin" | "trainer";
 }
 
 export const UserModal = ({
@@ -44,6 +45,7 @@ export const UserModal = ({
   getModalTitle,
   getStepNumber,
   isFinalStep,
+  portalType = "admin",
 }: UserModalProps) => {
   if (!isOpen) return null;
 
@@ -232,99 +234,138 @@ export const UserModal = ({
               animate={{ opacity: 1, x: 0 }}
               className="space-y-4"
             >
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Height</label>
-                  <input
-                    type="number"
-                    value={formData.metadata.height}
-                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, height: Number(e.target.value) } })}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-indigo-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Weight</label>
-                  <input
-                    type="number"
-                    value={formData.metadata.weight}
-                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, weight: Number(e.target.value) } })}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-indigo-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">DOB</label>
-                  <input
-                    type="date"
-                    value={formData.metadata.dob ? new Date(formData.metadata.dob * 1000).toISOString().split('T')[0] : ""}
-                    onChange={(e) => {
-                      const date = e.target.value ? Math.floor(new Date(e.target.value).getTime() / 1000) : 0;
-                      setFormData({ ...formData, metadata: { ...formData.metadata, dob: date } });
-                    }}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-indigo-400"
-                  />
-                </div>
-              </div>
+              {formData.role === "trainer" ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-white mb-1">Specialization <span className="text-orange-400">*</span></label>
+                      <input
+                        type="text"
+                        placeholder="e.g., Strength Training, Yoga, HIIT"
+                        value={formData.metadata.specialization || ""}
+                        onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, specialization: e.target.value } })}
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-white mb-1">Experience (Years) <span className="text-orange-400">*</span></label>
+                      <input
+                        type="number"
+                        placeholder="Years of experience"
+                        value={formData.metadata.experience || ""}
+                        onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, experience: Number(e.target.value) } })}
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-400"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-white mb-1">Certifications</label>
+                    <input
+                      type="text"
+                      placeholder="Any certifications or credentials"
+                      value={formData.metadata.certifications || ""}
+                      onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, certifications: e.target.value } })}
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-400"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Height</label>
+                      <input
+                        type="number"
+                        value={formData.metadata.height}
+                        onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, height: Number(e.target.value) } })}
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-indigo-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Weight</label>
+                      <input
+                        type="number"
+                        value={formData.metadata.weight}
+                        onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, weight: Number(e.target.value) } })}
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-indigo-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">DOB</label>
+                      <input
+                        type="date"
+                        value={formData.metadata.dob ? new Date(formData.metadata.dob * 1000).toISOString().split('T')[0] : ""}
+                        onChange={(e) => {
+                          const date = e.target.value ? Math.floor(new Date(e.target.value).getTime() / 1000) : 0;
+                          setFormData({ ...formData, metadata: { ...formData.metadata, dob: date } });
+                        }}
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-indigo-400"
+                      />
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-white mb-1">Gender</label>
-                  <select
-                    value={formData.metadata.gender}
-                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, gender: e.target.value } })}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs"
-                  >
-                    <option value="male" className="bg-slate-900">Male</option>
-                    <option value="female" className="bg-slate-900">Female</option>
-                    <option value="other" className="bg-slate-900">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-white mb-1">Emergency Contact</label>
-                  <input
-                    type="tel"
-                    value={formData.metadata.emergency_contact}
-                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, emergency_contact: e.target.value } })}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs"
-                  />
-                </div>
-              </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-white mb-1">Gender</label>
+                      <select
+                        value={formData.metadata.gender}
+                        onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, gender: e.target.value } })}
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs"
+                      >
+                        <option value="male" className="bg-slate-900">Male</option>
+                        <option value="female" className="bg-slate-900">Female</option>
+                        <option value="other" className="bg-slate-900">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-white mb-1">Emergency Contact</label>
+                      <input
+                        type="tel"
+                        value={formData.metadata.emergency_contact}
+                        onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, emergency_contact: e.target.value } })}
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs"
+                      />
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-white mb-1">Fitness Goal</label>
-                  <select
-                    value={formData.metadata.fitness_goal}
-                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, fitness_goal: e.target.value } })}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs"
-                  >
-                    <option value="fat_loss" className="bg-slate-900">Fat Loss</option>
-                    <option value="muscle_gain" className="bg-slate-900">Muscle Gain</option>
-                    <option value="fitness" className="bg-slate-900">General Fitness</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-white mb-1">Workout Time</label>
-                  <select
-                    value={formData.metadata.workout_time}
-                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, workout_time: e.target.value } })}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs"
-                  >
-                    <option value="morning" className="bg-slate-900">Morning</option>
-                    <option value="evening" className="bg-slate-900">Evening</option>
-                  </select>
-                </div>
-              </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-white mb-1">Fitness Goal</label>
+                      <select
+                        value={formData.metadata.fitness_goal}
+                        onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, fitness_goal: e.target.value } })}
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs"
+                      >
+                        <option value="fat_loss" className="bg-slate-900">Fat Loss</option>
+                        <option value="muscle_gain" className="bg-slate-900">Muscle Gain</option>
+                        <option value="fitness" className="bg-slate-900">General Fitness</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-white mb-1">Workout Time</label>
+                      <select
+                        value={formData.metadata.workout_time}
+                        onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, workout_time: e.target.value } })}
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs"
+                      >
+                        <option value="morning" className="bg-slate-900">Morning</option>
+                        <option value="evening" className="bg-slate-900">Evening</option>
+                      </select>
+                    </div>
+                  </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-white mb-1 uppercase tracking-widest">Medical Conditions</label>
-                <textarea
-                  placeholder="Describe any medical conditions, chronic issues or health concerns..."
-                  value={formData.metadata.medical_conditions || ""}
-                  onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, medical_conditions: e.target.value } })}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-xs resize-none focus:border-orange-400 transition"
-                  rows={3}
-                />
-              </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-white mb-1 uppercase tracking-widest">Medical Conditions</label>
+                    <textarea
+                      placeholder="Describe any medical conditions, chronic issues or health concerns..."
+                      value={formData.metadata.medical_conditions || ""}
+                      onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, medical_conditions: e.target.value } })}
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-xs resize-none focus:border-orange-400 transition"
+                      rows={3}
+                    />
+                  </div>
+                </>
+              )}
             </motion.div>
           )}
 
@@ -334,19 +375,25 @@ export const UserModal = ({
               animate={{ opacity: 1, x: 0 }}
               className="space-y-6"
             >
-              <div>
-                <label className="block text-sm font-semibold text-white mb-2">Assign Trainer</label>
-                <select
-                  value={formData.trainer_id || ""}
-                  onChange={(e) => setFormData({ ...formData, trainer_id: e.target.value })}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 transition"
-                >
-                  <option value="" className="bg-slate-900">Select Trainer (Optional)</option>
-                  {trainers.map((t: any) => (
-                    <option key={t.id} value={t.id} className="bg-slate-900">{t.name}</option>
-                  ))}
-                </select>
-              </div>
+              {(portalType === "admin" || portalType === "trainer") ? (
+                <div className="py-4 text-center text-slate-400 text-sm">
+                  User will be assigned to your portal automatically
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">Assign Trainer</label>
+                  <select
+                    value={formData.trainer_id || ""}
+                    onChange={(e) => setFormData({ ...formData, trainer_id: e.target.value })}
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 transition"
+                  >
+                    <option value="" className="bg-slate-900">Select Trainer (Optional)</option>
+                    {trainers.map((t: any) => (
+                      <option key={t.id} value={t.id} className="bg-slate-900">{t.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </motion.div>
           )}
         </div>

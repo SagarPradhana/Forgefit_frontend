@@ -629,6 +629,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
         getModalTitle={getModalTitle}
         getStepNumber={getStepNumber}
         isFinalStep={isFinalStep}
+        portalType={portalType}
       />
 
       <DocumentModal

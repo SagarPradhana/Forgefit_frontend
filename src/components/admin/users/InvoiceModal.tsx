@@ -1,7 +1,7 @@
 import { useRef } from "react";
-import { Modal, GlowButton } from "../ui/primitives";
+import { Modal, GlowButton } from "../../ui/primitives";
 import { Printer, Download, X } from "lucide-react";
-import { useGymStore } from "../../store/gymStore";
+import { useGymStore } from "../../../store/gymStore";
 
 interface PaymentInvoice {
   id: string;
