@@ -30,6 +30,13 @@ export function AttendanceManagement() {
     from_date: toUnix(today, false),
     to_date: toUnix(today, true)
   });
+
+  const { data: statsData, refetch: fetchStats } = useGet(
+    dateRange ? `${API_ENDPOINTS.ADMIN.ATTENDANCE_STATS}?from_date=${dateRange.from_date}&to_date=${dateRange.to_date}` : null,
+    { useCache: false }
+  );
+
+  const stats = statsData || { total_checkins_today: 0, present_now: 0, checked_out_today: 0, avg_time_hours: 0 };
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<AttendanceResponse | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -139,7 +146,36 @@ export function AttendanceManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Header row: title + date filter + view toggle */}
+      {/* Date Filter at Top */}
+      <div className="flex justify-end">
+        <DateRangeFilter
+          defaultPreset="today"
+          onChange={(range) => setDateRange(range)}
+        />
+      </div>
+
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: "Total Check-Ins", value: stats.total_checkins_today || 0, color: "bg-emerald-500" },
+          { label: "Present Now", value: stats.present_now || 0, color: "bg-indigo-500" },
+          { label: "Checked Out", value: stats.checked_out_today || 0, color: "bg-amber-500" },
+          { label: "Avg Hours", value: (() => {
+            const hours = Number(stats.avg_time_hours) || 0;
+            const h = Math.floor(hours);
+            const m = Math.round((hours - h) * 60);
+            return `${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m`;
+          })(), color: "bg-purple-500" },
+        ].map((stat, i) => (
+          <div key={i} className="relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-4">
+            <div className={`absolute -top-8 -right-8 w-16 h-16 rounded-full blur-2xl opacity-20 ${stat.color}`} />
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{stat.label}</p>
+            <p className="text-2xl font-black text-white">{stat.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Header row: title + view toggle */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <SectionTitle
           title={t("attendance")}
@@ -147,12 +183,6 @@ export function AttendanceManagement() {
         />
 
         <div className="flex items-center gap-3 self-end md:self-auto">
-          {/* Date Range Filter */}
-          <DateRangeFilter
-            defaultPreset="today"
-            onChange={(range) => setDateRange(range)}
-          />
-
           {/* View toggle */}
           <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl">
             {(["grid", "list"] as AttendanceView[]).map((type) => (
@@ -233,8 +263,8 @@ export function AttendanceManagement() {
                 headers={["ID", "Check In", "Check Out", "Status", "Actions"]}
                 rows={records.map(r => [
                   <span key={r.id} className="text-xs font-mono text-slate-500">{r.id.substring(0, 8)}...</span>,
-                  new Date(r.check_in * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                  r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Active",
+                  new Date(r.check_in * 1000).toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+                  r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' }) : "Active",
                   <span key={`${r.id}-status`} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${r.status?.toLowerCase() === "present" ? "bg-emerald-500/20 text-emerald-400" :
                     r.status?.toLowerCase() === "late" ? "bg-amber-500/20 text-amber-400" :
                       "bg-red-500/20 text-red-400"
@@ -368,11 +398,11 @@ function AttendanceGridCard({ record, onEdit, onDelete }: { record: AttendanceRe
       <div className="grid grid-cols-2 gap-3 p-3 bg-black/20 rounded-xl relative z-10">
         <div className="space-y-1">
           <span className="text-[10px] text-slate-500 uppercase font-black">In</span>
-          <p className="text-white font-bold text-sm flex items-center gap-2"><Clock size={12} /> {new Date(record.check_in * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+          <p className="text-white font-bold text-sm flex items-center gap-2"><Clock size={12} /> {new Date(record.check_in * 1000).toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' })}</p>
         </div>
         <div className="space-y-1 border-l border-white/10 pl-3">
           <span className="text-[10px] text-slate-500 uppercase font-black">Out</span>
-          <p className="text-white font-bold text-sm flex items-center gap-2"><Clock size={12} /> {record.check_out ? new Date(record.check_out * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Active"}</p>
+          <p className="text-white font-bold text-sm flex items-center gap-2"><Clock size={12} /> {record.check_out ? new Date(record.check_out * 1000).toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' }) : "Active"}</p>
         </div>
       </div>
 

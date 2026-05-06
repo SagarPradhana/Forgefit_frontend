@@ -375,9 +375,9 @@ export const UserModal = ({
               animate={{ opacity: 1, x: 0 }}
               className="space-y-6"
             >
-              {(portalType === "admin" || portalType === "trainer") ? (
+              {(portalType === "admin" || portalType === "trainer") && formData.role !== "user" ? (
                 <div className="py-4 text-center text-slate-400 text-sm">
-                  User will be assigned to your portal automatically
+                  {formData.role === "admin" ? "Admin role - no trainer needed" : "Trainer role - no trainer needed"}
                 </div>
               ) : (
                 <div>

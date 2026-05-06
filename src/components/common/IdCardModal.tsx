@@ -191,7 +191,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user,
                 </div>
 
                 <div className="hero-info">
-                  <div className="hero-name">{user.name}</div>
+                  <div className="hero-name">{(user.name || '').length > 21 ? (user.name || '').slice(0, 21) + '...' : user.name}</div>
                   <div className="status-row">
                     <span className="tag tag-teal">● Active</span>
                     {isUser && user.metadata?.gender && (
@@ -497,9 +497,17 @@ const idCardStyles = `
     color:#fff;
     line-height:1.1;
     margin-bottom:5px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
+    max-width:260px;
+    word-wrap:break-word;
+    overflow-wrap:break-word;
+    white-space:normal;
+  }
+
+  @media (max-width: 340px) {
+    .hero-name {
+      font-size:16px;
+      max-width:220px;
+    }
   }
 
   .hero-id {
