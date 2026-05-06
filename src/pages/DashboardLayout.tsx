@@ -77,9 +77,6 @@ export function Sidebar({
         ? [
           { name: "dashboard", icon: LayoutDashboard, label: t("dashboard") },
           { name: "users", icon: Users, label: t("users") },
-          { name: "attendance", icon: Calendar, label: t("attendance") },
-          { name: "workouts", icon: ClipboardList, label: "Workouts" },
-          { name: "diets", icon: ClipboardList, label: "Diet Plans" },
         ]
         : [
           { name: "dashboard", icon: LayoutDashboard, label: t("dashboard") },

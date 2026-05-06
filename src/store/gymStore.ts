@@ -189,7 +189,7 @@ type GymState = {
   publicLocations: Location[];
   publicSubscriptionPlans: SubscriptionPlan[];
   isLoadingPublicData: boolean;
-  fetchPublicData: () => Promise<void>;
+  fetchPublicData: (configOnly?: boolean) => Promise<void>;
 };
 
 export const useGymStore = create<GymState>((set) => ({
@@ -398,9 +398,21 @@ export const useGymStore = create<GymState>((set) => ({
   publicLocations: [],
   publicSubscriptionPlans: [],
   isLoadingPublicData: false,
-  fetchPublicData: async () => {
+  fetchPublicData: async (configOnly = false) => {
     set({ isLoadingPublicData: true });
     try {
+      if (configOnly) {
+        const configRes = await publicAppService.getAppConfig().catch(() => null);
+        const publicAppConfigData = (configRes?.brand_name !== undefined)
+          ? configRes
+          : (Array.isArray(configRes?.data) ? configRes.data[0] : (configRes?.data || configRes || null));
+        set((state) => ({
+          publicAppConfig: publicAppConfigData,
+          isLoadingPublicData: false,
+        }));
+        return;
+      }
+
       const [configRes, faqRes, testimonialRes, locationRes, plansRes] = await Promise.all([
         publicAppService.getAppConfig().catch(() => null),
         publicAppService.getFAQs({ count: 1000 }).catch(() => ({ data: [] })),

@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useState } from "react";
-import { Navigate, Route, Routes, useParams } from "react-router-dom";
+import { lazy, Suspense, useEffect, useState, useRef } from "react";
+import { Navigate, Route, Routes, useParams, useLocation } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
 import { useGymStore } from "./store/gymStore";
 import DashboardLayout from "./pages/DashboardLayout";
@@ -157,12 +157,27 @@ const LoadingScreen = ({ brandName, logoPath }: { brandName: string; logoPath?: 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const { updateAppConfig, fetchPublicData, publicAppConfig } = useGymStore();
+  const location = useLocation();
+  const fetchedStatus = useRef({ config: false, full: false });
 
   const brandName = publicAppConfig?.brand_name || "ForgeFit";
 
   useEffect(() => {
-    fetchPublicData();
-  }, []);
+    const isPublicAuthRoute = ["/signin", "/forgot-password"].includes(location.pathname) || location.pathname.startsWith("/auth");
+    const isDashboardRoute = location.pathname.startsWith("/admin") || location.pathname.startsWith("/user") || location.pathname.startsWith("/trainer");
+    const fetchConfigOnly = isPublicAuthRoute || isDashboardRoute;
+
+    if (fetchConfigOnly && (fetchedStatus.current.config || fetchedStatus.current.full)) return;
+    if (!fetchConfigOnly && fetchedStatus.current.full) return;
+
+    fetchPublicData(fetchConfigOnly).then(() => {
+      if (fetchConfigOnly) {
+        fetchedStatus.current.config = true;
+      } else {
+        fetchedStatus.current.full = true;
+      }
+    });
+  }, [location.pathname, fetchPublicData]);
 
   // Update app config based on public data
   useEffect(() => {

@@ -1,63 +1,84 @@
 import { useTranslation } from "react-i18next";
+import { useState, useEffect } from "react";
 import {
   GlassCard,
   SectionTitle,
   Skeleton,
   EmptyState,
+  GlowButton,
 } from "../../components/ui/primitives";
 import { UserManagement } from "../../components/admin/UserManagement";
 import { AttendanceManagement } from "../../components/admin/AttendanceManagement";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
-import { Users, ClipboardList, Activity, Clock, ChevronRight } from "lucide-react";
+import { Users, ClipboardList, Activity, Clock, ChevronRight, QrCode, Dumbbell, Zap } from "lucide-react";
 import { motion } from "framer-motion";
+import { useGet } from "../../hooks/useApi";
+import { API_ENDPOINTS } from "../../utils/url";
+import { IdCardModal } from "../../components/common/IdCardModal";
 
 const TrainerDashboard = () => {
-  const { name } = useAuthStore();
+  const { name, id: userId, mobile, email, profile_image_path, metadata, joining_date, username, qr_url, role } = useAuthStore();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  const myDetails = { mobile, email, profile_image_path, qr_url, metadata, role, joining_date, username };
+  const [idCardOpen, setIdCardOpen] = useState(false);
+
+  const { data: statsData } = useGet(
+    userId ? API_ENDPOINTS.ADMIN.TRAINER_STATS(userId) : null,
+    { useCache: true }
+  );
+  
+  const stats = statsData || { total_assigned_users: 0, new_assigned_users: 0, avg_session_time_minutes: 0 };
+
+  const { data: trainerUsersData } = useGet(
+    userId ? `${API_ENDPOINTS.ADMIN.TRAINER_USERS}?count=100&offset=0` : null,
+    { useCache: true }
+  );
+  const trainerUsers = trainerUsersData?.data || [];
+  
+  const [selectedWorkoutUser, setSelectedWorkoutUser] = useState<string>("");
+  
+  useEffect(() => {
+    if (trainerUsers.length > 0 && !selectedWorkoutUser) {
+      setSelectedWorkoutUser(trainerUsers[0].id);
+    }
+  }, [trainerUsers, selectedWorkoutUser]);
+
+  const todayDay = String(new Date().getDay() || 7);
+  const [workoutDay, setWorkoutDay] = useState(todayDay);
+  const { data: workoutData, loading: workoutLoading } = useGet(
+    selectedWorkoutUser ? API_ENDPOINTS.APP.MY_WORKOUT_PLAN(selectedWorkoutUser, workoutDay) : null,
+    { useCache: true }
+  );
+  const workoutPlan = workoutData;
+  const dayNames = ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
   return (
-    <div className="space-y-8">
-      {/* ── HERO SECTION ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative p-1 rounded-[2.5rem] bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-orange-500/20 shadow-2xl"
-      >
-        <div className="bg-slate-950/90 backdrop-blur-2xl px-10 py-12 rounded-[2.3rem] border border-white/5 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 blur-[120px] -mr-48 -mt-48" />
-
-          <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-8 relative z-10">
-            <div className="h-24 w-24 rounded-[2rem] bg-gradient-to-br from-indigo-500 to-purple-600 p-[3px] shadow-2xl shadow-indigo-500/30">
-              <div className="h-full w-full bg-slate-950 rounded-[1.8rem] flex items-center justify-center text-3xl font-black text-white italic">
-                {name?.[0]?.toUpperCase()}
-              </div>
-            </div>
-            <div>
-              <p className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-2">Trainer Portal</p>
-              <h2 className="text-4xl sm:text-5xl font-black text-white italic tracking-tighter leading-none mb-4">
-                COACH {name?.toUpperCase()}
-              </h2>
-              <div className="flex flex-wrap justify-center sm:justify-start gap-4">
-                <span className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
-                  <Activity size={14} className="text-emerald-400" /> 8 Sessions Today
-                </span>
-                <span className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
-                  <Users size={14} className="text-indigo-400" /> 12 Active Clients
-                </span>
-              </div>
-            </div>
-          </div>
+    <div className="space-y-8 max-w-5xl mx-auto pb-10">
+      {/* ── HERO SECTION & ID CARD BUTTON ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <SectionTitle
+          title={`${t("welcomeBack")}, COACH ${name?.split(' ')[0] || ""}`}
+          subtitle="Trainer Portal"
+        />
+        <div className="flex flex-row items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
+          <GlowButton
+            onClick={() => setIdCardOpen(true)}
+            className="flex-1 md:flex-none h-12 px-4 sm:px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500 hover:text-white transition-all shadow-lg shadow-indigo-500/10"
+          >
+            <QrCode size={18} className="shrink-0" />
+            <span className="truncate">{t("profile")} ID</span>
+          </GlowButton>
         </div>
-      </motion.div>
+      </div>
 
       {/* ── STATS GRID ── */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {[
-          { label: "New Assignments", value: "05", icon: Users, color: "bg-indigo-500", delay: 0.1 },
-          { label: "Completion Rate", value: "94%", icon: Activity, color: "bg-emerald-500", delay: 0.2 },
-          { label: "Avg Session Time", value: "45m", icon: Clock, color: "bg-purple-500", delay: 0.3 },
-          { label: "Protocol Updates", value: "03", icon: ClipboardList, color: "bg-orange-500", delay: 0.4 },
+          { label: "Total Assigned Users", value: stats.total_assigned_users, icon: Users, color: "bg-indigo-500", delay: 0.1 },
+          { label: "Avg Session Time", value: `${stats.avg_session_time_minutes}m`, icon: Clock, color: "bg-purple-500", delay: 0.2 },
         ].map((stat, i) => (
           <motion.div
             key={i}
@@ -76,30 +97,95 @@ const TrainerDashboard = () => {
         ))}
       </div>
 
-      {/* ── ACTION CARDS ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <GlassCard className="p-8 group hover:bg-indigo-500/5 transition-all cursor-pointer" onClick={() => navigate("/trainer/workouts")}>
-          <div className="flex items-center justify-between mb-6">
-            <div className="h-14 w-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
-              <ClipboardList size={28} />
+      {/* ── TRAINING PROTOCOLS (User Wise) ── */}
+      <GlassCard className="p-6 border-indigo-500/20 bg-gradient-to-br from-indigo-500/5 to-transparent">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+              <Dumbbell size={20} />
             </div>
-            <ChevronRight className="text-slate-600 group-hover:text-indigo-400 group-hover:translate-x-2 transition-all" />
+            <div>
+              <h3 className="text-lg font-black text-white uppercase tracking-tight">User Training Protocols</h3>
+              <p className="text-xs text-slate-400">View user-specific workout plans</p>
+            </div>
           </div>
-          <h3 className="text-xl font-black text-white uppercase italic tracking-tighter mb-2">Training Protocols</h3>
-          <p className="text-slate-400 text-sm leading-relaxed">Design specialized workout routines and manage intensity levels for your assigned athletes.</p>
-        </GlassCard>
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <select
+              value={selectedWorkoutUser}
+              onChange={(e) => setSelectedWorkoutUser(e.target.value)}
+              className="flex-1 md:w-48 bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-xs text-white font-bold focus:border-indigo-500 outline-none"
+            >
+              <option value="" disabled>Select User</option>
+              {trainerUsers.map((u: any) => (
+                <option key={u.id} value={u.id}>{u.name}</option>
+              ))}
+            </select>
+            <select
+              value={workoutDay}
+              onChange={(e) => setWorkoutDay(e.target.value)}
+              className="w-32 bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-xs text-white font-bold focus:border-indigo-500 outline-none"
+            >
+              {dayNames.map((day, i) => i > 0 && <option key={i} value={String(i)}>{day}</option>)}
+            </select>
+          </div>
+        </div>
 
-        <GlassCard className="p-8 group hover:bg-orange-500/5 transition-all cursor-pointer" onClick={() => navigate("/trainer/diets")}>
-          <div className="flex items-center justify-between mb-6">
-            <div className="h-14 w-14 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-400 group-hover:scale-110 transition-transform">
-              <ClipboardList size={28} />
-            </div>
-            <ChevronRight className="text-slate-600 group-hover:text-orange-400 group-hover:translate-x-2 transition-all" />
+        {workoutLoading ? (
+          <div className="animate-pulse space-y-2">
+            <div className="h-4 bg-white/[0.06] rounded w-3/4" />
+            <div className="h-4 bg-white/[0.06] rounded w-1/2" />
           </div>
-          <h3 className="text-xl font-black text-white uppercase italic tracking-tighter mb-2">Nutrition Blueprints</h3>
-          <p className="text-slate-400 text-sm leading-relaxed">Customize meal plans and supplement schedules to fuel performance and recovery goals.</p>
-        </GlassCard>
-      </div>
+        ) : workoutPlan?.workout_details?.workouts?.length > 0 ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/5 p-3 rounded-lg border border-white/5">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Plan Name</p>
+                <p className="text-base font-black text-white italic">{workoutPlan.name || "-"}</p>
+              </div>
+              <div className="bg-white/5 p-3 rounded-lg border border-white/5">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Focus</p>
+                <p className="text-sm font-bold text-indigo-400">{workoutPlan.focus || "-"}</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Exercises</p>
+              {workoutPlan.workout_details.workouts.map((ex: any, idx: number) => (
+                <div 
+                  key={idx} 
+                  className="flex justify-between items-center py-2 px-3 rounded-lg bg-white/5 border border-white/5"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-6 w-6 rounded-full bg-white/10 flex items-center justify-center text-slate-400 text-[10px] font-bold">
+                      {idx + 1}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white">{ex.name}</p>
+                      <p className="text-[9px] text-slate-500">{ex.target_body_part}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] font-black text-indigo-400">{ex.no_of_sets} Sets</p>
+                    <p className="text-[9px] text-slate-500">{ex.reps} Reps</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="py-12 text-center border-t border-white/5 mt-4">
+            <p className="text-lg font-black text-slate-600 uppercase italic">Rest Day</p>
+            <p className="text-xs text-slate-500 mt-1">No workout assigned for {dayNames[parseInt(workoutDay)]}</p>
+          </div>
+        )}
+      </GlassCard>
+
+      {/* 🆔 DIGITAL IDENTITY MODAL */}
+      <IdCardModal
+        isOpen={idCardOpen}
+        onClose={() => setIdCardOpen(false)}
+        user={{ id: userId || '', name: name || '', ...myDetails }}
+        portalType="trainer"
+      />
     </div>
   );
 };

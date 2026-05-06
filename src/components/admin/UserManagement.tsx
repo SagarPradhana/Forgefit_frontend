@@ -8,6 +8,7 @@ import { API_ENDPOINTS } from "../../utils/url";
 import { api } from "../../utils/httputils";
 import { toast } from "../../store/toastStore";
 import { useLocation } from "react-router-dom";
+import { useAuthStore } from "../../store/authStore";
 
 // Sub-components
 import { UserModal } from "./users/UserModal";
@@ -32,6 +33,9 @@ export function UserManagement() {
     const params = new URLSearchParams(location.search);
     return params.get("role") || "";
   }, [location.search]);
+
+  const authRole = useAuthStore((s) => s.role);
+  const isTrainer = authRole === "trainer";
 
   // --- States ---
   const [viewType, setViewType] = useState<ViewType>("grid");
@@ -108,11 +112,11 @@ export function UserManagement() {
       params.append("search", debouncedSearch.trim());
       params.append("member_id", debouncedSearch.trim()); // The user specified member_id is a parameter in GET
     }
-    if (roleFilter) {
+    if (roleFilter && !isTrainer) {
       params.append("role", roleFilter);
     }
-    return `${API_ENDPOINTS.ADMIN.USERS}?${params.toString()}`;
-  }, [page, perPage, debouncedSearch, roleFilter]);
+    return isTrainer ? `${API_ENDPOINTS.ADMIN.TRAINER_USERS}?${params.toString()}` : `${API_ENDPOINTS.ADMIN.USERS}?${params.toString()}`;
+  }, [page, perPage, debouncedSearch, roleFilter, isTrainer]);
 
   const { loading: usersLoading, refetch: refetchUsers } = useGet(
     usersApiUrl,
@@ -126,7 +130,7 @@ export function UserManagement() {
     }
   );
 
-  const { data: rolesData } = useGet(API_ENDPOINTS.ADMIN.ROLES, { useCache: true });
+  const { data: rolesData } = useGet(!isTrainer ? API_ENDPOINTS.ADMIN.ROLES : null, { useCache: true });
   const roles = useMemo<string[]>(() => {
     if (!rolesData?.data) return ["admin", "trainer", "user"];
     // Extract unique roles from data
@@ -134,9 +138,9 @@ export function UserManagement() {
     return unique.length > 0 ? unique : ["admin", "trainer", "user"];
   }, [rolesData]);
 
-  const { data: plansData } = useGet(API_ENDPOINTS.ADMIN.PLANS, { useCache: true });
+  const { data: plansData } = useGet(!isTrainer ? API_ENDPOINTS.ADMIN.PLANS : null, { useCache: true });
   const plans = plansData?.data || [];
-  const { data: trainersData } = useGet(API_ENDPOINTS.ADMIN.TRAINER_LIST, { useCache: true });
+  const { data: trainersData } = useGet(!isTrainer ? API_ENDPOINTS.ADMIN.TRAINER_LIST : null, { useCache: true });
   const trainers = trainersData?.data || [];
 
   // --- Mutations ---
@@ -549,33 +553,37 @@ export function UserManagement() {
           </div>
         </div>
 
-        {/* Role Filter */}
-        <div className="relative">
-          <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-          <select
-            id="admin-user-role-filter"
-            value={roleFilter}
-            onChange={(e) => { setRoleFilter(e.target.value); }}
-            className="bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white outline-none focus:border-indigo-500 transition cursor-pointer appearance-none min-w-[130px]"
-          >
-            <option value="" className="bg-slate-900">All Roles</option>
-            <option value="admin" className="bg-slate-900">Admins</option>
-            <option value="trainer" className="bg-slate-900">Trainers</option>
-            <option value="user" className="bg-slate-900">Users</option>
-          </select>
-        </div>
+        {/* Role Filter - Hidden for trainers */}
+        {!isTrainer && (
+          <div className="relative">
+            <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+            <select
+              id="admin-user-role-filter"
+              value={roleFilter}
+              onChange={(e) => { setRoleFilter(e.target.value); }}
+              className="bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white outline-none focus:border-indigo-500 transition cursor-pointer appearance-none min-w-[130px]"
+            >
+              <option value="" className="bg-slate-900">All Roles</option>
+              <option value="admin" className="bg-slate-900">Admins</option>
+              <option value="trainer" className="bg-slate-900">Trainers</option>
+              <option value="user" className="bg-slate-900">Users</option>
+            </select>
+          </div>
+        )}
 
-        <div className="flex items-center gap-3">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleAddNew}
-            className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-orange-400 hover:from-indigo-600 hover:to-orange-500 text-white font-medium px-4 py-2 rounded-lg transition"
-          >
-            <Plus size={18} />
-            Add
-          </motion.button>
-        </div>
+        {!isTrainer && (
+          <div className="flex items-center gap-3">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleAddNew}
+              className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-orange-400 hover:from-indigo-600 hover:to-orange-500 text-white font-medium px-4 py-2 rounded-lg transition"
+            >
+              <Plus size={18} />
+              Add
+            </motion.button>
+          </div>
+        )}
       </div>
 
       <UserListView

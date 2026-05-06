@@ -15,6 +15,7 @@ export const API_ENDPOINTS = {
   ADMIN: {
     USERS: "/api/admin/user_roles/users",
     TRAINER_LIST: "/api/admin/user_roles/trainer_list",
+    TRAINER_USERS: "/api/admin/user_roles/trainer-users",
     GET_USERS_DROPDOWN: "/api/admin/user_roles/get-users-dropdown",
     USER_CREATE: "/api/admin/user_roles/users/create",
     USER_EDIT: (id: string) => `/api/admin/user_roles/users/${id}/edit`,
@@ -48,6 +49,7 @@ export const API_ENDPOINTS = {
     REVENUE_PAYMENTS_PRODUCTS: "/api/admin/revenue/payments/products",
     REVENUE_CONTACT_INQUIRIES: "/api/admin/revenue/contact-inquiries",
     DASHBOARD_STATS: "/api/admin/dashboard/stats",
+    TRAINER_STATS: (userId: string) => `/api/admin/dashboard/trainer_stats/${userId}`,
     DASHBOARD_RECENT_INQUIRIES: "/api/admin/dashboard/recent-inquiries",
     DASHBOARD_RECENT_PAYMENTS: "/api/admin/dashboard/recent-payments",
     DASHBOARD_RECENT_SUBSCRIPTIONS: "/api/admin/dashboard/recent-subscription-history",
