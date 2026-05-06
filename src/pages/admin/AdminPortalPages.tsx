@@ -10,11 +10,12 @@ import {
   StatusBadge,
   Table,
 } from "../../components/ui/primitives";
-import { Edit2, Search, Trash2 } from "lucide-react";
+import { Edit2, Search, Trash2, FileText, Printer } from "lucide-react";
 import AdminDashboard from "../AdminDashboard";
 import { AdminSettings } from "../../components/admin/settings/AdminSettings";
 import { UserManagement } from "../../components/admin/UserManagement";
 import { AttendanceManagement } from "../../components/admin/AttendanceManagement";
+import { InvoiceModal } from "../../components/admin/users/InvoiceModal";
 import { adminSubscriptionService, type PlanResponse } from "../../services/adminSubscriptionService";
 import { adminProductService, type ProductResponse } from "../../services/adminProductService";
 import { adminPaymentService, type PaymentResponse, type PaymentMethod, type PaymentStatus, type PurchaseType } from "../../services/adminPaymentService";
@@ -91,6 +92,8 @@ export function AdminPortalPages({ page }: { page: string }) {
     has_previous: false
   });
   const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<PaymentResponse | null>(null);
 
   // Settings page state
   const [settingsTab, setSettingsTab] = useState<"app" | "pages" | "design">(
@@ -1065,6 +1068,16 @@ export function AdminPortalPages({ page }: { page: string }) {
                   </button>
                   <button
                     onClick={() => {
+                      setSelectedPayment(p);
+                      setInvoiceModalOpen(true);
+                    }}
+                    className="text-emerald-400 hover:text-emerald-300"
+                    title="Download Invoice"
+                  >
+                    <Printer size={16} />
+                  </button>
+                  <button
+                    onClick={() => {
                       setDeleteTarget({ type: "payment", id: p.id });
                       setDeleteModalOpen(true);
                     }}
@@ -1301,5 +1314,18 @@ export function AdminPortalPages({ page }: { page: string }) {
     );
   }
 
-  return <EmptyState title="Loading" hint="Select a section to continue." />;
+  return (
+    <>
+      <EmptyState title="Loading" hint="Select a section to continue." />
+      <InvoiceModal
+        isOpen={invoiceModalOpen}
+        onClose={() => {
+          setInvoiceModalOpen(false);
+          setSelectedPayment(null);
+        }}
+        payment={selectedPayment}
+      />
+    </>
+  );
+}
 }
