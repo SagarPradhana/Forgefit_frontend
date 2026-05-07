@@ -250,13 +250,14 @@ export function AdminPortalPages({ page }: { page: string }) {
       return;
     }
     const doc = new jsPDF();
-    doc.text("Payments Report", 14, 15);
+    doc.text(`Payments Report-${new Date().toLocaleDateString()}`, 14, 15);
     autoTable(doc, {
       startY: 20,
-      head: [["Username", "Name", "Date", "Amount", "Method", "Type", "Status"]],
+      head: [["Username", "Name", "Mobile", "Date", "Amount", "Method", "Type", "Status"]],
       body: fetchedPayments.map((p) => [
         p.username || "System",
         (p as any).name || p.Name || "N/A",
+        p.mobile || "N/A",
         new Date(p.payment_date * 1000).toLocaleDateString(),
         p.amount.toString(),
         p.payment_method,
@@ -264,7 +265,7 @@ export function AdminPortalPages({ page }: { page: string }) {
         p.status
       ]),
     });
-    doc.save("Payments_Report.pdf");
+    doc.save(`Payments_Report-${new Date().toLocaleDateString()}.pdf`);
   };
 
   const handleExportExcel = () => {
@@ -275,6 +276,7 @@ export function AdminPortalPages({ page }: { page: string }) {
     const data = fetchedPayments.map((p) => ({
       Username: p.username || "System",
       Name: (p as any).name || p.Name || "N/A",
+      Mobile: p.mobile || "N/A",
       Date: new Date(p.payment_date * 1000).toLocaleDateString(),
       Amount: p.amount,
       Method: p.payment_method,
@@ -284,7 +286,7 @@ export function AdminPortalPages({ page }: { page: string }) {
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Payments");
-    XLSX.writeFile(workbook, "Payments_Report.xlsx");
+    XLSX.writeFile(workbook, `Payments_Report-${new Date().toLocaleDateString()}.xlsx`);
   };
 
 

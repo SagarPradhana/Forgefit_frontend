@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Modal, GlowButton, CommonButton } from "../../ui/primitives";
-import { Printer, Download, X } from "lucide-react";
+import { Download, X } from "lucide-react";
 import { useGymStore } from "../../../store/gymStore";
 import { toast } from "../../../store/toastStore";
 import { jsPDF } from "jspdf";
@@ -39,90 +39,35 @@ export function InvoiceModal({ isOpen, onClose, payment }: InvoiceModalProps) {
   const logo = publicAppConfig?.logo_image_path || "/logo.png";
   const currency = publicAppConfig?.currency || "₹";
 
-  const handlePrint = () => {
-    const printContent = printRef.current;
-    if (!printContent) return;
-
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Invoice - ${payment?.id}</title>
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #1a1a2e; }
-          .invoice-container { max-width: 800px; margin: 0 auto; border: 2px solid #e0e0e0; border-radius: 12px; overflow: hidden; }
-          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; display: flex; justify-content: space-between; align-items: center; }
-          .brand-section { display: flex; align-items: center; gap: 16px; }
-          .logo { width: 60px; height: 60px; border-radius: 12px; background: white; object-fit: contain; padding: 4px; }
-          .brand-name { font-size: 28px; font-weight: 800; }
-          .invoice-title { font-size: 14px; opacity: 0.9; letter-spacing: 2px; text-transform: uppercase; }
-          .invoice-details { padding: 40px; }
-          .section-title { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 40px; }
-          .info-box { background: #f8f9fa; padding: 20px; border-radius: 8px; }
-          .info-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-          .info-value { font-size: 15px; font-weight: 600; color: #1a1a2e; }
-          .items-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
-          .items-table th { background: #667eea; color: white; padding: 14px 16px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
-          .items-table td { padding: 16px; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
-          .items-table tr:last-child td { border-bottom: none; }
-          .amount-section { background: #f8f9fa; padding: 24px; border-radius: 8px; display: flex; justify-content: flex-end; }
-          .amount-row { display: flex; justify-content: space-between; width: 200px; gap: 40px; }
-          .amount-label { font-size: 14px; color: #666; }
-          .amount-value { font-size: 18px; font-weight: 700; color: #1a1a2e; }
-          .total-row { border-top: 2px solid #ddd; padding-top: 12px; margin-top: 12px; }
-          .total-row .amount-value { font-size: 22px; color: #667eea; }
-          .footer { padding: 24px 40px; background: #f8f9fa; border-top: 1px solid #e0e0e0; }
-          .footer-text { font-size: 12px; color: #999; text-align: center; }
-          .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
-          .status-paid { background: #d4edda; color: #155724; }
-          .status-pending { background: #fff3cd; color: #856404; }
-          .status-failed { background: #f8d7da; color: #721c24; }
-          @media print { body { padding: 0; } }
-        </style>
-      </head>
-      <body>
-        ${printContent.innerHTML}
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
-  };
-
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
     if (!printRef.current || !payment) return;
-    
+
     setIsDownloading(true);
     console.log("Starting PDF generation for payment:", payment.id);
-    
+
     try {
       // Use toCanvas for more reliability in some browsers
-      const canvas = await htmlToImage.toCanvas(printRef.current, { 
+      const canvas = await htmlToImage.toCanvas(printRef.current, {
         backgroundColor: '#ffffff',
         pixelRatio: 2,
         cacheBust: true,
       });
-      
+
       console.log("Canvas generated, creating PDF...");
       const dataUrl = canvas.toDataURL('image/png');
-      
+
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
         format: "a4"
       });
-      
+
       const imgProps = pdf.getImageProperties(dataUrl);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      
+
       pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Invoice_${payment.id.slice(0, 8)}.pdf`);
       console.log("PDF saved successfully");
@@ -140,7 +85,7 @@ export function InvoiceModal({ isOpen, onClose, payment }: InvoiceModalProps) {
   const getPurchaseDescription = () => {
     const details = payment.purchase_details;
     if (!details) return payment.purchase_type;
-    
+
     if (payment.purchase_type === "subscription" || payment.purchase_type === "renewal") {
       return details.plan_name || details.name || "Gym Subscription";
     }
@@ -160,8 +105,8 @@ export function InvoiceModal({ isOpen, onClose, payment }: InvoiceModalProps) {
           <CommonButton variant="ghost" onClick={onClose}>
             <X size={18} />
           </CommonButton>
-          <GlowButton 
-            onClick={handleDownload} 
+          <GlowButton
+            onClick={handleDownload}
             disabled={isDownloading}
             className="flex items-center gap-2 bg-indigo-600 disabled:opacity-50"
           >
@@ -171,10 +116,6 @@ export function InvoiceModal({ isOpen, onClose, payment }: InvoiceModalProps) {
               <Download size={18} />
             )}
             {isDownloading ? "Generating..." : "Download PDF"}
-          </GlowButton>
-          <GlowButton onClick={handlePrint} className="flex items-center gap-2">
-            <Printer size={18} />
-            Print
           </GlowButton>
         </div>
       }
@@ -208,24 +149,23 @@ export function InvoiceModal({ isOpen, onClose, payment }: InvoiceModalProps) {
               <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Invoice Details</p>
               <p className="text-sm text-slate-900">
                 <span className="text-slate-500">Date: </span>
-                {new Date(payment.payment_date * 1000).toLocaleDateString("en-IN", { 
-                  day: "numeric", 
-                  month: "short", 
-                  year: "numeric" 
+                {new Date(payment.payment_date * 1000).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric"
                 })}
               </p>
               <p className="text-sm text-slate-900">
                 <span className="text-slate-500">Time: </span>
-                {new Date(payment.payment_date * 1000).toLocaleTimeString("en-IN", { 
-                  hour: "2-digit", 
-                  minute: "2-digit" 
+                {new Date(payment.payment_date * 1000).toLocaleTimeString("en-IN", {
+                  hour: "2-digit",
+                  minute: "2-digit"
                 })}
               </p>
-              <span className={`inline-block mt-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
-                payment.status === "paid" ? "bg-emerald-100 text-emerald-700" :
+              <span className={`inline-block mt-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase ${payment.status === "paid" ? "bg-emerald-100 text-emerald-700" :
                 payment.status === "pending" ? "bg-amber-100 text-amber-700" :
-                "bg-red-100 text-red-700"
-              }`}>
+                  "bg-red-100 text-red-700"
+                }`}>
                 {payment.status}
               </span>
             </div>
@@ -270,9 +210,9 @@ export function InvoiceModal({ isOpen, onClose, payment }: InvoiceModalProps) {
               Thank you for your payment • {brandName}
             </p>
             <p className="text-[9px] text-slate-300 mt-1">
-              Generated on {new Date().toLocaleDateString("en-IN", { 
-                day: "numeric", 
-                month: "long", 
+              Generated on {new Date().toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "long",
                 year: "numeric",
                 hour: "2-digit",
                 minute: "2-digit"
