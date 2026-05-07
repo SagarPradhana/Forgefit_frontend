@@ -7,9 +7,10 @@ import { appInquiryService } from "../../services/appInquiryService";
 import { useGymStore } from "../../store/gymStore";
 
 export function ContactPage() {
-  const { publicAppConfig, publicLocations, publicBanners } = useGymStore();
+  const { publicAppConfig, publicLocations, publicBanners, isLoadingPublicData } = useGymStore();
 
   const mainLocation = publicLocations[0];
+  const brandName = isLoadingPublicData ? "" : (publicAppConfig?.brand_name || "ForgeFit");
   const contactPhone = mainLocation?.phone || publicAppConfig?.phone || "+91 98765 43210";
   const contactEmail = mainLocation?.email || publicAppConfig?.email || "support@forgefit.com";
   const contactAddress = mainLocation?.address || "Ahmedabad, Gujarat, India";

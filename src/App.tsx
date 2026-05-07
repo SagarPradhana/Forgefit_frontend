@@ -117,7 +117,7 @@ function RoleRoute({ role }: { role: "admin" | "user" | "trainer" }) {
   );
 }
 
-const LoadingScreen = ({ brandName, logoPath }: { brandName: string; logoPath?: string }) => (
+const LoadingScreen = () => (
   <motion.div
     initial={{ opacity: 1 }}
     exit={{ opacity: 0 }}
@@ -125,30 +125,17 @@ const LoadingScreen = ({ brandName, logoPath }: { brandName: string; logoPath?: 
     className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950"
   >
     <motion.div
-      initial={{ scale: 0.5, opacity: 0 }}
+      initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
       className="flex flex-col items-center gap-6"
     >
-      <div className="flex items-center gap-4">
-        <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/20 bg-gradient-to-br from-indigo-500 via-purple-500 to-orange-400 shadow-glow overflow-hidden">
-          {logoPath ? (
-            <img src={logoPath} alt={brandName} className="h-full w-full object-cover" />
-          ) : (
-            <Dumbbell size={32} className="text-white" />
-          )}
-        </span>
-        <h1 className="text-4xl font-bold tracking-tighter text-white">
-          {brandName}
-        </h1>
+      <div className="relative flex h-20 w-20 items-center justify-center">
+        <div className="absolute inset-0 animate-spin rounded-full border-[3px] border-indigo-500/20 border-t-indigo-500"></div>
+        <div className="absolute inset-2 animate-spin rounded-full border-[3px] border-orange-500/20 border-t-orange-500" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
       </div>
-      <div className="h-1 w-48 overflow-hidden rounded-full bg-white/10">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: "100%" }}
-          transition={{ duration: 1, ease: "easeInOut" }}
-          className="h-full bg-orange-500"
-        />
+      <div className="text-xs font-black tracking-[0.3em] text-white/50 uppercase animate-pulse">
+        Initializing...
       </div>
     </motion.div>
   </motion.div>
@@ -213,7 +200,7 @@ export default function App() {
   return (
     <div className="relative min-h-screen bg-slate-950 overflow-x-hidden">
       <AnimatePresence>
-        {isLoading && <LoadingScreen key="loader" brandName={brandName} logoPath={publicAppConfig?.logo_image_path} />}
+        {isLoading && <LoadingScreen key="loader" />}
       </AnimatePresence>
       <div className="cursor-glow" />
       <ToastContainer />

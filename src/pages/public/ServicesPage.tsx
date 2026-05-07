@@ -16,8 +16,8 @@ import { useGymStore } from "../../store/gymStore";
 import { Link } from "react-router-dom";
 
 export function ServicesPage() {
-  const { publicAppConfig, publicFaqs, publicBanners, publicLocations } = useGymStore();
-  const brandName = publicAppConfig?.brand_name || "ForgeFit";
+  const { publicAppConfig, publicFaqs, publicBanners, publicLocations, isLoadingPublicData } = useGymStore();
+  const brandName = isLoadingPublicData ? "" : (publicAppConfig?.brand_name || "ForgeFit");
   const mainLocation = publicLocations[0];
   const servicesBanner = publicBanners["about"]?.[0]?.file_path || publicBanners["inspirational"]?.[0]?.file_path || publicBanners["common"]?.[0]?.file_path;
   const displayFaqs = publicFaqs;

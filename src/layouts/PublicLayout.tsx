@@ -205,14 +205,14 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                 )}
               </motion.span>
               <span className="text-sm sm:text-lg font-semibold tracking-tight">
-                {publicAppConfig?.brand_name || (
+                {isLoadingPublicData ? "" : (publicAppConfig?.brand_name || (
                   <>
                     Forge
                     <span className="bg-gradient-to-r from-indigo-300 via-white to-orange-300 bg-clip-text text-transparent">
                       Fit
                     </span>
                   </>
-                )}
+                ))}
               </span>
             </Link>
 

@@ -75,7 +75,7 @@ export function SignInPage() {
   };
 
   const { publicAppConfig, isLoadingPublicData } = useGymStore();
-  const brandName = publicAppConfig?.brand_name || "ForgeFit";
+  const brandName = isLoadingPublicData ? "" : (publicAppConfig?.brand_name || "ForgeFit");
 
   return (
     <PublicLayout>

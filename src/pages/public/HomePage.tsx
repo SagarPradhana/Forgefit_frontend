@@ -20,7 +20,7 @@ export function HomePage() {
   const featuredPlans = publicSubscriptionPlans.slice(0, 3);
   const featuredTestimonials = publicTestimonials.filter((item) => item.note?.trim() || item.name?.trim()).slice(0, 3);
 
-  const brandName = publicAppConfig?.brand_name || "ForgeFit";
+  const brandName = isLoadingPublicData ? "" : (publicAppConfig?.brand_name || "ForgeFit");
   return (
     <PublicLayout>
       <div className="relative isolate min-h-screen bg-[#0a0a0c]">

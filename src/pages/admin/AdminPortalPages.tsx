@@ -9,8 +9,9 @@ import {
   Skeleton,
   StatusBadge,
   Table,
+  CommonButton,
 } from "../../components/ui/primitives";
-import { Edit2, Search, Trash2, FileText, Printer } from "lucide-react";
+import { Edit2, Search, Trash2, FileText, Printer, Download } from "lucide-react";
 import AdminDashboard from "../AdminDashboard";
 import { AdminSettings } from "../../components/admin/settings/AdminSettings";
 import { UserManagement } from "../../components/admin/UserManagement";
@@ -24,13 +25,17 @@ import { InquiryCenter } from "../../components/admin/InquiryCenter";
 import { RevenueOps } from "../../components/admin/RevenueOps";
 import { PlansManagement } from "../../components/admin/PlansManagement";
 import { useAuthStore } from "../../store/authStore";
-import { Bell, Users, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { ChangePassword } from "../../components/admin/ChangePassword";
 import { API_ENDPOINTS } from "../../utils/url";
 import { api } from "../../utils/httputils";
 import { useTranslation } from "react-i18next";
 import { DateRangeFilter, type DateRange } from "../../components/ui/DateRangeFilter";
-import { getCurrencySymbol, formatCurrency } from "../../utils/currency";
+import { getCurrencySymbol } from "../../utils/currency";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
+
 
 const getDurationLabel = (months: number) => {
   if (!months) return "1 Month";
@@ -45,12 +50,6 @@ export function AdminPortalPages({ page }: { page: string }) {
   const { t } = useTranslation();
   const {
     appConfig,
-    publicPageConfig,
-    designThemes,
-    currentDesignTheme,
-    updateAppConfig,
-    updatePublicPageConfig,
-    setDesignTheme,
   } = useGymStore();
 
   const currency = appConfig?.currency || "INR";
@@ -95,10 +94,6 @@ export function AdminPortalPages({ page }: { page: string }) {
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<PaymentResponse | null>(null);
 
-  // Settings page state
-  const [settingsTab, setSettingsTab] = useState<"app" | "pages" | "design">(
-    "app",
-  );
   const [configForm, setConfigForm] = useState({
     name: appConfig.name,
     logo: appConfig.logo,
@@ -114,7 +109,6 @@ export function AdminPortalPages({ page }: { page: string }) {
     instagram: appConfig.socialLinks.instagram,
     twitter: appConfig.socialLinks.twitter,
   });
-  const [publicConfigForm, setPublicConfigForm] = useState(publicPageConfig);
 
   // Modal states
   const [planModalOpen, setPlanModalOpen] = useState(false);
@@ -224,7 +218,7 @@ export function AdminPortalPages({ page }: { page: string }) {
       const pageSize = Number(paymentsMeta.page_size) || 10;
       const offset = (currentPage - 1) * pageSize;
       const fromDate = paymentDateRange.from_date;
-      const toDate   = paymentDateRange.to_date;
+      const toDate = paymentDateRange.to_date;
 
       const res = await adminPaymentService.getPayments({
         count: pageSize,
@@ -250,6 +244,50 @@ export function AdminPortalPages({ page }: { page: string }) {
     }
   };
 
+  const handleExportPDF = () => {
+    if (!fetchedPayments.length) {
+      toast.error("No data to export");
+      return;
+    }
+    const doc = new jsPDF();
+    doc.text("Payments Report", 14, 15);
+    autoTable(doc, {
+      startY: 20,
+      head: [["Username", "Name", "Date", "Amount", "Method", "Type", "Status"]],
+      body: fetchedPayments.map((p) => [
+        p.username || "System",
+        (p as any).name || p.Name || "N/A",
+        new Date(p.payment_date * 1000).toLocaleDateString(),
+        p.amount.toString(),
+        p.payment_method,
+        p.purchase_type,
+        p.status
+      ]),
+    });
+    doc.save("Payments_Report.pdf");
+  };
+
+  const handleExportExcel = () => {
+    if (!fetchedPayments.length) {
+      toast.error("No data to export");
+      return;
+    }
+    const data = fetchedPayments.map((p) => ({
+      Username: p.username || "System",
+      Name: (p as any).name || p.Name || "N/A",
+      Date: new Date(p.payment_date * 1000).toLocaleDateString(),
+      Amount: p.amount,
+      Method: p.payment_method,
+      Type: p.purchase_type,
+      Status: p.status
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Payments");
+    XLSX.writeFile(workbook, "Payments_Report.xlsx");
+  };
+
+
   const fetchDropdownUsers = async () => {
     try {
       const res = await api.get(API_ENDPOINTS.ADMIN.GET_USERS_DROPDOWN) as any;
@@ -265,13 +303,21 @@ export function AdminPortalPages({ page }: { page: string }) {
     if (page === "subscriptions") {
       const timer = setTimeout(() => fetchPlans(1), 300);
       return () => clearTimeout(timer);
-    } else if (page === "products") {
+    }
+  }, [page, planSearch]);
+
+  useEffect(() => {
+    if (page === "products") {
       const timer = setTimeout(() => fetchProducts(1), 300);
       return () => clearTimeout(timer);
-    } else if (page === "payments") {
+    }
+  }, [page, productSearch, productCategory]);
+
+  useEffect(() => {
+    if (page === "payments") {
       fetchPayments(1);
     }
-  }, [page, paymentStatus, paymentDateRange, planSearch, productSearch, productCategory]);
+  }, [page, paymentStatus, paymentDateRange]);
 
   // Sync config form with store changes
   useEffect(() => {
@@ -625,11 +671,11 @@ export function AdminPortalPages({ page }: { page: string }) {
           <GlassCard className="p-6 space-y-5">
             <h3 className="text-sm font-black text-white uppercase tracking-widest border-b border-white/10 pb-3">Contact Information</h3>
             {[
-              { label: "Full Name",   value: user.name },
-              { label: "Username",    value: user.username },
-              { label: "Email",       value: user.email },
-              { label: "Mobile",      value: user.mobile },
-              { label: "Address",     value: user.address },
+              { label: "Full Name", value: user.name },
+              { label: "Username", value: user.username },
+              { label: "Email", value: user.email },
+              { label: "Mobile", value: user.mobile },
+              { label: "Address", value: user.address },
               { label: "Joining Date", value: fmtDate(user.joining_date) },
             ].map(({ label, value }) => (
               <div key={label} className="grid gap-0.5">
@@ -1019,6 +1065,14 @@ export function AdminPortalPages({ page }: { page: string }) {
             defaultPreset="monthly"
             onChange={(r) => setPaymentDateRange(r)}
           />
+          <div className="flex gap-2 ml-auto">
+            <CommonButton variant="ghost" onClick={handleExportPDF} className="flex items-center gap-2">
+              <FileText size={16} /> PDF
+            </CommonButton>
+            <CommonButton variant="ghost" onClick={handleExportExcel} className="flex items-center gap-2 text-emerald-400">
+              <Download size={16} /> Excel
+            </CommonButton>
+          </div>
         </div>
 
         {paymentsLoading ? (
@@ -1285,6 +1339,14 @@ export function AdminPortalPages({ page }: { page: string }) {
             <p className="text-xs">This action will remove the record from the financial ledger. This cannot be undone.</p>
           </div>
         </Modal>
+        <InvoiceModal
+          isOpen={invoiceModalOpen}
+          onClose={() => {
+            setInvoiceModalOpen(false);
+            setSelectedPayment(null);
+          }}
+          payment={selectedPayment}
+        />
       </GlassCard>
     );
   }
@@ -1315,16 +1377,6 @@ export function AdminPortalPages({ page }: { page: string }) {
   }
 
   return (
-    <>
-      <EmptyState title="Loading" hint="Select a section to continue." />
-      <InvoiceModal
-        isOpen={invoiceModalOpen}
-        onClose={() => {
-          setInvoiceModalOpen(false);
-          setSelectedPayment(null);
-        }}
-        payment={selectedPayment}
-      />
-    </>
+    <EmptyState title="Loading" hint="Select a section to continue." />
   );
 }

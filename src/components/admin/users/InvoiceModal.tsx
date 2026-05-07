@@ -1,14 +1,18 @@
-import { useRef } from "react";
-import { Modal, GlowButton } from "../../ui/primitives";
+import { useRef, useState } from "react";
+import { Modal, GlowButton, CommonButton } from "../../ui/primitives";
 import { Printer, Download, X } from "lucide-react";
 import { useGymStore } from "../../../store/gymStore";
+import { toast } from "../../../store/toastStore";
+import { jsPDF } from "jspdf";
+import * as htmlToImage from "html-to-image";
 
 interface PaymentInvoice {
   id: string;
   user_id: string;
   username: string;
   member_id: string;
-  name: string;
+  name?: string;
+  Name?: string;
   mobile: string;
   email?: string;
   amount: number;
@@ -32,7 +36,7 @@ export function InvoiceModal({ isOpen, onClose, payment }: InvoiceModalProps) {
   const printRef = useRef<HTMLDivElement>(null);
 
   const brandName = publicAppConfig?.brand_name || "ForgeFit";
-  const logo = publicAppConfig?.logo || "/logo.png";
+  const logo = publicAppConfig?.logo_image_path || "/logo.png";
   const currency = publicAppConfig?.currency || "₹";
 
   const handlePrint = () => {
@@ -90,8 +94,45 @@ export function InvoiceModal({ isOpen, onClose, payment }: InvoiceModalProps) {
     printWindow.print();
   };
 
-  const handleDownload = () => {
-    handlePrint();
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!printRef.current || !payment) return;
+    
+    setIsDownloading(true);
+    console.log("Starting PDF generation for payment:", payment.id);
+    
+    try {
+      // Use toCanvas for more reliability in some browsers
+      const canvas = await htmlToImage.toCanvas(printRef.current, { 
+        backgroundColor: '#ffffff',
+        pixelRatio: 2,
+        cacheBust: true,
+      });
+      
+      console.log("Canvas generated, creating PDF...");
+      const dataUrl = canvas.toDataURL('image/png');
+      
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+      });
+      
+      const imgProps = pdf.getImageProperties(dataUrl);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Invoice_${payment.id.slice(0, 8)}.pdf`);
+      console.log("PDF saved successfully");
+      toast.success("Invoice downloaded successfully");
+    } catch (err) {
+      console.error("Failed to generate PDF:", err);
+      toast.error("Failed to generate PDF. Try the Print option.");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   if (!payment) return null;
@@ -116,12 +157,24 @@ export function InvoiceModal({ isOpen, onClose, payment }: InvoiceModalProps) {
       title="Payment Invoice"
       footer={
         <div className="flex gap-3">
-          <GlowButton variant="ghost" onClick={onClose}>
+          <CommonButton variant="ghost" onClick={onClose}>
             <X size={18} />
+          </CommonButton>
+          <GlowButton 
+            onClick={handleDownload} 
+            disabled={isDownloading}
+            className="flex items-center gap-2 bg-indigo-600 disabled:opacity-50"
+          >
+            {isDownloading ? (
+              <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Download size={18} />
+            )}
+            {isDownloading ? "Generating..." : "Download PDF"}
           </GlowButton>
           <GlowButton onClick={handlePrint} className="flex items-center gap-2">
             <Printer size={18} />
-            Print Invoice
+            Print
           </GlowButton>
         </div>
       }
@@ -147,7 +200,7 @@ export function InvoiceModal({ isOpen, onClose, payment }: InvoiceModalProps) {
           <div className="grid grid-cols-2 gap-6 mb-8">
             <div className="bg-slate-50 p-4 rounded-xl">
               <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Billed To</p>
-              <p className="font-bold text-slate-900">{payment.name || "N/A"}</p>
+              <p className="font-bold text-slate-900">{payment.name || payment.Name || "N/A"}</p>
               <p className="text-xs text-slate-500">#{payment.member_id || payment.username || "N/A"}</p>
               <p className="text-xs text-slate-500">{payment.mobile}</p>
             </div>

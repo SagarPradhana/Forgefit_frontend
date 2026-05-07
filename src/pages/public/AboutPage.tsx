@@ -42,7 +42,7 @@ import { NoDataFound } from "../../components/ui/NoDataFound";
 
 export function AboutPage() {
   const { publicAppConfig, publicBanners, publicLocations, isLoadingPublicData } = useGymStore();
-  const brandName = publicAppConfig?.brand_name || "ForgeFit";
+  const brandName = isLoadingPublicData ? "" : (publicAppConfig?.brand_name || "ForgeFit");
   const mainLocation = publicLocations[0];
   const aboutBanners = publicBanners["about"] || [];
   const trainerBanners = publicBanners["trainers"] || [];

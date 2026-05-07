@@ -9,7 +9,7 @@ import { NoDataFound } from "../../components/ui/NoDataFound";
 
 export function TestimonialsPage() {
   const { publicAppConfig, publicTestimonials, publicBanners, isLoadingPublicData } = useGymStore();
-  const brandName = publicAppConfig?.brand_name || "ForgeFit";
+  const brandName = isLoadingPublicData ? "" : (publicAppConfig?.brand_name || "ForgeFit");
 
   const displayTestimonials = publicTestimonials.length > 0
     ? publicTestimonials.map((t) => ({
