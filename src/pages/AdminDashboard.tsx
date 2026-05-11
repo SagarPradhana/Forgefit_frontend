@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 import {
-  Users, CreditCard, UserPlus, RefreshCw, IndianRupee, Calendar,
-  ShoppingBag, Mail, Bell, CheckCircle, XCircle, Activity,
+  Users, CreditCard, UserPlus, RefreshCw, IndianRupee,
+  ShoppingBag, Mail, Bell, Activity,
   ChevronRight, TrendingUp, Clock, Camera,
 } from "lucide-react";
 import { GlassCard, SectionTitle } from "../components/ui/primitives";
@@ -45,8 +45,8 @@ function Badge({ v }: { v: string }) {
     ["paid", "success", "completed", "active"].includes(val)
       ? "bg-emerald-500/20 text-emerald-400"
       : ["failed", "pending", "inactive"].includes(val)
-      ? "bg-red-500/20 text-red-400"
-      : "bg-indigo-500/20 text-indigo-300";
+        ? "bg-red-500/20 text-red-400"
+        : "bg-indigo-500/20 text-indigo-300";
   return <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${cls}`}>{v || "—"}</span>;
 }
 
@@ -90,7 +90,7 @@ function SectionHeader({ title, sub, onRedirect }: { title: string; sub?: string
         </h3>
       </div>
       {onRedirect && (
-        <button 
+        <button
           onClick={onRedirect}
           className="group flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-indigo-500/20 hover:border-indigo-500/30 hover:text-indigo-400 transition-all text-[10px] font-black uppercase tracking-widest text-slate-400"
           title={`Go to ${title}`}
@@ -137,18 +137,18 @@ export default function AdminDashboard() {
 
   // Global date range (for most sections) — default: This Month with proper dates
   const [dateRange, setDateRange] = useState<DateRange>(() => {
-    const fromUnix = toUnix(new Date(monthRange.from), false);
-    const toUnixVal = toUnix(new Date(monthRange.to), true);
+    const fromUnix = toUnix(monthRange.from, false);
+    const toUnixVal = toUnix(monthRange.to, true);
     return { label: "This Month", from_date: fromUnix, to_date: toUnixVal };
   });
 
   // Attendance date range (default today)
   const [attRange, setAttRange] = useState<DateRange>(() => {
     const todayStr = today();
-    return { 
-      label: "Today", 
-      from_date: toUnix(new Date(todayStr), false),
-      to_date: toUnix(new Date(todayStr), true)
+    return {
+      label: "Today",
+      from_date: toUnix(todayStr, false),
+      to_date: toUnix(todayStr, true)
     };
   });
 
@@ -185,7 +185,7 @@ export default function AdminDashboard() {
   const dateParams = useCallback((range: DateRange) => {
     const p = new URLSearchParams();
     if (range.from_date) p.set("from_date", String(range.from_date));
-    if (range.to_date)   p.set("to_date",   String(range.to_date));
+    if (range.to_date) p.set("to_date", String(range.to_date));
     return p;
   }, []);
 
@@ -247,7 +247,7 @@ export default function AdminDashboard() {
     try {
       const p = new URLSearchParams();
       if (attRange.from_date) p.set("from_date", String(attRange.from_date));
-      if (attRange.to_date)   p.set("to_date",   String(attRange.to_date));
+      if (attRange.to_date) p.set("to_date", String(attRange.to_date));
       const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_ATTENDANCE}?${p}`);
       if (res?.data) setAttendance(res.data);
     } catch (e) { console.error(e); } finally { setLoad("attendance", false); }
@@ -266,7 +266,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const from = dateRange.from_date;
     const to = dateRange.to_date;
-    
+
     // Build params with dates
     const p = new URLSearchParams();
     if (from) p.set("from_date", String(from));
@@ -282,7 +282,7 @@ export default function AdminDashboard() {
       setLoad("products", true);
       setLoad("attendance", true);
       setLoad("revenue", true);
-      
+
       try {
         const [statsRes, inqRes, payRes, subRes, prodRes, attRes, revRes] = await Promise.all([
           api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_STATS}?${paramsStr}`),
@@ -293,7 +293,7 @@ export default function AdminDashboard() {
           api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_ATTENDANCE}?from_date=${attRange.from_date}&to_date=${attRange.to_date}`),
           api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_MONTHLY_REVENUE}?months=${revenueMonths}`)
         ]);
-        
+
         if (statsRes?.code === 200) setStats({ total_users: statsRes.total_users, total_trainers: statsRes.total_trainers, total_admins: statsRes.total_admins, total_members: statsRes.total_members, total_active_subscriptions: statsRes.total_active_subscriptions, total_expired_subscriptions: statsRes.total_expired_subscriptions, new_registrations: statsRes.new_registrations, upcoming_renewals: statsRes.upcoming_renewals, total_revenue: statsRes.total_revenue });
         if (inqRes?.data) setInquiries(inqRes.data);
         if (payRes?.data) setPayments(payRes.data);
@@ -302,16 +302,16 @@ export default function AdminDashboard() {
         if (attRes?.data) setAttendance(attRes.data);
         if (revRes?.data) setMonthlyRevenue(revRes.data);
       } catch (e) { console.error(e); }
-      finally { 
+      finally {
         setLoad("stats", false); setLoad("inquiries", false); setLoad("payments", false);
         setLoad("subscriptions", false); setLoad("products", false); setLoad("attendance", false); setLoad("revenue", false);
       }
     };
-    
+
     fetchData();
   }, []);
 
-  const refreshAll = () => { 
+  const refreshAll = () => {
     fetchStats();
     fetchInquiries();
     fetchPayments();
@@ -326,9 +326,9 @@ export default function AdminDashboard() {
   // ── Inquiry tab data ──
   const inqData: any[] = inquiries?.[inqTab] ?? [];
   const inqTabs = [
-    { id: "subscriptions",     label: "Subscriptions",    icon: CreditCard },
-    { id: "product_orders",    label: "Product Orders",   icon: ShoppingBag },
-    { id: "contact_inquiries", label: "Contact",          icon: Mail },
+    { id: "subscriptions", label: "Subscriptions", icon: CreditCard },
+    { id: "product_orders", label: "Product Orders", icon: ShoppingBag },
+    { id: "contact_inquiries", label: "Contact", icon: Mail },
   ] as const;
 
   return (
@@ -376,7 +376,7 @@ export default function AdminDashboard() {
               <p className="text-3xl font-black text-white tracking-tighter">{stats?.total_users ?? "—"}</p>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-3 gap-2 mt-auto relative z-10">
             <button onClick={() => navigate('/admin/users?role=admin')} className="py-2 px-1 rounded-xl bg-white/5 hover:bg-indigo-500/20 hover:border-indigo-500/30 border border-transparent transition-all flex flex-col items-center group/btn">
               <span className="text-lg font-black text-indigo-400 group-hover/btn:scale-110 transition-transform">{stats?.total_admins ?? 0}</span>
@@ -392,10 +392,10 @@ export default function AdminDashboard() {
             </button>
           </div>
         </motion.div>
-        <StatCard label="Active Subscriptions" value={stats?.total_active_subscriptions} icon={CreditCard}  color="bg-violet-500"  delay={0.05} subLabel="Expired" subValue={stats?.total_expired_subscriptions} />
-        <StatCard label="New Registrations"    value={stats?.new_registrations}           icon={UserPlus}    color="bg-sky-500"     delay={0.1}  />
-        <StatCard label="Upcoming Renewals"    value={stats?.upcoming_renewals}           icon={Clock}       color="bg-amber-500"   delay={0.15} />
-        <StatCard label="Total Revenue"        value={stats?.total_revenue != null ? fmt(stats.total_revenue) : "—"} icon={IndianRupee} color="bg-emerald-500" delay={0.2} />
+        <StatCard label="Active Subscriptions" value={stats?.total_active_subscriptions} icon={CreditCard} color="bg-violet-500" delay={0.05} subLabel="Expired" subValue={stats?.total_expired_subscriptions} />
+        <StatCard label="New Registrations" value={stats?.new_registrations} icon={UserPlus} color="bg-sky-500" delay={0.1} />
+        <StatCard label="Upcoming Renewals" value={stats?.upcoming_renewals} icon={Clock} color="bg-amber-500" delay={0.15} />
+        <StatCard label="Total Revenue" value={stats?.total_revenue != null ? fmt(stats.total_revenue) : "—"} icon={IndianRupee} color="bg-emerald-500" delay={0.2} />
       </div>
 
       {/* ── [ROW 2] Recent Inquiries (4 tabs) ── */}
@@ -405,8 +405,7 @@ export default function AdminDashboard() {
           <div className="flex gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
             {inqTabs.map(({ id, label, icon: Icon }) => (
               <button key={id} onClick={() => setInqTab(id as any)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                  inqTab === id ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${inqTab === id ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
                 <Icon size={12} />{label}
               </button>
             ))}
@@ -532,9 +531,9 @@ export default function AdminDashboard() {
         ) : (
           <div className="grid grid-cols-3 gap-4">
             {[
-              { label: "Total Check-ins", value: attendance?.total_count ?? 0, icon: Users,    color: "text-indigo-400", bg: "bg-indigo-500/10" },
-              { label: "Present Now",     value: attendance?.present_now   ?? 0, icon: Activity, color: "text-emerald-400", bg: "bg-emerald-500/10" },
-              { label: "Checked Out",     value: attendance?.checked_out   ?? 0, icon: TrendingUp, color: "text-amber-400", bg: "bg-amber-500/10" },
+              { label: "Total Check-ins", value: attendance?.total_count ?? 0, icon: Users, color: "text-indigo-400", bg: "bg-indigo-500/10" },
+              { label: "Present Now", value: attendance?.present_now ?? 0, icon: Activity, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+              { label: "Checked Out", value: attendance?.checked_out ?? 0, icon: TrendingUp, color: "text-amber-400", bg: "bg-amber-500/10" },
             ].map(({ label, value, icon: Icon, color, bg }) => (
               <div key={label} className={`rounded-2xl ${bg} border border-white/5 p-5 flex flex-col items-center gap-2 text-center`}>
                 <Icon size={22} className={color} />
@@ -553,8 +552,7 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-2">
             {[3, 6, 12].map((m) => (
               <button key={m} onClick={() => setRevenueMonths(m)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                  revenueMonths === m ? "bg-indigo-500 text-white" : "bg-white/5 text-slate-400 hover:text-white border border-white/10"}`}>
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${revenueMonths === m ? "bg-indigo-500 text-white" : "bg-white/5 text-slate-400 hover:text-white border border-white/10"}`}>
                 {m}M
               </button>
             ))}
@@ -576,8 +574,8 @@ export default function AdminDashboard() {
                 <Tooltip content={<RevTooltip currency={currency} />} />
                 <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700, paddingTop: 12 }} />
                 <Bar dataKey="subscription_revenue" name="Subscriptions" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="product_revenue"      name="Products"      fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="renewal_revenue"      name="Renewals"      fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="product_revenue" name="Products" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="renewal_revenue" name="Renewals" fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

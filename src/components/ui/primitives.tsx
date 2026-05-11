@@ -363,18 +363,61 @@ export function InputField({
   onChange,
   className,
   type = "text",
+  isPhone = false,
+  isNumeric = false,
 }: {
   placeholder?: string;
   value?: string;
   onChange?: (value: string) => void;
   className?: string;
   type?: string;
+  isPhone?: boolean;
+  isNumeric?: boolean;
 }) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isPhone && !isNumeric) return;
+
+    // Allow: Backspace, Tab, Enter, Escape, Delete
+    if (["Backspace", "Tab", "Enter", "Escape", "Delete"].includes(e.key)) {
+      return;
+    }
+    // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+Z
+    if ((e.ctrlKey || e.metaKey) && ["a", "c", "v", "x", "z"].includes(e.key.toLowerCase())) {
+      return;
+    }
+    // Allow: home, end, left, right, up, down
+    if (["Home", "End", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+      return;
+    }
+    // Prevent if not a number
+    if (!/^\d$/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    if (!isPhone && !isNumeric) return;
+    const pasteData = e.clipboardData.getData("text");
+    if (/[^\d]/.test(pasteData)) {
+      e.preventDefault();
+      const sanitized = pasteData.replace(/[^\d]/g, "");
+      onChange?.(sanitized);
+    }
+  };
+
   return (
     <input
       type={type}
       value={value}
-      onChange={(e) => onChange?.(e.target.value)}
+      onChange={(e) => {
+        let val = e.target.value;
+        if (isPhone || isNumeric) {
+          val = val.replace(/[^\d]/g, "");
+        }
+        onChange?.(val);
+      }}
+      onKeyDown={handleKeyDown}
+      onPaste={handlePaste}
       placeholder={placeholder}
       className={clsx(
         "w-full rounded-xl border px-3 py-2 text-sm outline-none transition-all duration-300 placeholder:text-slate-500 focus:border-indigo-300/50 focus:shadow-[0_0_20px_rgba(99,102,241,0.2)]",

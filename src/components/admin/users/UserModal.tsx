@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Loader2, Eye, EyeOff } from "lucide-react";
 import type { UserFormData, ModalStep, UserRole } from "./types";
+import { handlePhoneKeyDown, handlePhonePaste, sanitizePhone } from "../../../utils/formUtils";
 
 interface UserModalProps {
   isOpen: boolean;
@@ -138,7 +139,9 @@ export const UserModal = ({
                     type="tel"
                     placeholder="Mobile number"
                     value={formData.mobile}
-                    onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, mobile: sanitizePhone(e.target.value) })}
+                    onKeyDown={handlePhoneKeyDown}
+                    onPaste={handlePhonePaste}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
                   />
                 </div>
@@ -322,7 +325,9 @@ export const UserModal = ({
                       <input
                         type="tel"
                         value={formData.metadata.emergency_contact}
-                        onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, emergency_contact: e.target.value } })}
+                        onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, emergency_contact: sanitizePhone(e.target.value) } })}
+                        onKeyDown={handlePhoneKeyDown}
+                        onPaste={handlePhonePaste}
                         className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs"
                       />
                     </div>

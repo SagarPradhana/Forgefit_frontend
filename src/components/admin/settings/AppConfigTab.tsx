@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { GlowButton } from "../../ui/primitives";
 import { toast } from "../../../store/toastStore";
 import { adminAppConfigService, type AppConfigData } from "../../../services/adminAppConfigService";
+import { handlePhoneKeyDown, handlePhonePaste, sanitizePhone } from "../../../utils/formUtils";
 
 const formatHoursToTime = (hours: number): string => {
   if (!hours || isNaN(hours)) return "00:00";
@@ -287,7 +288,9 @@ export function AppConfigTab() {
             <input
               className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
               value={config.phone || ""}
-              onChange={(e) => setConfig({ ...config, phone: e.target.value })}
+              onChange={(e) => setConfig({ ...config, phone: sanitizePhone(e.target.value) })}
+              onKeyDown={handlePhoneKeyDown}
+              onPaste={handlePhonePaste}
             />
           </div>
           <div>
@@ -295,7 +298,9 @@ export function AppConfigTab() {
             <input
               className="w-full rounded bg-white/10 p-2 text-white border border-white/10"
               value={config.whatsapp || ""}
-              onChange={(e) => setConfig({ ...config, whatsapp: e.target.value })}
+              onChange={(e) => setConfig({ ...config, whatsapp: sanitizePhone(e.target.value) })}
+              onKeyDown={handlePhoneKeyDown}
+              onPaste={handlePhonePaste}
             />
           </div>
           <div>

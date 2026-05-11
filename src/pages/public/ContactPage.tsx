@@ -3,6 +3,7 @@ import { useState } from "react";
 import { PublicLayout } from "../../layouts/PublicLayout";
 import { Phone, Mail, MapPin } from "lucide-react";
 import { appInquiryService } from "../../services/appInquiryService";
+import { handlePhoneKeyDown, handlePhonePaste, sanitizePhone } from "../../utils/formUtils";
 
 import { useGymStore } from "../../store/gymStore";
 

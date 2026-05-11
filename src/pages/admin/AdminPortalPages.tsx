@@ -35,6 +35,7 @@ import { getCurrencySymbol } from "../../utils/currency";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { handlePhoneKeyDown, handlePhonePaste, sanitizePhone } from "../../utils/formUtils";
 
 
 const getDurationLabel = (months: number) => {
@@ -536,11 +537,13 @@ export function AdminPortalPages({ page }: { page: string }) {
                 <input
                   className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
                   placeholder="0"
-                  type="number"
+                  type="text"
                   value={planForm.actual_price}
                   onChange={(e) =>
-                    setPlanForm({ ...planForm, actual_price: e.target.value })
+                    setPlanForm({ ...planForm, actual_price: sanitizePhone(e.target.value) })
                   }
+                  onKeyDown={handlePhoneKeyDown}
+                  onPaste={handlePhonePaste}
                 />
               </div>
               <div className="space-y-1">
@@ -548,11 +551,13 @@ export function AdminPortalPages({ page }: { page: string }) {
                 <input
                   className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
                   placeholder="0"
-                  type="number"
+                  type="text"
                   value={planForm.price}
                   onChange={(e) =>
-                    setPlanForm({ ...planForm, price: e.target.value })
+                    setPlanForm({ ...planForm, price: sanitizePhone(e.target.value) })
                   }
+                  onKeyDown={handlePhoneKeyDown}
+                  onPaste={handlePhonePaste}
                 />
               </div>
               <div className="space-y-1">
@@ -925,10 +930,12 @@ export function AdminPortalPages({ page }: { page: string }) {
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Price ({currencySymbol})</label>
                 <input
                   className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
-                  type="number"
+                  type="text"
                   placeholder="0.00"
                   value={productForm.price}
-                  onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+                  onChange={(e) => setProductForm({ ...productForm, price: sanitizePhone(e.target.value) })}
+                  onKeyDown={handlePhoneKeyDown}
+                  onPaste={handlePhonePaste}
                 />
               </div>
             </div>
@@ -938,10 +945,12 @@ export function AdminPortalPages({ page }: { page: string }) {
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Stock Level</label>
                 <input
                   className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
-                  type="number"
+                  type="text"
                   placeholder="0"
                   value={productForm.stock}
-                  onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
+                  onChange={(e) => setProductForm({ ...productForm, stock: sanitizePhone(e.target.value) })}
+                  onKeyDown={handlePhoneKeyDown}
+                  onPaste={handlePhonePaste}
                 />
               </div>
               <div className="space-y-1">
@@ -1224,9 +1233,11 @@ export function AdminPortalPages({ page }: { page: string }) {
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Transaction Value ({currencySymbol})</label>
                 <input
                   className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
-                  type="number"
+                  type="text"
                   value={paymentForm.amount}
-                  onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, amount: sanitizePhone(e.target.value) })}
+                  onKeyDown={handlePhoneKeyDown}
+                  onPaste={handlePhonePaste}
                 />
               </div>
               <div className="space-y-1">
