@@ -84,6 +84,19 @@ export function AttendanceManagement() {
   }, [searchQuery, dateRange]);
 
   const handleSave = async () => {
+    if (!form.user_id) {
+      toast.error("Please select a member");
+      return;
+    }
+    if (!form.date) {
+      toast.error("Please select a date");
+      return;
+    }
+    if (!form.checkIn) {
+      toast.error("Please select a check-in time");
+      return;
+    }
+
     try {
       // Use epoch conversion
       const dateTimestamp = Math.floor(new Date(form.date).getTime() / 1000);
@@ -260,9 +273,17 @@ export function AttendanceManagement() {
               exit={{ opacity: 0, x: 20 }}
             >
               <Table
-                headers={["ID", "Check In", "Check Out", "Status", "Actions"]}
+                headers={["Name, mobile/email", "Check In", "Check Out", "Status", "Actions"]}
                 rows={records.map(r => [
-                  <span key={r.id} className="text-xs font-mono text-slate-500">{r.id.substring(0, 8)}...</span>,
+                  <div key={r.id} className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-indigo-500/30 to-violet-500/30 flex items-center justify-center text-xs font-black text-white shrink-0">
+                      {r.user_name?.[0]?.toUpperCase() || "?"}
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs font-bold text-white">{r.user_name || "—"}</p>
+                      <p className="text-[10px] text-slate-500">{(r as any).email || (r as any).mobile || "—"}</p>
+                    </div>
+                  </div>,
                   new Date(r.check_in * 1000).toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' }),
                   r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' }) : "Active",
                   <span key={`${r.id}-status`} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${r.status?.toLowerCase() === "present" ? "bg-emerald-500/20 text-emerald-400" :
@@ -291,7 +312,7 @@ export function AttendanceManagement() {
         footer={
           <div className="flex gap-3">
             <CommonButton variant="ghost" onClick={() => setModalOpen(false)}>Cancel</CommonButton>
-            <CommonButton onClick={handleSave}>Save Record</CommonButton>
+            <CommonButton onClick={handleSave}>Submit</CommonButton>
           </div>
         }
       >
@@ -364,8 +385,8 @@ export function AttendanceManagement() {
         title="Delete Record?"
         footer={
           <div className="flex gap-2">
-            <CommonButton variant="ghost" onClick={() => setDeleteModalOpen(false)}>No, Keep it</CommonButton>
-            <CommonButton variant="danger" onClick={handleDelete}>Yes, Delete Log</CommonButton>
+            <CommonButton variant="ghost" onClick={() => setDeleteModalOpen(false)}>Cancel</CommonButton>
+            <CommonButton variant="danger" onClick={handleDelete}>Submit</CommonButton>
           </div>
         }
       >

@@ -364,7 +364,7 @@ export function AppConfigTab() {
 
       <div className="flex justify-end">
         <GlowButton onClick={handleSave} disabled={loading}>
-          {loading ? "Saving..." : "Save App Config"}
+          {loading ? "Saving..." : "Submit"}
         </GlowButton>
       </div>
     </div>

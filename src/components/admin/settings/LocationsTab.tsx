@@ -185,7 +185,7 @@ export function LocationsTab() {
       )}
 
       {/* Location Modal */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editId ? "Edit Location" : "Add Location"} footer={<><GlowButton className="bg-gray-600" onClick={() => setModalOpen(false)}>Cancel</GlowButton><GlowButton onClick={handleSave}>Save</GlowButton></>}>
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editId ? "Edit Location" : "Add Location"} footer={<><GlowButton className="bg-gray-600" onClick={() => setModalOpen(false)}>Cancel</GlowButton><GlowButton onClick={handleSave}>Submit</GlowButton></>}>
         <div className="space-y-4 pt-2 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
           <div className="space-y-1">
             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Address</label>
@@ -256,7 +256,7 @@ export function LocationsTab() {
         </div>
       </Modal>
 
-      <Modal open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Delete Location" footer={<><GlowButton className="bg-gray-600" onClick={() => setDeleteModalOpen(false)}>Cancel</GlowButton><GlowButton onClick={handleDelete}>Delete</GlowButton></>}>
+      <Modal open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Delete Location" footer={<><GlowButton className="bg-gray-600" onClick={() => setDeleteModalOpen(false)}>Cancel</GlowButton><GlowButton onClick={handleDelete}>Submit</GlowButton></>}>
         <div className="text-center py-4">
           <p className="text-white font-bold mb-2">Are you sure you want to delete this location?</p>
           <p className="text-slate-400 text-xs">This action cannot be undone.</p>

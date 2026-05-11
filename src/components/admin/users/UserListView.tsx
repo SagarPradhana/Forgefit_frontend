@@ -216,8 +216,8 @@ export const UserListView = ({
             <table className="w-full text-sm border-separate border-spacing-0">
               <thead>
                 <tr className="bg-white/10 border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
-                  <th className="text-left py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">{t("memberIdentity") || "Member Identity"}</th>
-                  <th className="text-left py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">{t("contactMatrix") || "Contact Matrix"}</th>
+                  <th className="text-left py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">Name</th>
+                  <th className="text-left py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">Mobile/Email</th>
                   <th className="text-center py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">{t("authStatus") || "Auth Status"}</th>
                   <th className="text-right py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">{t("operations") || "Operations"}</th>
                 </tr>

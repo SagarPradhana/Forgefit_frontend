@@ -168,7 +168,7 @@ export const PasswordResetModal = ({
                 disabled={loading}
                 className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-widest text-[10px] border border-indigo-400 transition-all shadow-xl shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? <Loader2 size={16} className="animate-spin" /> : "Reset"}
+                {loading ? <Loader2 size={16} className="animate-spin" /> : "Submit"}
               </button>
             </div>
           </form>

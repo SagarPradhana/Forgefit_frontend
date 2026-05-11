@@ -171,6 +171,18 @@ export function PlansManagement() {
 
   // === EVENT HANDLERS ===
   const handleSaveWorkout = async () => {
+    if (!workoutForm.name.trim()) {
+      toast.error("Protocol name is required");
+      return;
+    }
+    if (!workoutForm.focus.trim()) {
+      toast.error("Objective focus is required");
+      return;
+    }
+    if (workoutForm.workout_details.length === 0) {
+      toast.error("Please add at least one training day");
+      return;
+    }
     try {
       if (editWorkoutId) {
         await adminPlansService.updateWorkoutPlan(editWorkoutId, workoutForm);
@@ -187,6 +199,18 @@ export function PlansManagement() {
   };
 
   const handleSaveDiet = async () => {
+    if (!dietForm.name.trim()) {
+      toast.error("Protocol name is required");
+      return;
+    }
+    if (!dietForm.focus.trim()) {
+      toast.error("Focus area is required");
+      return;
+    }
+    if (dietForm.diet_details.length === 0) {
+      toast.error("Please add at least one nutritional day");
+      return;
+    }
     try {
       if (editDietId) {
         await adminPlansService.updateDietPlan(editDietId, dietForm);
@@ -626,7 +650,7 @@ export function PlansManagement() {
             >
               Cancel
             </button>
-            <GlowButton onClick={handleSaveWorkout} className="px-8">Save Protocol</GlowButton>
+            <GlowButton onClick={handleSaveWorkout} className="px-8">Submit</GlowButton>
           </div>
         }
       >
@@ -838,13 +862,7 @@ export function PlansManagement() {
         title={editDietId ? "Edit Diet Protocol" : "Create Diet Protocol"}
         footer={
           <div className="flex gap-3 justify-end w-full">
-            <button
-              className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-all"
-              onClick={() => setDietModalOpen(false)}
-            >
-              Cancel
-            </button>
-            <GlowButton onClick={handleSaveDiet} className="from-emerald-600 to-teal-500 px-8">Activate Protocol</GlowButton>
+            <GlowButton onClick={handleSaveDiet} className="px-8">Submit</GlowButton>
           </div>
         }
       >
@@ -1011,13 +1029,7 @@ export function PlansManagement() {
         title={`Authorize ${assignType === "workout" ? "Workout" : "Diet"} Assignment`}
         footer={
           <div className="flex gap-3 justify-end w-full">
-            <button
-              className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-all"
-              onClick={() => setAssignModalOpen(false)}
-            >
-              Cancel
-            </button>
-            <GlowButton onClick={handleAssign} className="px-8">Confirm Assignment</GlowButton>
+            <GlowButton onClick={handleAssign} className="px-8">Submit</GlowButton>
           </div>
         }
       >
@@ -1074,16 +1086,10 @@ export function PlansManagement() {
         footer={
           <div className="flex gap-3 justify-end w-full">
             <button
-              className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-all"
-              onClick={() => setDeleteModalOpen(false)}
-            >
-              Cancel
-            </button>
-            <button
               className="px-8 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-black uppercase tracking-widest transition-all shadow-lg shadow-red-500/20 active:scale-95"
               onClick={handleDelete}
             >
-              Confirm Removal
+              Submit
             </button>
           </div>
         }

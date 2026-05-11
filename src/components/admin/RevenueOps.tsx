@@ -375,7 +375,7 @@ export function RevenueOps() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-white/10 bg-white/5">
-                {["Member", "Amount", "Method", "Type", "Status", "Date"].map((h) => (
+                {["Name, mobile/email", "Amount", "Method", "Type", "Status", "Date"].map((h) => (
                   <th key={h} className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{h}</th>
                 ))}
               </tr>
@@ -439,7 +439,7 @@ export function RevenueOps() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-white/10 bg-white/5">
-                {["Contact", "Subject", "Message", "Status", "Date"].map((h) => (
+                {["Name, mobile/email", "Subject", "Message", "Status", "Date"].map((h) => (
                   <th key={h} className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{h}</th>
                 ))}
               </tr>

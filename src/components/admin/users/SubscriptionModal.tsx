@@ -219,20 +219,30 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
                   </p>
                 </div>
 
-                <motion.button
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  disabled={subscribing || !selectedPlanId}
-                  onClick={handleSubscribe}
-                  className="w-full bg-gradient-to-r from-indigo-500 to-indigo-700 py-6 rounded-[1.5rem] font-black uppercase text-xs italic tracking-[0.2em] text-white shadow-2xl shadow-indigo-500/40 disabled:opacity-50 flex items-center justify-center gap-4 group transition-all"
-                >
-                  {subscribing ? <Loader2 className="animate-spin" size={24} /> : (
-                    <>
-                      <CheckCircle2 size={24} className="group-hover:rotate-12 transition-transform" /> 
-                      Apply Plan
-                    </>
-                  )}
-                </motion.button>
+                <div className="flex gap-4">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={onClose}
+                    className="flex-1 px-6 py-5 rounded-[1.5rem] bg-white/5 border border-white/10 font-black uppercase text-[10px] tracking-widest text-slate-400 hover:bg-white/10 hover:text-white transition-all"
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    disabled={subscribing || !selectedPlanId}
+                    onClick={handleSubscribe}
+                    className="flex-[2] bg-gradient-to-r from-indigo-500 to-indigo-700 py-5 rounded-[1.5rem] font-black uppercase text-[10px] italic tracking-[0.2em] text-white shadow-2xl shadow-indigo-500/40 disabled:opacity-50 flex items-center justify-center gap-4 group transition-all"
+                  >
+                    {subscribing ? <Loader2 className="animate-spin" size={24} /> : (
+                      <>
+                        <CheckCircle2 size={24} className="group-hover:rotate-12 transition-transform" /> 
+                        Submit
+                      </>
+                    )}
+                  </motion.button>
+                </div>
               </div>
             </div>
           ) : (

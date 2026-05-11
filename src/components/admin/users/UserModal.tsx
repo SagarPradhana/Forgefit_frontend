@@ -437,7 +437,7 @@ export const UserModal = ({
                 <Loader2 size={20} className="animate-spin" />
               ) : (
                 <>
-                  {isFinalStep ? (editingUserId ? "Update User" : "Finish & Create") : "Next"}
+                  {isFinalStep ? "Submit" : "Next"}
                   {!isFinalStep && <ChevronRight size={20} />}
                 </>
               )}

@@ -137,12 +137,10 @@ export function InquiryCenter() {
           <>
             {activeTab === "subscriptions" && (
               <Table
-                headers={["User", "Requested Plan", "Inquiry Date", "Status", "Actions"]}
+                headers={["Name", "Mobile/Email", "Requested Plan", "Inquiry Date", "Status", "Actions"]}
                 rows={data.map((r) => [
-                  <div key={r.id}>
-                    <p className="font-bold text-white uppercase tracking-tighter text-xs">{r.user_name || r.name || r.username || '—'}</p>
-                    <p className="text-[10px] text-slate-500">{r.user_mobile || r.email || '—'}</p>
-                  </div>,
+                  <p key={`${r.id}-name`} className="font-bold text-white uppercase tracking-tighter text-xs">{r.user_name || r.name || r.username || '—'}</p>,
+                  <p key={`${r.id}-contact`} className="text-[10px] text-slate-500">{r.user_mobile || r.email || '—'}</p>,
                   <div key={`${r.id}-plan`}>
                     <p className="text-indigo-400 font-black italic text-xs">
                       {r.plan_name || r.subscription_plan_name || r.subscription_name || `Plan: ${r.subscription_plan_id?.substring(0, 8)}…`}
@@ -161,12 +159,10 @@ export function InquiryCenter() {
 
             {activeTab === "products" && (
               <Table
-                headers={["User", "Product", "Qty", "Date", "Status", "Actions"]}
+                headers={["Name", "Mobile/Email", "Product", "Qty", "Date", "Status", "Actions"]}
                 rows={data.map((r) => [
-                  <div key={r.id}>
-                    <p className="font-bold text-white uppercase tracking-tighter text-xs">{r.user_name || r.name || r.username || '—'}</p>
-                    <p className="text-[10px] text-slate-500">{r.user_mobile || r.email || '—'}</p>
-                  </div>,
+                  <p key={`${r.id}-name`} className="font-bold text-white uppercase tracking-tighter text-xs">{r.user_name || r.name || r.username || '—'}</p>,
+                  <p key={`${r.id}-contact`} className="text-[10px] text-slate-500">{r.user_mobile || r.email || '—'}</p>,
                   <div key={`${r.id}-prod`}>
                     <p className="text-orange-400 font-black text-xs">
                       {r.product_name || r.product?.name || `Product: ${r.product_id?.substring(0, 8)}…`}
@@ -186,12 +182,10 @@ export function InquiryCenter() {
 
             {activeTab === "contacts" && (
               <Table
-                headers={["Liaison", "Subject & Objective", "Contact Signals", "Date", "Status", "Actions"]}
+                headers={["Name", "Mobile/Email", "Subject & Objective", "Date", "Status", "Actions"]}
                 rows={data.map((r) => [
-                  <div key={r.id}>
-                    <p className="font-bold text-white uppercase tracking-tighter text-xs">{r.name}</p>
-                    <p className="text-[10px] text-slate-500">{r.email}</p>
-                  </div>,
+                  <p key={`${r.id}-name`} className="font-bold text-white uppercase tracking-tighter text-xs">{r.name}</p>,
+                  <p key={`${r.id}-contact`} className="text-[10px] text-slate-500">{r.phone || r.email}</p>,
                   <div key={`${r.id}-msg`} className="max-w-xs">
                     <p className="text-xs font-bold text-indigo-400 uppercase tracking-tight">{r.subject || 'Strategic Inquiry'}</p>
                     <p className="text-[10px] text-slate-400 line-clamp-2 italic">"{r.message}"</p>
@@ -212,12 +206,10 @@ export function InquiryCenter() {
 
             {activeTab === "expiry" && (
               <Table
-                headers={["Member", "Timeline", "Status", "Actions"]}
+                headers={["Name", "Mobile/Email", "Timeline", "Status", "Actions"]}
                 rows={data.map((r) => [
-                  <div key={r.id}>
-                    <p className="font-bold text-white uppercase tracking-tight italic">{r.user_name || r.name || r.username || '—'}</p>
-                    <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">{r.user_mobile || r.mobile || r.email || 'Member Protocol'}</p>
-                  </div>,
+                  <p key={`${r.id}-name`} className="font-bold text-white uppercase tracking-tight italic">{r.user_name || r.name || r.username || '—'}</p>,
+                  <p key={`${r.id}-contact`} className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">{r.user_mobile || r.mobile || r.email || '—'}</p>,
                   <div key={`${r.id}-cycle`} className="flex flex-col">
                     <span className="text-xl font-black text-orange-400 italic leading-none">{r.remaining_days} DAYS</span>
                     <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1">Timeline to Termination</span>

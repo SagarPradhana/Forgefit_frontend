@@ -472,7 +472,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                 className="bg-gray-600"
                 onClick={() => setPlanModalOpen(false)}
               >
-                Abort
+                Cancel
               </GlowButton>
               <GlowButton
                 onClick={async () => {
@@ -513,7 +513,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                   }
                 }}
               >
-                Execute
+                Submit
               </GlowButton>
             </>
           }
@@ -602,7 +602,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                 className="bg-gray-600"
                 onClick={() => setDeleteModalOpen(false)}
               >
-                Abort
+                Cancel
               </GlowButton>
               <GlowButton
                 onClick={async () => {
@@ -619,7 +619,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                   setDeleteTarget(null);
                 }}
               >
-                Confirm Delete
+                Submit
               </GlowButton>
             </>
           }
@@ -855,7 +855,7 @@ export function AdminPortalPages({ page }: { page: string }) {
           title={editProduct ? "Modify Inventory" : "Register Product"}
           footer={
             <>
-              <GlowButton className="bg-gray-600" onClick={() => setProductModalOpen(false)}>Abort</GlowButton>
+              <GlowButton className="bg-gray-600" onClick={() => setProductModalOpen(false)}>Cancel</GlowButton>
               <GlowButton
                 onClick={async () => {
                   // Validate product form
@@ -889,14 +889,13 @@ export function AdminPortalPages({ page }: { page: string }) {
                       await adminProductService.createProduct(payload);
                       toast.success("New product deployed to catalog");
                     }
-                    fetchProducts(1);
                     setProductModalOpen(false);
                   } catch (err) {
                     toast.error("Inventory sync failed");
                   }
                 }}
               >
-                Sync Inventory
+                Submit
               </GlowButton>
             </>
           }
@@ -993,7 +992,7 @@ export function AdminPortalPages({ page }: { page: string }) {
           title="Archive Protocol"
           footer={
             <>
-              <GlowButton className="bg-gray-600" onClick={() => setDeleteModalOpen(false)}>Abort</GlowButton>
+              <GlowButton className="bg-gray-600" onClick={() => setDeleteModalOpen(false)}>Cancel</GlowButton>
               <GlowButton
                 onClick={async () => {
                   if (deleteTarget && deleteTarget.type === "product") {
@@ -1009,7 +1008,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                   setDeleteTarget(null);
                 }}
               >
-                Confirm Termination
+                Submit
               </GlowButton>
             </>
           }
@@ -1095,13 +1094,10 @@ export function AdminPortalPages({ page }: { page: string }) {
         ) : fetchedPayments.length > 0 ? (
           <>
             <Table
-              headers={["Username", "Member", "Timestamp", "Valuation", "Method", "Type", "Status"]}
+              headers={["Name", "Mobile/Email", "Timestamp", "Valuation", "Method", "Type", "Status", "Operations"]}
               rows={fetchedPayments.map((p) => [
-                <span key={`${p.id}-user`} className="text-xs font-bold text-white uppercase tracking-tighter italic">#{p.username || 'System'}</span>,
-                <div key={`${p.id}-member`} className="flex flex-col gap-0.5">
-                  <span className="text-xs font-bold text-slate-200 uppercase tracking-tight">{(p as any).name || p.Name || '--'}</span>
-                  <span className="text-[10px] font-black text-indigo-400 tracking-widest">{p.mobile || '--'}</span>
-                </div>,
+                <span key={`${p.id}-name`} className="text-xs font-bold text-white uppercase tracking-tight italic">{(p as any).name || p.Name || '--'}</span>,
+                <span key={`${p.id}-contact`} className="text-[10px] font-black text-indigo-400 tracking-widest">{p.mobile || '--'}</span>,
                 <span key={`${p.id}-date`} className="text-xs font-medium text-slate-300">
                   {new Date(p.payment_date * 1000).toLocaleDateString()}
                 </span>,
@@ -1189,8 +1185,22 @@ export function AdminPortalPages({ page }: { page: string }) {
           title={editPayment ? "Modify Financial Record" : "Log Strategic Transaction"}
           footer={
             <>
-              <GlowButton className="bg-gray-600" onClick={() => setModalOpen(false)}>Abort</GlowButton>
+              <GlowButton className="bg-gray-600" onClick={() => setModalOpen(false)}>Cancel</GlowButton>
               <GlowButton onClick={async () => {
+                // Validate payment form
+                if (!paymentForm.user_id) {
+                  toast.error("Please select a member");
+                  return;
+                }
+                if (!paymentForm.amount || Number(paymentForm.amount) <= 0) {
+                  toast.error("Transaction amount must be greater than 0");
+                  return;
+                }
+                if (paymentForm.purchase_type === "product" && !paymentForm.purchase_id) {
+                  toast.error("Please select a product");
+                  return;
+                }
+
                 const payload = {
                   ...paymentForm,
                   amount: Number(paymentForm.amount),
@@ -1209,7 +1219,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                 } catch (err) {
                   toast.error("Process failed");
                 }
-              }}>Execute</GlowButton>
+              }}>Submit</GlowButton>
             </>
           }
         >
@@ -1323,7 +1333,7 @@ export function AdminPortalPages({ page }: { page: string }) {
           title="Confirm Registry Purge"
           footer={
             <>
-              <GlowButton className="bg-gray-600" onClick={() => setDeleteModalOpen(false)}>Abort</GlowButton>
+              <GlowButton className="bg-gray-600" onClick={() => setDeleteModalOpen(false)}>Cancel</GlowButton>
               <GlowButton
                 onClick={async () => {
                   if (deleteTarget && deleteTarget.type === "payment") {
@@ -1339,7 +1349,7 @@ export function AdminPortalPages({ page }: { page: string }) {
                   setDeleteTarget(null);
                 }}
               >
-                Confirm Delete
+                Submit
               </GlowButton>
             </>
           }
