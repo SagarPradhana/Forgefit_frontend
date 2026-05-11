@@ -1,6 +1,7 @@
 import { useAuthStore } from "../store/authStore";
 import { toast } from "../store/toastStore";
 import { API_ENDPOINTS } from "./url";
+import { nullifyEmptyStrings } from "./formUtils";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -141,13 +142,13 @@ export const api = {
     return httpFetch(finalUrl, { ...options, method: "GET" });
   },
   post: (url: string, body: any, options?: RequestOptions) =>
-    httpFetch(url, { ...options, method: "POST", body: JSON.stringify(body) }),
+    httpFetch(url, { ...options, method: "POST", body: JSON.stringify(nullifyEmptyStrings(body)) }),
   put: (url: string, body: any, options?: RequestOptions) =>
-    httpFetch(url, { ...options, method: "PUT", body: JSON.stringify(body) }),
+    httpFetch(url, { ...options, method: "PUT", body: JSON.stringify(nullifyEmptyStrings(body)) }),
   delete: (url: string, options?: RequestOptions) =>
     httpFetch(url, { ...options, method: "DELETE" }),
   patch: (url: string, body: any, options?: RequestOptions) =>
-    httpFetch(url, { ...options, method: "PATCH", body: JSON.stringify(body) }),
+    httpFetch(url, { ...options, method: "PATCH", body: JSON.stringify(nullifyEmptyStrings(body)) }),
   upload: (url: string, formData: FormData, options?: RequestOptions) =>
     httpFetch(url, { ...options, method: "POST", body: formData }),
   download: async (url: string, filename: string) => {

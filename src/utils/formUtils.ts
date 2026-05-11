@@ -61,3 +61,32 @@ export const isValidPhone = (phone: string) => {
   const digits = phone.replace(/\D/g, "");
   return digits.length >= 7 && digits.length <= 15;
 };
+
+/**
+ * Recursively replaces empty strings with null in an object/array.
+ * Useful for preparing payloads where optional fields should be null instead of "".
+ */
+export const nullifyEmptyStrings = (obj: any): any => {
+  if (obj === null || obj === undefined || typeof obj !== "object") {
+    return obj === "" ? null : obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(nullifyEmptyStrings);
+  }
+
+  const result: any = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const value = obj[key];
+      if (value === "") {
+        result[key] = null;
+      } else if (typeof value === "object" && value !== null) {
+        result[key] = nullifyEmptyStrings(value);
+      } else {
+        result[key] = value;
+      }
+    }
+  }
+  return result;
+};
