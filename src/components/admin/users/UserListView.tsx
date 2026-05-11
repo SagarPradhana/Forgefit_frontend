@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Edit2, Calendar, ToggleRight, ToggleLeft, Trash2, FileText, Mail, Phone, Users, Loader2, ChevronLeft, ChevronRight, CreditCard, Key, Contact, Clock } from "lucide-react";
+import { Edit2, Calendar, ToggleRight, ToggleLeft, Trash2, FileText, Mail, Phone, Users, Loader2, ChevronLeft, ChevronRight, CreditCard, Key, Contact, Clock, MessageCircle } from "lucide-react";
 import type { ViewType } from "./types";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -24,6 +24,7 @@ interface UserListViewProps {
   onOpenSubscription: (user: any) => void;
   onResetPassword: (user: any) => void;
   onOpenIdCard: (user: any) => void;
+  onSendWhatsAppReminder: (user: any) => void;
   lastUserElementRef: (node: HTMLDivElement) => void;
   portalType?: "admin" | "trainer";
 }
@@ -47,6 +48,7 @@ export const UserListView = ({
   onOpenSubscription,
   onResetPassword,
   onOpenIdCard,
+  onSendWhatsAppReminder,
   lastUserElementRef,
   portalType = "admin",
 }: UserListViewProps) => {
@@ -88,7 +90,6 @@ export const UserListView = ({
                   </div>
                   <div className="min-w-0">
                     <h3 className="truncate text-xs md:text-sm font-black text-white uppercase tracking-tight">{user.name}</h3>
-                    <p className="text-[10px] font-bold text-indigo-400">#{user.member_id || user.username || 'N/A'}</p>
                     <p className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest">{user.role}</p>
                   </div>
                 </div>
@@ -157,6 +158,14 @@ export const UserListView = ({
                     )}
                   </button>
                   <button
+                    onClick={() => onSendWhatsAppReminder(user)}
+                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-green-500/20 text-green-400 border border-white/5 hover:border-green-500/30 transition-all group"
+                    title="Send WhatsApp Reminder"
+                  >
+                    <MessageCircle size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Reminder</span>
+                  </button>
+                  <button
                     onClick={() => onResetPassword(user)}
                     className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-slate-600/20 text-slate-400 border border-white/5 hover:border-slate-500/30 transition-all group"
                     title="Security Override"
@@ -218,7 +227,6 @@ export const UserListView = ({
                 <tr className="bg-white/10 border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
                   <th className="text-left py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">Name</th>
                   <th className="text-left py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">Mobile/Email</th>
-                  <th className="text-center py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">{t("authStatus") || "Auth Status"}</th>
                   <th className="text-right py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">{t("operations") || "Operations"}</th>
                 </tr>
               </thead>
@@ -244,10 +252,7 @@ export const UserListView = ({
                         <div className="min-w-0">
                           <p className="font-black text-white text-base uppercase tracking-tight truncate leading-tight mb-1 group-hover:text-indigo-200 transition-colors">{user.name}</p>
                           <p className="text-[10px] font-black text-indigo-400 mb-1">#{user.member_id || user.username || 'N/A'}</p>
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded-md bg-white/5 text-[9px] text-slate-500 font-bold uppercase tracking-widest border border-white/5 group-hover:text-slate-300 transition-colors">ID: {user.member_id || user.id?.slice(0, 8)}</span>
-                            <span className="text-[9px] font-black text-indigo-400/80 uppercase tracking-tighter italic">{user.role}</span>
-                          </div>
+                          <span className="text-[9px] font-black text-indigo-400/80 uppercase tracking-tighter italic">{user.role}</span>
                         </div>
                       </div>
                     </td>
@@ -266,12 +271,6 @@ export const UserListView = ({
                           <span className="text-xs font-bold tracking-tight">{user.mobile || user.phone || 'NO DATA'}</span>
                         </div>
                       </div>
-                    </td>
-                    <td className="py-5 px-8 text-center">
-                      <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] border transition-all duration-300 shadow-lg ${user.is_active !== false ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-700/20 text-slate-500 border-white/5'}`}>
-                        <div className={`h-1.5 w-1.5 rounded-full ${user.is_active !== false ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-slate-500'}`} />
-                        {user.is_active !== false ? t("activeUsers") : t("markedAbsent")}
-                      </span>
                     </td>
                     <td className="py-5 px-8 text-right">
                       <div className="flex items-center justify-end gap-2 group-hover:scale-105 transition-transform origin-right">
@@ -319,6 +318,13 @@ export const UserListView = ({
                           className={`h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] border border-white/5 transition-all shadow-xl ${user.is_active !== false ? 'text-amber-500 hover:bg-amber-500 hover:text-white shadow-amber-500/20' : 'text-slate-500 hover:bg-slate-500 hover:text-white'}`}
                         >
                           {statusUpdating && loadingStatusId === user.id ? <Loader2 size={16} className="animate-spin" /> : (user.is_active !== false ? <ToggleRight size={20} /> : <ToggleLeft size={20} />)}
+                        </button>
+                        <button
+                          onClick={() => onSendWhatsAppReminder(user)}
+                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-green-500 text-green-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-green-500/40"
+                          title="Send WhatsApp Reminder"
+                        >
+                          <MessageCircle size={16} />
                         </button>
                         <button
                           disabled={deletingRecord && loadingDeleteId === user.id}
