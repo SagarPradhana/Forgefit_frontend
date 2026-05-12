@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Edit2, Calendar, ToggleRight, ToggleLeft, Trash2, FileText, Mail, Phone, Users, Loader2, ChevronLeft, ChevronRight, CreditCard, Key, Contact, Clock } from "lucide-react";
+import { Edit2, Calendar, ToggleRight, ToggleLeft, Trash2, FileText, Mail, Phone, Users, Loader2, ChevronLeft, ChevronRight, CreditCard, Key, Contact, Clock, MessageCircle } from "lucide-react";
 import type { ViewType } from "./types";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -24,6 +24,7 @@ interface UserListViewProps {
   onOpenSubscription: (user: any) => void;
   onResetPassword: (user: any) => void;
   onOpenIdCard: (user: any) => void;
+  onSendWhatsAppReminder: (user: any) => void;
   lastUserElementRef: (node: HTMLDivElement) => void;
   portalType?: "admin" | "trainer";
 }
@@ -47,6 +48,7 @@ export const UserListView = ({
   onOpenSubscription,
   onResetPassword,
   onOpenIdCard,
+  onSendWhatsAppReminder,
   lastUserElementRef,
   portalType = "admin",
 }: UserListViewProps) => {
@@ -59,7 +61,7 @@ export const UserListView = ({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-  
+
   const isCurrentUser = (userId: string) => userId === currentUserId;
   if (viewType === "grid") {
     return (
@@ -113,77 +115,85 @@ export const UserListView = ({
                 <div className="mt-auto pt-4 md:pt-5 border-t border-white/5 grid grid-cols-4 gap-1.5 md:gap-2">
                   {portalType !== "trainer" && (
                     <>
-                  <button
-                    disabled={isCurrentUser(user.id)}
-                    onClick={() => onEdit(user)}
-                    className={`flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 transition-all group ${isCurrentUser(user.id) ? "opacity-40 cursor-not-allowed" : "hover:bg-indigo-500/20 text-indigo-400 hover:border-indigo-500/30"}`}
-                    title={isCurrentUser(user.id) ? "Cannot edit your own profile" : "Edit Member Information"}
-                  >
-                    <Edit2 size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Edit</span>
-                  </button>
-                  <button
-                    onClick={() => onOpenSubscription(user)}
-                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-purple-500/20 text-purple-400 border border-white/5 hover:border-purple-500/30 transition-all group"
-                    title="Manage Membership Plans"
-                  >
-                    <CreditCard size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Plans</span>
-                  </button>
-                  <button
-                    onClick={() => onOpenAttendance(user)}
-                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-white/5 hover:border-emerald-500/30 transition-all group"
-                    title="Attendance Log"
-                  >
-                    <Calendar size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Log</span>
-                  </button>
-                  <button
-                    onClick={() => onOpenDocs(user)}
-                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-amber-500/20 text-amber-400 border border-white/5 hover:border-amber-500/30 transition-all group"
-                    title="Document Vault"
-                  >
-                    <FileText size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Docs</span>
-                  </button>
-                  <button
-                    disabled={statusUpdating && loadingStatusId === user.id}
-                    onClick={() => onToggleStatus(user.id, user.is_active !== false)}
-                    className={`flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 transition-all group ${user.is_active !== false ? 'text-amber-500 hover:bg-amber-500/10' : 'text-slate-500'}`}
-                    title={user.is_active !== false ? "Suspend User" : "Reactivate User"}
-                  >
-                    {statusUpdating && loadingStatusId === user.id ? (
-                      <Loader2 size={isMobile ? 14 : 16} className="animate-spin" />
-                    ) : (
-                      <>
-                        {user.is_active !== false ? <ToggleRight size={isMobile ? 14 : 16} /> : <ToggleLeft size={isMobile ? 14 : 16} />}
-                        <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Status</span>
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => onResetPassword(user)}
-                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-slate-600/20 text-slate-400 border border-white/5 hover:border-slate-500/30 transition-all group"
-                    title="Security Override"
-                  >
-                    <Key size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Reset</span>
-                  </button>
-                  <button
-                    disabled={deletingRecord && loadingDeleteId === user.id}
-                    onClick={() => onDelete(user.id)}
-                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-red-500/20 text-red-500 border border-white/5 hover:border-red-500/30 transition-all group"
-                    title="Permanently Remove"
-                  >
-                    {deletingRecord && loadingDeleteId === user.id ? (
-                      <Loader2 size={isMobile ? 14 : 16} className="animate-spin" />
-                    ) : (
-                      <>
-                        <Trash2 size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
-                        <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Drop</span>
-                      </>
-                    )}
-                  </button>
+                      <button
+                        disabled={isCurrentUser(user.id)}
+                        onClick={() => onEdit(user)}
+                        className={`flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 transition-all group ${isCurrentUser(user.id) ? "opacity-40 cursor-not-allowed" : "hover:bg-indigo-500/20 text-indigo-400 hover:border-indigo-500/30"}`}
+                        title={isCurrentUser(user.id) ? "Cannot edit your own profile" : "Edit Member Information"}
+                      >
+                        <Edit2 size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
+                        <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Edit</span>
+                      </button>
+                      <button
+                        onClick={() => onOpenSubscription(user)}
+                        className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-purple-500/20 text-purple-400 border border-white/5 hover:border-purple-500/30 transition-all group"
+                        title="Manage Membership Plans"
+                      >
+                        <CreditCard size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
+                        <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Plans</span>
+                      </button>
+                      <button
+                        onClick={() => onOpenAttendance(user)}
+                        className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-white/5 hover:border-emerald-500/30 transition-all group"
+                        title="Attendance Log"
+                      >
+                        <Calendar size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
+                        <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Log</span>
+                      </button>
+                      <button
+                        onClick={() => onOpenDocs(user)}
+                        className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-amber-500/20 text-amber-400 border border-white/5 hover:border-amber-500/30 transition-all group"
+                        title="Document Vault"
+                      >
+                        <FileText size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
+                        <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Docs</span>
+                      </button>
+                      <button
+                        disabled={statusUpdating && loadingStatusId === user.id}
+                        onClick={() => onToggleStatus(user.id, user.is_active !== false)}
+                        className={`flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 transition-all group ${user.is_active !== false ? 'text-amber-500 hover:bg-amber-500/10' : 'text-slate-500'}`}
+                        title={user.is_active !== false ? "Suspend User" : "Reactivate User"}
+                      >
+                        {statusUpdating && loadingStatusId === user.id ? (
+                          <Loader2 size={isMobile ? 14 : 16} className="animate-spin" />
+                        ) : (
+                          <>
+                            {user.is_active !== false ? <ToggleRight size={isMobile ? 14 : 16} /> : <ToggleLeft size={isMobile ? 14 : 16} />}
+                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Status</span>
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => onSendWhatsAppReminder(user)}
+                        className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-green-500/20 text-green-400 border border-white/5 hover:border-green-500/30 transition-all group"
+                        title="Send WhatsApp Reminder"
+                      >
+                        <MessageCircle size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
+                        <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Reminder</span>
+                      </button>
+                      <button
+                        onClick={() => onResetPassword(user)}
+                        className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-slate-600/20 text-slate-400 border border-white/5 hover:border-slate-500/30 transition-all group"
+                        title="Security Override"
+                      >
+                        <Key size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
+                        <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Reset</span>
+                      </button>
+                      <button
+                        disabled={deletingRecord && loadingDeleteId === user.id}
+                        onClick={() => onDelete(user.id)}
+                        className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-red-500/20 text-red-500 border border-white/5 hover:border-red-500/30 transition-all group"
+                        title="Permanently Remove"
+                      >
+                        {deletingRecord && loadingDeleteId === user.id ? (
+                          <Loader2 size={isMobile ? 14 : 16} className="animate-spin" />
+                        ) : (
+                          <>
+                            <Trash2 size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
+                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Drop</span>
+                          </>
+                        )}
+                      </button>
                     </>
                   )}
                   <button
@@ -223,7 +233,6 @@ export const UserListView = ({
                 <tr className="bg-white/10 border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
                   <th className="text-left py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">Name</th>
                   <th className="text-left py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">Mobile/Email</th>
-                  <th className="text-center py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">{t("authStatus") || "Auth Status"}</th>
                   <th className="text-right py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">{t("operations") || "Operations"}</th>
                 </tr>
               </thead>
@@ -275,68 +284,69 @@ export const UserListView = ({
                         </div>
                       </div>
                     </td>
-                    <td className="py-5 px-8 text-center">
-                      <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] border transition-all duration-300 shadow-lg ${user.is_active !== false ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-700/20 text-slate-500 border-white/5'}`}>
-                        <div className={`h-1.5 w-1.5 rounded-full ${user.is_active !== false ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-slate-500'}`} />
-                        {user.is_active !== false ? t("activeUsers") : t("markedAbsent")}
-                      </span>
-                    </td>
                     <td className="py-5 px-8 text-right">
                       <div className="flex items-center justify-end gap-2 group-hover:scale-105 transition-transform origin-right">
                         {portalType !== "trainer" && (
-                        <>
-                         <button
-                          disabled={isCurrentUser(user.id)}
-                          onClick={() => onEdit(user)}
-                          className={`h-10 w-10 flex items-center justify-center rounded-xl border transition-all shadow-xl group/btn ${isCurrentUser(user.id) ? "bg-white/5 text-slate-600 border-white/5 cursor-not-allowed" : "bg-white/[0.07] hover:bg-indigo-500 text-indigo-400 hover:text-white border-white/5 hover:shadow-indigo-500/40"}`}
-                          title={isCurrentUser(user.id) ? "Cannot edit your own profile" : "Edit Operational Data"}
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          onClick={() => onOpenSubscription(user)}
-                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-purple-500 text-purple-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-purple-500/40"
-                          title="Membership Protocol"
-                        >
-                          <CreditCard size={16} />
-                        </button>
-                        <button
-                          onClick={() => onOpenAttendance(user)}
-                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-amber-500 text-amber-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-amber-500/40"
-                          title="Attendance History Log"
-                        >
-                          <Clock size={16} />
-                        </button>
-                        <button
-                          onClick={() => onOpenDocs(user)}
-                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-amber-500 text-amber-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-amber-500/40"
-                          title="Identity Vault"
-                        >
-                          <FileText size={16} />
-                        </button>
-                        <button
-                          onClick={() => onResetPassword(user)}
-                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-slate-600 text-slate-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-slate-500/40"
-                          title="Reset Security Protocol"
-                        >
-                          <Key size={16} />
-                        </button>
-                        <button
-                          disabled={statusUpdating && loadingStatusId === user.id}
-                          onClick={() => onToggleStatus(user.id, user.is_active !== false)}
-                          className={`h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] border border-white/5 transition-all shadow-xl ${user.is_active !== false ? 'text-amber-500 hover:bg-amber-500 hover:text-white shadow-amber-500/20' : 'text-slate-500 hover:bg-slate-500 hover:text-white'}`}
-                        >
-                          {statusUpdating && loadingStatusId === user.id ? <Loader2 size={16} className="animate-spin" /> : (user.is_active !== false ? <ToggleRight size={20} /> : <ToggleLeft size={20} />)}
-                        </button>
-                        <button
-                          disabled={deletingRecord && loadingDeleteId === user.id}
-                          onClick={() => onDelete(user.id)}
-                          className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-red-500 text-red-500 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-red-500/40"
-                          title="Terminate Access"
-                        >
-                          {deletingRecord && loadingDeleteId === user.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                        </button>
-                        </>
+                          <>
+                            <button
+                              disabled={isCurrentUser(user.id)}
+                              onClick={() => onEdit(user)}
+                              className={`h-10 w-10 flex items-center justify-center rounded-xl border transition-all shadow-xl group/btn ${isCurrentUser(user.id) ? "bg-white/5 text-slate-600 border-white/5 cursor-not-allowed" : "bg-white/[0.07] hover:bg-indigo-500 text-indigo-400 hover:text-white border-white/5 hover:shadow-indigo-500/40"}`}
+                              title={isCurrentUser(user.id) ? "Cannot edit your own profile" : "Edit Operational Data"}
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => onOpenSubscription(user)}
+                              className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-purple-500 text-purple-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-purple-500/40"
+                              title="Membership Protocol"
+                            >
+                              <CreditCard size={16} />
+                            </button>
+                            <button
+                              onClick={() => onOpenAttendance(user)}
+                              className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-amber-500 text-amber-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-amber-500/40"
+                              title="Attendance History Log"
+                            >
+                              <Clock size={16} />
+                            </button>
+                            <button
+                              onClick={() => onOpenDocs(user)}
+                              className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-amber-500 text-amber-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-amber-500/40"
+                              title="Identity Vault"
+                            >
+                              <FileText size={16} />
+                            </button>
+                            <button
+                              onClick={() => onResetPassword(user)}
+                              className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-slate-600 text-slate-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-slate-500/40"
+                              title="Reset Security Protocol"
+                            >
+                              <Key size={16} />
+                            </button>
+                            <button
+                              disabled={statusUpdating && loadingStatusId === user.id}
+                              onClick={() => onToggleStatus(user.id, user.is_active !== false)}
+                              className={`h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] border border-white/5 transition-all shadow-xl ${user.is_active !== false ? 'text-amber-500 hover:bg-amber-500 hover:text-white shadow-amber-500/20' : 'text-slate-500 hover:bg-slate-500 hover:text-white'}`}
+                            >
+                              {statusUpdating && loadingStatusId === user.id ? <Loader2 size={16} className="animate-spin" /> : (user.is_active !== false ? <ToggleRight size={20} /> : <ToggleLeft size={20} />)}
+                            </button>
+                            <button
+                              onClick={() => onSendWhatsAppReminder(user)}
+                              className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-green-500 text-green-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-green-500/40"
+                              title="Send WhatsApp Reminder"
+                            >
+                              <MessageCircle size={16} />
+                            </button>
+                            <button
+                              disabled={deletingRecord && loadingDeleteId === user.id}
+                              onClick={() => onDelete(user.id)}
+                              className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-red-500 text-red-500 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-red-500/40"
+                              title="Terminate Access"
+                            >
+                              {deletingRecord && loadingDeleteId === user.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                            </button>
+                          </>
                         )}
                         <button
                           onClick={() => onOpenIdCard(user)}
@@ -390,35 +400,35 @@ export const UserListView = ({
                       {user.is_active !== false ? 'Active' : 'Suspended'}
                     </span>
                     {portalType !== "trainer" && (
-                    <div className="flex gap-2">
-                      <button disabled={isCurrentUser(user.id)} onClick={() => onEdit(user)} className={`h-10 w-10 flex items-center justify-center rounded-xl shadow-lg ${isCurrentUser(user.id) ? "bg-slate-500/10 text-slate-600 border border-slate-500/20 cursor-not-allowed" : "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"}`}><Edit2 size={18} /></button>
-                      <button onClick={() => onOpenSubscription(user)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 shadow-lg"><CreditCard size={18} /></button>
-                      <button onClick={() => onOpenAttendance(user)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-lg"><Clock size={18} /></button>
-                    </div>
+                      <div className="flex gap-2">
+                        <button disabled={isCurrentUser(user.id)} onClick={() => onEdit(user)} className={`h-10 w-10 flex items-center justify-center rounded-xl shadow-lg ${isCurrentUser(user.id) ? "bg-slate-500/10 text-slate-600 border border-slate-500/20 cursor-not-allowed" : "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"}`}><Edit2 size={18} /></button>
+                        <button onClick={() => onOpenSubscription(user)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 shadow-lg"><CreditCard size={18} /></button>
+                        <button onClick={() => onOpenAttendance(user)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-lg"><Clock size={18} /></button>
+                      </div>
                     )}
                   </div>
-                  
+
                   <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/5">
                     <div className="flex gap-2">
                       {portalType !== "trainer" && (
-                      <>
-                      <button onClick={() => onOpenDocs(user)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-lg" title="Docs"><FileText size={18} /></button>
-                      <button onClick={() => onResetPassword(user)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-500/10 text-slate-400 border border-slate-500/20 shadow-lg" title="Reset"><Key size={18} /></button>
-                      <button 
-                        disabled={statusUpdating && loadingStatusId === user.id}
-                        onClick={() => onToggleStatus(user.id, user.is_active !== false)}
-                        className={`h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/5 shadow-lg ${user.is_active !== false ? 'text-amber-500' : 'text-slate-500'}`}
-                      >
-                        {statusUpdating && loadingStatusId === user.id ? <Loader2 size={18} className="animate-spin" /> : (user.is_active !== false ? <ToggleRight size={22} /> : <ToggleLeft size={22} />)}
-                      </button>
-                      <button 
-                        disabled={deletingRecord && loadingDeleteId === user.id}
-                        onClick={() => onDelete(user.id)} 
-                        className="h-10 w-10 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 shadow-lg"
-                      >
-                        {statusUpdating && loadingDeleteId === user.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
-                      </button>
-                      </>
+                        <>
+                          <button onClick={() => onOpenDocs(user)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-lg" title="Docs"><FileText size={18} /></button>
+                          <button onClick={() => onResetPassword(user)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-500/10 text-slate-400 border border-slate-500/20 shadow-lg" title="Reset"><Key size={18} /></button>
+                          <button
+                            disabled={statusUpdating && loadingStatusId === user.id}
+                            onClick={() => onToggleStatus(user.id, user.is_active !== false)}
+                            className={`h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/5 shadow-lg ${user.is_active !== false ? 'text-amber-500' : 'text-slate-500'}`}
+                          >
+                            {statusUpdating && loadingStatusId === user.id ? <Loader2 size={18} className="animate-spin" /> : (user.is_active !== false ? <ToggleRight size={22} /> : <ToggleLeft size={22} />)}
+                          </button>
+                          <button
+                            disabled={deletingRecord && loadingDeleteId === user.id}
+                            onClick={() => onDelete(user.id)}
+                            className="h-10 w-10 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 shadow-lg"
+                          >
+                            {statusUpdating && loadingDeleteId === user.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+                          </button>
+                        </>
                       )}
                       <button onClick={() => onOpenIdCard(user)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-lg" title="ID Card"><Contact size={18} /></button>
                     </div>

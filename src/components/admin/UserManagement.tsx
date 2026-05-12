@@ -8,6 +8,7 @@ import { API_ENDPOINTS } from "../../utils/url";
 import { api } from "../../utils/httputils";
 import { toast } from "../../store/toastStore";
 import { useLocation } from "react-router-dom";
+import { openWhatsAppChat } from "../../utils/whatsapp";
 import { useAuthStore } from "../../store/authStore";
 
 // Sub-components
@@ -646,6 +647,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
         onOpenSubscription={(user) => { setSelectedUserForSubscription(user); setSubscriptionModalOpen(true); }}
         onResetPassword={(user) => { setSelectedUserForReset(user); setResetModalOpen(true); }}
         onOpenIdCard={handleOpenIdCard}
+        onSendWhatsAppReminder={openWhatsAppChat}
         lastUserElementRef={lastUserElementRef}
         portalType={portalType}
       />
