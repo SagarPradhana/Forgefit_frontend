@@ -10,6 +10,8 @@ import { toast } from "../../store/toastStore";
 import { useLocation } from "react-router-dom";
 import { openWhatsAppChat } from "../../utils/whatsapp";
 import { useAuthStore } from "../../store/authStore";
+import { useGymStore } from "../../store/gymStore";
+import { adminAppConfigService } from "../../services/adminAppConfigService";
 
 // Sub-components
 import { UserModal } from "./users/UserModal";
@@ -53,6 +55,36 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
   const [showPassword, setShowPassword] = useState(false);
   const [loadingStatusId, setLoadingStatusId] = useState<string | null>(null);
   const [loadingDeleteId, setLoadingDeleteId] = useState<string | null>(null);
+
+  // Admin config for WhatsApp messages
+  const publicAppConfig = useGymStore((s) => s.publicAppConfig);
+  const brandName = publicAppConfig?.brand_name || "Forgefit Gym";
+  const [adminConfig, setAdminConfig] = useState<{
+    website_url?: string;
+    whatsapp?: string;
+    phone?: string;
+    expiry_reminder_days?: number;
+  }>({});
+
+  useEffect(() => {
+    const fetchAdminConfig = async () => {
+      try {
+        const res = await adminAppConfigService.getConfig();
+        const cfg = res?.data?.[0] || res;
+        if (cfg?.expiry_reminder_days !== undefined) {
+          setAdminConfig({
+            website_url: cfg.website_url || "",
+            whatsapp: cfg.whatsapp || "",
+            phone: cfg.phone || "",
+            expiry_reminder_days: cfg.expiry_reminder_days || 7,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch admin config:", err);
+      }
+    };
+    fetchAdminConfig();
+  }, []);
 
   // Role filter state — initialized from URL param
   const [roleFilter, setRoleFilter] = useState<string>(initialRole);
@@ -496,8 +528,33 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
       return;
     }
     const cleanPhone = phone.replace(/\D/g, "");
-    const message = encodeURIComponent(`Hi ${user.name}, this is a reminder from Forgefit Gym regarding your membership. We look forward to seeing you at your next session!`);
-    window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
+    
+    const { plan_status, remaining_days = 0 } = user;
+    const expiryDays = adminConfig.expiry_reminder_days || 7;
+    const websiteUrl = adminConfig.website_url?.replace(/\/$/, "") || "";
+    const contactPhone = adminConfig.whatsapp || adminConfig.phone || "";
+    const subscriptionUrl = websiteUrl ? `${websiteUrl}/user/subscription` : "";
+    const whatsappLink = contactPhone ? `https://wa.me/${contactPhone.replace(/\D/g, "")}` : "";
+    
+    const renewalLinks = (subscriptionUrl || whatsappLink)
+      ? `\n\n${subscriptionUrl ? `👉 Subscribe: ${subscriptionUrl}\n` : ""}${whatsappLink ? `👉 Contact: ${whatsappLink}` : ""}`
+      : "";
+    
+    let message;
+    
+    if (plan_status === "active") {
+      if (remaining_days < expiryDays) {
+        message = `Hi ${user.name}! 👋\n\nYour *${brandName}* membership is *ACTIVE* but expires in *${remaining_days} days*.\n\nRenew or upgrade your plan now to keep your fitness journey going! 💪${renewalLinks}\n\n- ${brandName} Team`;
+      } else {
+        message = `Hi ${user.name}! 👋\n\nGreat news from *${brandName}*! Your membership is *ACTIVE* with *${remaining_days} days* remaining.\n\nKeep up the great work and see you at the gym! 💪\n\n- ${brandName} Team`;
+      }
+    } else if (plan_status === "expired") {
+      message = `Hi ${user.name}! 👋\n\nYour *${brandName}* membership has *EXPIRED*.\n\nDon't miss out on your fitness journey! Renew today and continue working towards your goals. 💪${renewalLinks}\n\n- ${brandName} Team`;
+    } else {
+      message = `Hi ${user.name}! 👋\n\nYou don't have an active subscription at *${brandName}* yet.\n\nStart your fitness journey with us today! Contact us for membership details. 💪${renewalLinks}\n\n- ${brandName} Team`;
+    }
+    
+    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, "_blank");
   };
 
   const handleDeleteUser = (userId: string) => {

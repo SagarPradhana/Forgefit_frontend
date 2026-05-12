@@ -83,6 +83,9 @@ export function AdminPortalPages({ page }: { page: string }) {
   });
   const [productsLoading, setProductsLoading] = useState(false);
 
+  // Subscription Plans for Payment Modal
+  const [subscriptionPlans, setSubscriptionPlans] = useState<PlanResponse[]>([]);
+
   // Payment States
   const [fetchedPayments, setFetchedPayments] = useState<PaymentResponse[]>([]);
   const [paymentsMeta, setPaymentsMeta] = useState({
@@ -210,6 +213,17 @@ export function AdminPortalPages({ page }: { page: string }) {
       console.error(err);
     } finally {
       setProductsLoading(false);
+    }
+  };
+
+  const fetchSubscriptionPlans = async () => {
+    try {
+      const res = await adminSubscriptionService.getPlans({ count: 100 });
+      if (res && res.data) {
+        setSubscriptionPlans(res.data);
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -1015,6 +1029,7 @@ export function AdminPortalPages({ page }: { page: string }) {
               setEditPayment(null);
               fetchDropdownUsers();
               fetchProducts(1, "", "All");
+              fetchSubscriptionPlans();
               setModalOpen(true);
             }}
           >
@@ -1086,11 +1101,23 @@ export function AdminPortalPages({ page }: { page: string }) {
                       });
                       fetchDropdownUsers();
                       fetchProducts(1, "", "All");
+                      fetchSubscriptionPlans();
                       setModalOpen(true);
                     }}
-                    className="text-indigo-400 hover:text-indigo-300"
+                    className={`${p.purchase_type === "subscription" ? "text-slate-600 cursor-not-allowed pointer-events-none" : "text-indigo-400 hover:text-indigo-300"}`}
+                    title={p.purchase_type === "subscription" ? "Cannot edit subscription payments" : "Edit Payment"}
                   >
                     <Edit2 size={16} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setDeleteTarget({ type: "payment", id: p.id });
+                      setDeleteModalOpen(true);
+                    }}
+                    className={`${p.purchase_type === "subscription" ? "text-slate-600 cursor-not-allowed pointer-events-none" : "text-red-400 hover:text-red-300"}`}
+                    title={p.purchase_type === "subscription" ? "Cannot delete subscription payments" : "Delete Payment"}
+                  >
+                    <Trash2 size={16} />
                   </button>
                   <button
                     onClick={() => {
@@ -1101,15 +1128,6 @@ export function AdminPortalPages({ page }: { page: string }) {
                     title="Download Invoice"
                   >
                     <Printer size={16} />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setDeleteTarget({ type: "payment", id: p.id });
-                      setDeleteModalOpen(true);
-                    }}
-                    className="text-red-400 hover:text-red-300"
-                  >
-                    <Trash2 size={16} />
                   </button>
                 </div>
               ])}
@@ -1157,12 +1175,12 @@ export function AdminPortalPages({ page }: { page: string }) {
                   toast.error("Please select a member");
                   return;
                 }
-                if (!paymentForm.amount || Number(paymentForm.amount) <= 0) {
-                  toast.error("Transaction amount must be greater than 0");
+                if (paymentForm.purchase_type === "product" && !paymentForm.purchase_id) {
+                  toast.error("Please select an inventory item");
                   return;
                 }
-                if (paymentForm.purchase_type === "product" && !paymentForm.purchase_id) {
-                  toast.error("Please select a product");
+                if (!paymentForm.amount || Number(paymentForm.amount) <= 0) {
+                  toast.error("Transaction amount must be greater than 0");
                   return;
                 }
 
@@ -1203,16 +1221,75 @@ export function AdminPortalPages({ page }: { page: string }) {
               </select>
             </div>
 
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Purchase Type</label>
+              <select
+                className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold uppercase"
+                value={paymentForm.purchase_type}
+                onChange={(e) => setPaymentForm({ ...paymentForm, purchase_type: e.target.value as any, purchase_id: "", amount: "0" })}
+              >
+                <option value="product">Product</option>
+                <option value="subscription">Subscription</option>
+              </select>
+            </div>
+
+            {paymentForm.purchase_type === "product" && (
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Select Inventory Item</label>
+                <select
+                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
+                  value={paymentForm.purchase_id}
+                  onChange={(e) => {
+                    const product = fetchedProducts.find(p => p.id === e.target.value);
+                    setPaymentForm({
+                      ...paymentForm,
+                      purchase_id: e.target.value,
+                      amount: product ? String(product.price) : "0",
+                      purchase_details: product ? { product_name: product.name, price: product.price, category: product.category } : { additionalProp1: {} }
+                    });
+                  }}
+                >
+                  <option value="">Choose Product</option>
+                  {fetchedProducts.map((p: any) => (
+                    <option key={p.id} value={p.id}>{p.name} ({currencySymbol}{p.price})</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {paymentForm.purchase_type === "subscription" && (
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Select Subscription Plan</label>
+                <select
+                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
+                  value={paymentForm.purchase_id}
+                  onChange={(e) => {
+                    const plan = subscriptionPlans.find(pl => pl.id === e.target.value);
+                    setPaymentForm({
+                      ...paymentForm,
+                      purchase_id: e.target.value,
+                      amount: plan ? String(plan.price) : "0",
+                      purchase_details: plan ? { plan_name: plan.name, price: plan.price, duration: plan.duration_in_months } : { additionalProp1: {} }
+                    });
+                  }}
+                >
+                  <option value="">Choose Subscription Plan</option>
+                  {subscriptionPlans.map((pl: any) => (
+                    <option key={pl.id} value={pl.id}>{pl.name} - {pl.duration_in_months} months ({currencySymbol}{pl.price})</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Transaction Value ({currencySymbol})</label>
                 <input
-                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
+                  className="w-full rounded-xl bg-slate-800 border border-white/10 p-4 text-slate-400 font-bold cursor-not-allowed"
                   type="text"
                   value={paymentForm.amount}
-                  onChange={(e) => setPaymentForm({ ...paymentForm, amount: sanitizePhone(e.target.value) })}
-                  onKeyDown={handlePhoneKeyDown}
-                  onPaste={handlePhonePaste}
+                  readOnly
+                  title="Auto-populated from inventory item"
                 />
               </div>
               <div className="space-y-1">
@@ -1253,41 +1330,6 @@ export function AdminPortalPages({ page }: { page: string }) {
                 </select>
               </div>
             </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Purchase Type</label>
-              <select
-                className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold uppercase"
-                value={paymentForm.purchase_type}
-                onChange={(e) => setPaymentForm({ ...paymentForm, purchase_type: e.target.value as any })}
-              >
-                <option value="product">Product Purchase</option>
-              </select>
-            </div>
-
-            {paymentForm.purchase_type === "product" && (
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Select Inventory Item</label>
-                <select
-                  className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
-                  value={paymentForm.purchase_id}
-                  onChange={(e) => {
-                    const product = fetchedProducts.find(p => p.id === e.target.value);
-                    setPaymentForm({
-                      ...paymentForm,
-                      purchase_id: e.target.value,
-                      amount: product ? String(product.price) : paymentForm.amount,
-                      purchase_details: product ? { product_name: product.name, price: product.price, category: product.category } : { additionalProp1: {} }
-                    });
-                  }}
-                >
-                  <option value="">Choose Product</option>
-                  {fetchedProducts.map((p: any) => (
-                    <option key={p.id} value={p.id}>{p.name} ({currencySymbol}{p.price})</option>
-                  ))}
-                </select>
-              </div>
-            )}
           </div>
         </Modal>
 
