@@ -425,8 +425,16 @@ export const UserListView = ({
                             disabled={deletingRecord && loadingDeleteId === user.id}
                             onClick={() => onDelete(user.id)}
                             className="h-10 w-10 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 shadow-lg"
+                            title="Drop"
                           >
                             {statusUpdating && loadingDeleteId === user.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+                          </button>
+                          <button
+                            onClick={() => onSendWhatsAppReminder(user)}
+                            className="h-10 w-10 flex items-center justify-center rounded-xl bg-green-500/10 text-green-400 border border-green-500/20 shadow-lg"
+                            title="WhatsApp Reminder"
+                          >
+                            <MessageCircle size={18} />
                           </button>
                         </>
                       )}

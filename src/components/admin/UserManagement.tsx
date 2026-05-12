@@ -489,6 +489,17 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
     }
   };
 
+  const openWhatsAppChat = (user: any) => {
+    const phone = user.mobile || user.phone;
+    if (!phone) {
+      toast.error("User does not have a mobile number provided");
+      return;
+    }
+    const cleanPhone = phone.replace(/\D/g, "");
+    const message = encodeURIComponent(`Hi ${user.name}, this is a reminder from Forgefit Gym regarding your membership. We look forward to seeing you at your next session!`);
+    window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
+  };
+
   const handleDeleteUser = (userId: string) => {
     setLoadingDeleteId(userId);
     deleteUserRecord(API_ENDPOINTS.ADMIN.USER_DELETE(userId));
