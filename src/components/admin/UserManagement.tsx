@@ -34,6 +34,11 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
     return params.get("role") || "";
   }, [location.search]);
 
+  const initialPlanStatus = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("plan_status") || "";
+  }, [location.search]);
+
   const authRole = useAuthStore((s) => s.role);
   const isTrainer = authRole === "trainer";
 
@@ -50,12 +55,14 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
 
   // Role filter state — initialized from URL param
   const [roleFilter, setRoleFilter] = useState<string>(initialRole);
+  const [planStatusFilter, setPlanStatusFilter] = useState<string>(initialPlanStatus);
 
-  // Sync roleFilter if URL param changes (e.g. navigating back from dashboard with new role)
+  // Sync filters if URL params change (e.g. navigating back from dashboard)
   useEffect(() => {
     setRoleFilter(initialRole);
+    setPlanStatusFilter(initialPlanStatus);
     setPage(1);
-  }, [initialRole]);
+  }, [initialRole, initialPlanStatus]);
 
   // Document Modal State
   const [docModalOpen, setDocModalOpen] = useState(false);
@@ -114,6 +121,9 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
     }
     if (roleFilter && !isTrainer) {
       params.append("role", roleFilter);
+    }
+    if (planStatusFilter) {
+      params.append("plan_status", planStatusFilter);
     }
     return isTrainer ? `${API_ENDPOINTS.ADMIN.TRAINER_USERS}?${params.toString()}` : `${API_ENDPOINTS.ADMIN.USERS}?${params.toString()}`;
   }, [page, perPage, debouncedSearch, roleFilter, isTrainer]);
@@ -318,6 +328,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
         medical_conditions: user.metadata?.medical_conditions || "",
         workout_time: user.metadata?.workout_time || "morning",
         emergency_contact: user.metadata?.emergency_contact || "",
+        purchase_id: user.metadata?.purchase_id || user.purchase_id || "",
       },
       trainer_id: user.trainer_id || "",
       subscription_id: user.subscription_id || "",
@@ -327,6 +338,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
       start_date: user.start_date || 0,
       end_date: user.end_date || 0,
       profilePhoto: user.profile_image_path || user.metadata?.profile_image_path || "",
+      purchase_id: user.purchase_id || user.metadata?.purchase_id || "",
     });
     setEditingUserId(user.id);
     setModalStep("role");
@@ -410,6 +422,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
       medical_conditions: rawPayload.metadata.medical_conditions,
       workout_time: rawPayload.metadata.workout_time,
       emergency_contact: rawPayload.metadata.emergency_contact,
+      purchase_id: rawPayload.metadata.purchase_id,
     };
 
     if (editingUserId) {
@@ -428,6 +441,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
         amount: rawPayload.amount,
         status: rawPayload.status,
         start_date: rawPayload.start_date,
+        purchase_id: rawPayload.purchase_id || rawPayload.metadata.purchase_id,
         end_date: rawPayload.end_date,
       };
       editUser(API_ENDPOINTS.ADMIN.USER_EDIT(editingUserId), editPayload);
@@ -517,6 +531,16 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
             >✕</button>
           </span>
         )}
+        {planStatusFilter && (
+          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${planStatusFilter === "active" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : "bg-red-500/20 text-red-300 border-red-500/30"}`}>
+            {planStatusFilter === "active" ? "Active Plans" : "Expired Plans"}
+            <button
+              onClick={() => setPlanStatusFilter("")}
+              className="ml-1.5 opacity-60 hover:opacity-100 transition-opacity font-black"
+              title="Clear filter"
+            >✕</button>
+          </span>
+        )}
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
@@ -567,6 +591,23 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
               <option value="admin" className="bg-slate-900">Admins</option>
               <option value="trainer" className="bg-slate-900">Trainers</option>
               <option value="user" className="bg-slate-900">Users</option>
+            </select>
+          </div>
+        )}
+
+        {/* Plan Status Filter */}
+        {!isTrainer && (
+          <div className="relative">
+            <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+            <select
+              id="admin-user-plan-status-filter"
+              value={planStatusFilter}
+              onChange={(e) => { setPlanStatusFilter(e.target.value); }}
+              className="bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white outline-none focus:border-indigo-500 transition cursor-pointer appearance-none min-w-[130px]"
+            >
+              <option value="" className="bg-slate-900">All Status</option>
+              <option value="active" className="bg-slate-900">Active</option>
+              <option value="expired" className="bg-slate-900">Expired</option>
             </select>
           </div>
         )}

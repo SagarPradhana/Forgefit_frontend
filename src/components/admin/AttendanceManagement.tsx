@@ -10,6 +10,7 @@ import { toast } from "../../store/toastStore";
 import { useGet } from "../../hooks/useApi";
 import { API_ENDPOINTS } from "../../utils/url";
 import { DateRangeFilter, type DateRange } from "../ui/DateRangeFilter";
+import { DeleteConfirmationModal } from "../common/DeleteConfirmationModal";
 
 type AttendanceView = "grid" | "list";
 
@@ -379,19 +380,14 @@ export function AttendanceManagement() {
       </Modal>
 
       {/* Delete Confirmation */}
-      <Modal
-        open={deleteModalOpen}
+      <DeleteConfirmationModal
+        isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleDelete}
         title="Delete Record?"
-        footer={
-          <div className="flex gap-2">
-            <CommonButton variant="ghost" onClick={() => setDeleteModalOpen(false)}>Cancel</CommonButton>
-            <CommonButton variant="danger" onClick={handleDelete}>Submit</CommonButton>
-          </div>
-        }
-      >
-        <p className="text-slate-300">Are you sure you want to delete this attendance log? This will remove the record permanently from the member's history.</p>
-      </Modal>
+        description="Are you sure you want to delete this attendance log? This will remove the record permanently from the member's history."
+        confirmLabel="Submit"
+      />
     </div>
   );
 }

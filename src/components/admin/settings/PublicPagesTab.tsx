@@ -3,6 +3,7 @@ import { SectionTitle, Modal } from "../../ui/primitives";
 import { Trash2, Save, Video, Image as ImageIcon, Eye, Download, UploadCloud } from "lucide-react";
 import { toast } from "../../../store/toastStore";
 import { adminPublicPagesService, type FAQ, type Testimonial, type PublicBannerType, type PublicBanner, type BannerConfig } from "../../../services/adminPublicPagesService";
+import { DeleteConfirmationModal } from "../../common/DeleteConfirmationModal";
 
 const BANNER_CONFIGS: Record<PublicBannerType, BannerConfig> = {
   common: { type: "common", maxCount: 3, maxSizeMB: 1, allowedTypes: ["image/png", "image/jpg", "image/jpeg"], label: "Home Banners", icon: "🏠" },
@@ -191,6 +192,8 @@ export function PublicPagesTab() {
   const [banners, setBanners] = useState<Record<PublicBannerType, PublicBanner[]>>({
     common: [], inspirational: [], trainers: [], offers: [], about: [], testimonials: [],
   });
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'banner' | 'faq' | 'testimonial'; id?: string; index?: number; bannerType?: PublicBannerType } | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -233,12 +236,34 @@ export function PublicPagesTab() {
   };
 
   const handleDeleteBanner = (type: PublicBannerType) => async (id: string) => {
+    setDeleteTarget({ type: 'banner', id, bannerType: type });
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+
     try {
-      await adminPublicPagesService.deleteBanner(id);
-      toast.success("Deleted successfully");
-      setBanners((prev) => ({ ...prev, [type]: prev[type].filter((b) => b.id !== id) }));
+      if (deleteTarget.type === 'banner' && deleteTarget.id && deleteTarget.bannerType) {
+        await adminPublicPagesService.deleteBanner(deleteTarget.id);
+        toast.success("Banner deleted successfully");
+        setBanners((prev) => ({ ...prev, [deleteTarget.bannerType!]: prev[deleteTarget.bannerType!].filter((b) => b.id !== deleteTarget.id) }));
+      } else if (deleteTarget.type === 'faq' && deleteTarget.index !== undefined) {
+        const faq = faqs[deleteTarget.index];
+        if (faq.id) await adminPublicPagesService.deleteFAQ(faq.id);
+        setFaqs(faqs.filter((_, i) => i !== deleteTarget.index));
+        toast.success("FAQ deleted successfully!");
+      } else if (deleteTarget.type === 'testimonial' && deleteTarget.index !== undefined) {
+        const test = testimonials[deleteTarget.index];
+        if (test.id) await adminPublicPagesService.deleteTestimonial(test.id);
+        setTestimonials(testimonials.filter((_, i) => i !== deleteTarget.index));
+        toast.success("Testimonial deleted successfully!");
+      }
     } catch (err) {
-      toast.error("Delete failed");
+      toast.error("Deletion failed");
+    } finally {
+      setDeleteModalOpen(false);
+      setDeleteTarget(null);
     }
   };
 
@@ -261,17 +286,8 @@ export function PublicPagesTab() {
   };
 
   const handleDeleteFaq = async (idx: number) => {
-    const faq = faqs[idx];
-    try {
-      if (faq.id) {
-        await adminPublicPagesService.deleteFAQ(faq.id);
-      }
-      const newFaqs = faqs.filter((_, i) => i !== idx);
-      setFaqs(newFaqs);
-      toast.success("FAQ deleted successfully!");
-    } catch (err) {
-      toast.error("Failed to delete FAQ.");
-    }
+    setDeleteTarget({ type: 'faq', index: idx });
+    setDeleteModalOpen(true);
   };
 
   const handleSaveTestimonial = async (idx: number) => {
@@ -293,17 +309,8 @@ export function PublicPagesTab() {
   };
 
   const handleDeleteTestimonial = async (idx: number) => {
-    const test = testimonials[idx];
-    try {
-      if (test.id) {
-        await adminPublicPagesService.deleteTestimonial(test.id);
-      }
-      const newT = testimonials.filter((_, i) => i !== idx);
-      setTestimonials(newT);
-      toast.success("Testimonial deleted successfully!");
-    } catch (err) {
-      toast.error("Failed to delete Testimonial.");
-    }
+    setDeleteTarget({ type: 'testimonial', index: idx });
+    setDeleteModalOpen(true);
   };
 
   return (
@@ -408,6 +415,15 @@ export function PublicPagesTab() {
           </div>
         </div>
       </div>
+
+      <DeleteConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title={deleteTarget?.type === 'banner' ? 'Banner Removal' : deleteTarget?.type === 'faq' ? 'FAQ Deletion' : 'Testimonial Purge'}
+        description="Are you sure you want to permanently remove this content? This action cannot be reversed."
+        confirmLabel="Submit"
+      />
     </div>
   );
 }

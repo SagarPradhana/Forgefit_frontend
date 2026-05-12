@@ -8,6 +8,7 @@ import {
 import { Trash2, CheckCircle, Search } from "lucide-react";
 import { toast } from "../../store/toastStore";
 import { adminInquiryService } from "../../services/adminInquiryService";
+import { DeleteConfirmationModal } from "../common/DeleteConfirmationModal";
 
 type InquiryType = "subscriptions" | "products" | "contacts" | "expiry";
 
@@ -18,6 +19,8 @@ export function InquiryCenter() {
   const [data, setData] = useState<any[]>([]);
   const [meta, setMeta] = useState({ total: 0, count: 10, offset: 0 });
   const [searchQuery, setSearchQuery] = useState("");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -59,18 +62,27 @@ export function InquiryCenter() {
     fetchData();
   }, [fetchData]);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
+    setDeleteTargetId(id);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTargetId) return;
     try {
       switch (activeTab) {
-        case "subscriptions": await adminInquiryService.deleteSubscriptionInquiry(id); break;
-        case "products": await adminInquiryService.deleteProductOrder(id); break;
-        case "contacts": await adminInquiryService.deleteContactInquiry(id); break;
-        case "expiry": await adminInquiryService.deleteExpiringMemberRecord(id); break;
+        case "subscriptions": await adminInquiryService.deleteSubscriptionInquiry(deleteTargetId); break;
+        case "products": await adminInquiryService.deleteProductOrder(deleteTargetId); break;
+        case "contacts": await adminInquiryService.deleteContactInquiry(deleteTargetId); break;
+        case "expiry": await adminInquiryService.deleteExpiringMemberRecord(deleteTargetId); break;
       }
       toast.success("Record deleted successfully");
       fetchData();
     } catch (err) {
       toast.error("Delete operation failed");
+    } finally {
+      setDeleteModalOpen(false);
+      setDeleteTargetId(null);
     }
   };
 
@@ -255,6 +267,15 @@ export function InquiryCenter() {
           </>
         )}
       </div>
+
+      <DeleteConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Record Termination"
+        description="This inquiry or notification record will be permanently removed from the system registry."
+        confirmLabel="Submit"
+      />
     </div>
   );
 }

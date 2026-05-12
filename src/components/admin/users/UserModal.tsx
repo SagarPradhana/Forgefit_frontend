@@ -235,8 +235,26 @@ export const UserModal = ({
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="space-y-4"
+              className="space-y-6"
             >
+              {/* Product Identifier Section */}
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Administrative Metadata</h4>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-tight mb-2">Product ID (Internal Ref)</label>
+                  <input
+                    type="text"
+                    placeholder="Enter purchase_id or product identifier"
+                    value={formData.metadata.purchase_id || ""}
+                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, purchase_id: e.target.value } })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500 transition"
+                  />
+                </div>
+              </div>
+
               {formData.role === "trainer" ? (
                 <>
                   <div className="grid grid-cols-2 gap-4">
@@ -360,14 +378,40 @@ export const UserModal = ({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-white mb-1 uppercase tracking-widest">Medical Conditions</label>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Medical Conditions</label>
                     <textarea
                       placeholder="Describe any medical conditions, chronic issues or health concerns..."
                       value={formData.metadata.medical_conditions || ""}
                       onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, medical_conditions: e.target.value } })}
-                      className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-xs resize-none focus:border-orange-400 transition"
-                      rows={3}
+                      className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-xs resize-none focus:border-indigo-500 transition"
+                      rows={2}
                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Language</label>
+                      <select
+                        value={formData.metadata.language}
+                        onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, language: e.target.value } })}
+                        className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-xs focus:outline-none"
+                      >
+                        <option value="en" className="bg-slate-900">English</option>
+                        <option value="hi" className="bg-slate-900">Hindi</option>
+                        <option value="mr" className="bg-slate-900">Marathi</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Theme Preference</label>
+                      <select
+                        value={formData.metadata.theme}
+                        onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, theme: e.target.value } })}
+                        className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-xs focus:outline-none"
+                      >
+                        <option value="dark" className="bg-slate-900">Dark Mode</option>
+                        <option value="light" className="bg-slate-900">Light Mode</option>
+                      </select>
+                    </div>
                   </div>
                 </>
               )}

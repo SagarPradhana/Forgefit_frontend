@@ -3,6 +3,7 @@ import { GlowButton, Table, EmptyState, Modal, Skeleton } from "../../ui/primiti
 import { Search, Edit2, Trash2, Plus } from "lucide-react";
 import { adminLocationService, type LocationData } from "../../../services/adminLocationService";
 import { toast } from "../../../store/toastStore";
+import { DeleteConfirmationModal } from "../../common/DeleteConfirmationModal";
 
 export function LocationsTab() {
   const [locations, setLocations] = useState<LocationData[]>([]);
@@ -256,12 +257,14 @@ export function LocationsTab() {
         </div>
       </Modal>
 
-      <Modal open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Delete Location" footer={<><GlowButton className="bg-gray-600" onClick={() => setDeleteModalOpen(false)}>Cancel</GlowButton><GlowButton onClick={handleDelete}>Submit</GlowButton></>}>
-        <div className="text-center py-4">
-          <p className="text-white font-bold mb-2">Are you sure you want to delete this location?</p>
-          <p className="text-slate-400 text-xs">This action cannot be undone.</p>
-        </div>
-      </Modal>
+      <DeleteConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Location"
+        description="Are you sure you want to delete this location? This action cannot be undone."
+        confirmLabel="Submit"
+      />
     </div>
   );
 }

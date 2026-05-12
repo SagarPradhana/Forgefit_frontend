@@ -36,6 +36,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { handlePhoneKeyDown, handlePhonePaste, sanitizePhone } from "../../utils/formUtils";
+import { DeleteConfirmationModal } from "../../components/common/DeleteConfirmationModal";
 
 
 const getDurationLabel = (months: number) => {
@@ -592,46 +593,26 @@ export function AdminPortalPages({ page }: { page: string }) {
         </Modal>
 
         {/* Delete Modal for Plans */}
-        <Modal
-          open={deleteModalOpen && deleteTarget?.type === "plan"}
+        <DeleteConfirmationModal
+          isOpen={deleteModalOpen && deleteTarget?.type === "plan"}
           onClose={() => setDeleteModalOpen(false)}
-          title="Confirm Strategic Deletion"
-          footer={
-            <>
-              <GlowButton
-                className="bg-gray-600"
-                onClick={() => setDeleteModalOpen(false)}
-              >
-                Cancel
-              </GlowButton>
-              <GlowButton
-                onClick={async () => {
-                  if (deleteTarget && deleteTarget.type === "plan") {
-                    try {
-                      await adminSubscriptionService.deletePlan(deleteTarget.id);
-                      toast.success("Strategy terminated successfully");
-                      fetchPlans(plansMeta.page_no);
-                    } catch (err) {
-                      toast.error("Termination failed. Active dependencies detected.");
-                    }
-                  }
-                  setDeleteModalOpen(false);
-                  setDeleteTarget(null);
-                }}
-              >
-                Submit
-              </GlowButton>
-            </>
-          }
-        >
-          <div className="text-sm text-slate-300 text-center py-4">
-            <div className="h-16 w-16 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mx-auto mb-4">
-              <Trash2 size={32} />
-            </div>
-            <p className="font-bold text-white mb-2">Are you sure you want to delete this plan?</p>
-            <p className="text-xs">This action will permanently terminate this membership strategy from the system.</p>
-          </div>
-        </Modal>
+          onConfirm={async () => {
+            if (deleteTarget && deleteTarget.type === "plan") {
+              try {
+                await adminSubscriptionService.deletePlan(deleteTarget.id);
+                toast.success("Strategy terminated successfully");
+                fetchPlans(plansMeta.page_no);
+              } catch (err) {
+                toast.error("Termination failed. Active dependencies detected.");
+              }
+            }
+            setDeleteModalOpen(false);
+            setDeleteTarget(null);
+          }}
+          title="Strategy Termination"
+          description="This membership strategy will be permanently erased. This action cannot be undone."
+          confirmLabel="Submit"
+        />
       </GlassCard>
     );
   }
@@ -985,42 +966,26 @@ export function AdminPortalPages({ page }: { page: string }) {
           </div>
         </Modal>
 
-        {/* Delete Modal for Products */}
-        <Modal
-          open={deleteModalOpen && deleteTarget?.type === "product"}
+        <DeleteConfirmationModal
+          isOpen={deleteModalOpen && deleteTarget?.type === "product"}
           onClose={() => setDeleteModalOpen(false)}
-          title="Archive Protocol"
-          footer={
-            <>
-              <GlowButton className="bg-gray-600" onClick={() => setDeleteModalOpen(false)}>Cancel</GlowButton>
-              <GlowButton
-                onClick={async () => {
-                  if (deleteTarget && deleteTarget.type === "product") {
-                    try {
-                      await adminProductService.deleteProduct(deleteTarget.id);
-                      toast.success("Inventory item terminated successfully");
-                      fetchProducts(productsMeta.page_no);
-                    } catch (err) {
-                      toast.error("Termination failed");
-                    }
-                  }
-                  setDeleteModalOpen(false);
-                  setDeleteTarget(null);
-                }}
-              >
-                Submit
-              </GlowButton>
-            </>
-          }
-        >
-          <div className="text-sm text-slate-300 text-center py-4">
-            <div className="h-16 w-16 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mx-auto mb-4">
-              <Trash2 size={32} />
-            </div>
-            <p className="font-bold text-white mb-2">Terminate Product Listing?</p>
-            <p className="text-xs">This will permanently remove the item from the active inventory catalog.</p>
-          </div>
-        </Modal>
+          onConfirm={async () => {
+            if (deleteTarget && deleteTarget.type === "product") {
+              try {
+                await adminProductService.deleteProduct(deleteTarget.id);
+                toast.success("Inventory item terminated successfully");
+                fetchProducts(productsMeta.page_no);
+              } catch (err) {
+                toast.error("Termination failed");
+              }
+            }
+            setDeleteModalOpen(false);
+            setDeleteTarget(null);
+          }}
+          title="Inventory Purge"
+          description="This product will be permanently removed from the active inventory catalog."
+          confirmLabel="Submit"
+        />
       </GlassCard>
     );
   }
@@ -1326,42 +1291,27 @@ export function AdminPortalPages({ page }: { page: string }) {
           </div>
         </Modal>
 
-        {/* Delete Modal for Payments */}
-        <Modal
-          open={deleteModalOpen && deleteTarget?.type === "payment"}
+        <DeleteConfirmationModal
+          isOpen={deleteModalOpen && deleteTarget?.type === "payment"}
           onClose={() => setDeleteModalOpen(false)}
-          title="Confirm Registry Purge"
-          footer={
-            <>
-              <GlowButton className="bg-gray-600" onClick={() => setDeleteModalOpen(false)}>Cancel</GlowButton>
-              <GlowButton
-                onClick={async () => {
-                  if (deleteTarget && deleteTarget.type === "payment") {
-                    try {
-                      await adminPaymentService.deletePayment(deleteTarget.id);
-                      toast.success("Transaction purged successfully");
-                      fetchPayments(paymentsMeta.page_no);
-                    } catch (err) {
-                      toast.error("Purge failed");
-                    }
-                  }
-                  setDeleteModalOpen(false);
-                  setDeleteTarget(null);
-                }}
-              >
-                Submit
-              </GlowButton>
-            </>
-          }
-        >
-          <div className="text-sm text-slate-300 text-center py-4">
-            <div className="h-16 w-16 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mx-auto mb-4">
-              <Trash2 size={32} />
-            </div>
-            <p className="font-bold text-white mb-2">Permanently delete this transaction?</p>
-            <p className="text-xs">This action will remove the record from the financial ledger. This cannot be undone.</p>
-          </div>
-        </Modal>
+          onConfirm={async () => {
+            if (deleteTarget && deleteTarget.type === "payment") {
+              try {
+                await adminPaymentService.deletePayment(deleteTarget.id);
+                toast.success("Transaction purged successfully");
+                fetchPayments(paymentsMeta.page_no);
+              } catch (err) {
+                toast.error("Purge failed");
+              }
+            }
+            setDeleteModalOpen(false);
+            setDeleteTarget(null);
+          }}
+          title="Registry Purge"
+          description="This financial record will be permanently erased from the master ledger."
+          confirmLabel="Submit"
+        />
+
         <InvoiceModal
           isOpen={invoiceModalOpen}
           onClose={() => {

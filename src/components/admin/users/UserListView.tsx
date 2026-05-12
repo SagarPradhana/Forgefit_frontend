@@ -89,7 +89,12 @@ export const UserListView = ({
                   <div className="min-w-0">
                     <h3 className="truncate text-xs md:text-sm font-black text-white uppercase tracking-tight">{user.name}</h3>
                     <p className="text-[10px] font-bold text-indigo-400">#{user.member_id || user.username || 'N/A'}</p>
-                    <p className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest">{user.role}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest">{user.role}</p>
+                      {(user.purchase_id || user.metadata?.purchase_id) && (
+                        <span className="text-[8px] bg-orange-500/10 text-orange-400 px-1.5 py-0.5 rounded border border-orange-500/20 font-black">PID: {user.purchase_id || user.metadata.purchase_id}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -247,6 +252,9 @@ export const UserListView = ({
                           <div className="flex items-center gap-2">
                             <span className="px-2 py-0.5 rounded-md bg-white/5 text-[9px] text-slate-500 font-bold uppercase tracking-widest border border-white/5 group-hover:text-slate-300 transition-colors">ID: {user.member_id || user.id?.slice(0, 8)}</span>
                             <span className="text-[9px] font-black text-indigo-400/80 uppercase tracking-tighter italic">{user.role}</span>
+                            {(user.purchase_id || user.metadata?.purchase_id) && (
+                              <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">PID: {user.purchase_id || user.metadata.purchase_id}</span>
+                            )}
                           </div>
                         </div>
                       </div>

@@ -20,6 +20,7 @@ export interface UserMetadata {
   specialization?: string;
   experience?: number;
   certifications?: string;
+  purchase_id?: string;
 }
 
 export interface UserFormData {
@@ -40,4 +41,5 @@ export interface UserFormData {
   start_date?: number;
   end_date?: number;
   profilePhoto?: string; // For UI display
+  purchase_id?: string;
 }

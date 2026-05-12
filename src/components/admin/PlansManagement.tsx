@@ -15,6 +15,7 @@ import { api } from "../../utils/httputils";
 import { API_ENDPOINTS } from "../../utils/url";
 import { useTranslation } from "react-i18next";
 import { adminPlansService, type WorkoutPlan, type DietPlan } from "../../services/adminPlansService";
+import { DeleteConfirmationModal } from "../common/DeleteConfirmationModal";
 
 export function PlansManagement() {
   const { t } = useTranslation();
@@ -1079,33 +1080,14 @@ export function PlansManagement() {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal
-        open={deleteModalOpen}
+      <DeleteConfirmationModal
+        isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleDelete}
         title="Removal Authorization"
-        footer={
-          <div className="flex gap-3 justify-end w-full">
-            <button
-              className="px-8 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-black uppercase tracking-widest transition-all shadow-lg shadow-red-500/20 active:scale-95"
-              onClick={handleDelete}
-            >
-              Submit
-            </button>
-          </div>
-        }
-      >
-        <div className="text-center space-y-4 py-6">
-          <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mx-auto text-red-500 border border-red-500/20 shadow-inner">
-            <Trash2 size={40} className="animate-pulse" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-white font-black text-xl uppercase tracking-tighter">Destructive Action</p>
-            <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed px-10">
-              This protocol will be permanently erased from the master database. This action is irreversible.
-            </p>
-          </div>
-        </div>
-      </Modal>
+        description="This protocol will be permanently erased from the master database. This action is irreversible."
+        confirmLabel="Submit"
+      />
 
     </GlassCard>
   );
