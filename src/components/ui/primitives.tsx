@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import clsx from "clsx";
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, Search, X } from "lucide-react";
+import { ChevronDown, Loader2, Search, X } from "lucide-react";
 import { createPortal } from "react-dom";
 
 export function GlassCard({
@@ -48,7 +48,7 @@ export function GlowButton({
       whileHover={{ scale: 1.04 }}
       whileTap={{ scale: 0.97 }}
       className={clsx(
-        "rounded-xl border px-5 py-2 text-sm font-semibold text-white shadow-glow transition",
+        "rounded-xl border px-5 py-2 text-sm font-semibold text-white shadow-glow transition disabled:pointer-events-none disabled:opacity-60",
         variants[variant],
         className,
       )}
@@ -80,7 +80,7 @@ export function CommonButton({
       whileHover={{ scale: 1.03 }}
       whileTap={{ scale: 0.98 }}
       className={clsx(
-        "rounded-xl border px-5 py-2.5 text-sm font-semibold transition-all duration-300",
+        "rounded-xl border px-5 py-2.5 text-sm font-semibold transition-all duration-300 disabled:pointer-events-none disabled:opacity-60",
         styles[variant],
         className,
       )}
@@ -298,6 +298,75 @@ export function SkeletonRows({ n = 5, className }: { n?: number; className?: str
   );
 }
 
+export function InlineSpinner({
+  className,
+  size = 16,
+}: {
+  className?: string;
+  size?: number;
+}) {
+  return <Loader2 size={size} className={clsx("animate-spin", className)} />;
+}
+
+export function ButtonLoader({
+  label,
+  loadingLabel,
+  loading,
+  className,
+  spinnerClassName,
+}: {
+  label: ReactNode;
+  loadingLabel?: ReactNode;
+  loading?: boolean;
+  className?: string;
+  spinnerClassName?: string;
+}) {
+  return (
+    <span className={clsx("inline-flex items-center justify-center gap-2", className)}>
+      {loading ? <InlineSpinner size={16} className={spinnerClassName} /> : null}
+      <span>{loading ? loadingLabel ?? label : label}</span>
+    </span>
+  );
+}
+
+export function LoadingOverlay({
+  show,
+  label = "Loading...",
+  className,
+  compact = false,
+}: {
+  show: boolean;
+  label?: string;
+  className?: string;
+  compact?: boolean;
+}) {
+  if (!show) return null;
+
+  return (
+    <div
+      className={clsx(
+        "absolute inset-0 z-20 flex items-center justify-center rounded-[inherit] border border-white/10 bg-slate-950/70 backdrop-blur-sm",
+        className,
+      )}
+    >
+      <div className="flex flex-col items-center gap-3 text-center text-white">
+        <div className="relative">
+          <div className={clsx(
+            "rounded-full border border-indigo-400/20 border-t-indigo-400 animate-spin",
+            compact ? "h-8 w-8 border-2" : "h-12 w-12 border-[3px]",
+          )} />
+          {!compact ? (
+            <div className="absolute inset-1.5 rounded-full border border-orange-400/20 border-b-orange-400 animate-spin [animation-direction:reverse] [animation-duration:1.2s]" />
+          ) : null}
+        </div>
+        <p className={clsx("font-black uppercase tracking-[0.24em] text-white/70", compact ? "text-[9px]" : "text-[10px]")}>
+          {label}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function CommonCard({
   children,
   className,
@@ -506,6 +575,45 @@ export function EmptyState({ title, hint }: { title: string; hint: string }) {
     >
       <p className="text-lg text-white">{title}</p>
       <p className="text-sm text-slate-300">{hint}</p>
+    </div>
+  );
+}
+
+export function Pagination({
+  currentPage,
+  totalPages,
+  hasPrev,
+  hasNext,
+  onPrev,
+  onNext,
+}: {
+  currentPage: number;
+  totalPages: number;
+  hasPrev: boolean;
+  hasNext: boolean;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  if (totalPages <= 1) return null;
+  return (
+    <div className="flex justify-center items-center gap-3 mt-6 pt-4 border-t border-white/5">
+      <button
+        disabled={!hasPrev}
+        onClick={onPrev}
+        className="flex items-center gap-1.5 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-300 hover:bg-white/10 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+      >
+        ← Prev
+      </button>
+      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-3 py-1.5 bg-white/5 rounded-lg border border-white/5">
+        {currentPage} / {totalPages}
+      </span>
+      <button
+        disabled={!hasNext}
+        onClick={onNext}
+        className="flex items-center gap-1.5 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-300 hover:bg-white/10 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+      >
+        Next →
+      </button>
     </div>
   );
 }

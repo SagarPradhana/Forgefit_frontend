@@ -1,4 +1,4 @@
-import { Modal, GlowButton } from "../../ui/primitives";
+import { Modal, GlowButton, ButtonLoader } from "../../ui/primitives";
 import { Plus, Trash2 } from "lucide-react";
 import type { DietPlan } from "../../../services/adminPlansService";
 import { useTranslation } from "react-i18next";
@@ -10,6 +10,7 @@ interface DietPlanModalProps {
   dietForm: DietPlan;
   setDietForm: (form: DietPlan) => void;
   onSave: () => void;
+  saving?: boolean;
 }
 
 export function DietPlanModal({
@@ -18,7 +19,8 @@ export function DietPlanModal({
   editDietId,
   dietForm,
   setDietForm,
-  onSave
+  onSave,
+  saving = false,
 }: DietPlanModalProps) {
   const { t } = useTranslation();
   return (
@@ -31,10 +33,13 @@ export function DietPlanModal({
           <button
             className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-all"
             onClick={onClose}
+            disabled={saving}
           >
             {t("cancel")}
           </button>
-          <GlowButton onClick={onSave} className="px-8 from-emerald-600 to-teal-500 shadow-emerald-500/20 hover:shadow-emerald-500/40">{t("submit")}</GlowButton>
+          <GlowButton onClick={onSave} disabled={saving} className="px-8 from-emerald-600 to-teal-500 shadow-emerald-500/20 hover:shadow-emerald-500/40">
+            <ButtonLoader label={t("submit")} loadingLabel={t("loading")} loading={saving} />
+          </GlowButton>
         </div>
       }
     >

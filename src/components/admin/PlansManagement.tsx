@@ -7,6 +7,8 @@ import {
   SectionTitle,
   Skeleton,
   Table,
+  Pagination,
+  LoadingOverlay,
 } from "../ui/primitives";
 import { Edit2, Search, Trash2, Plus } from "lucide-react";
 import { toast } from "../../store/toastStore";
@@ -58,6 +60,11 @@ export function PlansManagement() {
   const [assignUserId, setAssignUserId] = useState<string>("");
   const [userSearch, setUserSearch] = useState("");
   const [usersDropdown, setUsersDropdown] = useState<any[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [workoutSaving, setWorkoutSaving] = useState(false);
+  const [dietSaving, setDietSaving] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // === DELETE MODAL STATES ===
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -129,6 +136,7 @@ export function PlansManagement() {
   };
 
   const fetchUsers = async (s = userSearch) => {
+    setUsersLoading(true);
     try {
       const res = await api.get(API_ENDPOINTS.ADMIN.GET_USERS_DROPDOWN, { search: s }) as any;
       if (res && res.data) {
@@ -136,6 +144,8 @@ export function PlansManagement() {
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setUsersLoading(false);
     }
   };
 
@@ -187,6 +197,7 @@ export function PlansManagement() {
       return;
     }
     try {
+      setWorkoutSaving(true);
       if (editWorkoutId) {
         await adminPlansService.updateWorkoutPlan(editWorkoutId, workoutForm);
         toast.success("Workout plan updated successfully.");
@@ -198,6 +209,8 @@ export function PlansManagement() {
       fetchWorkouts(workoutMeta.page_no);
     } catch (err) {
       toast.error("Failed to save workout plan.");
+    } finally {
+      setWorkoutSaving(false);
     }
   };
 
@@ -215,6 +228,7 @@ export function PlansManagement() {
       return;
     }
     try {
+      setDietSaving(true);
       if (editDietId) {
         await adminPlansService.updateDietPlan(editDietId, dietForm);
         toast.success("Diet plan updated successfully.");
@@ -226,11 +240,14 @@ export function PlansManagement() {
       fetchDiets(dietMeta.page_no);
     } catch (err) {
       toast.error("Failed to save diet plan.");
+    } finally {
+      setDietSaving(false);
     }
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
+    setDeleteLoading(true);
     try {
       if (deleteTarget.type === "workout") {
         await adminPlansService.deleteWorkoutPlan(deleteTarget.id);
@@ -245,6 +262,8 @@ export function PlansManagement() {
       setDeleteTarget(null);
     } catch (err) {
       toast.error("Failed to delete plan.");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -254,6 +273,7 @@ export function PlansManagement() {
       return;
     }
     try {
+      setAssigning(true);
       if (assignType === "workout") {
         await adminPlansService.assignWorkoutPlan({ user_id: assignUserId, workout_plan_id: assignPlanId });
         toast.success("Workout plan assigned successfully.");
@@ -264,6 +284,8 @@ export function PlansManagement() {
       setAssignModalOpen(false);
     } catch (err) {
       toast.error("Failed to assign plan.");
+    } finally {
+      setAssigning(false);
     }
   };
 
@@ -391,14 +413,14 @@ export function PlansManagement() {
             </div>
           )}
 
-          {workoutsLoading ? (
+          {workoutsLoading && workouts.length === 0 ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
                 <Skeleton key={i} className="h-20 w-full rounded-2xl" />
               ))}
             </div>
           ) : workouts.length > 0 ? (
-            <div className="overflow-hidden rounded-2xl border border-white/5 bg-white/5 backdrop-blur-md">
+            <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 backdrop-blur-md">
               <Table
                 headers={[t("planDetails"), t("typeFocus"), t("days"), t("created"), t("actions")]}
                 rows={workouts.map((p) => [
@@ -453,35 +475,20 @@ export function PlansManagement() {
                   </div>
                 ])}
               />
+              <LoadingOverlay show={workoutsLoading && workouts.length > 0} label="Refreshing workout plans" compact />
             </div>
           ) : (
             <EmptyState title="No Workout Plans" hint="Create your first workout strategy to begin." />
           )}
 
-          {/* Pagination Controls */}
-          {workouts.length > 0 && (
-            <div className="flex items-center justify-between pt-4 border-t border-white/5">
-              <div className="text-xs text-slate-400 font-medium uppercase tracking-wide">
-                Page {workoutMeta.page_no} of {Math.ceil(workoutMeta.total_count / workoutMeta.page_size)}
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => fetchWorkouts(workoutMeta.page_no - 1)}
-                  disabled={!workoutMeta.has_previous}
-                  className="px-4 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 disabled:bg-slate-900/50 disabled:text-slate-600 text-indigo-400 hover:text-indigo-300 disabled:hover:text-slate-600 transition-all text-xs font-bold uppercase tracking-wider disabled:cursor-not-allowed"
-                >
-                  ← Previous
-                </button>
-                <button
-                  onClick={() => fetchWorkouts(workoutMeta.page_no + 1)}
-                  disabled={!workoutMeta.has_next}
-                  className="px-4 py-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 disabled:bg-slate-900/50 disabled:text-slate-600 text-indigo-400 hover:text-indigo-300 disabled:hover:text-slate-600 transition-all text-xs font-bold uppercase tracking-wider disabled:cursor-not-allowed"
-                >
-                  Next →
-                </button>
-              </div>
-            </div>
-          )}
+          <Pagination
+            currentPage={workoutMeta.page_no}
+            totalPages={Math.ceil(workoutMeta.total_count / workoutMeta.page_size) || 1}
+            hasPrev={workoutMeta.has_previous}
+            hasNext={workoutMeta.has_next}
+            onPrev={() => fetchWorkouts(workoutMeta.page_no - 1)}
+            onNext={() => fetchWorkouts(workoutMeta.page_no + 1)}
+          />
         </div>
       )}
 
@@ -548,14 +555,14 @@ export function PlansManagement() {
             </div>
           )}
 
-          {dietsLoading ? (
+          {dietsLoading && diets.length === 0 ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
                 <Skeleton key={i} className="h-20 w-full rounded-2xl" />
               ))}
             </div>
           ) : diets.length > 0 ? (
-            <div className="overflow-hidden rounded-2xl border border-white/5 bg-white/5 backdrop-blur-md">
+            <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 backdrop-blur-md">
               <Table
                 headers={[t("planName"), t("focusArea"), t("days"), t("created"), t("actions")]}
                 rows={diets.map((p) => [
@@ -604,35 +611,20 @@ export function PlansManagement() {
                   </div>
                 ])}
               />
+              <LoadingOverlay show={dietsLoading && diets.length > 0} label="Refreshing diet plans" compact />
             </div>
           ) : (
             <EmptyState title="No Diet Plans" hint="Formulate a nutritional strategy to start." />
           )}
 
-          {/* Pagination Controls */}
-          {diets.length > 0 && (
-            <div className="flex items-center justify-between pt-4 border-t border-white/5">
-              <div className="text-xs text-slate-400 font-medium uppercase tracking-wide">
-                Page {dietMeta.page_no} of {Math.ceil(dietMeta.total_count / dietMeta.page_size)}
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => fetchDiets(dietMeta.page_no - 1)}
-                  disabled={!dietMeta.has_previous}
-                  className="px-4 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 disabled:bg-slate-900/50 disabled:text-slate-600 text-emerald-400 hover:text-emerald-300 disabled:hover:text-slate-600 transition-all text-xs font-bold uppercase tracking-wider disabled:cursor-not-allowed"
-                >
-                  ← Previous
-                </button>
-                <button
-                  onClick={() => fetchDiets(dietMeta.page_no + 1)}
-                  disabled={!dietMeta.has_next}
-                  className="px-4 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 disabled:bg-slate-900/50 disabled:text-slate-600 text-emerald-400 hover:text-emerald-300 disabled:hover:text-slate-600 transition-all text-xs font-bold uppercase tracking-wider disabled:cursor-not-allowed"
-                >
-                  Next →
-                </button>
-              </div>
-            </div>
-          )}
+          <Pagination
+            currentPage={dietMeta.page_no}
+            totalPages={Math.ceil(dietMeta.total_count / dietMeta.page_size) || 1}
+            hasPrev={dietMeta.has_previous}
+            hasNext={dietMeta.has_next}
+            onPrev={() => fetchDiets(dietMeta.page_no - 1)}
+            onNext={() => fetchDiets(dietMeta.page_no + 1)}
+          />
         </div>
       )}
 
@@ -645,6 +637,7 @@ export function PlansManagement() {
         workoutForm={workoutForm}
         setWorkoutForm={setWorkoutForm}
         onSave={handleSaveWorkout}
+        saving={workoutSaving}
       />
 
       <DietPlanModal
@@ -654,6 +647,7 @@ export function PlansManagement() {
         dietForm={dietForm}
         setDietForm={setDietForm}
         onSave={handleSaveDiet}
+        saving={dietSaving}
       />
 
       <AssignPlanModal
@@ -667,6 +661,8 @@ export function PlansManagement() {
         setUserSearch={setUserSearch}
         usersDropdown={usersDropdown}
         onAssign={handleAssign}
+        assigning={assigning}
+        usersLoading={usersLoading}
       />
 
       {/* Delete Confirmation Modal */}
@@ -677,6 +673,7 @@ export function PlansManagement() {
         title={t("removalAuthorization")}
         description={t("removalDescription")}
         confirmLabel={t("submit")}
+        isProcessing={deleteLoading}
       />
 
     </GlassCard>

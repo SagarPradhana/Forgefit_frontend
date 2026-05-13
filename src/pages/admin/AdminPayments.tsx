@@ -8,9 +8,12 @@ import {
   Skeleton, 
   Table, 
   EmptyState,
-  Modal,
   StatusBadge,
-  CommonButton
+  CommonButton,
+  Pagination,
+  ButtonLoader,
+  LoadingOverlay,
+  InlineSpinner,
 } from "../../components/ui/primitives";
 import { Edit2, Trash2, Printer, FileText, Download } from "lucide-react";
 import { adminPaymentService, type PaymentResponse, type PaymentMethod, type PaymentStatus, type PurchaseType } from "../../services/adminPaymentService";
@@ -55,6 +58,10 @@ export function AdminPayments() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentResponse | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: string; id: any } | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [modalBootstrapping, setModalBootstrapping] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
 
   const [paymentForm, setPaymentForm] = useState({
     user_id: "",
@@ -124,49 +131,100 @@ export function AdminPayments() {
     fetchPayments(1);
   }, [paymentStatus, paymentDateRange]);
 
-  const handleExportPDF = () => {
-    if (!fetchedPayments.length) {
-      toast.error("No data to export");
-      return;
+  const bootstrapPaymentModal = async (payment?: PaymentResponse) => {
+    setModalBootstrapping(true);
+    try {
+      await Promise.all([
+        fetchDropdownUsers(),
+        fetchProductsForDropdown(),
+        fetchSubscriptionPlans(),
+      ]);
+
+      if (payment) {
+        setEditPayment(payment.id);
+        setPaymentForm({
+          user_id: payment.user_id,
+          amount: String(payment.amount),
+          payment_date: new Date(payment.payment_date * 1000).toISOString().split('T')[0],
+          payment_method: payment.payment_method as PaymentMethod,
+          status: payment.status as PaymentStatus,
+          purchase_type: payment.purchase_type as PurchaseType,
+          purchase_id: payment.purchase_id,
+          purchase_details: payment.purchase_details || { additionalProp1: {} }
+        });
+      } else {
+        setPaymentForm({
+          user_id: "",
+          amount: "0",
+          payment_date: new Date().toISOString().split('T')[0],
+          payment_method: "cash" as PaymentMethod,
+          status: "paid" as PaymentStatus,
+          purchase_type: "product" as PurchaseType,
+          purchase_id: "",
+          purchase_details: { additionalProp1: {} }
+        });
+        setEditPayment(null);
+      }
+
+      setModalOpen(true);
+    } finally {
+      setModalBootstrapping(false);
     }
-    const doc = new jsPDF();
-    doc.text(`Payments Report-${new Date().toLocaleDateString()}`, 14, 15);
-    autoTable(doc, {
-      startY: 20,
-      head: [["Username", "Name", "Mobile", "Date", "Amount", "Method", "Type", "Status"]],
-      body: fetchedPayments.map((p) => [
-        p.username || "System",
-        (p as any).name || p.Name || "N/A",
-        p.mobile || "N/A",
-        new Date(p.payment_date * 1000).toLocaleDateString(),
-        p.amount.toString(),
-        p.payment_method,
-        p.purchase_type,
-        p.status
-      ]),
-    });
-    doc.save(`Payments_Report-${new Date().toLocaleDateString()}.pdf`);
   };
 
-  const handleExportExcel = () => {
+  const handleExportPDF = async () => {
     if (!fetchedPayments.length) {
       toast.error("No data to export");
       return;
     }
-    const data = fetchedPayments.map((p) => ({
-      Username: p.username || "System",
-      Name: (p as any).name || p.Name || "N/A",
-      Mobile: p.mobile || "N/A",
-      Date: new Date(p.payment_date * 1000).toLocaleDateString(),
-      Amount: p.amount,
-      Method: p.payment_method,
-      Type: p.purchase_type,
-      Status: p.status
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Payments");
-    XLSX.writeFile(workbook, `Payments_Report-${new Date().toLocaleDateString()}.xlsx`);
+    setExportingPdf(true);
+    try {
+      const doc = new jsPDF();
+      doc.text(`Payments Report-${new Date().toLocaleDateString()}`, 14, 15);
+      autoTable(doc, {
+        startY: 20,
+        head: [["Username", "Name", "Mobile", "Date", "Amount", "Method", "Type", "Status"]],
+        body: fetchedPayments.map((p) => [
+          p.username || "System",
+          (p as any).name || p.Name || "N/A",
+          p.mobile || "N/A",
+          new Date(p.payment_date * 1000).toLocaleDateString(),
+          p.amount.toString(),
+          p.payment_method,
+          p.purchase_type,
+          p.status
+        ]),
+      });
+      doc.save(`Payments_Report-${new Date().toLocaleDateString()}.pdf`);
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    if (!fetchedPayments.length) {
+      toast.error("No data to export");
+      return;
+    }
+    setExportingExcel(true);
+    try {
+      const data = fetchedPayments.map((p) => ({
+        Username: p.username || "System",
+        Name: (p as any).name || p.Name || "N/A",
+        Mobile: p.mobile || "N/A",
+        Date: new Date(p.payment_date * 1000).toLocaleDateString(),
+        Amount: p.amount,
+        Method: p.payment_method,
+        Type: p.purchase_type,
+        Status: p.status
+      }));
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Payments");
+      XLSX.writeFile(workbook, `Payments_Report-${new Date().toLocaleDateString()}.xlsx`);
+    } finally {
+      setExportingExcel(false);
+    }
   };
 
   const lastPage = Math.ceil(paymentsMeta.total_count / paymentsMeta.page_size) || 1;
@@ -179,25 +237,10 @@ export function AdminPayments() {
           subtitle="Secure transaction ledger with multi-dimensional filtering."
         />
         <GlowButton
-          onClick={() => {
-            setPaymentForm({
-              user_id: "",
-              amount: "0",
-              payment_date: new Date().toISOString().split('T')[0],
-              payment_method: "cash" as PaymentMethod,
-              status: "paid" as PaymentStatus,
-              purchase_type: "product" as PurchaseType,
-              purchase_id: "",
-              purchase_details: { additionalProp1: {} }
-            });
-            setEditPayment(null);
-            fetchDropdownUsers();
-            fetchProductsForDropdown();
-            fetchSubscriptionPlans();
-            setModalOpen(true);
-          }}
+          onClick={() => bootstrapPaymentModal()}
+          disabled={modalBootstrapping}
         >
-          {t("createNewPayment")}
+          <ButtonLoader label={t("createNewPayment")} loadingLabel="Preparing" loading={modalBootstrapping} />
         </GlowButton>
       </div>
 
@@ -220,23 +263,23 @@ export function AdminPayments() {
           onChange={(r) => setPaymentDateRange(r)}
         />
         <div className="flex gap-2 ml-auto">
-          <CommonButton variant="ghost" onClick={handleExportPDF} className="flex items-center gap-2">
-            <FileText size={16} /> PDF
+          <CommonButton variant="ghost" onClick={handleExportPDF} disabled={exportingPdf} className="flex items-center gap-2">
+            {exportingPdf ? <InlineSpinner size={16} /> : <FileText size={16} />} PDF
           </CommonButton>
-          <CommonButton variant="ghost" onClick={handleExportExcel} className="flex items-center gap-2 text-emerald-400">
-            <Download size={16} /> Excel
+          <CommonButton variant="ghost" onClick={handleExportExcel} disabled={exportingExcel} className="flex items-center gap-2 text-emerald-400">
+            {exportingExcel ? <InlineSpinner size={16} /> : <Download size={16} />} Excel
           </CommonButton>
         </div>
       </div>
 
-      {paymentsLoading ? (
+      {paymentsLoading && fetchedPayments.length === 0 ? (
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
             <Skeleton key={i} className="h-16 w-full rounded-xl" />
           ))}
         </div>
       ) : fetchedPayments.length > 0 ? (
-        <>
+        <div className="relative">
           <Table
             headers={[t("name"), t("contact"), t("timestamp"), t("valuation"), t("method"), t("type"), t("status"), t("operations")]}
             rows={fetchedPayments.map((p) => [
@@ -251,23 +294,7 @@ export function AdminPayments() {
               <StatusBadge key={`${p.id}-status`} status={p.status.charAt(0).toUpperCase() + p.status.slice(1) as any} />,
               <div key={`${p.id}-act`} className="flex gap-2 justify-center">
                 <button
-                  onClick={() => {
-                    setEditPayment(p.id);
-                    setPaymentForm({
-                      user_id: p.user_id,
-                      amount: String(p.amount),
-                      payment_date: new Date(p.payment_date * 1000).toISOString().split('T')[0],
-                      payment_method: p.payment_method as PaymentMethod,
-                      status: p.status as PaymentStatus,
-                      purchase_type: p.purchase_type as PurchaseType,
-                      purchase_id: p.purchase_id,
-                      purchase_details: p.purchase_details || { additionalProp1: {} }
-                    });
-                    fetchDropdownUsers();
-                    fetchProductsForDropdown();
-                    fetchSubscriptionPlans();
-                    setModalOpen(true);
-                  }}
+                  onClick={() => bootstrapPaymentModal(p)}
                   className={`${p.purchase_type === "subscription" ? "text-slate-600 cursor-not-allowed pointer-events-none" : "text-indigo-400 hover:text-indigo-300"}`}
                   title={p.purchase_type === "subscription" ? t("cannotEditSubPayment") : t("editPayment")}
                 >
@@ -296,29 +323,17 @@ export function AdminPayments() {
               </div>
             ])}
           />
+          <LoadingOverlay show={paymentsLoading && fetchedPayments.length > 0} label="Refreshing payments" compact />
 
-          {lastPage > 1 && (
-            <div className="flex justify-center items-center gap-4 mt-6">
-              <button
-                disabled={!paymentsMeta.has_previous}
-                onClick={() => fetchPayments(paymentsMeta.page_no - 1)}
-                className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-xs font-bold uppercase tracking-widest disabled:opacity-30"
-              >
-                Prev
-              </button>
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                Page {paymentsMeta.page_no} of {lastPage}
-              </span>
-              <button
-                disabled={!paymentsMeta.has_next}
-                onClick={() => fetchPayments(paymentsMeta.page_no + 1)}
-                className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-xs font-bold uppercase tracking-widest disabled:opacity-30"
-              >
-                Next
-              </button>
-            </div>
-          )}
-        </>
+          <Pagination
+            currentPage={paymentsMeta.page_no}
+            totalPages={lastPage}
+            hasPrev={paymentsMeta.has_previous}
+            hasNext={paymentsMeta.has_next}
+            onPrev={() => fetchPayments(paymentsMeta.page_no - 1)}
+            onNext={() => fetchPayments(paymentsMeta.page_no + 1)}
+          />
+        </div>
       ) : (
         <EmptyState
           title="Financial Static"
@@ -345,12 +360,15 @@ export function AdminPayments() {
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={async () => {
           if (deleteTarget && deleteTarget.type === "payment") {
+            setDeleteLoading(true);
             try {
               await adminPaymentService.deletePayment(deleteTarget.id);
               toast.success("Transaction purged successfully");
               fetchPayments(paymentsMeta.page_no);
             } catch (err) {
               toast.error("Purge failed");
+            } finally {
+              setDeleteLoading(false);
             }
           }
           setDeleteModalOpen(false);
@@ -359,6 +377,7 @@ export function AdminPayments() {
         title="Registry Purge"
         description="This financial record will be permanently erased from the master ledger."
         confirmLabel="Submit"
+        isProcessing={deleteLoading}
       />
 
       <InvoiceModal

@@ -4,6 +4,9 @@ import {
   Table,
   StatusBadge,
   Skeleton,
+  Pagination,
+  InlineSpinner,
+  LoadingOverlay,
 } from "../../components/ui/primitives";
 import { Trash2, CheckCircle, Search } from "lucide-react";
 import { toast } from "../../store/toastStore";
@@ -16,17 +19,21 @@ export function InquiryCenter() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<InquiryType>("subscriptions");
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [data, setData] = useState<any[]>([]);
   const [meta, setMeta] = useState({ total: 0, count: 10, offset: 0 });
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [resolveTargetId, setResolveTargetId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const params = {
-        search: searchQuery || undefined,
+        search: debouncedSearchQuery || undefined,
         count: meta.count,
         offset: meta.offset,
       };
@@ -55,8 +62,18 @@ export function InquiryCenter() {
       toast.error("Failed to fetch inquiries");
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
-  }, [activeTab, searchQuery, meta.count, meta.offset]);
+  }, [activeTab, debouncedSearchQuery, meta.count, meta.offset]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery.trim());
+      setMeta((prev) => ({ ...prev, offset: 0 }));
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     fetchData();
@@ -69,6 +86,7 @@ export function InquiryCenter() {
 
   const confirmDelete = async () => {
     if (!deleteTargetId) return;
+    setDeleteLoading(true);
     try {
       switch (activeTab) {
         case "subscriptions": await adminInquiryService.deleteSubscriptionInquiry(deleteTargetId); break;
@@ -81,12 +99,14 @@ export function InquiryCenter() {
     } catch (err) {
       toast.error("Delete operation failed");
     } finally {
+      setDeleteLoading(false);
       setDeleteModalOpen(false);
       setDeleteTargetId(null);
     }
   };
 
   const handleResolve = async (id: string) => {
+    setResolveTargetId(id);
     try {
       switch (activeTab) {
         case "subscriptions": await adminInquiryService.updateSubscriptionInquiry(id); break;
@@ -98,6 +118,8 @@ export function InquiryCenter() {
       fetchData();
     } catch (err) {
       toast.error("Resolve operation failed");
+    } finally {
+      setResolveTargetId(null);
     }
   };
 
@@ -120,8 +142,8 @@ export function InquiryCenter() {
                   setMeta({ ...meta, offset: 0 });
                 }}
                 className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 border ${activeTab === tab.id
-                    ? "bg-indigo-500 border-indigo-400 text-white shadow-lg shadow-indigo-500/20"
-                    : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
+                  ? "bg-indigo-500 border-indigo-400 text-white shadow-lg shadow-indigo-500/20"
+                  : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
                   }`}
               >
                 {t(tab.id)}
@@ -148,8 +170,8 @@ export function InquiryCenter() {
         {activeTab === "expiry" && <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">{t("expiryTabSubtitle")}</p>}
       </div>
 
-      <div className="w-full">
-        {loading ? (
+      <div className="relative w-full min-h-[260px]">
+        {initialLoading ? (
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-2xl" />)}
           </div>
@@ -168,9 +190,16 @@ export function InquiryCenter() {
                     {r.description && <p className="text-[10px] text-slate-500 mt-0.5 italic line-clamp-1">{r.description}</p>}
                   </div>,
                   <span key={`${r.id}-date`} className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span>,
-                  <StatusBadge key={`${r.id}-status`} status={r.status ? t("resolved") : t("pending")} />,
+                  <StatusBadge key={`${r.id}-status`} status={r.status ? t("resolved") as any : t("pending") as any} />,
                   <div key={`${r.id}-actions`} className="flex gap-3">
-                    <button onClick={() => handleResolve(r.id)} className="text-emerald-400 hover:scale-125 transition-transform" title={t("resolve")}><CheckCircle size={16} /></button>
+                    <button
+                      onClick={() => handleResolve(r.id)}
+                      disabled={resolveTargetId === r.id}
+                      className="text-emerald-400 hover:scale-125 transition-transform disabled:opacity-60 disabled:hover:scale-100"
+                      title={t("resolve")}
+                    >
+                      {resolveTargetId === r.id ? <InlineSpinner size={16} /> : <CheckCircle size={16} />}
+                    </button>
                     <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title={t("delete")}><Trash2 size={16} /></button>
                   </div>
                 ])}
@@ -191,9 +220,16 @@ export function InquiryCenter() {
                   </div>,
                   <span key={`${r.id}-qty`} className="text-slate-200 font-black italic text-lg">{r.quantity}</span>,
                   <span key={`${r.id}-date`} className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span>,
-                  <StatusBadge key={`${r.id}-status`} status={r.status ? t("resolved") : t("pending")} />,
+                  <StatusBadge key={`${r.id}-status`} status={r.status ? t("resolved") as any : t("pending") as any} />,
                   <div key={`${r.id}-actions`} className="flex gap-3">
-                    <button onClick={() => handleResolve(r.id)} className="text-emerald-400 hover:scale-125 transition-transform" title={t("resolve")}><CheckCircle size={16} /></button>
+                    <button
+                      onClick={() => handleResolve(r.id)}
+                      disabled={resolveTargetId === r.id}
+                      className="text-emerald-400 hover:scale-125 transition-transform disabled:opacity-60 disabled:hover:scale-100"
+                      title={t("resolve")}
+                    >
+                      {resolveTargetId === r.id ? <InlineSpinner size={16} /> : <CheckCircle size={16} />}
+                    </button>
                     <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title={t("delete")}><Trash2 size={16} /></button>
                   </div>
                 ])}
@@ -215,9 +251,16 @@ export function InquiryCenter() {
                     <span className="text-[8px] text-slate-500 font-bold uppercase">{r.email}</span>
                   </div>,
                   <span key={`${r.id}-date`} className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span>,
-                  <StatusBadge key={`${r.id}-status`} status={r.status ? t("resolved") : t("pending")} />,
+                  <StatusBadge key={`${r.id}-status`} status={r.status ? t("resolved") as any : t("pending") as any} />,
                   <div key={`${r.id}-actions`} className="flex gap-3">
-                    <button onClick={() => handleResolve(r.id)} className="text-emerald-400 hover:scale-125 transition-transform" title={t("resolve")}><CheckCircle size={16} /></button>
+                    <button
+                      onClick={() => handleResolve(r.id)}
+                      disabled={resolveTargetId === r.id}
+                      className="text-emerald-400 hover:scale-125 transition-transform disabled:opacity-60 disabled:hover:scale-100"
+                      title={t("resolve")}
+                    >
+                      {resolveTargetId === r.id ? <InlineSpinner size={16} /> : <CheckCircle size={16} />}
+                    </button>
                     <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title={t("delete")}><Trash2 size={16} /></button>
                   </div>
                 ])}
@@ -239,8 +282,12 @@ export function InquiryCenter() {
                     <span className="text-[10px] font-black text-white uppercase tracking-widest">{r.status ? t(t("resolved")) : t("renewalCritical")}</span>
                   </div>,
                   <div key={`${r.id}-actions`} className="flex gap-3">
-                    <button onClick={() => handleResolve(r.id)} className="h-8 px-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all flex items-center gap-2">
-                      <CheckCircle size={12} /> {t("resolve")}
+                    <button
+                      onClick={() => handleResolve(r.id)}
+                      disabled={resolveTargetId === r.id}
+                      className="h-8 px-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all flex items-center gap-2 disabled:opacity-60"
+                    >
+                      {resolveTargetId === r.id ? <InlineSpinner size={12} /> : <CheckCircle size={12} />} {t("resolve")}
                     </button>
                     <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform p-2"><Trash2 size={16} /></button>
                   </div>
@@ -254,26 +301,17 @@ export function InquiryCenter() {
               </div>
             )}
 
-            {meta.total > meta.count && (
-              <div className="flex justify-center gap-2 mt-6">
-                <button
-                  disabled={meta.offset === 0}
-                  onClick={() => setMeta({ ...meta, offset: Math.max(0, meta.offset - meta.count) })}
-                  className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white disabled:opacity-30"
-                >
-                  Prev
-                </button>
-                <button
-                  disabled={meta.offset + meta.count >= meta.total}
-                  onClick={() => setMeta({ ...meta, offset: meta.offset + meta.count })}
-                  className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white disabled:opacity-30"
-                >
-                  Next
-                </button>
-              </div>
-            )}
+            <Pagination
+              currentPage={Math.floor(meta.offset / meta.count) + 1}
+              totalPages={Math.ceil((meta?.total || 0) / (meta?.count || 1))}
+              hasPrev={meta.offset > 0}
+              hasNext={meta.offset + meta.count < meta.total}
+              onPrev={() => setMeta({ ...meta, offset: Math.max(0, meta.offset - meta.count) })}
+              onNext={() => setMeta({ ...meta, offset: meta.offset + meta.count })}
+            />
           </>
         )}
+        <LoadingOverlay show={loading && !initialLoading} label="Refreshing records" compact />
       </div>
 
       <DeleteConfirmationModal
@@ -283,6 +321,7 @@ export function InquiryCenter() {
         title="Delete Record"
         description="This inquiry record will be permanently removed from the system."
         confirmLabel="Delete"
+        isProcessing={deleteLoading}
       />
     </div>
   );

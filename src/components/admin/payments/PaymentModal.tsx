@@ -1,4 +1,5 @@
-import { Modal, GlowButton } from "../../ui/primitives";
+import { useState } from "react";
+import { Modal, GlowButton, ButtonLoader } from "../../ui/primitives";
 import { toast } from "../../../store/toastStore";
 import { adminPaymentService, type PaymentMethod, type PaymentStatus, type PurchaseType } from "../../../services/adminPaymentService";
 import { useTranslation } from "react-i18next";
@@ -38,7 +39,10 @@ export function PaymentModal({
   onSuccess
 }: PaymentModalProps) {
   const { t } = useTranslation();
+  const [submitting, setSubmitting] = useState(false);
+
   const handleSubmit = async () => {
+    setSubmitting(true);
     const payload = {
       ...paymentForm,
       amount: Number(paymentForm.amount),
@@ -56,6 +60,8 @@ export function PaymentModal({
       onClose();
     } catch (err) {
       toast.error("Process failed");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -66,8 +72,10 @@ export function PaymentModal({
       title={editPaymentId ? t("financialAdjustment") : t("logTransaction")}
       footer={
         <>
-          <GlowButton className="bg-gray-600" onClick={onClose}>{t("cancel")}</GlowButton>
-          <GlowButton onClick={handleSubmit}>{t("submit")}</GlowButton>
+          <GlowButton className="bg-gray-600" onClick={onClose} disabled={submitting}>{t("cancel")}</GlowButton>
+          <GlowButton onClick={handleSubmit} disabled={submitting}>
+            <ButtonLoader label={t("submit")} loadingLabel={t("loading")} loading={submitting} />
+          </GlowButton>
         </>
       }
     >

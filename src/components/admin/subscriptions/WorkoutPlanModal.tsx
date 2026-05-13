@@ -1,4 +1,4 @@
-import { Modal, GlowButton } from "../../ui/primitives";
+import { Modal, GlowButton, ButtonLoader } from "../../ui/primitives";
 import { Plus, Trash2 } from "lucide-react";
 import type { WorkoutPlan } from "../../../services/adminPlansService";
 import { useTranslation } from "react-i18next";
@@ -10,6 +10,7 @@ interface WorkoutPlanModalProps {
   workoutForm: WorkoutPlan;
   setWorkoutForm: (form: WorkoutPlan) => void;
   onSave: () => void;
+  saving?: boolean;
 }
 
 export function WorkoutPlanModal({
@@ -18,7 +19,8 @@ export function WorkoutPlanModal({
   editWorkoutId,
   workoutForm,
   setWorkoutForm,
-  onSave
+  onSave,
+  saving = false,
 }: WorkoutPlanModalProps) {
   const { t } = useTranslation();
   return (
@@ -31,10 +33,13 @@ export function WorkoutPlanModal({
           <button
             className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-all"
             onClick={onClose}
+            disabled={saving}
           >
             {t("cancel")}
           </button>
-          <GlowButton onClick={onSave} className="px-8">{t("submit")}</GlowButton>
+          <GlowButton onClick={onSave} disabled={saving} className="px-8">
+            <ButtonLoader label={t("submit")} loadingLabel={t("loading")} loading={saving} />
+          </GlowButton>
         </div>
       }
     >

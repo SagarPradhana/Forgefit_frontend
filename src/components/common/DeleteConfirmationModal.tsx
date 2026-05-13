@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, AlertTriangle, X } from "lucide-react";
-import { CommonButton } from "../ui/primitives";
+import { ButtonLoader, CommonButton } from "../ui/primitives";
 
 interface DeleteConfirmationModalProps {
   isOpen: boolean;
@@ -10,6 +10,7 @@ interface DeleteConfirmationModalProps {
   title?: string;
   description?: string;
   confirmLabel?: string;
+  isProcessing?: boolean;
 }
 
 export const DeleteConfirmationModal = ({
@@ -18,7 +19,8 @@ export const DeleteConfirmationModal = ({
   onConfirm,
   title = "Confirm Deletion",
   description = "Are you sure you want to permanently remove this record? This action cannot be undone.",
-  confirmLabel = "Delete Now"
+  confirmLabel = "Delete Now",
+  isProcessing = false,
 }: DeleteConfirmationModalProps) => {
   useEffect(() => {
     if (isOpen) {
@@ -52,11 +54,12 @@ export const DeleteConfirmationModal = ({
           >
             {/* Close Button */}
             <button
-              onClick={onClose}
-              className="absolute top-6 right-6 p-2 rounded-full bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all z-20"
-            >
-              <X size={18} />
-            </button>
+            onClick={isProcessing ? undefined : onClose}
+            className="absolute top-6 right-6 p-2 rounded-full bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all z-20"
+            disabled={isProcessing}
+          >
+            <X size={18} />
+          </button>
 
             {/* Red Accent Glow */}
             <div className="absolute -top-24 -right-24 w-48 h-48 bg-red-600/20 blur-[80px] rounded-full pointer-events-none" />
@@ -89,6 +92,7 @@ export const DeleteConfirmationModal = ({
                 <CommonButton
                   variant="ghost"
                   onClick={onClose}
+                  disabled={isProcessing}
                   className="py-4 rounded-2xl border-white/5 hover:border-white/10 text-slate-300 font-bold uppercase tracking-widest text-[10px]"
                 >
                   Cancel
@@ -97,9 +101,15 @@ export const DeleteConfirmationModal = ({
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={onConfirm}
+                  disabled={isProcessing}
                   className="py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-lg shadow-red-500/30 transition-all border border-red-400/20"
                 >
-                  {confirmLabel}
+                  <ButtonLoader
+                    label={confirmLabel}
+                    loadingLabel="Deleting"
+                    loading={isProcessing}
+                    spinnerClassName="text-white"
+                  />
                 </motion.button>
               </div>
             </div>

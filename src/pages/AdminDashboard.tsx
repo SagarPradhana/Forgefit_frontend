@@ -311,8 +311,18 @@ export default function AdminDashboard() {
   }, [fetchStats, fetchInquiries, fetchPayments, fetchSubscriptions, fetchProducts, fetchAttendance, fetchMonthlyRevenue]);
 
   useEffect(() => {
-    refreshAll();
-  }, [refreshAll, derivedRevenueMonths]);
+    fetchStats();
+    fetchInquiries();
+    fetchPayments();
+    fetchSubscriptions();
+    fetchProducts();
+    fetchAttendance();
+  }, [dateRange]);
+
+  // Revenue chart is INDEPENDENT of the global date filter — only depends on revenueMonths
+  useEffect(() => {
+    fetchMonthlyRevenue();
+  }, [fetchMonthlyRevenue]);
 
   const isAnyLoading = Object.values(loading).some(Boolean);
 
@@ -398,56 +408,57 @@ export default function AdminDashboard() {
         <StatCard label={t("totalRevenue")} value={stats?.total_revenue != null ? fmt(stats.total_revenue) : "—"} icon={IndianRupee} color="bg-emerald-500" delay={0.25} />
       </div>
 
-      {/* ── [ROW 2] Recent Inquiries (4 tabs) ── */}
+      {/* ── [ROW 2] Recent Inquiries ── */}
       <GlassCard>
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <SectionHeader title={t("recentInquiries")} sub={t("latestRequests")} onRedirect={() => navigate('/admin/inquiries')} />
-          <div className="flex flex-wrap gap-1 bg-white/5 border border-white/10 rounded-xl p-1 overflow-x-auto no-scrollbar">
+          {/* Tab pills */}
+          <div className="flex flex-wrap gap-1.5">
             {inqTabs.map(({ id, label, icon: Icon }) => (
               <button key={id} onClick={() => setInqTab(id as any)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${inqTab === id ? "bg-indigo-500 text-white shadow-lg" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
-                <Icon size={12} />{t(id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${
+                  inqTab === id
+                    ? "bg-indigo-500 border-indigo-400 text-white shadow-lg shadow-indigo-500/20"
+                    : "bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10"
+                }`}>
+                <Icon size={11} />{t(id)}
               </button>
             ))}
           </div>
         </div>
-        {loading.inquiries ? <SkeletonRows /> : inqData.length === 0 ? (
+        {loading.inquiries ? (
+          <div className="space-y-2">
+            {[...Array(4)].map((_, i) => <div key={i} className="h-16 rounded-xl bg-white/5 animate-pulse" />)}
+          </div>
+        ) : inqData.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-10 text-slate-500">
             <Bell size={32} className="opacity-20" /><p className="text-sm font-bold">{t("noRecords")}</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {inqData.slice(0, 5).map((item: any, i: number) => (
-              <motion.div key={item.id ?? i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
-                className="flex items-center justify-between gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-white/15 transition-all group">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className={`h-10 w-10 rounded-2xl flex items-center justify-center text-xs font-black shrink-0 shadow-lg ${
-                    inqTab === 'subscriptions' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/20' : 
-                    inqTab === 'product_orders' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' : 
-                    'bg-amber-500/20 text-amber-400 border border-amber-500/20'
-                  }`}>
-                    {(item.user_name ?? "?")?.[0]?.toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex flex-col justify-center">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-black text-white truncate">{item.user_name ?? "—"}</p>
-                      <span className={`h-1.5 w-1.5 rounded-full ${item.status ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
-                    </div>
-                    <p className="text-[10px] text-slate-400 truncate mt-0.5 font-medium leading-relaxed">
-                      {item.description ?? t("noRecords")}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Clock size={10} className="text-slate-500" />
-                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">
-                        {fmtDate(item.inquiry_date)}
-                      </span>
-                    </div>
-                  </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {inqData.slice(0, 6).map((item: any, i: number) => (
+              <motion.div key={item.id ?? i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                className="flex items-start gap-3 p-3.5 rounded-xl bg-white/5 border border-white/5 hover:border-white/15 transition-all group">
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 ${
+                  inqTab === 'subscriptions' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/20' :
+                  inqTab === 'product_orders' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' :
+                  'bg-amber-500/20 text-amber-400 border border-amber-500/20'
+                }`}>
+                  {(item.user_name ?? "?")?.[0]?.toUpperCase()}
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button onClick={() => navigate('/admin/inquiries')} className="h-9 w-9 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white/10 hover:text-white transition-all text-slate-500 border border-white/5">
-                    <ChevronRight size={16} />
-                  </button>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-black text-white truncate">{item.user_name ?? "—"}</p>
+                    <span className={`h-2 w-2 rounded-full shrink-0 ${item.status ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                  </div>
+                  <p className="text-[10px] text-slate-400 truncate mt-0.5 leading-relaxed">{item.description ?? "—"}</p>
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <Clock size={9} className="text-slate-600" />
+                    <span className="text-[9px] font-bold text-slate-600 uppercase">{fmtDate(item.inquiry_date)}</span>
+                    <span className={`ml-auto text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${
+                      item.status ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
+                    }`}>{item.status ? t("resolved") : t("pending")}</span>
+                  </div>
                 </div>
               </motion.div>
             ))}

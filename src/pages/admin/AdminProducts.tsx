@@ -8,7 +8,7 @@ import {
   Skeleton, 
   Table, 
   EmptyState,
-  Modal
+  Pagination
 } from "../../components/ui/primitives";
 import { Search, Edit2, Trash2 } from "lucide-react";
 import { adminProductService, type ProductResponse } from "../../services/adminProductService";
@@ -183,27 +183,14 @@ export function AdminProducts() {
             ])}
           />
 
-          {lastPage > 1 && (
-            <div className="flex justify-center items-center gap-4 mt-6">
-              <button
-                disabled={!productsMeta.has_previous}
-                onClick={() => fetchProducts(productsMeta.page_no - 1)}
-                className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-xs font-bold uppercase tracking-widest disabled:opacity-30"
-              >
-                {t("prev")}
-              </button>
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                {t("pageOf", { current: productsMeta.page_no, total: lastPage })}
-              </span>
-              <button
-                disabled={!productsMeta.has_next}
-                onClick={() => fetchProducts(productsMeta.page_no + 1)}
-                className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-xs font-bold uppercase tracking-widest disabled:opacity-30"
-              >
-                {t("next")}
-              </button>
-            </div>
-          )}
+          <Pagination
+            currentPage={productsMeta.page_no}
+            totalPages={lastPage}
+            hasPrev={productsMeta.has_previous}
+            hasNext={productsMeta.has_next}
+            onPrev={() => fetchProducts(productsMeta.page_no - 1)}
+            onNext={() => fetchProducts(productsMeta.page_no + 1)}
+          />
         </>
       ) : (
         <EmptyState

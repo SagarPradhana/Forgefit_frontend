@@ -24,34 +24,34 @@ const LanguageSwitcher: React.FC = () => {
       {/* 🔥 BUTTON */}
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 backdrop-blur hover:bg-white/10 transition"
+        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 border border-white/20 backdrop-blur hover:bg-white/15 transition text-white font-medium text-sm"
       >
-        <Languages size={16} />
-        <span className="text-sm">
+        <Languages size={15} />
+        <span className="text-sm font-bold">
           {currentLang?.flag} {currentLang?.name}
         </span>
         <ChevronDown
-          size={14}
+          size={13}
           className={`transition ${open ? "rotate-180" : ""}`}
         />
       </button>
 
       {/* 💎 DROPDOWN */}
       {open && (
-        <div className="absolute right-0 mt-2 w-44 rounded-xl bg-slate-900 border border-white/10 shadow-xl z-50 overflow-visible">
+        <div className="absolute right-0 mt-2 w-44 rounded-xl bg-slate-900 border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.8)] z-[200] overflow-hidden">
           {languages.map((lang) => (
             <button
               key={lang.code}
               onClick={() => changeLanguage(lang.code)}
-              className={`w-full flex items-center gap-2 px-4 py-2 text-sm transition
+              className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-all
                 ${
                   i18n.language === lang.code
-                    ? "bg-indigo-500/20 text-white"
-                    : "text-slate-300 hover:bg-white/10"
+                    ? "bg-indigo-600 text-white"
+                    : "text-slate-200 hover:bg-slate-800 hover:text-white"
                 }
               `}
             >
-              <span>{lang.flag}</span>
+              <span className="text-base">{lang.flag}</span>
               {lang.name}
             </button>
           ))}

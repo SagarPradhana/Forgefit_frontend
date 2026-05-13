@@ -1,4 +1,4 @@
-import { Modal, GlowButton } from "../../ui/primitives";
+import { Modal, GlowButton, ButtonLoader, InlineSpinner } from "../../ui/primitives";
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -13,6 +13,8 @@ interface AssignPlanModalProps {
   setUserSearch: (s: string) => void;
   usersDropdown: any[];
   onAssign: () => void;
+  assigning?: boolean;
+  usersLoading?: boolean;
 }
 
 export function AssignPlanModal({
@@ -25,7 +27,9 @@ export function AssignPlanModal({
   userSearch,
   setUserSearch,
   usersDropdown,
-  onAssign
+  onAssign,
+  assigning = false,
+  usersLoading = false,
 }: AssignPlanModalProps) {
   const { t } = useTranslation();
   return (
@@ -38,10 +42,13 @@ export function AssignPlanModal({
           <button
             className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-all"
             onClick={onClose}
+            disabled={assigning}
           >
             {t("cancel")}
           </button>
-          <GlowButton onClick={onAssign} className="px-8">{t("executeAssignment")}</GlowButton>
+          <GlowButton onClick={onAssign} disabled={assigning} className="px-8">
+            <ButtonLoader label={t("executeAssignment")} loadingLabel={t("loading")} loading={assigning} />
+          </GlowButton>
         </div>
       }
     >
@@ -57,6 +64,11 @@ export function AssignPlanModal({
               value={userSearch}
               onChange={(e) => setUserSearch(e.target.value)}
             />
+            {usersLoading ? (
+              <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                <InlineSpinner size={16} className="text-indigo-400" />
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -66,6 +78,7 @@ export function AssignPlanModal({
             className="w-full rounded-2xl bg-slate-950 border border-white/5 p-4 text-white focus:border-indigo-500/50 outline-none transition duration-300 text-sm font-bold shadow-inner"
             value={assignUserId}
             onChange={(e) => setAssignUserId(e.target.value)}
+            disabled={usersLoading}
           >
             <option value="" className="bg-slate-900">{t("selectRegistryEntity")}</option>
             {usersDropdown.map((u: any) => (

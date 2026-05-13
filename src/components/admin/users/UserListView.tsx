@@ -234,54 +234,54 @@ export const UserListView = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
             style={{ position: "fixed", top: menuPos.top, left: menuPos.left, zIndex: 9999 }}
-            className="w-56 rounded-2xl border border-white/10 bg-slate-900 shadow-2xl shadow-black/70 overflow-hidden"
+            className="w-60 rounded-2xl border border-white/15 bg-slate-950 shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden"
           >
             {/* Header */}
-            <div className="px-3 py-2.5 border-b border-white/5 bg-white/[0.03]">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">{t("moreActions")}</p>
-              <p className="text-[11px] font-black text-white truncate">{user.name}</p>
+            <div className="px-4 py-3 border-b border-white/10 bg-gradient-to-r from-indigo-600/10 to-transparent">
+              <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400/80">{t("moreActions")}</p>
+              <p className="text-[12px] font-black text-white truncate mt-0.5">{user.name}</p>
             </div>
             {/* Actions */}
-            <div className="p-1.5 space-y-0.5">
+            <div className="p-2 space-y-0.5">
               <button onClick={() => { onOpenIdCard(user); setOpenMenuId(null); setMenuPos(null); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-emerald-500/15 text-emerald-400 transition-all group/item">
-                <div className="h-7 w-7 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0 group-hover/item:bg-emerald-500/20"><Contact size={13} /></div>
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-emerald-500/20 text-emerald-400 transition-all group/item">
+                <div className="h-7 w-7 rounded-lg bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center shrink-0"><Contact size={13} /></div>
                 <span className="text-[11px] font-black uppercase tracking-wider">{t("idCard")}</span>
               </button>
               <button onClick={() => { onOpenSubscription(user); setOpenMenuId(null); setMenuPos(null); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-purple-500/15 text-purple-400 transition-all group/item">
-                <div className="h-7 w-7 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0 group-hover/item:bg-purple-500/20"><CreditCard size={13} /></div>
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-purple-500/20 text-purple-400 transition-all group/item">
+                <div className="h-7 w-7 rounded-lg bg-purple-500/15 border border-purple-500/20 flex items-center justify-center shrink-0"><CreditCard size={13} /></div>
                 <span className="text-[11px] font-black uppercase tracking-wider">{t("plans")}</span>
               </button>
               <button onClick={() => { onOpenAttendance(user); setOpenMenuId(null); setMenuPos(null); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-sky-500/15 text-sky-400 transition-all group/item">
-                <div className="h-7 w-7 rounded-lg bg-sky-500/10 flex items-center justify-center shrink-0 group-hover/item:bg-sky-500/20"><Calendar size={13} /></div>
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-sky-500/20 text-sky-400 transition-all group/item">
+                <div className="h-7 w-7 rounded-lg bg-sky-500/15 border border-sky-500/20 flex items-center justify-center shrink-0"><Calendar size={13} /></div>
                 <span className="text-[11px] font-black uppercase tracking-wider">{t("attendance")}</span>
               </button>
               <button onClick={() => { onOpenDocs(user); setOpenMenuId(null); setMenuPos(null); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-amber-500/15 text-amber-400 transition-all group/item">
-                <div className="h-7 w-7 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 group-hover/item:bg-amber-500/20"><FileText size={13} /></div>
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-amber-500/20 text-amber-400 transition-all group/item">
+                <div className="h-7 w-7 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center shrink-0"><FileText size={13} /></div>
                 <span className="text-[11px] font-black uppercase tracking-wider">{t("docs")}</span>
               </button>
               <button onClick={() => { onSendWhatsAppReminder(user); setOpenMenuId(null); setMenuPos(null); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-green-500/15 text-green-400 transition-all group/item">
-                <div className="h-7 w-7 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0 group-hover/item:bg-green-500/20"><MessageCircle size={13} /></div>
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-green-500/20 text-green-400 transition-all group/item">
+                <div className="h-7 w-7 rounded-lg bg-green-500/15 border border-green-500/20 flex items-center justify-center shrink-0"><MessageCircle size={13} /></div>
                 <span className="text-[11px] font-black uppercase tracking-wider">{t("whatsapp")}</span>
               </button>
               <button onClick={() => { onResetPassword(user); setOpenMenuId(null); setMenuPos(null); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-500/15 text-slate-400 transition-all group/item">
-                <div className="h-7 w-7 rounded-lg bg-slate-500/10 flex items-center justify-center shrink-0 group-hover/item:bg-slate-500/20"><Key size={13} /></div>
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-700/50 text-slate-300 transition-all group/item">
+                <div className="h-7 w-7 rounded-lg bg-slate-700/50 border border-white/10 flex items-center justify-center shrink-0"><Key size={13} /></div>
                 <span className="text-[11px] font-black uppercase tracking-wider">{t("resetPassword")}</span>
               </button>
-              <div className="h-px bg-white/5 my-1" />
+              <div className="h-px bg-white/10 my-1.5 mx-2" />
               <button
                 disabled={statusUpdating && loadingStatusId === user.id}
                 onClick={() => { onToggleStatus(user.id, user.is_active !== false); setOpenMenuId(null); setMenuPos(null); }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group/item ${
-                  user.is_active !== false ? "hover:bg-amber-500/15 text-amber-400" : "hover:bg-emerald-500/15 text-emerald-400"}`}
+                  user.is_active !== false ? "hover:bg-amber-500/20 text-amber-400" : "hover:bg-emerald-500/20 text-emerald-400"}`}
               >
-                <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${
-                  user.is_active !== false ? "bg-amber-500/10" : "bg-emerald-500/10"}`}>
+                <div className={`h-7 w-7 rounded-lg border flex items-center justify-center shrink-0 ${
+                  user.is_active !== false ? "bg-amber-500/15 border-amber-500/20" : "bg-emerald-500/15 border-emerald-500/20"}`}>
                   {statusUpdating && loadingStatusId === user.id
                     ? <Loader2 size={13} className="animate-spin" />
                     : user.is_active !== false ? <ToggleLeft size={13} /> : <ToggleRight size={13} />}
