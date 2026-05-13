@@ -33,7 +33,7 @@ export interface PaginatedPaymentResponse {
   mCode: string;
   message: string;
   count: number;
-  totalcount: number;
+  total_count: number;
   data: PaymentResponse[];
 }
 

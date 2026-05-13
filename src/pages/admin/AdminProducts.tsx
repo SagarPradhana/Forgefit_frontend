@@ -62,12 +62,15 @@ export function AdminProducts() {
         category: category !== "All" ? category : undefined
       });
       if (res && res.data) {
+        const totalCount = Number(
+          res.total_count ?? res.totalcount ?? res.pagination?.total_count ?? res.count ?? res.data.length ?? 0
+        );
         setFetchedProducts(res.data);
         setProductsMeta({
           page_no: Math.floor(offset / pageSize) + 1,
-          total_count: res.totalcount || 0,
+          total_count: totalCount,
           page_size: pageSize,
-          has_next: offset + pageSize < res.totalcount,
+          has_next: offset + pageSize < totalCount,
           has_previous: offset > 0
         });
       }

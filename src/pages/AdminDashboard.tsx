@@ -416,11 +416,10 @@ export default function AdminDashboard() {
           <div className="flex flex-wrap gap-1.5">
             {inqTabs.map(({ id, label, icon: Icon }) => (
               <button key={id} onClick={() => setInqTab(id as any)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${
-                  inqTab === id
-                    ? "bg-indigo-500 border-indigo-400 text-white shadow-lg shadow-indigo-500/20"
-                    : "bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10"
-                }`}>
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${inqTab === id
+                  ? "bg-indigo-500 border-indigo-400 text-white shadow-lg shadow-indigo-500/20"
+                  : "bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10"
+                  }`}>
                 <Icon size={11} />{t(id)}
               </button>
             ))}
@@ -435,29 +434,51 @@ export default function AdminDashboard() {
             <Bell size={32} className="opacity-20" /><p className="text-sm font-bold">{t("noRecords")}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="flex flex-col gap-2">
             {inqData.slice(0, 6).map((item: any, i: number) => (
-              <motion.div key={item.id ?? i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                className="flex items-start gap-3 p-3.5 rounded-xl bg-white/5 border border-white/5 hover:border-white/15 transition-all group">
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 ${
-                  inqTab === 'subscriptions' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/20' :
-                  inqTab === 'product_orders' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' :
-                  'bg-amber-500/20 text-amber-400 border border-amber-500/20'
-                }`}>
+              <motion.div
+                key={item.id ?? i}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04 }}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/[0.07] transition-all"
+              >
+                <div
+                  className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-black shrink-0 ${inqTab === "subscriptions"
+                      ? "bg-indigo-500/20 text-indigo-400"
+                      : inqTab === "product_orders"
+                        ? "bg-emerald-500/20 text-emerald-400"
+                        : "bg-amber-500/20 text-amber-400"
+                    }`}
+                >
                   {(item.user_name ?? "?")?.[0]?.toUpperCase()}
                 </div>
+
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-black text-white truncate">{item.user_name ?? "—"}</p>
-                    <span className={`h-2 w-2 rounded-full shrink-0 ${item.status ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                    <p className="text-sm font-semibold text-white truncate">
+                      {item.user_name ?? "—"}
+                    </p>
+
+                    <span
+                      className={`text-[10px] font-bold uppercase px-2 py-1 rounded-md ${item.status
+                          ? "bg-emerald-500/10 text-emerald-400"
+                          : "bg-amber-500/10 text-amber-400"
+                        }`}
+                    >
+                      {item.status ? t("resolved") : t("pending")}
+                    </span>
                   </div>
-                  <p className="text-[10px] text-slate-400 truncate mt-0.5 leading-relaxed">{item.description ?? "—"}</p>
-                  <div className="flex items-center gap-1.5 mt-1.5">
-                    <Clock size={9} className="text-slate-600" />
-                    <span className="text-[9px] font-bold text-slate-600 uppercase">{fmtDate(item.inquiry_date)}</span>
-                    <span className={`ml-auto text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${
-                      item.status ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
-                    }`}>{item.status ? t("resolved") : t("pending")}</span>
+
+                  <p className="text-xs text-slate-400 truncate mt-1">
+                    {item.description ?? "—"}
+                  </p>
+
+                  <div className="flex items-center gap-1 mt-1">
+                    <Clock size={10} className="text-slate-500" />
+                    <span className="text-[10px] text-slate-500">
+                      {fmtDate(item.inquiry_date)}
+                    </span>
                   </div>
                 </div>
               </motion.div>

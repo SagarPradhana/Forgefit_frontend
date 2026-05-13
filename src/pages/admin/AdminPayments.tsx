@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useGymStore } from "../../store/gymStore";
 import { useTranslation } from "react-i18next";
-import { 
-  GlassCard, 
-  GlowButton, 
-  SectionTitle, 
-  Skeleton, 
-  Table, 
+import {
+  GlassCard,
+  GlowButton,
+  SectionTitle,
+  Skeleton,
+  Table,
   EmptyState,
   StatusBadge,
   CommonButton,
@@ -47,13 +47,13 @@ export function AdminPayments() {
   const [paymentsLoading, setPaymentsLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<"All" | "Paid" | "Pending">("All");
   const [paymentDateRange, setPaymentDateRange] = useState<DateRange>({ label: "This Month" });
-  
+
   const [paymentModalOpen, setModalOpen] = useState(false);
   const [editPayment, setEditPayment] = useState<string | null>(null);
   const [usersDropdown, setUsersDropdown] = useState<any[]>([]);
   const [subscriptionPlans, setSubscriptionPlans] = useState<PlanResponse[]>([]);
   const [fetchedProducts, setFetchedProducts] = useState<any[]>([]);
-  
+
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<PaymentResponse | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -80,7 +80,7 @@ export function AdminPayments() {
       const currentPage = Number(p) || 1;
       const pageSize = Number(paymentsMeta.page_size) || 10;
       const offset = (currentPage - 1) * pageSize;
-      
+
       const res = await adminPaymentService.getPayments({
         count: pageSize,
         offset,
@@ -88,14 +88,17 @@ export function AdminPayments() {
         from_date: paymentDateRange.from_date,
         to_date: paymentDateRange.to_date,
       });
-      
+
       if (res && res.data) {
+        const totalCount = Number(
+          res.total_count ?? res.count ?? res.data.length ?? 0
+        );
         setFetchedPayments(res.data);
         setPaymentsMeta({
           page_no: Math.floor(offset / pageSize) + 1,
-          total_count: res.totalcount || 0,
+          total_count: totalCount,
           page_size: pageSize,
-          has_next: offset + pageSize < res.totalcount,
+          has_next: offset + pageSize < totalCount,
           has_previous: offset > 0
         });
       }

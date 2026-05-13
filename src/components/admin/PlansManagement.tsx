@@ -86,13 +86,16 @@ export function PlansManagement() {
 
       const res = await adminPlansService.getWorkoutPlans(params) as any;
       if (res && res.data) {
+        const totalCount = Number(
+          res.pagination?.total_count ?? res.total_count ?? res.totalcount ?? res.count ?? res.data.length ?? 0
+        );
         setWorkouts(res.data);
         setWorkoutMeta({
           page_no: p,
-          total_count: res.pagination?.total_count || 0,
+          total_count: totalCount,
           page_size: pageSize,
-          has_next: res.pagination?.has_next || false,
-          has_previous: res.pagination?.has_previous || false
+          has_next: res.pagination?.has_next ?? offset + pageSize < totalCount,
+          has_previous: res.pagination?.has_previous ?? offset > 0
         });
       }
     } catch (err) {
@@ -118,13 +121,16 @@ export function PlansManagement() {
 
       const res = await adminPlansService.getDietPlans(params) as any;
       if (res && res.data) {
+        const totalCount = Number(
+          res.pagination?.total_count ?? res.total_count ?? res.totalcount ?? res.count ?? res.data.length ?? 0
+        );
         setDiets(res.data);
         setDietMeta({
           page_no: p,
-          total_count: res.pagination?.total_count || 0,
+          total_count: totalCount,
           page_size: pageSize,
-          has_next: res.pagination?.has_next || false,
-          has_previous: res.pagination?.has_previous || false
+          has_next: res.pagination?.has_next ?? offset + pageSize < totalCount,
+          has_previous: res.pagination?.has_previous ?? offset > 0
         });
       }
     } catch (err) {
