@@ -89,8 +89,8 @@ export const UserListView = ({
                     <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-900 ${user.is_active !== false ? 'bg-emerald-500' : 'bg-slate-500'}`} />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="truncate text-xs md:text-sm font-black text-white uppercase tracking-tight">{user.name}</h3>
-                    <p className="text-[10px] font-bold text-indigo-400">#{user.member_id || user.username || 'N/A'}</p>
+                    <h3 className="truncate text-xs md:text-sm font-black text-white uppercase tracking-tight" title={user.name}>{user.name}</h3>
+                    <p className="text-[10px] font-bold text-indigo-400">@{user.username || user.member_id || 'user'}</p>
                     <div className="flex items-center gap-2">
                       <p className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest">{user.role}</p>
                       {(user.purchase_id || user.metadata?.purchase_id) && (
@@ -255,12 +255,11 @@ export const UserListView = ({
                           )}
                           <div className={`absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-slate-900 shadow-lg ${user.is_active !== false ? 'bg-emerald-500' : 'bg-slate-500'} animate-pulse`} />
                         </div>
-                        <div className="min-w-0">
-                          <p className="font-black text-white text-base uppercase tracking-tight truncate leading-tight mb-1 group-hover:text-indigo-200 transition-colors">{user.name}</p>
-                          <p className="text-[10px] font-black text-indigo-400 mb-1">#{user.member_id || user.username || 'N/A'}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-black text-white text-base uppercase tracking-tight truncate leading-tight mb-0.5 group-hover:text-indigo-200 transition-colors" title={user.name}>{user.name}</p>
+                          <p className="text-[10px] font-black text-indigo-400 mb-1">@{user.username || user.member_id || 'user'}</p>
                           <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded-md bg-white/5 text-[9px] text-slate-500 font-bold uppercase tracking-widest border border-white/5 group-hover:text-slate-300 transition-colors">ID: {user.member_id || user.id?.slice(0, 8)}</span>
-                            <span className="text-[9px] font-black text-indigo-400/80 uppercase tracking-tighter italic">{user.role}</span>
+                            <span className="px-2 py-0.5 rounded-md bg-white/5 text-[9px] text-slate-500 font-bold uppercase tracking-widest border border-white/5 group-hover:text-slate-300 transition-colors">Role: {user.role}</span>
                             {(user.purchase_id || user.metadata?.purchase_id) && (
                               <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">PID: {user.purchase_id || user.metadata.purchase_id}</span>
                             )}

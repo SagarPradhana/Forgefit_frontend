@@ -78,10 +78,10 @@ function isTokenValid(token: string | null): boolean {
 function AuthRedirect({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, role, token } = useAuthStore();
   if (isAuthenticated && isTokenValid(token)) {
-    const dest = 
-      role === "admin" ? "/admin/dashboard" : 
-      role === "trainer" ? "/trainer/dashboard" : 
-      "/user/dashboard";
+    const dest =
+      role === "admin" ? "/admin/dashboard" :
+        role === "trainer" ? "/trainer/dashboard" :
+          "/user/dashboard";
     return <Navigate to={dest} replace />;
   }
   return <>{children}</>;
@@ -179,6 +179,13 @@ export default function App() {
         currency: publicAppConfig.currency,
         language: publicAppConfig.language,
       });
+
+      // Synchronize i18n
+      if (publicAppConfig.language) {
+        import("./i18n").then(({ default: i18n }) => {
+          i18n.changeLanguage(publicAppConfig.language);
+        });
+      }
     }
   }, [publicAppConfig]);
 

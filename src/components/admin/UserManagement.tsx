@@ -12,6 +12,7 @@ import { openWhatsAppChat } from "../../utils/whatsapp";
 import { useAuthStore } from "../../store/authStore";
 import { useGymStore } from "../../store/gymStore";
 import { adminAppConfigService } from "../../services/adminAppConfigService";
+import { isValidEmail, isValidPhone, isValidName } from "../../utils/formUtils";
 
 // Sub-components
 import { UserModal } from "./users/UserModal";
@@ -381,37 +382,21 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
 
   const handleNextStep = () => {
     if (modalStep === "role") {
-      if (!formData.name.trim() || !formData.mobile.trim()) {
-        toast.error("Please fill in all mandatory account details");
+      if (!isValidName(formData.name)) {
+        toast.error("Full Name must be between 3 and 30 characters");
         return;
       }
-      // Validate phone format (at least 7 digits)
-      const phoneDigits = formData.mobile.replace(/\D/g, "");
-      if (phoneDigits.length < 7) {
-        toast.error("Please enter a valid mobile number (at least 7 digits)");
+      if (!isValidPhone(formData.mobile)) {
+        toast.error("Mobile number must be between 7 and 15 digits");
         return;
       }
-      // Validate email format if provided
-      if (formData.email && formData.email.trim()) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.email.trim())) {
-          toast.error("Please enter a valid email address");
-          return;
-        }
+      if (formData.email && !isValidEmail(formData.email)) {
+        toast.error("Please enter a valid email address");
+        return;
       }
-      // Validate password strength for new users
-      if (!editingUserId) {
-        const pwd = formData.password || "";
-        if (pwd.trim()) {
-          if (pwd.length < 8) {
-            toast.error("Password must be at least 8 characters");
-            return;
-          }
-          if (!/[a-zA-Z]/.test(pwd) || !/[0-9]/.test(pwd)) {
-            toast.error("Password must contain both letters and numbers");
-            return;
-          }
-        }
+      if (!editingUserId && (!formData.password || formData.password.length < 6)) {
+        toast.error("Password must be at least 6 characters");
+        return;
       }
       setModalStep("details");
       return;
@@ -631,53 +616,61 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
         </div>
 
         <div className="flex-1 max-w-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
-            <input
-              id="admin-master-user-search-query-field"
-              name="admin-master-user-search-query-field"
-              type="text"
-              autoComplete="new-password"
-              placeholder="Search by name, email, or phone..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-10 pr-4 py-2 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition shadow-sm dark:shadow-none"
-            />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Search Members</label>
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={16} />
+              <input
+                id="admin-master-user-search-query-field"
+                name="admin-master-user-search-query-field"
+                type="text"
+                autoComplete="new-password"
+                placeholder="Name, Email or Phone..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-10 bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 text-xs font-bold text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-none"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Role Filter - Hidden for trainers */}
         {!isTrainer && (
-          <div className="relative">
-            <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-            <select
-              id="admin-user-role-filter"
-              value={roleFilter}
-              onChange={(e) => { setRoleFilter(e.target.value); }}
-              className="bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white outline-none focus:border-indigo-500 transition cursor-pointer appearance-none min-w-[130px]"
-            >
-              <option value="" className="bg-slate-900">All Roles</option>
-              <option value="admin" className="bg-slate-900">Admins</option>
-              <option value="trainer" className="bg-slate-900">Trainers</option>
-              <option value="user" className="bg-slate-900">Users</option>
-            </select>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Role</label>
+            <div className="relative">
+              <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+              <select
+                id="admin-user-role-filter"
+                value={roleFilter}
+                onChange={(e) => { setRoleFilter(e.target.value); }}
+                className="h-10 bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-indigo-500/50 transition cursor-pointer appearance-none min-w-[140px] [&>option]:bg-slate-900"
+              >
+                <option value="">All Roles</option>
+                <option value="admin">Admins</option>
+                <option value="trainer">Trainers</option>
+                <option value="user">Users</option>
+              </select>
+            </div>
           </div>
         )}
 
-        {/* Plan Status Filter */}
         {!isTrainer && (
-          <div className="relative">
-            <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-            <select
-              id="admin-user-plan-status-filter"
-              value={planStatusFilter}
-              onChange={(e) => { setPlanStatusFilter(e.target.value); }}
-              className="bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white outline-none focus:border-indigo-500 transition cursor-pointer appearance-none min-w-[130px]"
-            >
-              <option value="" className="bg-slate-900">All Status</option>
-              <option value="active" className="bg-slate-900">Active</option>
-              <option value="expired" className="bg-slate-900">Expired</option>
-            </select>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Plan Status</label>
+            <div className="relative">
+              <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+              <select
+                id="admin-user-plan-status-filter"
+                value={planStatusFilter}
+                onChange={(e) => { setPlanStatusFilter(e.target.value); }}
+                className="h-10 bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-indigo-500/50 transition cursor-pointer appearance-none min-w-[140px] [&>option]:bg-slate-900"
+              >
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="expired">Expired</option>
+                <option value="not_subscribed">Not Subscribed</option>
+              </select>
+            </div>
           </div>
         )}
 

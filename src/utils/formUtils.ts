@@ -50,16 +50,25 @@ export const sanitizePhone = (value: string) => {
  * Validates email format.
  */
 export const isValidEmail = (email: string) => {
+  if (!email) return true; // Optional
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
 /**
- * Validates phone format (e.g., minimum 7 digits).
+ * Validates phone format (max 15 digits).
  */
 export const isValidPhone = (phone: string) => {
   const digits = phone.replace(/\D/g, "");
   return digits.length >= 7 && digits.length <= 15;
+};
+
+/**
+ * Validates name format (3-30 chars).
+ */
+export const isValidName = (name: string) => {
+  const trimmed = (name || "").trim();
+  return trimmed.length >= 3 && trimmed.length <= 30;
 };
 
 /**

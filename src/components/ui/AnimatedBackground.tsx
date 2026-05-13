@@ -80,7 +80,7 @@ export function AnimatedBackground({
       {/* Dynamic Mesh Base */}
       <div
         className="absolute inset-0 transition-opacity duration-1000"
-        style={{ 
+        style={{
           backgroundImage: currentTheme.background,
         }}
       />

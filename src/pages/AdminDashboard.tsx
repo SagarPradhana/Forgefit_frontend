@@ -152,16 +152,6 @@ export default function AdminDashboard() {
     return { label: "This Month", from_date: fromUnix, to_date: toUnixVal };
   });
 
-  // Attendance date range (default today)
-  const [attRange, setAttRange] = useState<DateRange>(() => {
-    const todayStr = today();
-    return {
-      label: "Today",
-      from_date: toUnix(todayStr, false),
-      to_date: toUnix(todayStr, true)
-    };
-  });
-
   // Monthly revenue months param
   const [revenueMonths, setRevenueMonths] = useState(6);
 
@@ -212,6 +202,7 @@ export default function AdminDashboard() {
           total_members: res.total_members,
           total_active_subscriptions: res.total_active_subscriptions,
           total_expired_subscriptions: res.total_expired_subscriptions,
+          total_no_subscriptions: res.total_no_subscriptions,
           new_registrations: res.new_registrations,
           upcoming_renewals: res.upcoming_renewals,
           total_revenue: res.total_revenue,
@@ -256,12 +247,12 @@ export default function AdminDashboard() {
     setLoad("attendance", true);
     try {
       const p = new URLSearchParams();
-      if (attRange.from_date) p.set("from_date", String(attRange.from_date));
-      if (attRange.to_date) p.set("to_date", String(attRange.to_date));
+      if (dateRange.from_date) p.set("from_date", String(dateRange.from_date));
+      if (dateRange.to_date) p.set("to_date", String(dateRange.to_date));
       const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_ATTENDANCE}?${p}`);
       if (res?.data) setAttendance(res.data);
     } catch (e) { console.error(e); } finally { setLoad("attendance", false); }
-  }, [attRange]);
+  }, [dateRange]);
 
   const fetchMonthlyRevenue = useCallback(async () => {
     setLoad("revenue", true);
@@ -300,11 +291,11 @@ export default function AdminDashboard() {
           api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_PAYMENTS}?${paramsStr}`),
           api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_SUBSCRIPTIONS}?${paramsStr}`),
           api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_PRODUCTS}?${paramsStr}`),
-          api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_ATTENDANCE}?from_date=${attRange.from_date}&to_date=${attRange.to_date}`),
+          api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_ATTENDANCE}?${paramsStr}`),
           api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_MONTHLY_REVENUE}?months=${revenueMonths}`)
         ]);
 
-        if (statsRes?.code === 200) setStats({ total_users: statsRes.total_users, total_trainers: statsRes.total_trainers, total_admins: statsRes.total_admins, total_members: statsRes.total_members, total_active_subscriptions: statsRes.total_active_subscriptions, total_expired_subscriptions: statsRes.total_expired_subscriptions, new_registrations: statsRes.new_registrations, upcoming_renewals: statsRes.upcoming_renewals, total_revenue: statsRes.total_revenue });
+        if (statsRes?.code === 200) setStats({ total_users: statsRes.total_users, total_trainers: statsRes.total_trainers, total_admins: statsRes.total_admins, total_members: statsRes.total_members, total_active_subscriptions: statsRes.total_active_subscriptions, total_expired_subscriptions: statsRes.total_expired_subscriptions, total_no_subscriptions: statsRes.total_no_subscriptions, new_registrations: statsRes.new_registrations, upcoming_renewals: statsRes.upcoming_renewals, total_revenue: statsRes.total_revenue });
         if (inqRes?.data) setInquiries(inqRes.data);
         if (payRes?.data) setPayments(payRes.data);
         if (subRes?.data) setSubscriptions(subRes.data);
@@ -320,6 +311,10 @@ export default function AdminDashboard() {
 
     fetchData();
   }, []);
+
+  useEffect(() => {
+    refreshAll();
+  }, [dateRange, revenueMonths]);
 
   const refreshAll = () => {
     fetchStats();
@@ -373,59 +368,56 @@ export default function AdminDashboard() {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0, duration: 0.35 }}
-          className="col-span-2 relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-5 backdrop-blur-xl hover:border-white/20 transition-all group flex flex-col justify-between"
+          transition={{ delay: 0.05, duration: 0.35 }}
+          className="col-span-2 relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-5 backdrop-blur-xl hover:border-indigo-500/30 transition-all group flex flex-col justify-between"
         >
           <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full blur-3xl opacity-20 bg-indigo-500" />
           <div className="flex items-start justify-between mb-4">
             <div>
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500 bg-opacity-20 mb-3 group-hover:scale-110 transition-transform">
-                <Users size={18} className="text-white" />
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/20 mb-3 group-hover:scale-110 transition-transform">
+                <CreditCard size={18} className="text-indigo-400" />
               </div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 leading-tight">Total Users</p>
-              <p className="text-3xl font-black text-white tracking-tighter">{stats?.total_users ?? "—"}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 leading-tight">Subscription Overview</p>
+              <p className="text-2xl font-black text-white tracking-tighter">Plan Status</p>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-2 mt-auto relative z-10">
-            <button onClick={() => navigate('/admin/users?role=admin')} className="py-2 px-1 rounded-xl bg-white/5 hover:bg-indigo-500/20 hover:border-indigo-500/30 border border-transparent transition-all flex flex-col items-center group/btn">
-              <span className="text-lg font-black text-indigo-400 group-hover/btn:scale-110 transition-transform">{stats?.total_admins ?? 0}</span>
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">Admins</span>
+            <button onClick={() => navigate('/admin/users?plan_status=active')} className="py-2 px-1 rounded-xl bg-white/5 hover:bg-emerald-500/20 hover:border-emerald-500/30 border border-transparent transition-all flex flex-col items-center group/btn">
+              <span className="text-lg font-black text-emerald-400 group-hover/btn:scale-110 transition-transform">{stats?.total_active_subscriptions ?? 0}</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">Active</span>
             </button>
-            <button onClick={() => navigate('/admin/users?role=trainer')} className="py-2 px-1 rounded-xl bg-white/5 hover:bg-emerald-500/20 hover:border-emerald-500/30 border border-transparent transition-all flex flex-col items-center group/btn">
-              <span className="text-lg font-black text-emerald-400 group-hover/btn:scale-110 transition-transform">{stats?.total_trainers ?? 0}</span>
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">Trainers</span>
+            <button onClick={() => navigate('/admin/users?plan_status=expired')} className="py-2 px-1 rounded-xl bg-white/5 hover:bg-red-500/20 hover:border-red-500/30 border border-transparent transition-all flex flex-col items-center group/btn">
+              <span className="text-lg font-black text-red-400 group-hover/btn:scale-110 transition-transform">{stats?.total_expired_subscriptions ?? 0}</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">Expired</span>
             </button>
-            <button onClick={() => navigate('/admin/users?role=user')} className="py-2 px-1 rounded-xl bg-white/5 hover:bg-sky-500/20 hover:border-sky-500/30 border border-transparent transition-all flex flex-col items-center group/btn">
-              <span className="text-lg font-black text-sky-400 group-hover/btn:scale-110 transition-transform">{stats?.total_members ?? 0}</span>
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">Users</span>
+            <button onClick={() => navigate('/admin/users?plan_status=not_subscribed')} className="py-2 px-1 rounded-xl bg-white/5 hover:bg-amber-500/20 hover:border-amber-500/30 border border-transparent transition-all flex flex-col items-center group/btn">
+              <span className="text-lg font-black text-amber-400 group-hover/btn:scale-110 transition-transform">{stats?.total_no_subscriptions ?? 0}</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">Not Subscribed</span>
             </button>
           </div>
         </motion.div>
         <StatCard
-          label="Active Subscriptions"
-          value={stats?.total_active_subscriptions}
-          icon={CreditCard}
-          color="bg-violet-500"
-          delay={0.05}
-          subLabel="Expired"
-          subValue={stats?.total_expired_subscriptions}
-          onClick={() => navigate('/admin/users?plan_status=active')}
-          onSubClick={() => navigate('/admin/users?plan_status=expired')}
+          label="Total Users"
+          value={stats?.total_users}
+          icon={Users}
+          color="bg-indigo-500"
+          delay={0.1}
+          onClick={() => navigate('/admin/users')}
         />
-        <StatCard label="New Registrations" value={stats?.new_registrations} icon={UserPlus} color="bg-sky-500" delay={0.1} />
-        <StatCard label="Upcoming Renewals" value={stats?.upcoming_renewals} icon={Clock} color="bg-amber-500" delay={0.15} />
-        <StatCard label="Total Revenue" value={stats?.total_revenue != null ? fmt(stats.total_revenue) : "—"} icon={IndianRupee} color="bg-emerald-500" delay={0.2} />
+        <StatCard label="New Registrations" value={stats?.new_registrations} icon={UserPlus} color="bg-sky-500" delay={0.15} />
+        <StatCard label="Upcoming Renewals" value={stats?.upcoming_renewals} icon={Clock} color="bg-amber-500" delay={0.2} />
+        <StatCard label="Total Revenue" value={stats?.total_revenue != null ? fmt(stats.total_revenue) : "—"} icon={IndianRupee} color="bg-emerald-500" delay={0.25} />
       </div>
 
       {/* ── [ROW 2] Recent Inquiries (4 tabs) ── */}
       <GlassCard>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
           <SectionHeader title="Recent Inquiries" sub="Latest incoming requests" onRedirect={() => navigate('/admin/inquiries')} />
-          <div className="flex gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
+          <div className="flex flex-wrap gap-1 bg-white/5 border border-white/10 rounded-xl p-1 overflow-x-auto no-scrollbar">
             {inqTabs.map(({ id, label, icon: Icon }) => (
               <button key={id} onClick={() => setInqTab(id as any)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${inqTab === id ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${inqTab === id ? "bg-indigo-500 text-white shadow-lg" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
                 <Icon size={12} />{label}
               </button>
             ))}
@@ -540,11 +532,7 @@ export default function AdminDashboard() {
       {/* ── [ROW 4] Attendance Count ── */}
       <GlassCard>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-          <SectionHeader title="Attendance" sub="Live count" onRedirect={() => navigate('/admin/attendance')} />
-          <DateRangeFilter
-            defaultPreset="today"
-            onChange={(r) => setAttRange(r)}
-          />
+          <SectionHeader title="Attendance Overview" sub="Activity for selected period" onRedirect={() => navigate('/admin/attendance')} />
         </div>
         {loading.attendance ? (
           <div className="grid grid-cols-3 gap-4"><div className="h-20 rounded-xl bg-white/5 animate-pulse" /><div className="h-20 rounded-xl bg-white/5 animate-pulse" /><div className="h-20 rounded-xl bg-white/5 animate-pulse" /></div>

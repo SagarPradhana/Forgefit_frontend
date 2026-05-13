@@ -113,19 +113,20 @@ export function InquiryCenter() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
         <div className="flex flex-wrap gap-2">
           {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setMeta({ ...meta, offset: 0 });
-              }}
-              className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 border ${activeTab === tab.id
-                  ? "bg-indigo-500 border-indigo-400 text-white shadow-lg shadow-indigo-500/20"
-                  : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
-                }`}
-            >
-              {tab.label}
-            </button>
+            <div key={tab.id} className="flex flex-col">
+              <button
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setMeta({ ...meta, offset: 0 });
+                }}
+                className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 border ${activeTab === tab.id
+                    ? "bg-indigo-500 border-indigo-400 text-white shadow-lg shadow-indigo-500/20"
+                    : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
+                  }`}
+              >
+                {tab.label}
+              </button>
+            </div>
           ))}
         </div>
 
@@ -133,11 +134,18 @@ export function InquiryCenter() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
           <input
             className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none focus:border-indigo-500 transition"
-            placeholder="Filter records..."
+            placeholder="Search records..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
+      </div>
+
+      <div className="mb-6 px-1">
+        {activeTab === "subscriptions" && <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">New membership requests and plan upgrades</p>}
+        {activeTab === "products" && <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Recent product orders and merchandise inquiries</p>}
+        {activeTab === "contacts" && <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Direct messages and general contact requests</p>}
+        {activeTab === "expiry" && <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Members with memberships expiring soon</p>}
       </div>
 
       <div className="w-full">
@@ -199,7 +207,7 @@ export function InquiryCenter() {
                   <p key={`${r.id}-name`} className="font-bold text-white uppercase tracking-tighter text-xs">{r.name}</p>,
                   <p key={`${r.id}-contact`} className="text-[10px] text-slate-500">{r.phone || r.email}</p>,
                   <div key={`${r.id}-msg`} className="max-w-xs">
-                    <p className="text-xs font-bold text-indigo-400 uppercase tracking-tight">{r.subject || 'Strategic Inquiry'}</p>
+                    <p className="text-xs font-bold text-indigo-400 uppercase tracking-tight">{r.subject || 'Contact Message'}</p>
                     <p className="text-[10px] text-slate-400 line-clamp-2 italic">"{r.message}"</p>
                   </div>,
                   <div key={`${r.id}-contact`} className="flex flex-col">
@@ -224,7 +232,7 @@ export function InquiryCenter() {
                   <p key={`${r.id}-contact`} className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">{r.user_mobile || r.mobile || r.email || '—'}</p>,
                   <div key={`${r.id}-cycle`} className="flex flex-col">
                     <span className="text-xl font-black text-orange-400 italic leading-none">{r.remaining_days} DAYS</span>
-                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1">Timeline to Termination</span>
+                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1">Days Remaining</span>
                   </div>,
                   <div key={`${r.id}-status`} className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
@@ -242,7 +250,7 @@ export function InquiryCenter() {
 
             {data.length === 0 && (
               <div className="text-center py-20 border border-dashed border-white/10 rounded-2xl">
-                <p className="text-slate-500 uppercase font-black tracking-widest text-xs">No signals detected in the {activeTab} frequency.</p>
+                <p className="text-slate-500 uppercase font-black tracking-widest text-xs">No inquiries found in this section.</p>
               </div>
             )}
 
@@ -272,9 +280,9 @@ export function InquiryCenter() {
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={confirmDelete}
-        title="Record Termination"
-        description="This inquiry or notification record will be permanently removed from the system registry."
-        confirmLabel="Submit"
+        title="Delete Record"
+        description="This inquiry record will be permanently removed from the system."
+        confirmLabel="Delete"
       />
     </div>
   );

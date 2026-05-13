@@ -10,6 +10,7 @@ interface RequestOptions extends RequestInit {
 }
 
 const pendingRequests = new Map<string, Promise<any>>();
+let refreshPromise: Promise<string> | null = null;
 
 export async function httpFetch(endpoint: string | null | undefined, options: RequestOptions = {}) {
   if (!endpoint) return null;
@@ -50,44 +51,47 @@ export async function httpFetch(endpoint: string | null | undefined, options: Re
     if (response.status === 401) {
       if (refreshToken) {
         try {
-          const refreshRes = await fetch(`${BASE_URL}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ refresh_token: refreshToken }),
-          });
-
-          if (refreshRes.ok) {
-            const refreshData = await refreshRes.json();
-            // Adjust response parsing based on common API wrapper patterns
-            const newAccessToken = refreshData.data?.access_token || refreshData.access_token;
-            const newRefreshToken = refreshData.data?.refresh_token || refreshData.refresh_token;
-            
-            if (newAccessToken) {
-              updateTokens(newAccessToken, newRefreshToken || refreshToken);
-              
-              // Retry original request with New Token
-              headers.set("Authorization", `Bearer ${newAccessToken}`);
-              response = await fetch(`${BASE_URL}${endpoint}`, {
-                ...fetchOptions,
-                headers,
+          // Check if a refresh is already in progress
+          if (!refreshPromise) {
+            refreshPromise = (async () => {
+              const refreshRes = await fetch(`${BASE_URL}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ refresh_token: refreshToken }),
               });
-            } else {
-              throw new Error("Token refresh returned no data");
-            }
-          } else {
-            logout();
-            toast.error("Session expired. Please login again.");
-            return null;
+
+              if (!refreshRes.ok) throw new Error("Refresh failed");
+              
+              const refreshData = await refreshRes.json();
+              const newAccessToken = refreshData.data?.access_token || refreshData.access_token;
+              const newRefreshToken = refreshData.data?.refresh_token || refreshData.refresh_token;
+
+              if (newAccessToken) {
+                updateTokens(newAccessToken, newRefreshToken || refreshToken);
+                return newAccessToken;
+              }
+              throw new Error("Invalid refresh data");
+            })();
           }
+
+          const newAccessToken = await refreshPromise;
+          refreshPromise = null;
+
+          // Retry original request with New Token
+          headers.set("Authorization", `Bearer ${newAccessToken}`);
+          response = await fetch(`${BASE_URL}${endpoint}`, {
+            ...fetchOptions,
+            headers,
+          });
         } catch (error) {
-          logout();
-          toast.error("Authentication failed. Redirecting to login.");
+          refreshPromise = null;
+          toast.error("Session expired. Please login again.");
+          setTimeout(() => logout(), 50);
           return null;
         }
       } else {
-        // No refresh token available, logout immediately
-        logout();
-        toast.error("Authentication expired.");
+        toast.error("Session expired. Please login again.");
+        setTimeout(() => logout(), 50);
         return null;
       }
     }

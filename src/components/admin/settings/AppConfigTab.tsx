@@ -120,7 +120,7 @@ export function AppConfigTab() {
       const payload = { ...config };
       delete payload.id;
       delete payload.logo_image_path;
-      
+
       await adminAppConfigService.saveConfig(payload);
       toast.success("App configuration saved successfully!");
       await fetchConfig();
