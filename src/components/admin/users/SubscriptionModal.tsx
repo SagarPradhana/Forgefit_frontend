@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useGet, useMutation } from "../../../hooks/useApi";
 import { API_ENDPOINTS } from "../../../utils/url";
 import { toast } from "../../../store/toastStore";
+import { useTranslation } from "react-i18next";
 
 interface SubscriptionModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ interface SubscriptionModalProps {
 }
 
 export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: SubscriptionModalProps) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"add" | "history">("add");
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [joiningDate, setJoiningDate] = useState(new Date().toISOString().split("T")[0]);
@@ -103,7 +105,7 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
               <CreditCard size={32} />
             </div>
             <div>
-              <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">Subscription Management</h2>
+              <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">{t("subscriptionManagement")}</h2>
               <div className="flex items-center gap-2 mt-1">
                 <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
                 <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">{selectedUser.name}</p>
@@ -117,10 +119,10 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
 
         <div className="flex p-3 bg-white/5 border-b border-white/5 shrink-0 gap-2">
           <button onClick={() => setActiveTab("add")} className={`flex-1 py-4 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] transition-all duration-300 ${activeTab === "add" ? "bg-indigo-500 text-white shadow-xl shadow-indigo-500/30" : "text-slate-400 hover:bg-white/5"}`}>
-            <Plus size={18} /> Add Plan
+            <Plus size={18} /> {t("addPlan")}
           </button>
           <button onClick={() => setActiveTab("history")} className={`flex-1 py-4 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] transition-all duration-300 ${activeTab === "history" ? "bg-indigo-500 text-white shadow-xl shadow-indigo-500/30" : "text-slate-400 hover:bg-white/5"}`}>
-            <History size={18} /> History
+            <History size={18} /> {t("history")}
           </button>
         </div>
 
@@ -198,7 +200,7 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Initiation</label>
-                    <input type="date" value={joiningDate} onChange={(e) => setJoiningDate(e.target.value)} className="w-full bg-slate-900/50 border border-white/10 p-4 rounded-2xl text-white font-bold text-xs focus:outline-none focus:border-indigo-500/50 transition-all" />
+                    <input type="date" max={new Date().toISOString().split('T')[0]} value={joiningDate} onChange={(e) => setJoiningDate(e.target.value)} className="w-full bg-slate-900/50 border border-white/10 p-4 rounded-2xl text-white font-bold text-xs focus:outline-none focus:border-indigo-500/50 transition-all" />
                   </div>
                   <div className="space-y-3">
                     <label className="block text-[10px] font-black text-indigo-500/50 uppercase tracking-widest text-right mr-1">Termination</label>

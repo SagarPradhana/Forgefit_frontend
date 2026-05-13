@@ -8,7 +8,6 @@ import { API_ENDPOINTS } from "../../utils/url";
 import { api } from "../../utils/httputils";
 import { toast } from "../../store/toastStore";
 import { useLocation } from "react-router-dom";
-import { openWhatsAppChat } from "../../utils/whatsapp";
 import { useAuthStore } from "../../store/authStore";
 import { useGymStore } from "../../store/gymStore";
 import { adminAppConfigService } from "../../services/adminAppConfigService";
@@ -90,6 +89,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
   // Role filter state — initialized from URL param
   const [roleFilter, setRoleFilter] = useState<string>(initialRole);
   const [planStatusFilter, setPlanStatusFilter] = useState<string>(initialPlanStatus);
+  const [isActiveFilter, setIsActiveFilter] = useState<string>("");
 
   // Sync filters if URL params change (e.g. navigating back from dashboard)
   useEffect(() => {
@@ -159,8 +159,11 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
     if (planStatusFilter) {
       params.append("plan_status", planStatusFilter);
     }
+    if (isActiveFilter) {
+      params.append("is_active", isActiveFilter);
+    }
     return isTrainer ? `${API_ENDPOINTS.ADMIN.TRAINER_USERS}?${params.toString()}` : `${API_ENDPOINTS.ADMIN.USERS}?${params.toString()}`;
-  }, [page, perPage, debouncedSearch, roleFilter, isTrainer]);
+  }, [page, perPage, debouncedSearch, roleFilter, planStatusFilter, isActiveFilter, isTrainer]);
 
   const { loading: usersLoading, refetch: refetchUsers } = useGet(
     usersApiUrl,
@@ -287,8 +290,11 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Reset page when role filter changes
-  useEffect(() => { setPage(1); setAllUsers([]); }, [roleFilter]);
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+    setAllUsers([]);
+  }, [roleFilter, planStatusFilter, isActiveFilter]);
 
   // Sync selected user when data refreshes
   useEffect(() => {
@@ -513,20 +519,20 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
       return;
     }
     const cleanPhone = phone.replace(/\D/g, "");
-    
+
     const { plan_status, remaining_days = 0 } = user;
     const expiryDays = adminConfig.expiry_reminder_days || 7;
     const websiteUrl = adminConfig.website_url?.replace(/\/$/, "") || "";
     const contactPhone = adminConfig.whatsapp || adminConfig.phone || "";
     const subscriptionUrl = websiteUrl ? `${websiteUrl}/user/subscription` : "";
     const whatsappLink = contactPhone ? `https://wa.me/${contactPhone.replace(/\D/g, "")}` : "";
-    
+
     const renewalLinks = (subscriptionUrl || whatsappLink)
       ? `\n\n${subscriptionUrl ? `👉 Subscribe: ${subscriptionUrl}\n` : ""}${whatsappLink ? `👉 Contact: ${whatsappLink}` : ""}`
       : "";
-    
+
     let message;
-    
+
     if (plan_status === "active") {
       if (remaining_days < expiryDays) {
         message = `Hi ${user.name}! 👋\n\nYour *${brandName}* membership is *ACTIVE* but expires in *${remaining_days} days*.\n\nRenew or upgrade your plan now to keep your fitness journey going! 💪${renewalLinks}\n\n- ${brandName} Team`;
@@ -538,7 +544,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
     } else {
       message = `Hi ${user.name}! 👋\n\nYou don't have an active subscription at *${brandName}* yet.\n\nStart your fitness journey with us today! Contact us for membership details. 💪${renewalLinks}\n\n- ${brandName} Team`;
     }
-    
+
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, "_blank");
   };
 
@@ -549,10 +555,10 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
   };
 
   const getModalTitle = () => {
-    if (modalStep === "metadata") return "Health & Vitals";
-    if (modalStep === "membership") return "Plan Selection";
-    if (modalStep === "details") return "Assignment Details";
-    return editingUserId ? "Update User Profile" : "Create New User";
+    if (modalStep === "metadata") return t("healthVitals");
+    if (modalStep === "membership") return t("planSelection");
+    if (modalStep === "details") return t("assignmentDetails");
+    return editingUserId ? t("updateProfile") : t("createNewUser");
   };
 
   const getStepNumber = () => {
@@ -570,28 +576,28 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
       <div className="mb-6 flex items-center gap-3 flex-wrap">
         <SectionTitle
           title={t("users")}
-          subtitle="Manage gym members, trainers, and employees"
+          subtitle={t("manageGymMembers")}
         />
         {roleFilter && (
           <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${roleFilter === "admin" ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30" :
             roleFilter === "trainer" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" :
               "bg-sky-500/20 text-sky-300 border-sky-500/30"
             }`}>
-            {roleFilter === "admin" ? "Admins" : roleFilter === "trainer" ? "Trainers" : "Users"}
+            {roleFilter === "admin" ? t("admins") : roleFilter === "trainer" ? t("trainers") : t("users")}
             <button
               onClick={() => setRoleFilter("")}
               className="ml-1.5 opacity-60 hover:opacity-100 transition-opacity font-black"
-              title="Clear filter"
+              title={t("clearFilter")}
             >✕</button>
           </span>
         )}
         {planStatusFilter && (
           <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${planStatusFilter === "active" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : "bg-red-500/20 text-red-300 border-red-500/30"}`}>
-            {planStatusFilter === "active" ? "Active Plans" : "Expired Plans"}
+            {planStatusFilter === "active" ? t("activePlans") : t("expiredPlans")}
             <button
               onClick={() => setPlanStatusFilter("")}
               className="ml-1.5 opacity-60 hover:opacity-100 transition-opacity font-black"
-              title="Clear filter"
+              title={t("clearFilter")}
             >✕</button>
           </span>
         )}
@@ -602,22 +608,22 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
           <button
             onClick={() => setViewType("grid")}
             className={`p-2 rounded transition ${viewType === "grid" ? "bg-indigo-500/30 text-indigo-300" : "text-slate-400 hover:text-white"}`}
-            title="Grid view"
+            title={t("gridView")}
           >
             <Grid size={20} />
           </button>
           <button
             onClick={() => setViewType("list")}
             className={`p-2 rounded transition ${viewType === "list" ? "bg-indigo-500/30 text-indigo-300" : "text-slate-400 hover:text-white"}`}
-            title="List view"
+            title={t("listView")}
           >
             <List size={20} />
           </button>
         </div>
 
-        <div className="flex-1 max-w-md">
+        <div className="flex flex-wrap gap-6 max-w-full">
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Search Members</label>
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">{t("searchMembers")}</label>
             <div className="relative group">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={16} />
               <input
@@ -625,54 +631,72 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
                 name="admin-master-user-search-query-field"
                 type="text"
                 autoComplete="new-password"
-                placeholder="Name, Email or Phone..."
+                placeholder={t("searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-10 bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 text-xs font-bold text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-none"
               />
             </div>
           </div>
+          {!isTrainer && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">{t("role")}</label>
+              <div className="relative">
+                <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                <select
+                  id="admin-user-role-filter"
+                  value={roleFilter}
+                  onChange={(e) => { setRoleFilter(e.target.value); }}
+                  className="h-10 bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-indigo-500/50 transition cursor-pointer appearance-none min-w-[140px] [&>option]:bg-slate-900"
+                >
+                  <option value="">{t("allRoles")}</option>
+                  <option value="admin">{t("admins")}</option>
+                  <option value="trainer">{t("trainers")}</option>
+                  <option value="user">{t("users")}</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {!isTrainer && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">{t("planStatus")}</label>
+              <div className="relative">
+                <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                <select
+                  id="admin-user-plan-status-filter"
+                  value={planStatusFilter}
+                  onChange={(e) => { setPlanStatusFilter(e.target.value); }}
+                  className="h-10 bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-indigo-500/50 transition cursor-pointer appearance-none min-w-[140px] [&>option]:bg-slate-900"
+                >
+                  <option value="">{t("allPlanStatus")}</option>
+                  <option value="active">{t("activePlan")}</option>
+                  <option value="expired">{t("expiredPlan")}</option>
+                  <option value="not_subscribed">{t("notSubscribed")}</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {!isTrainer && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">{t("account")}</label>
+              <div className="relative">
+                <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                <select
+                  id="admin-user-active-status-filter"
+                  value={isActiveFilter}
+                  onChange={(e) => { setIsActiveFilter(e.target.value); }}
+                  className="h-10 bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-indigo-500/50 transition cursor-pointer appearance-none min-w-[140px] [&>option]:bg-slate-900"
+                >
+                  <option value="">{t("allAccounts")}</option>
+                  <option value="true">{t("activeOnly")}</option>
+                  <option value="false">{t("suspendedOnly")}</option>
+                </select>
+              </div>
+            </div>
+          )}
         </div>
-
-        {!isTrainer && (
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Role</label>
-            <div className="relative">
-              <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-              <select
-                id="admin-user-role-filter"
-                value={roleFilter}
-                onChange={(e) => { setRoleFilter(e.target.value); }}
-                className="h-10 bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-indigo-500/50 transition cursor-pointer appearance-none min-w-[140px] [&>option]:bg-slate-900"
-              >
-                <option value="">All Roles</option>
-                <option value="admin">Admins</option>
-                <option value="trainer">Trainers</option>
-                <option value="user">Users</option>
-              </select>
-            </div>
-          </div>
-        )}
-
-        {!isTrainer && (
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Plan Status</label>
-            <div className="relative">
-              <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-              <select
-                id="admin-user-plan-status-filter"
-                value={planStatusFilter}
-                onChange={(e) => { setPlanStatusFilter(e.target.value); }}
-                className="h-10 bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-indigo-500/50 transition cursor-pointer appearance-none min-w-[140px] [&>option]:bg-slate-900"
-              >
-                <option value="">All Status</option>
-                <option value="active">Active</option>
-                <option value="expired">Expired</option>
-                <option value="not_subscribed">Not Subscribed</option>
-              </select>
-            </div>
-          </div>
-        )}
 
         {!isTrainer && (
           <div className="flex items-center gap-3">
@@ -683,7 +707,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
               className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-orange-400 hover:from-indigo-600 hover:to-orange-500 text-white font-medium px-4 py-2 rounded-lg transition"
             >
               <Plus size={18} />
-              Add
+              {t("add")}
             </motion.button>
           </div>
         )}

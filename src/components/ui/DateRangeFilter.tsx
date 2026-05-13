@@ -68,12 +68,6 @@ export function DateRangeFilter({ defaultPreset = "today", onChange, className =
   const [label, setLabel] = useState(buildRange(defaultPreset, "", "").label);
   const ref = useRef<HTMLDivElement>(null);
 
-  // initial fire
-  useEffect(() => {
-    const r = buildRange(defaultPreset, "", "");
-    setLabel(r.label);
-    onChange(r);
-  }, []);
 
   // Close on outside click
   useEffect(() => {

@@ -124,7 +124,7 @@ export function InquiryCenter() {
                     : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
                   }`}
               >
-                {tab.label}
+                {t(tab.id)}
               </button>
             </div>
           ))}
@@ -134,7 +134,7 @@ export function InquiryCenter() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
           <input
             className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none focus:border-indigo-500 transition"
-            placeholder="Search records..."
+            placeholder={t("searchRecords")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -142,10 +142,10 @@ export function InquiryCenter() {
       </div>
 
       <div className="mb-6 px-1">
-        {activeTab === "subscriptions" && <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">New membership requests and plan upgrades</p>}
-        {activeTab === "products" && <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Recent product orders and merchandise inquiries</p>}
-        {activeTab === "contacts" && <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Direct messages and general contact requests</p>}
-        {activeTab === "expiry" && <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Members with memberships expiring soon</p>}
+        {activeTab === "subscriptions" && <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">{t("subscriptionsTabSubtitle")}</p>}
+        {activeTab === "products" && <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">{t("productsTabSubtitle")}</p>}
+        {activeTab === "contacts" && <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">{t("contactsTabSubtitle")}</p>}
+        {activeTab === "expiry" && <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">{t("expiryTabSubtitle")}</p>}
       </div>
 
       <div className="w-full">
@@ -157,7 +157,7 @@ export function InquiryCenter() {
           <>
             {activeTab === "subscriptions" && (
               <Table
-                headers={["Name", "Mobile/Email", "Requested Plan", "Inquiry Date", "Status", "Actions"]}
+                headers={[t("name"), t("mobileEmail"), t("requestedPlan"), t("inquiryDate"), t("status"), t("actions")]}
                 rows={data.map((r) => [
                   <p key={`${r.id}-name`} className="font-bold text-white uppercase tracking-tighter text-xs">{r.user_name || r.name || r.username || '—'}</p>,
                   <p key={`${r.id}-contact`} className="text-[10px] text-slate-500">{r.user_mobile || r.email || '—'}</p>,
@@ -168,10 +168,10 @@ export function InquiryCenter() {
                     {r.description && <p className="text-[10px] text-slate-500 mt-0.5 italic line-clamp-1">{r.description}</p>}
                   </div>,
                   <span key={`${r.id}-date`} className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span>,
-                  <StatusBadge key={`${r.id}-status`} status={r.status ? "Resolved" : "Pending"} />,
+                  <StatusBadge key={`${r.id}-status`} status={r.status ? t("resolved") : t("pending")} />,
                   <div key={`${r.id}-actions`} className="flex gap-3">
-                    <button onClick={() => handleResolve(r.id)} className="text-emerald-400 hover:scale-125 transition-transform" title="Resolve"><CheckCircle size={16} /></button>
-                    <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title="Delete"><Trash2 size={16} /></button>
+                    <button onClick={() => handleResolve(r.id)} className="text-emerald-400 hover:scale-125 transition-transform" title={t("resolve")}><CheckCircle size={16} /></button>
+                    <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title={t("delete")}><Trash2 size={16} /></button>
                   </div>
                 ])}
               />
@@ -179,7 +179,7 @@ export function InquiryCenter() {
 
             {activeTab === "products" && (
               <Table
-                headers={["Name", "Mobile/Email", "Product", "Qty", "Date", "Status", "Actions"]}
+                headers={[t("name"), t("mobileEmail"), t("product"), t("qty"), t("date"), t("status"), t("actions")]}
                 rows={data.map((r) => [
                   <p key={`${r.id}-name`} className="font-bold text-white uppercase tracking-tighter text-xs">{r.user_name || r.name || r.username || '—'}</p>,
                   <p key={`${r.id}-contact`} className="text-[10px] text-slate-500">{r.user_mobile || r.email || '—'}</p>,
@@ -191,10 +191,10 @@ export function InquiryCenter() {
                   </div>,
                   <span key={`${r.id}-qty`} className="text-slate-200 font-black italic text-lg">{r.quantity}</span>,
                   <span key={`${r.id}-date`} className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span>,
-                  <StatusBadge key={`${r.id}-status`} status={r.status ? "Resolved" : "Pending"} />,
+                  <StatusBadge key={`${r.id}-status`} status={r.status ? t("resolved") : t("pending")} />,
                   <div key={`${r.id}-actions`} className="flex gap-3">
-                    <button onClick={() => handleResolve(r.id)} className="text-emerald-400 hover:scale-125 transition-transform" title="Resolve"><CheckCircle size={16} /></button>
-                    <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title="Delete"><Trash2 size={16} /></button>
+                    <button onClick={() => handleResolve(r.id)} className="text-emerald-400 hover:scale-125 transition-transform" title={t("resolve")}><CheckCircle size={16} /></button>
+                    <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title={t("delete")}><Trash2 size={16} /></button>
                   </div>
                 ])}
               />
@@ -202,12 +202,12 @@ export function InquiryCenter() {
 
             {activeTab === "contacts" && (
               <Table
-                headers={["Name", "Mobile/Email", "Subject & Objective", "Date", "Status", "Actions"]}
+                headers={[t("name"), t("mobileEmail"), t("subjectObjective"), t("date"), t("status"), t("actions")]}
                 rows={data.map((r) => [
                   <p key={`${r.id}-name`} className="font-bold text-white uppercase tracking-tighter text-xs">{r.name}</p>,
                   <p key={`${r.id}-contact`} className="text-[10px] text-slate-500">{r.phone || r.email}</p>,
                   <div key={`${r.id}-msg`} className="max-w-xs">
-                    <p className="text-xs font-bold text-indigo-400 uppercase tracking-tight">{r.subject || 'Contact Message'}</p>
+                    <p className="text-xs font-bold text-indigo-400 uppercase tracking-tight">{r.subject || t("contactMessage")}</p>
                     <p className="text-[10px] text-slate-400 line-clamp-2 italic">"{r.message}"</p>
                   </div>,
                   <div key={`${r.id}-contact`} className="flex flex-col">
@@ -215,10 +215,10 @@ export function InquiryCenter() {
                     <span className="text-[8px] text-slate-500 font-bold uppercase">{r.email}</span>
                   </div>,
                   <span key={`${r.id}-date`} className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span>,
-                  <StatusBadge key={`${r.id}-status`} status={r.status ? "Resolved" : "Pending"} />,
+                  <StatusBadge key={`${r.id}-status`} status={r.status ? t("resolved") : t("pending")} />,
                   <div key={`${r.id}-actions`} className="flex gap-3">
-                    <button onClick={() => handleResolve(r.id)} className="text-emerald-400 hover:scale-125 transition-transform" title="Resolve"><CheckCircle size={16} /></button>
-                    <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title="Delete"><Trash2 size={16} /></button>
+                    <button onClick={() => handleResolve(r.id)} className="text-emerald-400 hover:scale-125 transition-transform" title={t("resolve")}><CheckCircle size={16} /></button>
+                    <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title={t("delete")}><Trash2 size={16} /></button>
                   </div>
                 ])}
               />
@@ -226,21 +226,21 @@ export function InquiryCenter() {
 
             {activeTab === "expiry" && (
               <Table
-                headers={["Name", "Mobile/Email", "Timeline", "Status", "Actions"]}
+                headers={[t("name"), t("mobileEmail"), t("timeline"), t("status"), t("actions")]}
                 rows={data.map((r) => [
                   <p key={`${r.id}-name`} className="font-bold text-white uppercase tracking-tight italic">{r.user_name || r.name || r.username || '—'}</p>,
                   <p key={`${r.id}-contact`} className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">{r.user_mobile || r.mobile || r.email || '—'}</p>,
                   <div key={`${r.id}-cycle`} className="flex flex-col">
-                    <span className="text-xl font-black text-orange-400 italic leading-none">{r.remaining_days} DAYS</span>
-                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1">Days Remaining</span>
+                    <span className="text-xl font-black text-orange-400 italic leading-none">{r.remaining_days} {t("days")}</span>
+                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1">{t("daysRemaining")}</span>
                   </div>,
                   <div key={`${r.id}-status`} className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
-                    <span className="text-[10px] font-black text-white uppercase tracking-widest">{r.status ? "Resolved" : "Renewal Critical"}</span>
+                    <span className="text-[10px] font-black text-white uppercase tracking-widest">{r.status ? t(t("resolved")) : t("renewalCritical")}</span>
                   </div>,
                   <div key={`${r.id}-actions`} className="flex gap-3">
                     <button onClick={() => handleResolve(r.id)} className="h-8 px-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all flex items-center gap-2">
-                      <CheckCircle size={12} /> Resolve
+                      <CheckCircle size={12} /> {t("resolve")}
                     </button>
                     <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform p-2"><Trash2 size={16} /></button>
                   </div>

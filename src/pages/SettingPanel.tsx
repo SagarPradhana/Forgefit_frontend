@@ -103,19 +103,19 @@ export function SettingsPanel() {
             <div className="space-y-6">
               <GlassCard className="p-8 shadow-2xl">
                 <SectionTitle 
-                  title="Profile Preferences" 
-                  subtitle="Manage your public presence and account visibility"
+                  title={t("profilePreferences")} 
+                  subtitle={t("profilePreferencesSub")}
                   className="mb-8"
                 />
                 
                 <div className="grid md:grid-cols-2 gap-8">
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Display Privacy</label>
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t("displayPrivacy")}</label>
                       <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition">
                         <div className="flex items-center gap-3">
                           <CheckCircle2 size={18} className="text-emerald-400" />
-                          <span className="text-sm font-bold text-white">Public Profile</span>
+                          <span className="text-sm font-bold text-white">{t("publicProfile")}</span>
                         </div>
                         <ToggleButton active={prefs.publicProfile} onClick={() => handleToggle("publicProfile")} />
                       </div>
@@ -124,9 +124,9 @@ export function SettingsPanel() {
 
                   <div className="p-6 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 flex flex-col justify-center items-center text-center">
                     <Zap className="text-indigo-400 mb-3" size={32} />
-                    <h4 className="text-sm font-black text-white uppercase mb-1">Quick Sync</h4>
+                    <h4 className="text-sm font-black text-white uppercase mb-1">{t("quickSync")}</h4>
                     <p className="text-xs text-slate-400 leading-relaxed italic">
-                      All your fitness data automatically synchronizes with the mobile app every 15 minutes.
+                      {t("quickSyncDesc")}
                     </p>
                   </div>
                 </div>
@@ -138,15 +138,15 @@ export function SettingsPanel() {
             <div className="space-y-6">
               <GlassCard className="p-8">
                 <SectionTitle 
-                  title={isPasswordOnly ? "Change Password" : "Security Vault"} 
-                  subtitle={isPasswordOnly ? "Update your account credentials" : "Fortify your account with advanced authentication"}
+                  title={isPasswordOnly ? t("changePassword") : t("securityVault")} 
+                  subtitle={isPasswordOnly ? t("updateCredentials") : t("securityVaultSub")}
                   className="mb-8"
                 />
 
                 <div className="grid md:grid-cols-2 gap-8">
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Current Password</label>
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t("currentPassword")}</label>
                       <InputField 
                         type="password" 
                         placeholder="••••••••" 
@@ -155,7 +155,7 @@ export function SettingsPanel() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">New Password</label>
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t("newPassword")}</label>
                       <InputField 
                         type="password" 
                         placeholder="••••••••" 
@@ -165,7 +165,7 @@ export function SettingsPanel() {
                     </div>
                     <div className="flex justify-start pt-2">
                       <CommonButton className="px-8 bg-indigo-500 text-xs font-black uppercase tracking-widest rounded-xl">
-                        Update Vault
+                        {t("updateVault")}
                       </CommonButton>
                     </div>
                   </div>
@@ -174,9 +174,9 @@ export function SettingsPanel() {
                     <div className="p-4 rounded-2xl bg-orange-500/5 border border-orange-500/20">
                       <div className="flex items-center gap-3 mb-2">
                         <ShieldCheck className="text-orange-400" size={18} />
-                        <h4 className="text-[11px] font-black text-white uppercase tracking-widest">Two-Factor Auth</h4>
+                        <h4 className="text-[11px] font-black text-white uppercase tracking-widest">{t("twoFactorAuth")}</h4>
                       </div>
-                      <p className="text-xs text-slate-400 mb-4 tracking-tight">Add an extra layer of protection using your mobile device.</p>
+                      <p className="text-xs text-slate-400 mb-4 tracking-tight">{t("twoFactorDesc")}</p>
                       <button 
                         onClick={() => handleToggle("twoFactor")}
                         className={`w-full py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
@@ -185,7 +185,7 @@ export function SettingsPanel() {
                             : "bg-white/5 text-slate-400 border-white/10 hover:bg-white/10"
                         }`}
                       >
-                        {prefs.twoFactor ? "Enabled" : "Enable 2FA"}
+                        {prefs.twoFactor ? t("enabled") : t("enable2FA")}
                       </button>
                     </div>
                   </div>
@@ -198,32 +198,32 @@ export function SettingsPanel() {
             <div className="space-y-6">
               <GlassCard className="p-8">
                 <SectionTitle 
-                  title="Alert Matrix" 
-                  subtitle="Configure how the gym system reaches out to you"
+                  title={t("alertMatrix")} 
+                  subtitle={t("alertMatrixSub")}
                   className="mb-8"
                 />
 
                 <div className="space-y-4">
                   <NotificationRow 
                     icon={Zap} 
-                    title="Workout Reminders" 
-                    desc="Receive push notifications 30 mins before your scheduled session."
+                    title={t("workoutReminders")} 
+                    desc={t("workoutRemindersDesc")}
                     active={prefs.workoutReminders}
                     onToggle={() => handleToggle("workoutReminders")}
                     color="text-indigo-400"
                   />
                   <NotificationRow 
                     icon={Mail} 
-                    title="Payment Invoices" 
-                    desc="Digital receipts and monthly billing alerts sent to your email."
+                    title={t("paymentInvoices")} 
+                    desc={t("paymentInvoicesDesc")}
                     active={prefs.paymentAlerts}
                     onToggle={() => handleToggle("paymentAlerts")}
                     color="text-emerald-400"
                   />
                   <NotificationRow 
                     icon={Smartphone} 
-                    title="Gym Newsletters" 
-                    desc="Be the first to hear about new equipment, events and offers."
+                    title={t("gymNewsletters")} 
+                    desc={t("gymNewslettersDesc")}
                     active={prefs.newsletters}
                     onToggle={() => handleToggle("newsletters")}
                     color="text-amber-400"
@@ -247,7 +247,7 @@ export function SettingsPanel() {
             onClick={handleSave}
             className="px-10 h-12 text-xs font-black uppercase tracking-widest shadow-orange-500/20"
           >
-            Confirm Synchronization
+            {t("confirmSync")}
           </CommonButton>
         </div>
       )}

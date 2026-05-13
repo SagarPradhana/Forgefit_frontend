@@ -296,6 +296,15 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div
       className={`relative h-screen min-h-screen overflow-hidden overflow-x-hidden text-white`}
+      style={{
+        // Inject theme tokens as CSS custom properties so ALL descendants
+        // (GlassCard, Table, inputs, etc.) pick them up without needing props.
+        "--theme-card-bg": currentTheme.cardBgRaw,
+        "--theme-border": currentTheme.borderRaw,
+        "--theme-shadow": currentTheme.shadowRaw,
+        "--theme-glow": currentTheme.glow,
+        "--theme-accent": currentTheme.accentRaw,
+      } as React.CSSProperties}
     >
       <Helmet>
         <title>{`${role === 'admin' ? 'Admin' : role === 'trainer' ? 'Trainer' : 'Member'} Portal | ${publicAppConfig?.brand_name || 'ForgeFit'}`}</title>
@@ -339,7 +348,12 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className={`relative z-[60] rounded-xl lg:rounded-3xl ${currentTheme.borderColor} ${currentTheme.cardBg} p-1.5 md:p-2.5 lg:p-4 ${currentTheme.shadowColor} backdrop-blur-xl mx-0 mt-1 lg:mx-0 lg:mt-0`}
+            className={`relative z-[60] rounded-xl lg:rounded-3xl border p-1.5 md:p-2.5 lg:p-4 backdrop-blur-xl mx-0 mt-1 lg:mx-0 lg:mt-0`}
+            style={{
+              background: currentTheme.cardBgRaw,
+              borderColor: currentTheme.borderRaw,
+              boxShadow: `0 0 50px -12px ${currentTheme.shadowRaw}`,
+            }}
           >
             <div className="flex items-center justify-between gap-2 lg:gap-3">
               <div className="flex items-center gap-2 lg:gap-3">

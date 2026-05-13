@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Loader2, Eye, EyeOff } from "lucide-react";
 import type { UserFormData, ModalStep, UserRole } from "./types";
 import { handlePhoneKeyDown, handlePhonePaste, sanitizePhone } from "../../../utils/formUtils";
+import { useTranslation } from "react-i18next";
 
 interface UserModalProps {
   isOpen: boolean;
@@ -38,7 +39,6 @@ export const UserModal = ({
   onNext,
   onBack,
   roles,
-  plans,
   trainers,
   isAnyLoading,
   showPassword,
@@ -48,6 +48,7 @@ export const UserModal = ({
   isFinalStep,
   portalType = "admin",
 }: UserModalProps) => {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   return createPortal(
@@ -74,7 +75,7 @@ export const UserModal = ({
         <div className="relative border-b border-white/15 bg-white/5 flex-shrink-0 rounded-t-2xl overflow-hidden">
           <div className="py-2 bg-gradient-to-r from-indigo-600 to-orange-400 flex justify-center">
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">
-              Step {getStepNumber()}
+              {t("step")} {getStepNumber()}
             </span>
           </div>
 
@@ -84,7 +85,7 @@ export const UserModal = ({
                 {getModalTitle()}
               </h2>
               <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
-                Registration Wizard
+                {t("registrationWizard")}
               </p>
             </div>
             <button
@@ -220,6 +221,7 @@ export const UserModal = ({
                 <label className="block text-sm font-semibold text-white mb-2">Joining Date <span className="text-orange-400">*</span></label>
                 <input
                   type="date"
+                  max={new Date().toISOString().split('T')[0]}
                   value={formData.joining_date ? new Date(formData.joining_date * 1000).toISOString().split('T')[0] : ""}
                   onChange={(e) => {
                     const date = e.target.value ? Math.floor(new Date(e.target.value).getTime() / 1000) : 0;
@@ -315,6 +317,7 @@ export const UserModal = ({
                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">DOB</label>
                       <input
                         type="date"
+                        max={new Date().toISOString().split('T')[0]}
                         value={formData.metadata.dob ? new Date(formData.metadata.dob * 1000).toISOString().split('T')[0] : ""}
                         onChange={(e) => {
                           const date = e.target.value ? Math.floor(new Date(e.target.value).getTime() / 1000) : 0;
@@ -353,34 +356,34 @@ export const UserModal = ({
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-white mb-1">Fitness Goal</label>
+                      <label className="block text-xs font-semibold text-white mb-1">{t("fitnessGoal")}</label>
                       <select
                         value={formData.metadata.fitness_goal}
                         onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, fitness_goal: e.target.value } })}
                         className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs"
                       >
-                        <option value="fat_loss" className="bg-slate-900">Fat Loss</option>
-                        <option value="muscle_gain" className="bg-slate-900">Muscle Gain</option>
-                        <option value="fitness" className="bg-slate-900">General Fitness</option>
+                        <option value="fat_loss" className="bg-slate-900">{t("fatLoss")}</option>
+                        <option value="muscle_gain" className="bg-slate-900">{t("muscleGain")}</option>
+                        <option value="fitness" className="bg-slate-900">{t("generalFitness")}</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-white mb-1">Workout Time</label>
+                      <label className="block text-xs font-semibold text-white mb-1">{t("workoutTime")}</label>
                       <select
                         value={formData.metadata.workout_time}
                         onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, workout_time: e.target.value } })}
                         className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs"
                       >
-                        <option value="morning" className="bg-slate-900">Morning</option>
-                        <option value="evening" className="bg-slate-900">Evening</option>
+                        <option value="morning" className="bg-slate-900">{t("morning")}</option>
+                        <option value="evening" className="bg-slate-900">{t("evening")}</option>
                       </select>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Medical Conditions</label>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t("medicalConditions")}</label>
                     <textarea
-                      placeholder="Describe any medical conditions, chronic issues or health concerns..."
+                      placeholder={t("medicalConditionsPlaceholder")}
                       value={formData.metadata.medical_conditions || ""}
                       onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, medical_conditions: e.target.value } })}
                       className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-xs resize-none focus:border-indigo-500 transition"
@@ -390,26 +393,27 @@ export const UserModal = ({
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Language</label>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t("language")}</label>
                       <select
                         value={formData.metadata.language}
                         onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, language: e.target.value } })}
                         className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-xs focus:outline-none"
                       >
-                        <option value="en" className="bg-slate-900">English</option>
-                        <option value="hi" className="bg-slate-900">Hindi</option>
-                        <option value="mr" className="bg-slate-900">Marathi</option>
+                        <option value="en" className="bg-slate-900">{t("english")}</option>
+                        <option value="hi" className="bg-slate-900">{t("hindi")}</option>
+                        <option value="mr" className="bg-slate-900">{t("marathi")}</option>
+                        <option value="or" className="bg-slate-900">{t("odia")}</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Theme Preference</label>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t("themePreference")}</label>
                       <select
                         value={formData.metadata.theme}
                         onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, theme: e.target.value } })}
                         className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-xs focus:outline-none"
                       >
-                        <option value="dark" className="bg-slate-900">Dark Mode</option>
-                        <option value="light" className="bg-slate-900">Light Mode</option>
+                        <option value="dark" className="bg-slate-900">{t("darkMode")}</option>
+                        <option value="light" className="bg-slate-900">{t("lightMode")}</option>
                       </select>
                     </div>
                   </div>
@@ -430,13 +434,13 @@ export const UserModal = ({
                 </div>
               ) : (
                 <div>
-                  <label className="block text-sm font-semibold text-white mb-2">Assign Trainer</label>
+                  <label className="block text-sm font-semibold text-white mb-2">{t("assignTrainer")}</label>
                   <select
                     value={formData.trainer_id || ""}
                     onChange={(e) => setFormData({ ...formData, trainer_id: e.target.value })}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-400 transition"
                   >
-                    <option value="" className="bg-slate-900">Select Trainer (Optional)</option>
+                    <option value="" className="bg-slate-900">{t("selectTrainerOptional")}</option>
                     {trainers.map((t: any) => (
                       <option key={t.id} value={t.id} className="bg-slate-900">{t.name}</option>
                     ))}
@@ -454,7 +458,7 @@ export const UserModal = ({
             onClick={onClose}
             className="w-full sm:w-auto px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition"
           >
-            Cancel
+            {t("cancel")}
           </motion.button>
 
           <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -466,7 +470,7 @@ export const UserModal = ({
                 className="flex-1 sm:flex-none px-6 py-2.5 bg-slate-600 hover:bg-slate-500 text-white font-medium rounded-lg transition flex items-center justify-center gap-2"
               >
                 <ChevronLeft size={18} />
-                Back
+                {t("back")}
               </motion.button>
             )}
 
@@ -481,7 +485,7 @@ export const UserModal = ({
                 <Loader2 size={20} className="animate-spin" />
               ) : (
                 <>
-                  {isFinalStep ? "Submit" : "Next"}
+                  {isFinalStep ? t("submit") : t("next")}
                   {!isFinalStep && <ChevronRight size={20} />}
                 </>
               )}

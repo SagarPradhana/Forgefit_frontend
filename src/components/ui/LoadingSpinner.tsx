@@ -9,9 +9,10 @@ export function LoadingSpinner() {
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          className="flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-transparent bg-gradient-to-r from-indigo-500/30 to-orange-400/30 mx-auto mb-6 shadow-[0_0_30px_rgba(99,102,241,0.3)]"
+          className="flex h-24 w-24 items-center justify-center rounded-3xl border border-indigo-500/30 bg-slate-900/80 mx-auto mb-8 shadow-[0_0_40px_rgba(99,102,241,0.2)] relative"
         >
-          <Dumbbell size={32} className="text-indigo-400" />
+          <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-indigo-500/20 to-orange-400/20 animate-pulse" />
+          <Dumbbell size={36} className="text-indigo-400 relative z-10" />
         </motion.div>
 
         {/* TEXT */}

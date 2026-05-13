@@ -18,6 +18,14 @@ export default {
         'hero-gradient':
           'radial-gradient(circle at 8% 12%, rgba(99,102,241,0.34), transparent 40%), radial-gradient(circle at 88% 8%, rgba(249,115,22,0.2), transparent 36%), linear-gradient(180deg, #020617 0%, #0f172a 55%, #020617 100%)',
       },
+      keyframes: {
+        shimmer: {
+          '100%': { transform: 'translateX(100%)' },
+        },
+      },
+      animation: {
+        shimmer: 'shimmer 2s infinite',
+      },
     },
   },
   plugins: [],

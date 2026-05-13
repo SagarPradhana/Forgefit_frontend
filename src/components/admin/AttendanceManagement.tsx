@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { GlassCard, SectionTitle, Table, CommonButton, Modal } from "../ui/primitives";
+import { GlassCard, SectionTitle, Table, CommonButton } from "../ui/primitives";
 import { Grid, List, Search, Clock, Edit2, Trash2, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { adminAttendanceService, type AttendanceResponse, type AttendanceRequest } from "../../services/adminAttendanceService";
@@ -11,6 +11,8 @@ import { useGet } from "../../hooks/useApi";
 import { API_ENDPOINTS } from "../../utils/url";
 import { DateRangeFilter, type DateRange } from "../ui/DateRangeFilter";
 import { DeleteConfirmationModal } from "../common/DeleteConfirmationModal";
+import { ManualAttendanceModal } from "./attendance/ManualAttendanceModal";
+import { t } from "i18next";
 
 type AttendanceView = "grid" | "list";
 
@@ -171,15 +173,17 @@ export function AttendanceManagement() {
       {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Total Check-Ins", value: stats.total_checkins_today || 0, color: "bg-emerald-500" },
-          { label: "Present Now", value: stats.present_now || 0, color: "bg-indigo-500" },
-          { label: "Checked Out", value: stats.checked_out_today || 0, color: "bg-amber-500" },
-          { label: "Avg Hours", value: (() => {
-            const hours = Number(stats.avg_time_hours) || 0;
-            const h = Math.floor(hours);
-            const m = Math.round((hours - h) * 60);
-            return `${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m`;
-          })(), color: "bg-purple-500" },
+          { label: t("totalCheckIns"), value: stats.total_checkins_today || 0, color: "bg-emerald-500" },
+          { label: t("presentNow"), value: stats.present_now || 0, color: "bg-indigo-500" },
+          { label: t("checkedOut"), value: stats.checked_out_today || 0, color: "bg-amber-500" },
+          {
+            label: t("avgHours"), value: (() => {
+              const hours = Number(stats.avg_time_hours) || 0;
+              const h = Math.floor(hours);
+              const m = Math.round((hours - h) * 60);
+              return `${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m`;
+            })(), color: "bg-purple-500"
+          },
         ].map((stat, i) => (
           <div key={i} className="relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-4">
             <div className={`absolute -top-8 -right-8 w-16 h-16 rounded-full blur-2xl opacity-20 ${stat.color}`} />
@@ -193,7 +197,7 @@ export function AttendanceManagement() {
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <SectionTitle
           title={t("attendance")}
-          subtitle="Precision control over member gym access and history"
+          subtitle={t("attendanceSubtitle")}
         />
 
         <div className="flex items-center gap-3 self-end md:self-auto">
@@ -220,7 +224,7 @@ export function AttendanceManagement() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input
               className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white outline-none focus:border-indigo-500 transition"
-              placeholder="Search member by name..."
+              placeholder={t("searchMembersPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -274,7 +278,7 @@ export function AttendanceManagement() {
               exit={{ opacity: 0, x: 20 }}
             >
               <Table
-                headers={["Name, mobile/email", "Check In", "Check Out", "Status", "Actions"]}
+                headers={[t("nameMobileEmail"), t("checkIn"), t("checkOut"), t("status"), t("actions")]}
                 rows={records.map(r => [
                   <div key={r.id} className="flex items-center gap-3">
                     <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-indigo-500/30 to-violet-500/30 flex items-center justify-center text-xs font-black text-white shrink-0">
@@ -286,7 +290,7 @@ export function AttendanceManagement() {
                     </div>
                   </div>,
                   new Date(r.check_in * 1000).toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-                  r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' }) : "Active",
+                  r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' }) : t("active"),
                   <span key={`${r.id}-status`} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${r.status?.toLowerCase() === "present" ? "bg-emerald-500/20 text-emerald-400" :
                     r.status?.toLowerCase() === "late" ? "bg-amber-500/20 text-amber-400" :
                       "bg-red-500/20 text-red-400"
@@ -305,88 +309,24 @@ export function AttendanceManagement() {
         </AnimatePresence>
       </GlassCard>
 
-      {/* Manual Entry Modal */}
-      <Modal
-        open={modalOpen}
+      <ManualAttendanceModal
+        isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editingRecord ? "Edit Attendance Log" : "Manual Check-In"}
-        footer={
-          <div className="flex gap-3">
-            <CommonButton variant="ghost" onClick={() => setModalOpen(false)}>Cancel</CommonButton>
-            <CommonButton onClick={handleSave}>Submit</CommonButton>
-          </div>
-        }
-      >
-        <div className="space-y-4 pt-2">
-          <div className="space-y-1">
-            <label className="text-xs font-bold uppercase text-slate-500">Member Name</label>
-            <select
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-indigo-500"
-              value={form.user_id}
-              onChange={e => {
-                const user = members.find((u: any) => u.id === e.target.value);
-                setForm({ ...form, user_id: e.target.value, userName: user?.name || "" });
-              }}
-            >
-              <option value="" className="bg-slate-900">Select Member</option>
-              {members.map((m: any) => (
-                <option key={m.id} value={m.id} className="bg-slate-900">{m.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-bold uppercase text-slate-500">Date</label>
-              <input
-                type="date"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-indigo-500"
-                value={form.date}
-                onChange={e => setForm({ ...form, date: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-bold uppercase text-slate-500">Status</label>
-              <select
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-indigo-500"
-                value={form.status}
-                onChange={e => setForm({ ...form, status: e.target.value })}
-              >
-                <option value="present" className="bg-slate-900">Present</option>
-                <option value="absent" className="bg-slate-900">Absent</option>
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-bold uppercase text-slate-500">Check In</label>
-              <input
-                type="time"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-indigo-500"
-                value={form.checkIn}
-                onChange={e => setForm({ ...form, checkIn: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-bold uppercase text-slate-500">Check Out</label>
-              <input
-                type="time"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-indigo-500"
-                value={form.checkOut}
-                onChange={e => setForm({ ...form, checkOut: e.target.value })}
-              />
-            </div>
-          </div>
-        </div>
-      </Modal>
+        editingRecord={editingRecord}
+        form={form}
+        setForm={setForm}
+        members={members}
+        onSave={handleSave}
+      />
 
       {/* Delete Confirmation */}
       <DeleteConfirmationModal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={handleDelete}
-        title="Delete Record?"
-        description="Are you sure you want to delete this attendance log? This will remove the record permanently from the member's history."
-        confirmLabel="Submit"
+        title={t("deleteRecordQuestion")}
+        description={t("deleteRecordDescription")}
+        confirmLabel={t("submit")}
       />
     </div>
   );
@@ -414,12 +354,12 @@ function AttendanceGridCard({ record, onEdit, onDelete }: { record: AttendanceRe
 
       <div className="grid grid-cols-2 gap-3 p-3 bg-black/20 rounded-xl relative z-10">
         <div className="space-y-1">
-          <span className="text-[10px] text-slate-500 uppercase font-black">In</span>
+          <span className="text-[10px] text-slate-500 uppercase font-black">{t("checkIn")}</span>
           <p className="text-white font-bold text-sm flex items-center gap-2"><Clock size={12} /> {new Date(record.check_in * 1000).toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' })}</p>
         </div>
         <div className="space-y-1 border-l border-white/10 pl-3">
-          <span className="text-[10px] text-slate-500 uppercase font-black">Out</span>
-          <p className="text-white font-bold text-sm flex items-center gap-2"><Clock size={12} /> {record.check_out ? new Date(record.check_out * 1000).toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' }) : "Active"}</p>
+          <span className="text-[10px] text-slate-500 uppercase font-black">{t("checkOut")}</span>
+          <p className="text-white font-bold text-sm flex items-center gap-2"><Clock size={12} /> {record.check_out ? new Date(record.check_out * 1000).toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' }) : t("active")}</p>
         </div>
       </div>
 

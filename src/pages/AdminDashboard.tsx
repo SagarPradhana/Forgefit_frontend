@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -9,7 +10,7 @@ import {
   ShoppingBag, Mail, Bell, Activity,
   ChevronRight, TrendingUp, Clock, Camera,
 } from "lucide-react";
-import { GlassCard, SectionTitle } from "../components/ui/primitives";
+import { GlassCard, SectionTitle, SkeletonRows } from "../components/ui/primitives";
 import { api } from "../utils/httputils";
 import { API_ENDPOINTS } from "../utils/url";
 import { DateRangeFilter, type DateRange } from "../components/ui/DateRangeFilter";
@@ -25,8 +26,7 @@ const getMonthRange = () => {
     to: now.toISOString().split("T")[0],
   };
 };
-const today = () => new Date().toISOString().split("T")[0];
-const toUnix = (d: string, end = false) => {
+const toUnix = (d: string | Date, end = false) => {
   if (!d) return undefined;
   const dt = new Date(d);
   end ? dt.setHours(23, 59, 59, 999) : dt.setHours(0, 0, 0, 0);
@@ -113,16 +113,6 @@ function SectionHeader({ title, sub, onRedirect }: { title: string; sub?: string
   );
 }
 
-// ─── Skeleton rows ────────────────────────────────────────────────────────────
-function SkeletonRows({ n = 5 }: { n?: number }) {
-  return (
-    <div className="space-y-2">
-      {[...Array(n)].map((_, i) => (
-        <div key={i} className="h-12 rounded-xl bg-white/5 animate-pulse" />
-      ))}
-    </div>
-  );
-}
 
 // ─── Custom Tooltip for Bar Chart ─────────────────────────────────────────────
 function RevTooltip({ active, payload, label, currency = "INR" }: any) {
@@ -142,6 +132,7 @@ function RevTooltip({ active, payload, label, currency = "INR" }: any) {
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function AdminDashboard() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const monthRange = getMonthRange();
 
@@ -157,6 +148,27 @@ export default function AdminDashboard() {
 
   // Inquiry tab
   const [inqTab, setInqTab] = useState<"subscriptions" | "product_orders" | "contact_inquiries">("subscriptions");
+
+  // Derived months for revenue chart from global dateRange
+  const derivedRevenueMonths = useMemo(() => {
+    if (!dateRange.from_date || !dateRange.to_date) return revenueMonths;
+    const d1 = new Date(dateRange.from_date * 1000);
+    const d2 = new Date(dateRange.to_date * 1000);
+    const m = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()) + 1;
+    return Math.max(1, m);
+  }, [dateRange, revenueMonths]);
+
+  // Sync dateRange when revenue months buttons are clicked
+  const handleRevenueMonthsChange = useCallback((n: number) => {
+    const now = new Date();
+    const from = new Date(now.getFullYear(), now.getMonth() - (n - 1), 1);
+    setDateRange({
+      from_date: toUnix(from, false),
+      to_date: toUnix(now, true),
+      label: `Last ${n} Months`
+    });
+    setRevenueMonths(n);
+  }, []);
 
   const [scannerOpen, setScannerOpen] = useState(false);
 
@@ -257,74 +269,50 @@ export default function AdminDashboard() {
   const fetchMonthlyRevenue = useCallback(async () => {
     setLoad("revenue", true);
     try {
-      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_MONTHLY_REVENUE}?months=${revenueMonths}`);
+      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_MONTHLY_REVENUE}?months=${derivedRevenueMonths}`);
       if (res?.data) setMonthlyRevenue(res.data);
     } catch (e) { console.error(e); } finally { setLoad("revenue", false); }
-  }, [revenueMonths]);
+  }, [derivedRevenueMonths]);
 
   // ── Effects ──
   // Single effect - fetches on mount with initial dateRange values
-  useEffect(() => {
-    const from = dateRange.from_date;
-    const to = dateRange.to_date;
 
-    // Build params with dates
-    const p = new URLSearchParams();
-    if (from) p.set("from_date", String(from));
-    if (to) p.set("to_date", String(to));
-    const paramsStr = p.toString();
+  const refreshAll = useCallback(async () => {
+    setLoad("stats", true);
+    setLoad("inquiries", true);
+    setLoad("payments", true);
+    setLoad("subscriptions", true);
+    setLoad("products", true);
+    setLoad("attendance", true);
+    setLoad("revenue", true);
 
-    // All APIs use dateParams internally which handles the dates
-    const fetchData = async () => {
-      setLoad("stats", true);
-      setLoad("inquiries", true);
-      setLoad("payments", true);
-      setLoad("subscriptions", true);
-      setLoad("products", true);
-      setLoad("attendance", true);
-      setLoad("revenue", true);
-
-      try {
-        const [statsRes, inqRes, payRes, subRes, prodRes, attRes, revRes] = await Promise.all([
-          api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_STATS}?${paramsStr}`),
-          api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_INQUIRIES}?${paramsStr}`),
-          api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_PAYMENTS}?${paramsStr}`),
-          api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_SUBSCRIPTIONS}?${paramsStr}`),
-          api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_PRODUCTS}?${paramsStr}`),
-          api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_ATTENDANCE}?${paramsStr}`),
-          api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_MONTHLY_REVENUE}?months=${revenueMonths}`)
-        ]);
-
-        if (statsRes?.code === 200) setStats({ total_users: statsRes.total_users, total_trainers: statsRes.total_trainers, total_admins: statsRes.total_admins, total_members: statsRes.total_members, total_active_subscriptions: statsRes.total_active_subscriptions, total_expired_subscriptions: statsRes.total_expired_subscriptions, total_no_subscriptions: statsRes.total_no_subscriptions, new_registrations: statsRes.new_registrations, upcoming_renewals: statsRes.upcoming_renewals, total_revenue: statsRes.total_revenue });
-        if (inqRes?.data) setInquiries(inqRes.data);
-        if (payRes?.data) setPayments(payRes.data);
-        if (subRes?.data) setSubscriptions(subRes.data);
-        if (prodRes?.data) setProducts(prodRes.data);
-        if (attRes?.data) setAttendance(attRes.data);
-        if (revRes?.data) setMonthlyRevenue(revRes.data);
-      } catch (e) { console.error(e); }
-      finally {
-        setLoad("stats", false); setLoad("inquiries", false); setLoad("payments", false);
-        setLoad("subscriptions", false); setLoad("products", false); setLoad("attendance", false); setLoad("revenue", false);
-      }
-    };
-
-    fetchData();
-  }, []);
+    try {
+      await Promise.all([
+        fetchStats(),
+        fetchInquiries(),
+        fetchPayments(),
+        fetchSubscriptions(),
+        fetchProducts(),
+        fetchAttendance(),
+        fetchMonthlyRevenue()
+      ]);
+    } catch (e) {
+      console.error("Dashboard refresh error:", e);
+    } finally {
+      // Loaders are handled inside individual fetchers, but set them false here as backup
+      setLoad("stats", false);
+      setLoad("inquiries", false);
+      setLoad("payments", false);
+      setLoad("subscriptions", false);
+      setLoad("products", false);
+      setLoad("attendance", false);
+      setLoad("revenue", false);
+    }
+  }, [fetchStats, fetchInquiries, fetchPayments, fetchSubscriptions, fetchProducts, fetchAttendance, fetchMonthlyRevenue]);
 
   useEffect(() => {
     refreshAll();
-  }, [dateRange, revenueMonths]);
-
-  const refreshAll = () => {
-    fetchStats();
-    fetchInquiries();
-    fetchPayments();
-    fetchSubscriptions();
-    fetchProducts();
-    fetchAttendance();
-    fetchMonthlyRevenue();
-  };
+  }, [refreshAll, derivedRevenueMonths]);
 
   const isAnyLoading = Object.values(loading).some(Boolean);
 
@@ -340,24 +328,24 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       {/* ── Top Header + Global Date Filter ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <SectionTitle title="Dashboard" subtitle="Real-time gym intelligence — members, revenue & activity" />
+        <SectionTitle title={t("dashboard")} subtitle="Real-time gym intelligence — members, revenue & activity" />
         <div className="flex items-center gap-2">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setScannerOpen(true)}
             className="h-10 px-4 flex items-center justify-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white transition-all text-xs font-black tracking-widest uppercase shadow-[0_0_15px_rgba(16,185,129,0.15)] hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]"
-            title="Scan ID Card"
+            title={t("scanIdCard")}
           >
             <Camera size={16} />
-            Scan
+            {t("scan")}
           </motion.button>
           <DateRangeFilter
             defaultPreset="monthly"
             onChange={(r) => setDateRange(r)}
           />
           <button onClick={refreshAll}
-            className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-indigo-500 hover:border-indigo-500 text-indigo-400 hover:text-white transition-all" title="Refresh all">
+            className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-indigo-500 hover:border-indigo-500 text-indigo-400 hover:text-white transition-all" title={t("refreshAll")}>
             <RefreshCw size={14} className={isAnyLoading ? "animate-spin" : ""} />
           </button>
         </div>
@@ -369,63 +357,63 @@ export default function AdminDashboard() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05, duration: 0.35 }}
-          className="col-span-2 relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-5 backdrop-blur-xl hover:border-indigo-500/30 transition-all group flex flex-col justify-between"
+          className="col-span-2 relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-5 backdrop-blur-xl hover:border-indigo-500/30 transition-all group flex flex-col justify-center gap-4"
         >
           <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full blur-3xl opacity-20 bg-indigo-500" />
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/20 group-hover:scale-110 transition-transform shrink-0">
+              <CreditCard size={20} className="text-indigo-400" />
+            </div>
             <div>
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/20 mb-3 group-hover:scale-110 transition-transform">
-                <CreditCard size={18} className="text-indigo-400" />
-              </div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 leading-tight">Subscription Overview</p>
-              <p className="text-2xl font-black text-white tracking-tighter">Plan Status</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 leading-tight">{t("subscriptionOverview")}</p>
+              <p className="text-xl font-black text-white tracking-tighter">{t("planStatusTitle")}</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 mt-auto relative z-10">
+          <div className="grid grid-cols-3 gap-2 relative z-10">
             <button onClick={() => navigate('/admin/users?plan_status=active')} className="py-2 px-1 rounded-xl bg-white/5 hover:bg-emerald-500/20 hover:border-emerald-500/30 border border-transparent transition-all flex flex-col items-center group/btn">
               <span className="text-lg font-black text-emerald-400 group-hover/btn:scale-110 transition-transform">{stats?.total_active_subscriptions ?? 0}</span>
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">Active</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">{t("active")}</span>
             </button>
             <button onClick={() => navigate('/admin/users?plan_status=expired')} className="py-2 px-1 rounded-xl bg-white/5 hover:bg-red-500/20 hover:border-red-500/30 border border-transparent transition-all flex flex-col items-center group/btn">
               <span className="text-lg font-black text-red-400 group-hover/btn:scale-110 transition-transform">{stats?.total_expired_subscriptions ?? 0}</span>
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">Expired</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">{t("expired")}</span>
             </button>
             <button onClick={() => navigate('/admin/users?plan_status=not_subscribed')} className="py-2 px-1 rounded-xl bg-white/5 hover:bg-amber-500/20 hover:border-amber-500/30 border border-transparent transition-all flex flex-col items-center group/btn">
               <span className="text-lg font-black text-amber-400 group-hover/btn:scale-110 transition-transform">{stats?.total_no_subscriptions ?? 0}</span>
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">Not Subscribed</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">{t("not_subscribed")}</span>
             </button>
           </div>
         </motion.div>
         <StatCard
-          label="Total Users"
+          label={t("totalUsers")}
           value={stats?.total_users}
           icon={Users}
           color="bg-indigo-500"
           delay={0.1}
           onClick={() => navigate('/admin/users')}
         />
-        <StatCard label="New Registrations" value={stats?.new_registrations} icon={UserPlus} color="bg-sky-500" delay={0.15} />
-        <StatCard label="Upcoming Renewals" value={stats?.upcoming_renewals} icon={Clock} color="bg-amber-500" delay={0.2} />
-        <StatCard label="Total Revenue" value={stats?.total_revenue != null ? fmt(stats.total_revenue) : "—"} icon={IndianRupee} color="bg-emerald-500" delay={0.25} />
+        <StatCard label={t("newRegistrations")} value={stats?.new_registrations} icon={UserPlus} color="bg-sky-500" delay={0.15} />
+        <StatCard label={t("upcomingRenewals")} value={stats?.upcoming_renewals} icon={Clock} color="bg-amber-500" delay={0.2} />
+        <StatCard label={t("totalRevenue")} value={stats?.total_revenue != null ? fmt(stats.total_revenue) : "—"} icon={IndianRupee} color="bg-emerald-500" delay={0.25} />
       </div>
 
       {/* ── [ROW 2] Recent Inquiries (4 tabs) ── */}
       <GlassCard>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-          <SectionHeader title="Recent Inquiries" sub="Latest incoming requests" onRedirect={() => navigate('/admin/inquiries')} />
+          <SectionHeader title={t("recentInquiries")} sub={t("latestRequests")} onRedirect={() => navigate('/admin/inquiries')} />
           <div className="flex flex-wrap gap-1 bg-white/5 border border-white/10 rounded-xl p-1 overflow-x-auto no-scrollbar">
             {inqTabs.map(({ id, label, icon: Icon }) => (
               <button key={id} onClick={() => setInqTab(id as any)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${inqTab === id ? "bg-indigo-500 text-white shadow-lg" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
-                <Icon size={12} />{label}
+                <Icon size={12} />{t(id)}
               </button>
             ))}
           </div>
         </div>
         {loading.inquiries ? <SkeletonRows /> : inqData.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-10 text-slate-500">
-            <Bell size={32} className="opacity-20" /><p className="text-sm font-bold">No records</p>
+            <Bell size={32} className="opacity-20" /><p className="text-sm font-bold">{t("noRecords")}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -433,19 +421,32 @@ export default function AdminDashboard() {
               <motion.div key={item.id ?? i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
                 className="flex items-center justify-between gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-white/15 transition-all group">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-8 w-8 rounded-xl bg-violet-500/20 flex items-center justify-center text-xs font-black text-violet-300 shrink-0">
-                    {(item.name ?? item.user_name ?? "?")?.[0]?.toUpperCase()}
+                  <div className={`h-10 w-10 rounded-2xl flex items-center justify-center text-xs font-black shrink-0 shadow-lg ${
+                    inqTab === 'subscriptions' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/20' : 
+                    inqTab === 'product_orders' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' : 
+                    'bg-amber-500/20 text-amber-400 border border-amber-500/20'
+                  }`}>
+                    {(item.user_name ?? "?")?.[0]?.toUpperCase()}
                   </div>
                   <div className="min-w-0 flex flex-col justify-center">
-                    <p className="text-sm font-bold text-white truncate">{item.name ?? item.user_name ?? "—"}</p>
-                    {inqTab === 'subscriptions' && <p className="text-[10px] text-slate-400 truncate mt-0.5"><span className="text-indigo-400 font-bold">{item.plan_name || 'Plan'}</span> • {item.duration_in_months ? `${item.duration_in_months} Months` : 'N/A'}</p>}
-                    {inqTab === 'product_orders' && <p className="text-[10px] text-slate-400 truncate mt-0.5"><span className="text-emerald-400 font-bold">{item.product_name || 'Product'}</span> • Qty: {item.quantity || 1}</p>}
-                    {inqTab === 'contact_inquiries' && <p className="text-[10px] text-slate-400 truncate mt-0.5"><span className="text-amber-400 font-bold">{item.subject || 'Inquiry'}</span> • {item.phone || item.email}</p>}
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-black text-white truncate">{item.user_name ?? "—"}</p>
+                      <span className={`h-1.5 w-1.5 rounded-full ${item.status ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
+                    </div>
+                    <p className="text-[10px] text-slate-400 truncate mt-0.5 font-medium leading-relaxed">
+                      {item.description ?? t("noRecords")}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Clock size={10} className="text-slate-500" />
+                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">
+                        {fmtDate(item.inquiry_date)}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <button onClick={() => navigate('/admin/inquiries')} className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10 hover:text-white transition-all text-slate-500">
-                    <ChevronRight size={14} />
+                  <button onClick={() => navigate('/admin/inquiries')} className="h-9 w-9 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white/10 hover:text-white transition-all text-slate-500 border border-white/5">
+                    <ChevronRight size={16} />
                   </button>
                 </div>
               </motion.div>
@@ -458,9 +459,9 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Recent Payments */}
         <GlassCard>
-          <SectionHeader title="Recent Payments" sub="This month" onRedirect={() => navigate('/admin/payments')} />
+          <SectionHeader title={t("recentPayments")} sub={t("thisMonth")} onRedirect={() => navigate('/admin/payments')} />
           {loading.payments ? <SkeletonRows /> : payments.length === 0 ? (
-            <p className="text-slate-500 text-xs text-center py-8">No payments</p>
+            <p className="text-slate-500 text-xs text-center py-8">{t("noPayments")}</p>
           ) : (
             <div className="space-y-2">
               {payments.slice(0, 5).map((p: any, i: number) => (
@@ -482,9 +483,9 @@ export default function AdminDashboard() {
 
         {/* Recent Subscription History */}
         <GlassCard>
-          <SectionHeader title="Subscription History" sub="This month" onRedirect={() => navigate('/admin/subscriptions')} />
+          <SectionHeader title={t("subscriptionHistory")} sub={t("thisMonth")} onRedirect={() => navigate('/admin/subscriptions')} />
           {loading.subscriptions ? <SkeletonRows /> : subscriptions.length === 0 ? (
-            <p className="text-slate-500 text-xs text-center py-8">No records</p>
+            <p className="text-slate-500 text-xs text-center py-8">{t("noRecords")}</p>
           ) : (
             <div className="space-y-2">
               {subscriptions.slice(0, 5).map((s: any, i: number) => (
@@ -506,9 +507,9 @@ export default function AdminDashboard() {
 
         {/* Recent Product Purchases */}
         <GlassCard>
-          <SectionHeader title="Product Purchases" sub="This month" onRedirect={() => navigate('/admin/products')} />
+          <SectionHeader title={t("productPurchases")} sub={t("thisMonth")} onRedirect={() => navigate('/admin/products')} />
           {loading.products ? <SkeletonRows /> : products.length === 0 ? (
-            <p className="text-slate-500 text-xs text-center py-8">No records</p>
+            <p className="text-slate-500 text-xs text-center py-8">{t("noRecords")}</p>
           ) : (
             <div className="space-y-2">
               {products.slice(0, 5).map((p: any, i: number) => (
@@ -532,16 +533,16 @@ export default function AdminDashboard() {
       {/* ── [ROW 4] Attendance Count ── */}
       <GlassCard>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-          <SectionHeader title="Attendance Overview" sub="Activity for selected period" onRedirect={() => navigate('/admin/attendance')} />
+          <SectionHeader title={t("attendanceOverview")} sub={t("activityPeriod")} onRedirect={() => navigate('/admin/attendance')} />
         </div>
         {loading.attendance ? (
           <div className="grid grid-cols-3 gap-4"><div className="h-20 rounded-xl bg-white/5 animate-pulse" /><div className="h-20 rounded-xl bg-white/5 animate-pulse" /><div className="h-20 rounded-xl bg-white/5 animate-pulse" /></div>
         ) : (
           <div className="grid grid-cols-3 gap-4">
             {[
-              { label: "Total Check-ins", value: attendance?.total_count ?? 0, icon: Users, color: "text-indigo-400", bg: "bg-indigo-500/10" },
-              { label: "Present Now", value: attendance?.present_now ?? 0, icon: Activity, color: "text-emerald-400", bg: "bg-emerald-500/10" },
-              { label: "Checked Out", value: attendance?.checked_out ?? 0, icon: TrendingUp, color: "text-amber-400", bg: "bg-amber-500/10" },
+              { label: t("totalCheckins"), value: attendance?.total_count ?? 0, icon: Users, color: "text-indigo-400", bg: "bg-indigo-500/10" },
+              { label: t("presentNow"), value: attendance?.present_now ?? 0, icon: Activity, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+              { label: t("checkedOut"), value: attendance?.checked_out ?? 0, icon: TrendingUp, color: "text-amber-400", bg: "bg-amber-500/10" },
             ].map(({ label, value, icon: Icon, color, bg }) => (
               <div key={label} className={`rounded-2xl ${bg} border border-white/5 p-5 flex flex-col items-center gap-2 text-center`}>
                 <Icon size={22} className={color} />
@@ -556,11 +557,11 @@ export default function AdminDashboard() {
       {/* ── [ROW 5] Monthly Revenue Bar Chart ── */}
       <GlassCard>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-          <SectionHeader title="Monthly Revenue" sub="Subscription · Product · Renewal breakdown" onRedirect={() => navigate('/admin/revenueops')} />
+          <SectionHeader title={t("monthlyRevenue")} sub={t("revenueBreakdown")} onRedirect={() => navigate('/admin/revenueops')} />
           <div className="flex items-center gap-2">
             {[3, 6, 12].map((m) => (
-              <button key={m} onClick={() => setRevenueMonths(m)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${revenueMonths === m ? "bg-indigo-500 text-white" : "bg-white/5 text-slate-400 hover:text-white border border-white/10"}`}>
+              <button key={m} onClick={() => handleRevenueMonthsChange(m)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${derivedRevenueMonths === m ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" : "bg-white/5 text-slate-400 hover:text-white border border-white/10"}`}>
                 {m}M
               </button>
             ))}
@@ -570,7 +571,7 @@ export default function AdminDashboard() {
           <div className="h-64 rounded-xl bg-white/5 animate-pulse" />
         ) : monthlyRevenue.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-16 text-slate-500">
-            <TrendingUp size={40} className="opacity-20" /><p className="text-sm font-bold">No revenue data</p>
+            <TrendingUp size={40} className="opacity-20" /><p className="text-sm font-bold">{t("noRevenueData")}</p>
           </div>
         ) : (
           <div className="h-64">
@@ -581,9 +582,9 @@ export default function AdminDashboard() {
                 <YAxis stroke="#475569" tick={{ fontSize: 10 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
                 <Tooltip content={<RevTooltip currency={currency} />} />
                 <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700, paddingTop: 12 }} />
-                <Bar dataKey="subscription_revenue" name="Subscriptions" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="product_revenue" name="Products" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="renewal_revenue" name="Renewals" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="subscription_revenue" name={t("subscriptions")} fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="product_revenue" name={t("products")} fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="renewal_revenue" name={t("renewals")} fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

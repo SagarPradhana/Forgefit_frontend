@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { createPortal } from "react-dom";
 import { X, CheckCircle, User, Mail, Phone, Calendar, Shield, Key } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface UserCreationSuccessModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export const UserCreationSuccessModal = ({
   onClose, 
   userData 
 }: UserCreationSuccessModalProps) => {
+  const { t } = useTranslation();
   if (!isOpen || !userData) return null;
 
   const formatDate = (timestamp: number) => {
@@ -57,9 +59,9 @@ export const UserCreationSuccessModal = ({
                 <CheckCircle className="text-emerald-400" size={20} />
               </div>
               <div>
-                <h2 className="text-lg font-black text-white uppercase tracking-tight">User Created</h2>
+                <h2 className="text-lg font-black text-white uppercase tracking-tight">{t("userCreated")}</h2>
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">
-                  Successfully registered
+                  {t("successfullyRegistered")}
                 </p>
               </div>
             </div>
@@ -75,14 +77,14 @@ export const UserCreationSuccessModal = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                  <User size={12} /> Username
+                  <User size={12} /> {t("username")}
                 </div>
                 <p className="text-sm text-white font-bold">{userData.username || "—"}</p>
               </div>
               
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                  <Shield size={12} /> Role
+                  <Shield size={12} /> {t("role")}
                 </div>
                 <p className="text-sm text-white font-bold capitalize">{userData.role}</p>
               </div>
@@ -90,7 +92,7 @@ export const UserCreationSuccessModal = ({
 
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                <User size={12} /> Name
+                <User size={12} /> {t("name")}
               </div>
               <p className="text-sm text-white font-bold">{userData.name}</p>
             </div>
@@ -98,14 +100,14 @@ export const UserCreationSuccessModal = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                  <Mail size={12} /> Email
+                  <Mail size={12} /> {t("email")}
                 </div>
                 <p className="text-sm text-white font-bold">{userData.email || "—"}</p>
               </div>
               
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                  <Phone size={12} /> Mobile
+                  <Phone size={12} /> {t("mobile")}
                 </div>
                 <p className="text-sm text-white font-bold">{userData.mobile}</p>
               </div>
@@ -114,14 +116,14 @@ export const UserCreationSuccessModal = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                  <Calendar size={12} /> Joining Date
+                  <Calendar size={12} /> {t("joiningDate")}
                 </div>
                 <p className="text-sm text-white font-bold">{formatDate(userData.joining_date)}</p>
               </div>
               
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                  <Key size={12} /> Password
+                  <Key size={12} /> {t("password")}
                 </div>
                 <p className="text-sm text-emerald-400 font-bold">{userData.password}</p>
               </div>
@@ -133,7 +135,7 @@ export const UserCreationSuccessModal = ({
               onClick={onClose}
               className="w-full px-6 py-4 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-widest text-[10px] border border-indigo-400 transition-all shadow-xl shadow-indigo-500/20"
             >
-              Close
+              {t("close")}
             </button>
           </div>
         </div>

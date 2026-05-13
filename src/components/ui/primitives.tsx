@@ -1,22 +1,28 @@
 import { motion } from "framer-motion";
 import clsx from "clsx";
 import { useEffect, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronDown, Search, X } from "lucide-react";
 import { createPortal } from "react-dom";
 
 export function GlassCard({
   className,
   children,
+  style,
   ...props
 }: import("framer-motion").HTMLMotionProps<"div">) {
   return (
     <motion.div
       className={clsx(
         "rounded-xl md:rounded-2xl border p-3 md:p-5 shadow-2xl backdrop-blur-xl transition-all duration-300 transform",
-        "dark:border-white/15 dark:bg-white/10 dark:shadow-slate-900/50",
-        "[.light_&]:border-slate-200 [.light_&]:bg-white/95 [.light_&]:shadow-slate-300/30",
         className,
       )}
+      style={{
+        background: "var(--theme-card-bg, rgba(255,255,255,0.07))",
+        borderColor: "var(--theme-border, rgba(255,255,255,0.12))",
+        boxShadow: "0 0 50px -12px var(--theme-shadow, rgba(99,102,241,0.15))",
+        ...style,
+      }}
       {...props}
     >
       {children}
@@ -90,6 +96,7 @@ export function StatusBadge({
 }: {
   status: "Active" | "Expired" | "Pending" | "Paid" | "Resolved";
 }) {
+  const { t } = useTranslation();
   const styles = {
     Active: "bg-emerald-500/25 text-emerald-200 border-emerald-400/30",
     Expired: "bg-red-500/25 text-red-200 border-red-400/30",
@@ -101,7 +108,7 @@ export function StatusBadge({
     <span
       className={clsx("rounded-full border px-3 py-1 text-xs", styles[status])}
     >
-      {status}
+      {t(status.toLowerCase())}
     </span>
   );
 }
@@ -236,9 +243,15 @@ export function Table({
   rows: (string | ReactNode)[][];
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border dark:border-white/10 [.light_&]:border-slate-200 custom-scrollbar">
+    <div
+      className="overflow-x-auto rounded-xl border custom-scrollbar"
+      style={{ borderColor: "var(--theme-border, rgba(255,255,255,0.10))" }}
+    >
       <table className="min-w-full text-xs md:text-sm border-separate border-spacing-0">
-        <thead className="dark:bg-white/10 [.light_&]:bg-slate-100 dark:text-slate-200 [.light_&]:text-slate-700 text-left">
+        <thead
+          className="text-slate-200 text-left"
+          style={{ background: "var(--theme-card-bg, rgba(255,255,255,0.08))" }}
+        >
           <tr>
             {headers.map((header) => (
               <th key={header} className="px-3 md:px-4 py-2 md:py-3 whitespace-nowrap">
@@ -249,7 +262,11 @@ export function Table({
         </thead>
         <tbody>
           {rows.map((row, idx) => (
-            <tr key={idx} className="border-t dark:border-white/10 [.light_&]:border-slate-200 dark:text-slate-100 [.light_&]:text-slate-600 hover:bg-white/[0.03] transition-colors">
+            <tr
+              key={idx}
+              className="text-slate-100 hover:bg-white/[0.03] transition-colors"
+              style={{ borderTopColor: "var(--theme-border, rgba(255,255,255,0.08))" }}
+            >
               {row.map((cell, cellIdx) => (
                 <td key={cellIdx} className="px-3 md:px-4 py-2 md:py-3 align-middle">
                   {cell}
@@ -265,26 +282,44 @@ export function Table({
 
 export function Skeleton({ className }: { className?: string }) {
   return (
-    <div className={clsx("animate-pulse rounded-lg bg-white/10", className)} />
+    <div className={clsx("relative overflow-hidden rounded-xl bg-white/[0.08] animate-pulse", className)}>
+       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent -translate-x-full animate-shimmer" />
+    </div>
+  );
+}
+
+export function SkeletonRows({ n = 5, className }: { n?: number; className?: string }) {
+  return (
+    <div className={clsx("space-y-3", className)}>
+      {[...Array(n)].map((_, i) => (
+        <Skeleton key={i} className="h-14 w-full" />
+      ))}
+    </div>
   );
 }
 
 export function CommonCard({
   children,
   className,
+  style,
 }: {
   children: ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }) {
   return (
     <motion.div
       whileHover={{ y: -4 }}
       className={clsx(
         "rounded-2xl border p-5 shadow-xl backdrop-blur-xl transition-all duration-300",
-        "dark:border-white/15 dark:bg-gradient-to-b dark:from-white/10 dark:to-white/5",
-        "[.light_&]:border-slate-200 [.light_&]:bg-white [.light_&]:shadow-slate-200/50",
         className,
       )}
+      style={{
+        background: "var(--theme-card-bg, rgba(255,255,255,0.07))",
+        borderColor: "var(--theme-border, rgba(255,255,255,0.12))",
+        boxShadow: "0 0 40px -10px var(--theme-shadow, rgba(99,102,241,0.12))",
+        ...style,
+      }}
     >
       {children}
     </motion.div>
@@ -305,11 +340,13 @@ export function SearchField({
   return (
     <div
       className={clsx(
-        "group flex items-center gap-2 rounded-xl border transition-all duration-300 focus-within:border-indigo-300/50 focus-within:shadow-[0_0_20px_rgba(99,102,241,0.25)]",
-        "dark:border-white/15 dark:bg-white/5 dark:backdrop-blur",
-        "[.light_&]:border-slate-200 [.light_&]:bg-slate-50 [.light_&]:shadow-inner",
+        "group flex items-center gap-2 rounded-xl border backdrop-blur transition-all duration-300",
         className,
       )}
+      style={{
+        background: "var(--theme-card-bg, rgba(255,255,255,0.05))",
+        borderColor: "var(--theme-border, rgba(255,255,255,0.12))",
+      }}
     >
       <Search
         size={16}
@@ -318,7 +355,7 @@ export function SearchField({
       <input
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
-        className="w-full bg-transparent text-sm outline-none dark:text-white [.light_&]:text-slate-900 placeholder:text-slate-500"
+        className="w-full bg-transparent text-sm outline-none text-white placeholder:text-slate-500"
         placeholder={placeholder}
       />
     </div>
@@ -341,10 +378,14 @@ export function CommonDropdown({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full appearance-none rounded-xl border px-3 py-2 pr-9 text-sm outline-none transition-all duration-300 focus:border-indigo-300/50 focus:shadow-[0_0_20px_rgba(99,102,241,0.2)] dark:border-white/15 dark:bg-white/5 dark:text-slate-100 [.light_&]:border-slate-200 [.light_&]:bg-slate-50 [.light_&]:text-slate-900"
+        className="w-full appearance-none rounded-xl border px-3 py-2 pr-9 text-sm text-slate-100 outline-none transition-all duration-300"
+        style={{
+          background: "var(--theme-card-bg, rgba(255,255,255,0.05))",
+          borderColor: "var(--theme-border, rgba(255,255,255,0.12))",
+        }}
       >
         {options.map((option) => (
-          <option key={option} value={option} className="dark:bg-slate-900 [.light_&]:bg-white">
+          <option key={option} value={option} className="bg-slate-900 text-white">
             {option}
           </option>
         ))}
@@ -365,6 +406,7 @@ export function InputField({
   type = "text",
   isPhone = false,
   isNumeric = false,
+  style,
 }: {
   placeholder?: string;
   value?: string;
@@ -373,6 +415,7 @@ export function InputField({
   type?: string;
   isPhone?: boolean;
   isNumeric?: boolean;
+  style?: React.CSSProperties;
 }) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!isPhone && !isNumeric) return;
@@ -420,11 +463,14 @@ export function InputField({
       onPaste={handlePaste}
       placeholder={placeholder}
       className={clsx(
-        "w-full rounded-xl border px-3 py-2 text-sm outline-none transition-all duration-300 placeholder:text-slate-500 focus:border-indigo-300/50 focus:shadow-[0_0_20px_rgba(99,102,241,0.2)]",
-        "dark:border-white/15 dark:bg-white/5 dark:text-slate-100",
-        "[.light_&]:border-slate-200 [.light_&]:bg-slate-50 [.light_&]:text-slate-900",
+        "w-full rounded-xl border px-3 py-2 text-sm text-slate-100 outline-none transition-all duration-300 placeholder:text-slate-500 focus:shadow-[0_0_20px_rgba(99,102,241,0.2)]",
         className,
       )}
+      style={{
+        background: "var(--theme-card-bg, rgba(255,255,255,0.05))",
+        borderColor: "var(--theme-border, rgba(255,255,255,0.12))",
+        ...style,
+      }}
     />
   );
 }
@@ -451,9 +497,15 @@ export function AnimatedCounter({ value }: { value: number }) {
 
 export function EmptyState({ title, hint }: { title: string; hint: string }) {
   return (
-    <div className="rounded-xl border border-dashed p-6 text-center dark:border-white/20 dark:bg-white/5 [.light_&]:border-slate-300 [.light_&]:bg-slate-50">
-      <p className="text-lg dark:text-white [.light_&]:text-slate-900">{title}</p>
-      <p className="text-sm dark:text-slate-300 [.light_&]:text-slate-600">{hint}</p>
+    <div
+      className="rounded-xl border border-dashed p-6 text-center"
+      style={{
+        background: "var(--theme-card-bg, rgba(255,255,255,0.05))",
+        borderColor: "var(--theme-border, rgba(255,255,255,0.18))",
+      }}
+    >
+      <p className="text-lg text-white">{title}</p>
+      <p className="text-sm text-slate-300">{hint}</p>
     </div>
   );
 }

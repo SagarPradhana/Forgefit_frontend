@@ -1,12 +1,11 @@
 import { lazy, Suspense, useEffect, useState, useRef } from "react";
-import { Navigate, Route, Routes, useParams, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
 import { useGymStore } from "./store/gymStore";
 import DashboardLayout from "./pages/DashboardLayout";
 import { NotFound404, LoadingSpinner } from "./components/ui/primitives";
 import { ToastContainer } from "./components/ui/ToastContainer";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dumbbell } from "lucide-react";
 
 const HomePage = lazy(() =>
   import("./pages/public/HomePage").then((m) => ({ default: m.HomePage })),
@@ -47,6 +46,21 @@ const AdminPortalPages = lazy(() =>
     default: m.AdminPortalPages,
   })),
 );
+
+// Admin Pages
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const UserManagement = lazy(() => import("./components/admin/UserManagement").then(m => ({ default: m.UserManagement })));
+const AttendanceManagement = lazy(() => import("./components/admin/AttendanceManagement").then(m => ({ default: m.AttendanceManagement })));
+const RevenueOps = lazy(() => import("./components/admin/RevenueOps").then(m => ({ default: m.RevenueOps })));
+const PlansManagement = lazy(() => import("./components/admin/PlansManagement").then(m => ({ default: m.PlansManagement })));
+const AdminSubscriptions = lazy(() => import("./pages/admin/AdminSubscriptions").then(m => ({ default: m.AdminSubscriptions })));
+const AdminProducts = lazy(() => import("./pages/admin/AdminProducts").then(m => ({ default: m.AdminProducts })));
+const AdminPayments = lazy(() => import("./pages/admin/AdminPayments").then(m => ({ default: m.AdminPayments })));
+const AdminProfile = lazy(() => import("./pages/admin/AdminProfile").then(m => ({ default: m.AdminProfile })));
+const AdminSettings = lazy(() => import("./components/admin/settings/AdminSettings").then(m => ({ default: m.AdminSettings })));
+const InquiryCenter = lazy(() => import("./components/admin/InquiryCenter").then(m => ({ default: m.InquiryCenter })));
+const ChangePassword = lazy(() => import("./components/admin/ChangePassword").then(m => ({ default: m.ChangePassword })));
+
 const UserPortalPages = lazy(() =>
   import("./pages/user/UserPortalPages").then((m) => ({
     default: m.UserPortalPages,
@@ -58,6 +72,22 @@ const TrainerPortalPages = lazy(() =>
     default: m.TrainerPortalPages,
   })),
 );
+
+// Trainer Pages
+const TrainerDashboard = lazy(() => import("./pages/trainer/TrainerDashboard").then(m => ({ default: m.TrainerDashboard })));
+const TrainerAttendance = lazy(() => import("./components/trainer/TrainerAttendance").then(m => ({ default: m.TrainerAttendance })));
+const TrainerProfile = lazy(() => import("./pages/trainer/TrainerProfile").then(m => ({ default: m.TrainerProfile })));
+const TrainerWorkouts = lazy(() => import("./pages/trainer/TrainerWorkouts").then(m => ({ default: m.TrainerWorkouts })));
+const TrainerDiets = lazy(() => import("./pages/trainer/TrainerDiets").then(m => ({ default: m.TrainerDiets })));
+
+// User Pages
+const UserDashboard = lazy(() => import("./pages/UserDashboard"));
+const UserProfile = lazy(() => import("./pages/user/UserProfile").then(m => ({ default: m.UserProfile })));
+const UserSubscription = lazy(() => import("./pages/user/UserSubscription").then(m => ({ default: m.UserSubscription })));
+const UserAttendance = lazy(() => import("./pages/user/UserAttendance").then(m => ({ default: m.UserAttendance })));
+const UserPayments = lazy(() => import("./pages/user/UserPayments").then(m => ({ default: m.UserPayments })));
+const UserProducts = lazy(() => import("./pages/user/UserProducts").then(m => ({ default: m.UserProducts })));
+const SettingsPanel = lazy(() => import("./pages/SettingPanel").then(m => ({ default: m.SettingsPanel })));
 
 /** Returns true if the stored JWT token exists and has not expired. */
 function isTokenValid(token: string | null): boolean {
@@ -100,22 +130,6 @@ function ProtectedRole({
   return <>{children}</>;
 }
 
-function RoleRoute({ role }: { role: "admin" | "user" | "trainer" }) {
-  const { page = "dashboard" } = useParams();
-  return (
-    <ProtectedRole expectedRole={role}>
-      <DashboardLayout>
-        {role === "admin" ? (
-          <AdminPortalPages page={page} />
-        ) : role === "trainer" ? (
-          <TrainerPortalPages page={page} />
-        ) : (
-          <UserPortalPages page={page} />
-        )}
-      </DashboardLayout>
-    </ProtectedRole>
-  );
-}
 
 const LoadingScreen = () => (
   <motion.div
@@ -146,8 +160,6 @@ export default function App() {
   const { updateAppConfig, fetchPublicData, publicAppConfig } = useGymStore();
   const location = useLocation();
   const fetchedStatus = useRef({ config: false, full: false });
-
-  const brandName = publicAppConfig?.brand_name || "ForgeFit";
 
   useEffect(() => {
     const isPublicAuthRoute = ["/signin", "/forgot-password"].includes(location.pathname) || location.pathname.startsWith("/auth");
@@ -222,9 +234,45 @@ export default function App() {
           <Route path="/signin" element={<AuthRedirect><SignInPage /></AuthRedirect>} />
           <Route path="/forgot-password" element={<AuthRedirect><ForgotPasswordPage /></AuthRedirect>} />
           <Route path="/auth" element={<Navigate to="/signin" replace />} />
-          <Route path="/admin/:page" element={<RoleRoute role="admin" />} />
-          <Route path="/trainer/:page" element={<RoleRoute role="trainer" />} />
-          <Route path="/user/:page" element={<RoleRoute role="user" />} />
+          <Route path="/admin" element={<ProtectedRole expectedRole="admin"><DashboardLayout><AdminPortalPages /></DashboardLayout></ProtectedRole>}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="users" element={<UserManagement />} />
+            <Route path="attendance" element={<AttendanceManagement />} />
+            <Route path="revenueops" element={<RevenueOps />} />
+            <Route path="plans" element={<PlansManagement />} />
+            <Route path="subscriptions" element={<AdminSubscriptions />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="payments" element={<AdminPayments />} />
+            <Route path="profile" element={<AdminProfile />} />
+            <Route path="settings" element={<AdminSettings />} />
+            <Route path="inquiries" element={<InquiryCenter />} />
+            <Route path="notifications" element={<InquiryCenter />} />
+            <Route path="change-password" element={<ChangePassword />} />
+          </Route>
+
+          <Route path="/trainer" element={<ProtectedRole expectedRole="trainer"><DashboardLayout><TrainerPortalPages /></DashboardLayout></ProtectedRole>}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<TrainerDashboard />} />
+            <Route path="users" element={<UserManagement portalType="trainer" />} />
+            <Route path="attendance" element={<TrainerAttendance />} />
+            <Route path="profile" element={<TrainerProfile />} />
+            <Route path="workouts" element={<TrainerWorkouts />} />
+            <Route path="diets" element={<TrainerDiets />} />
+            <Route path="change-password" element={<ChangePassword />} />
+          </Route>
+
+          <Route path="/user" element={<ProtectedRole expectedRole="user"><DashboardLayout><UserPortalPages /></DashboardLayout></ProtectedRole>}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<UserDashboard />} />
+            <Route path="profile" element={<UserProfile />} />
+            <Route path="subscription" element={<UserSubscription />} />
+            <Route path="attendance" element={<UserAttendance />} />
+            <Route path="payments" element={<UserPayments />} />
+            <Route path="products" element={<UserProducts />} />
+            <Route path="settings" element={<SettingsPanel />} />
+            <Route path="change-password" element={<ChangePassword />} />
+          </Route>
           <Route path="*" element={<NotFound404 />} />
         </Routes>
       </Suspense>

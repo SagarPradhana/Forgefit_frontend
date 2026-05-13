@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
-import { Edit2, Calendar, ToggleRight, ToggleLeft, Trash2, FileText, Mail, Phone, Users, Loader2, ChevronLeft, ChevronRight, CreditCard, Key, Contact, Clock, MessageCircle } from "lucide-react";
+import { Edit2, Calendar, ToggleRight, ToggleLeft, Trash2, FileText, Mail, Phone, Users, Loader2, ChevronLeft, ChevronRight, CreditCard, Key, Contact, Clock, MessageCircle, MoreVertical } from "lucide-react";
+import { SkeletonRows } from "../../ui/primitives";
 import type { ViewType } from "./types";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../../../store/authStore";
 
@@ -55,6 +57,8 @@ export const UserListView = ({
   const { t } = useTranslation();
   const { id: currentUserId } = useAuthStore();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -62,10 +66,45 @@ export const UserListView = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Close popover on outside click or scroll
+  useEffect(() => {
+    if (!openMenuId) return;
+    const close = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(`[data-menu-id="${openMenuId}"]`) && !target.closest('[data-popover="user-menu"]')) {
+        setOpenMenuId(null);
+        setMenuPos(null);
+      }
+    };
+    const closeOnScroll = () => { setOpenMenuId(null); setMenuPos(null); };
+    document.addEventListener("mousedown", close);
+    window.addEventListener("scroll", closeOnScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      window.removeEventListener("scroll", closeOnScroll, true);
+    };
+  }, [openMenuId]);
+
+  const handleMenuToggle = (e: React.MouseEvent<HTMLButtonElement>, userId: string) => {
+    if (openMenuId === userId) {
+      setOpenMenuId(null);
+      setMenuPos(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    // Position below the button, aligned to its right edge
+    setMenuPos({
+      top: rect.bottom + 8,
+      left: Math.min(rect.right - 224, window.innerWidth - 236),
+    });
+    setOpenMenuId(userId);
+  };
+
   const isCurrentUser = (userId: string) => userId === currentUserId;
   if (viewType === "grid") {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-8">
+      <>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-8 overflow-visible">
         {users.length > 0 ? (
           users.map((user: any, index) => (
             <motion.div
@@ -74,10 +113,10 @@ export const UserListView = ({
               animate={{ opacity: 1, y: 0 }}
               whileHover={{ y: -5 }}
               transition={{ delay: index * 0.05 }}
-              className="group relative"
+              className="group relative overflow-visible"
               ref={index === users.length - 1 ? lastUserElementRef : null}
             >
-              <div className="relative h-full flex flex-col overflow-hidden rounded-[1.5rem] md:rounded-[2.5rem] border border-white/10 bg-slate-900/60 backdrop-blur-3xl p-4 md:p-6 transition-all duration-300 hover:border-indigo-500/50 hover:bg-slate-900/80">
+              <div className="relative h-full flex flex-col rounded-[1.5rem] md:rounded-[2.5rem] border border-white/10 bg-slate-900/60 backdrop-blur-3xl p-4 md:p-6 transition-all duration-300 hover:border-indigo-500/50 hover:bg-slate-900/80">
                 {/* Visual Identity */}
                 <div className="flex items-center gap-4 mb-6">
                   <div className="relative h-14 w-14 rounded-2xl bg-slate-800 border-2 border-white/10 overflow-hidden flex items-center justify-center">
@@ -111,99 +150,62 @@ export const UserListView = ({
                   </div>
                 </div>
 
-                {/* Unified Premium Action Zone */}
-                <div className="mt-auto pt-4 md:pt-5 border-t border-white/5 grid grid-cols-4 gap-1.5 md:gap-2">
-                  {portalType !== "trainer" && (
-                    <>
+                {/* ── Action Bar: Edit · Delete · ⋯ ── */}
+                <div className="mt-auto pt-3 border-t border-white/5">
+                  {portalType !== "trainer" ? (
+                    <div className="flex items-center gap-2">
+
+                      {/* Edit */}
                       <button
                         disabled={isCurrentUser(user.id)}
                         onClick={() => onEdit(user)}
-                        className={`flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 transition-all group ${isCurrentUser(user.id) ? "opacity-40 cursor-not-allowed" : "hover:bg-indigo-500/20 text-indigo-400 hover:border-indigo-500/30"}`}
-                        title={isCurrentUser(user.id) ? "Cannot edit your own profile" : "Edit Member Information"}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border text-xs font-black uppercase tracking-wider transition-all ${
+                          isCurrentUser(user.id)
+                            ? "opacity-30 cursor-not-allowed bg-white/3 border-white/5 text-slate-500"
+                            : "bg-indigo-500/10 border-indigo-500/20 text-indigo-400 hover:bg-indigo-500 hover:text-white hover:border-indigo-500"}`}
+                        title="Edit Profile"
                       >
-                        <Edit2 size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
-                        <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Edit</span>
+                        <Edit2 size={13} />
+                        <span>{t("edit")}</span>
                       </button>
-                      <button
-                        onClick={() => onOpenSubscription(user)}
-                        className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-purple-500/20 text-purple-400 border border-white/5 hover:border-purple-500/30 transition-all group"
-                        title="Manage Membership Plans"
-                      >
-                        <CreditCard size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
-                        <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Plans</span>
-                      </button>
-                      <button
-                        onClick={() => onOpenAttendance(user)}
-                        className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-white/5 hover:border-emerald-500/30 transition-all group"
-                        title="Attendance Log"
-                      >
-                        <Calendar size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
-                        <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Log</span>
-                      </button>
-                      <button
-                        onClick={() => onOpenDocs(user)}
-                        className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-amber-500/20 text-amber-400 border border-white/5 hover:border-amber-500/30 transition-all group"
-                        title="Document Vault"
-                      >
-                        <FileText size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
-                        <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Docs</span>
-                      </button>
-                      <button
-                        disabled={statusUpdating && loadingStatusId === user.id}
-                        onClick={() => onToggleStatus(user.id, user.is_active !== false)}
-                        className={`flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 transition-all group ${user.is_active !== false ? 'text-amber-500 hover:bg-amber-500/10' : 'text-slate-500'}`}
-                        title={user.is_active !== false ? "Suspend User" : "Reactivate User"}
-                      >
-                        {statusUpdating && loadingStatusId === user.id ? (
-                          <Loader2 size={isMobile ? 14 : 16} className="animate-spin" />
-                        ) : (
-                          <>
-                            {user.is_active !== false ? <ToggleRight size={isMobile ? 14 : 16} /> : <ToggleLeft size={isMobile ? 14 : 16} />}
-                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Status</span>
-                          </>
-                        )}
-                      </button>
-                      <button
-                        onClick={() => onSendWhatsAppReminder(user)}
-                        className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-green-500/20 text-green-400 border border-white/5 hover:border-green-500/30 transition-all group"
-                        title="Send WhatsApp Reminder"
-                      >
-                        <MessageCircle size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
-                        <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Reminder</span>
-                      </button>
-                      <button
-                        onClick={() => onResetPassword(user)}
-                        className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-slate-600/20 text-slate-400 border border-white/5 hover:border-slate-500/30 transition-all group"
-                        title="Security Override"
-                      >
-                        <Key size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
-                        <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Reset</span>
-                      </button>
+
+                      {/* Delete */}
                       <button
                         disabled={deletingRecord && loadingDeleteId === user.id}
                         onClick={() => onDelete(user.id)}
-                        className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 hover:bg-red-500/20 text-red-500 border border-white/5 hover:border-red-500/30 transition-all group"
-                        title="Permanently Remove"
+                        className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 text-xs font-black uppercase tracking-wider transition-all"
+                        title="Delete User"
                       >
-                        {deletingRecord && loadingDeleteId === user.id ? (
-                          <Loader2 size={isMobile ? 14 : 16} className="animate-spin" />
-                        ) : (
-                          <>
-                            <Trash2 size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
-                            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">Drop</span>
-                          </>
-                        )}
+                        {deletingRecord && loadingDeleteId === user.id
+                          ? <Loader2 size={13} className="animate-spin" />
+                          : <Trash2 size={13} />}
+                        <span>{t("delete")}</span>
                       </button>
-                    </>
+
+                      {/* ⋯ More actions */}
+                      <div className="relative" data-menu-id={user.id}>
+                        <button
+                          onClick={(e) => handleMenuToggle(e, user.id)}
+                          className={`h-9 w-9 flex items-center justify-center rounded-xl border transition-all ${
+                            openMenuId === user.id
+                              ? "bg-white/15 border-white/20 text-white"
+                              : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white"}`}
+                          title="More actions"
+                        >
+                          <MoreVertical size={15} />
+                        </button>
+                      </div>
+
+                    </div>
+                  ) : (
+                    /* Trainer view — just ID Card */
+                    <button
+                      onClick={() => onOpenIdCard(user)}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition-all text-xs font-black uppercase tracking-wider"
+                    >
+                      <Contact size={14} /><span>{t("viewIdCard")}</span>
+                    </button>
                   )}
-                  <button
-                    onClick={() => onOpenIdCard(user)}
-                    className={`flex flex-col items-center justify-center gap-1 p-2 md:p-3 rounded-xl md:rounded-2xl transition-all group ${portalType === "trainer" ? "col-span-4" : ""} bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-white/5 hover:border-emerald-500/30`}
-                    title="View Identity Card"
-                  >
-                    <Contact size={isMobile ? 14 : 16} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-tighter opacity-60">ID Card</span>
-                  </button>
                 </div>
               </div>
             </motion.div>
@@ -211,7 +213,7 @@ export const UserListView = ({
         ) : !usersLoading && (
           <div className="col-span-full py-20 text-center">
             <Users size={40} className="mx-auto text-slate-700 mb-4" />
-            <p className="text-slate-500 font-bold uppercase tracking-widest">No users listed in this vision</p>
+            <p className="text-slate-500 font-bold uppercase tracking-widest">{t("noRecords")}</p>
           </div>
         )}
         {usersLoading && (
@@ -220,6 +222,80 @@ export const UserListView = ({
           </div>
         )}
       </div>
+
+      {/* ── Fixed-position popover rendered at body level via portal ── */}
+      {openMenuId && menuPos && (() => {
+        const user = users.find(u => u.id === openMenuId);
+        if (!user) return null;
+        return createPortal(
+          <motion.div
+            data-popover="user-menu"
+            initial={{ opacity: 0, scale: 0.93, y: -6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            style={{ position: "fixed", top: menuPos.top, left: menuPos.left, zIndex: 9999 }}
+            className="w-56 rounded-2xl border border-white/10 bg-slate-900 shadow-2xl shadow-black/70 overflow-hidden"
+          >
+            {/* Header */}
+            <div className="px-3 py-2.5 border-b border-white/5 bg-white/[0.03]">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">{t("moreActions")}</p>
+              <p className="text-[11px] font-black text-white truncate">{user.name}</p>
+            </div>
+            {/* Actions */}
+            <div className="p-1.5 space-y-0.5">
+              <button onClick={() => { onOpenIdCard(user); setOpenMenuId(null); setMenuPos(null); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-emerald-500/15 text-emerald-400 transition-all group/item">
+                <div className="h-7 w-7 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0 group-hover/item:bg-emerald-500/20"><Contact size={13} /></div>
+                <span className="text-[11px] font-black uppercase tracking-wider">{t("idCard")}</span>
+              </button>
+              <button onClick={() => { onOpenSubscription(user); setOpenMenuId(null); setMenuPos(null); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-purple-500/15 text-purple-400 transition-all group/item">
+                <div className="h-7 w-7 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0 group-hover/item:bg-purple-500/20"><CreditCard size={13} /></div>
+                <span className="text-[11px] font-black uppercase tracking-wider">{t("plans")}</span>
+              </button>
+              <button onClick={() => { onOpenAttendance(user); setOpenMenuId(null); setMenuPos(null); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-sky-500/15 text-sky-400 transition-all group/item">
+                <div className="h-7 w-7 rounded-lg bg-sky-500/10 flex items-center justify-center shrink-0 group-hover/item:bg-sky-500/20"><Calendar size={13} /></div>
+                <span className="text-[11px] font-black uppercase tracking-wider">{t("attendance")}</span>
+              </button>
+              <button onClick={() => { onOpenDocs(user); setOpenMenuId(null); setMenuPos(null); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-amber-500/15 text-amber-400 transition-all group/item">
+                <div className="h-7 w-7 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 group-hover/item:bg-amber-500/20"><FileText size={13} /></div>
+                <span className="text-[11px] font-black uppercase tracking-wider">{t("docs")}</span>
+              </button>
+              <button onClick={() => { onSendWhatsAppReminder(user); setOpenMenuId(null); setMenuPos(null); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-green-500/15 text-green-400 transition-all group/item">
+                <div className="h-7 w-7 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0 group-hover/item:bg-green-500/20"><MessageCircle size={13} /></div>
+                <span className="text-[11px] font-black uppercase tracking-wider">{t("whatsapp")}</span>
+              </button>
+              <button onClick={() => { onResetPassword(user); setOpenMenuId(null); setMenuPos(null); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-500/15 text-slate-400 transition-all group/item">
+                <div className="h-7 w-7 rounded-lg bg-slate-500/10 flex items-center justify-center shrink-0 group-hover/item:bg-slate-500/20"><Key size={13} /></div>
+                <span className="text-[11px] font-black uppercase tracking-wider">{t("resetPassword")}</span>
+              </button>
+              <div className="h-px bg-white/5 my-1" />
+              <button
+                disabled={statusUpdating && loadingStatusId === user.id}
+                onClick={() => { onToggleStatus(user.id, user.is_active !== false); setOpenMenuId(null); setMenuPos(null); }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group/item ${
+                  user.is_active !== false ? "hover:bg-amber-500/15 text-amber-400" : "hover:bg-emerald-500/15 text-emerald-400"}`}
+              >
+                <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${
+                  user.is_active !== false ? "bg-amber-500/10" : "bg-emerald-500/10"}`}>
+                  {statusUpdating && loadingStatusId === user.id
+                    ? <Loader2 size={13} className="animate-spin" />
+                    : user.is_active !== false ? <ToggleLeft size={13} /> : <ToggleRight size={13} />}
+                </div>
+                <span className="text-[11px] font-black uppercase tracking-wider">
+                  {user.is_active !== false ? t("suspendUser") : t("activateUser")}
+                </span>
+              </button>
+            </div>
+          </motion.div>,
+          document.body
+        );
+      })()}
+      </>
     );
   }
 
@@ -231,9 +307,9 @@ export const UserListView = ({
             <table className="w-full text-sm border-separate border-spacing-0">
               <thead>
                 <tr className="bg-white/10 border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
-                  <th className="text-left py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">Name</th>
-                  <th className="text-left py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">Mobile/Email</th>
-                  <th className="text-right py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">{t("operations") || "Operations"}</th>
+                  <th className="text-left py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">{t("name")}</th>
+                  <th className="text-left py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">{t("contactMatrix")}</th>
+                  <th className="text-right py-6 px-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-white/10">{t("operations")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10 bg-gradient-to-b from-transparent to-white/[0.02]">
@@ -257,9 +333,9 @@ export const UserListView = ({
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-black text-white text-base uppercase tracking-tight truncate leading-tight mb-0.5 group-hover:text-indigo-200 transition-colors" title={user.name}>{user.name}</p>
-                          <p className="text-[10px] font-black text-indigo-400 mb-1">@{user.username || user.member_id || 'user'}</p>
+                          <p className="text-[10px] font-black text-indigo-400 mb-1">@{user.username || user.member_id || t("user")}</p>
                           <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded-md bg-white/5 text-[9px] text-slate-500 font-bold uppercase tracking-widest border border-white/5 group-hover:text-slate-300 transition-colors">Role: {user.role}</span>
+                            <span className="px-2 py-0.5 rounded-md bg-white/5 text-[9px] text-slate-500 font-bold uppercase tracking-widest border border-white/5 group-hover:text-slate-300 transition-colors">{t("role")}: {user.role}</span>
                             {(user.purchase_id || user.metadata?.purchase_id) && (
                               <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">PID: {user.purchase_id || user.metadata.purchase_id}</span>
                             )}
@@ -279,7 +355,7 @@ export const UserListView = ({
                           <div className="h-6 w-6 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0">
                             <Phone size={12} className="text-orange-400" />
                           </div>
-                          <span className="text-xs font-bold tracking-tight">{user.mobile || user.phone || 'NO DATA'}</span>
+                          <span className="text-xs font-bold tracking-tight">{user.mobile || user.phone || t("noData")}</span>
                         </div>
                       </div>
                     </td>
@@ -291,35 +367,35 @@ export const UserListView = ({
                               disabled={isCurrentUser(user.id)}
                               onClick={() => onEdit(user)}
                               className={`h-10 w-10 flex items-center justify-center rounded-xl border transition-all shadow-xl group/btn ${isCurrentUser(user.id) ? "bg-white/5 text-slate-600 border-white/5 cursor-not-allowed" : "bg-white/[0.07] hover:bg-indigo-500 text-indigo-400 hover:text-white border-white/5 hover:shadow-indigo-500/40"}`}
-                              title={isCurrentUser(user.id) ? "Cannot edit your own profile" : "Edit Operational Data"}
+                              title={isCurrentUser(user.id) ? t("cannotEditSelf") : t("editProfile")}
                             >
                               <Edit2 size={16} />
                             </button>
                             <button
                               onClick={() => onOpenSubscription(user)}
                               className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-purple-500 text-purple-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-purple-500/40"
-                              title="Membership Protocol"
+                              title={t("membershipProtocol")}
                             >
                               <CreditCard size={16} />
                             </button>
                             <button
                               onClick={() => onOpenAttendance(user)}
                               className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-amber-500 text-amber-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-amber-500/40"
-                              title="Attendance History Log"
+                              title={t("attendanceHistory")}
                             >
                               <Clock size={16} />
                             </button>
                             <button
                               onClick={() => onOpenDocs(user)}
                               className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-amber-500 text-amber-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-amber-500/40"
-                              title="Identity Vault"
+                              title={t("identityVault")}
                             >
                               <FileText size={16} />
                             </button>
                             <button
                               onClick={() => onResetPassword(user)}
                               className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-slate-600 text-slate-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-slate-500/40"
-                              title="Reset Security Protocol"
+                              title={t("resetSecurity")}
                             >
                               <Key size={16} />
                             </button>
@@ -333,7 +409,7 @@ export const UserListView = ({
                             <button
                               onClick={() => onSendWhatsAppReminder(user)}
                               className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-green-500 text-green-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-green-500/40"
-                              title="Send WhatsApp Reminder"
+                              title={t("sendWhatsApp")}
                             >
                               <MessageCircle size={16} />
                             </button>
@@ -341,7 +417,7 @@ export const UserListView = ({
                               disabled={deletingRecord && loadingDeleteId === user.id}
                               onClick={() => onDelete(user.id)}
                               className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-red-500 text-red-500 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-red-500/40"
-                              title="Terminate Access"
+                              title={t("terminateAccess")}
                             >
                               {deletingRecord && loadingDeleteId === user.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                             </button>
@@ -350,7 +426,7 @@ export const UserListView = ({
                         <button
                           onClick={() => onOpenIdCard(user)}
                           className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-emerald-500 text-emerald-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-emerald-500/40"
-                          title="View Identity Card Protocol"
+                          title={t("viewIdCard")}
                         >
                           <Contact size={16} />
                         </button>
@@ -450,7 +526,7 @@ export const UserListView = ({
             <div className="flex items-center gap-4">
               <div className="px-4 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-3">
                 <div className="h-2 w-2 rounded-full bg-indigo-500 animate-ping" />
-                <p className="text-[10px] md:text-[11px] font-black text-indigo-400 uppercase tracking-[0.2em]">Live Registry • Page {page}</p>
+                <p className="text-[10px] md:text-[11px] font-black text-indigo-400 uppercase tracking-[0.2em]">{t("liveRegistry")} • {t("page")} {page}</p>
               </div>
             </div>
 
@@ -463,7 +539,7 @@ export const UserListView = ({
                 className="flex-1 sm:flex-none group flex items-center justify-center gap-2 md:gap-3 px-4 md:px-6 py-3 rounded-xl md:rounded-2xl bg-white/10 hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-[9px] md:text-[10px] border border-white/10 hover:border-indigo-400 transition-all shadow-2xl disabled:opacity-20 disabled:cursor-not-allowed"
               >
                 <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                Prev
+                {t("prev")}
               </motion.button>
 
               <div className="hidden sm:block h-10 w-[1px] bg-white/10 mx-2" />
@@ -475,25 +551,31 @@ export const UserListView = ({
                 onClick={() => onPageChange(page + 1)}
                 className="flex-1 sm:flex-none group flex items-center justify-center gap-2 md:gap-3 px-4 md:px-6 py-3 rounded-xl md:rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-widest text-[9px] md:text-[10px] border border-indigo-400 transition-all shadow-xl shadow-indigo-500/20 disabled:opacity-20 disabled:cursor-not-allowed"
               >
-                Next
+                {t("next")}
                 <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </motion.button>
             </div>
           </div>
         </div>
       ) : usersLoading ? (
-        <div className="text-center py-32 bg-slate-900/60 rounded-[3rem] border border-white/10 backdrop-blur-3xl shadow-2xl">
-          <Loader2 className="animate-spin text-indigo-500 mx-auto mb-4" size={48} />
-          <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Syncing Registry...</h3>
-          <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-2">Accessing central database signatures</p>
+        <div className="p-8 bg-slate-900/40 rounded-[2.5rem] border border-white/5 backdrop-blur-3xl shadow-2xl overflow-hidden relative">
+           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent animate-shimmer" />
+           <div className="flex items-center gap-4 mb-10">
+              <div className="h-12 w-12 rounded-2xl bg-indigo-500/20 animate-pulse" />
+              <div>
+                <div className="h-4 w-32 bg-white/10 rounded-md mb-2 animate-pulse" />
+                <div className="h-3 w-48 bg-white/5 rounded-md animate-pulse" />
+              </div>
+           </div>
+           <SkeletonRows n={8} />
         </div>
       ) : (
         <div className="text-center py-32 bg-slate-900/60 rounded-[3rem] border border-white/10 backdrop-blur-3xl shadow-2xl">
           <div className="h-24 w-24 rounded-full bg-white/5 border border-white/5 flex items-center justify-center mx-auto mb-8 shadow-inner">
             <Users size={48} className="text-slate-700" />
           </div>
-          <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-3">Void Detected in Registry</h3>
-          <p className="text-sm text-slate-500 font-bold uppercase tracking-widest max-w-md mx-auto leading-relaxed">The central repository returned zero authenticated signatures. Adjust sensors or verify credentials.</p>
+          <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-3">{t("voidDetected")}</h3>
+          <p className="text-sm text-slate-500 font-bold uppercase tracking-widest max-w-md mx-auto leading-relaxed">{t("noRegistryEntries")}</p>
         </div>
       )}
     </div>

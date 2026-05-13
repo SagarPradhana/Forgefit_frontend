@@ -207,3 +207,56 @@ body {
     scrollbar-width: none;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SYSTEM-WIDE THEME INHERITANCE
+   When the DashboardLayout sets --theme-* CSS custom properties on its root
+   div, ALL descendant components inherit the colours automatically.
+   The rules below map common hardcoded Tailwind patterns to the theme vars.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Smooth theme colour transitions for every element inside the layout */
+[style*="--theme-card-bg"] * {
+  transition:
+    background-color 0.4s ease,
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
+}
+
+/* ── Card / Panel containers that use hardcoded slate backgrounds ── */
+[style*="--theme-card-bg"] .bg-slate-900\/40,
+[style*="--theme-card-bg"] .bg-slate-900\/60,
+[style*="--theme-card-bg"] .bg-slate-900\/70,
+[style*="--theme-card-bg"] .bg-slate-900\/80,
+[style*="--theme-card-bg"] .bg-slate-900 {
+  background: var(--theme-card-bg, rgba(15, 23, 42, 0.4)) !important;
+}
+
+[style*="--theme-card-bg"] .bg-slate-800\/40,
+[style*="--theme-card-bg"] .bg-slate-800\/60,
+[style*="--theme-card-bg"] .bg-slate-800 {
+  background: color-mix(in srgb, var(--theme-card-bg, rgba(15,23,42,0.4)) 60%, rgba(30,41,59,0.6)) !important;
+}
+
+/* ── Semi-transparent white overlays (used for card rows, list items) ── */
+[style*="--theme-card-bg"] .bg-white\/5 {
+  background: color-mix(in srgb, var(--theme-card-bg, rgba(255,255,255,0.05)) 50%, rgba(255,255,255,0.03)) !important;
+}
+[style*="--theme-card-bg"] .bg-white\/10 {
+  background: color-mix(in srgb, var(--theme-card-bg, rgba(255,255,255,0.1)) 80%, rgba(255,255,255,0.05)) !important;
+}
+
+/* ── Theme-coloured borders ── */
+[style*="--theme-border"] .border-white\/10,
+[style*="--theme-border"] .border-white\/15,
+[style*="--theme-border"] .border-white\/20 {
+  border-color: var(--theme-border, rgba(255,255,255,0.12)) !important;
+}
+
+/* ── Header topbar uses currentTheme.cardBg class — override it too ── */
+[style*="--theme-card-bg"] [class*="bg-purple-950"],
+[style*="--theme-card-bg"] [class*="bg-emerald-950"],
+[style*="--theme-card-bg"] [class*="bg-orange-950"],
+[style*="--theme-card-bg"] [class*="bg-amber-950"] {
+  background: var(--theme-card-bg, rgba(15, 23, 42, 0.4)) !important;
+}

@@ -13,6 +13,11 @@ export const themeStyles = {
     shadowColor: "shadow-[0_0_50px_-12px_rgba(59,130,246,0.2)]",
     particleColor: "bg-indigo-400/40",
     glow: "rgba(99, 102, 241, 0.5)",
+    // Raw CSS values for CSS custom properties
+    cardBgRaw: "rgba(15, 23, 42, 0.40)",
+    borderRaw: "rgba(99, 102, 241, 0.20)",
+    shadowRaw: "rgba(59, 130, 246, 0.15)",
+    accentRaw: "rgba(99, 102, 241, 1)",
   },
   theme2: {
     label: "Royal Amethyst",
@@ -26,6 +31,11 @@ export const themeStyles = {
     shadowColor: "shadow-[0_0_50px_-12px_rgba(168,85,247,0.2)]",
     particleColor: "bg-purple-400/40",
     glow: "rgba(168, 85, 247, 0.5)",
+    // Raw CSS values for CSS custom properties
+    cardBgRaw: "rgba(59, 7, 100, 0.20)",
+    borderRaw: "rgba(168, 85, 247, 0.20)",
+    shadowRaw: "rgba(168, 85, 247, 0.15)",
+    accentRaw: "rgba(168, 85, 247, 1)",
   },
   theme3: {
     label: "Emerald Aurora",
@@ -39,6 +49,11 @@ export const themeStyles = {
     shadowColor: "shadow-[0_0_50px_-12px_rgba(16,185,129,0.2)]",
     particleColor: "bg-emerald-400/40",
     glow: "rgba(16, 185, 129, 0.5)",
+    // Raw CSS values for CSS custom properties
+    cardBgRaw: "rgba(2, 44, 34, 0.20)",
+    borderRaw: "rgba(16, 185, 129, 0.20)",
+    shadowRaw: "rgba(16, 185, 129, 0.15)",
+    accentRaw: "rgba(16, 185, 129, 1)",
   },
   theme4: {
     label: "Solar Flare",
@@ -52,6 +67,11 @@ export const themeStyles = {
     shadowColor: "shadow-[0_0_50px_-12px_rgba(249,115,22,0.2)]",
     particleColor: "bg-orange-400/40",
     glow: "rgba(249, 115, 22, 0.5)",
+    // Raw CSS values for CSS custom properties
+    cardBgRaw: "rgba(67, 20, 7, 0.20)",
+    borderRaw: "rgba(249, 115, 22, 0.20)",
+    shadowRaw: "rgba(249, 115, 22, 0.15)",
+    accentRaw: "rgba(249, 115, 22, 1)",
   },
   theme5: {
     label: "Golden Horizon",
@@ -65,6 +85,11 @@ export const themeStyles = {
     shadowColor: "shadow-[0_0_50px_-12px_rgba(245,158,11,0.2)]",
     particleColor: "bg-amber-400/40",
     glow: "rgba(245, 158, 11, 0.5)",
+    // Raw CSS values for CSS custom properties
+    cardBgRaw: "rgba(69, 26, 3, 0.20)",
+    borderRaw: "rgba(245, 158, 11, 0.20)",
+    shadowRaw: "rgba(245, 158, 11, 0.15)",
+    accentRaw: "rgba(245, 158, 11, 1)",
   },
 };
 

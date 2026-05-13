@@ -13,6 +13,7 @@ import { api } from "../../utils/httputils";
 import { GlassCard, SectionTitle } from "../ui/primitives";
 import { DateRangeFilter, type DateRange } from "../ui/DateRangeFilter";
 import { useGymStore } from "../../store/gymStore";
+import { useTranslation } from "react-i18next";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface RevenueStats {
@@ -129,6 +130,7 @@ function Badge({ value, green, red }: { value: string; green?: string[]; red?: s
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function RevenueOps() {
+  const { t } = useTranslation();
   const [dateRange, setDateRange] = useState<DateRange>({ label: "This Month" });
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
@@ -240,10 +242,10 @@ export function RevenueOps() {
     : Math.ceil(paymentsTotal / PAGE_SIZE);
 
   const tabs: { id: Tab; label: string; icon: any }[] = [
-    { id: "all",           label: "All Payments",    icon: IndianRupee },
-    { id: "subscriptions", label: "Subscriptions",   icon: CreditCard },
-    { id: "products",      label: "Products",        icon: ShoppingBag },
-    { id: "inquiries",     label: "Inquiries",       icon: Mail },
+    { id: "all",           label: t("allPayments"),    icon: IndianRupee },
+    { id: "subscriptions", label: t("subscriptions"),   icon: CreditCard },
+    { id: "products",      label: t("products"),        icon: ShoppingBag },
+    { id: "inquiries",     label: t("inquiries"),       icon: Mail },
   ];
 
   return (
@@ -251,8 +253,8 @@ export function RevenueOps() {
       {/* ── Header ── */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
         <SectionTitle
-          title="RevenueOps"
-          subtitle="Financial intelligence — payments, subscriptions & inquiry pipeline"
+          title={t("revenueOps")}
+          subtitle={t("revenueOpsSubtitle")}
         />
 
         {/* Global Date Range Filter */}
@@ -274,10 +276,10 @@ export function RevenueOps() {
       {/* ── Stats Cards ── */}
       {stats && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Total Revenue"        value={stats.total_revenue}        icon={TrendingUp}  color="bg-indigo-500"  delay={0}    currency={currency} />
-          <StatCard label="Subscription Revenue" value={stats.subscription_revenue} icon={CreditCard}  color="bg-violet-500"  delay={0.05} currency={currency} />
-          <StatCard label="Product Revenue"      value={stats.product_revenue}      icon={ShoppingBag} color="bg-amber-500"   delay={0.1}  currency={currency} />
-          <StatCard label="Renewal Revenue"      value={stats.renewal_revenue}      icon={RefreshCw}   color="bg-emerald-500" delay={0.15} currency={currency} />
+          <StatCard label={t("totalRevenue")}        value={stats.total_revenue}        icon={TrendingUp}  color="bg-indigo-500"  delay={0}    currency={currency} />
+          <StatCard label={t("subscriptionRevenue")} value={stats.subscription_revenue} icon={CreditCard}  color="bg-violet-500"  delay={0.05} currency={currency} />
+          <StatCard label={t("productRevenue")}      value={stats.product_revenue}      icon={ShoppingBag} color="bg-amber-500"   delay={0.1}  currency={currency} />
+          <StatCard label={t("renewalRevenue")}      value={stats.renewal_revenue}      icon={RefreshCw}   color="bg-emerald-500" delay={0.15} currency={currency} />
         </div>
       )}
 
@@ -285,8 +287,8 @@ export function RevenueOps() {
       <div className="mb-8 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <div>
-            <h3 className="text-base font-black text-white uppercase tracking-tight">Monthly Revenue</h3>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Subscription · Product · Renewal breakdown</p>
+            <h3 className="text-base font-black text-white uppercase tracking-tight">{t("monthlyRevenue")}</h3>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t("monthlyRevenueSubtitle")}</p>
           </div>
           <div className="flex items-center gap-2">
             {[3, 6, 12].map((m) => (
@@ -302,7 +304,7 @@ export function RevenueOps() {
           <div className="h-64 rounded-xl bg-white/5 animate-pulse" />
         ) : monthlyRevenue.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-16 text-slate-500">
-            <TrendingUp size={40} className="opacity-20" /><p className="text-sm font-bold">No revenue data</p>
+            <TrendingUp size={40} className="opacity-20" /><p className="text-sm font-bold">{t("noRevenueData")}</p>
           </div>
         ) : (
           <div className="h-64">
@@ -313,9 +315,9 @@ export function RevenueOps() {
                 <YAxis stroke="#475569" tick={{ fontSize: 10 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
                 <Tooltip content={<RevTooltip currency={currency} />} />
                 <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700, paddingTop: 12 }} />
-                <Bar dataKey="subscription_revenue" name="Subscriptions" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="product_revenue"      name="Products"      fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="renewal_revenue"      name="Renewals"      fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="subscription_revenue" name={t("subscriptions")} fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="product_revenue"      name={t("products")}      fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="renewal_revenue"      name={t("renewals")}      fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -346,7 +348,7 @@ export function RevenueOps() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
-            placeholder={activeTab === "inquiries" ? "Search inquiries..." : "Search by name, email, phone..."}
+            placeholder={activeTab === "inquiries" ? t("searchInquiriesPlaceholder") : t("searchRevenuePlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500 transition"
@@ -360,7 +362,7 @@ export function RevenueOps() {
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white outline-none focus:border-indigo-500 transition cursor-pointer appearance-none"
             >
-              <option value="" className="bg-slate-900">All Methods</option>
+              <option value="" className="bg-slate-900">{t("allMethods")}</option>
               {PAYMENT_METHODS.map((m) => (
                 <option key={m} value={m} className="bg-slate-900 capitalize">{m}</option>
               ))}
@@ -375,7 +377,7 @@ export function RevenueOps() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-white/10 bg-white/5">
-                {["Name, mobile/email", "Amount", "Method", "Type", "Status", "Date"].map((h) => (
+                {[t("nameMobileEmail"), t("amount"), t("method"), t("type"), t("status"), t("date")].map((h) => (
                   <th key={h} className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{h}</th>
                 ))}
               </tr>
@@ -396,7 +398,7 @@ export function RevenueOps() {
                   <td colSpan={6} className="px-4 py-16 text-center">
                     <div className="flex flex-col items-center gap-3 text-slate-500">
                       <IndianRupee size={40} className="opacity-20" />
-                      <p className="text-sm font-bold">No payment records found</p>
+                      <p className="text-sm font-bold">{t("noPaymentsFound")}</p>
                     </div>
                   </td>
                 </tr>
@@ -460,7 +462,7 @@ export function RevenueOps() {
                   <td colSpan={5} className="px-4 py-16 text-center">
                     <div className="flex flex-col items-center gap-3 text-slate-500">
                       <Mail size={40} className="opacity-20" />
-                      <p className="text-sm font-bold">No inquiries found</p>
+                      <p className="text-sm font-bold">{t("noInquiriesFound")}</p>
                     </div>
                   </td>
                 </tr>
@@ -491,8 +493,8 @@ export function RevenueOps() {
                     <td className="px-4 py-3 text-xs text-slate-400 max-w-[200px] truncate">{inq.message || "—"}</td>
                     <td className="px-4 py-3">
                       {inq.status
-                        ? <span className="flex items-center gap-1 text-emerald-400 text-[10px] font-black"><CheckCircle size={12} />Resolved</span>
-                        : <span className="flex items-center gap-1 text-amber-400 text-[10px] font-black"><XCircle size={12} />Pending</span>}
+                        ? <span className="flex items-center gap-1 text-emerald-400 text-[10px] font-black"><CheckCircle size={12} />{t("resolved")}</span>
+                        : <span className="flex items-center gap-1 text-amber-400 text-[10px] font-black"><XCircle size={12} />{t("pending")}</span>}
                     </td>
                     <td className="px-4 py-3 text-slate-400 text-xs">{fmtDate(inq.inquiry_date)}</td>
                   </motion.tr>
@@ -507,7 +509,7 @@ export function RevenueOps() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-6">
           <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest">
-            Page {page} of {totalPages}
+            {t("pageOf", { current: page, total: totalPages })}
           </p>
           <div className="flex gap-2">
             <button
