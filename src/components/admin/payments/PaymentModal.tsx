@@ -42,6 +42,23 @@ export function PaymentModal({
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
+    // 🛡️ VALIDATION
+    if (!paymentForm.user_id) {
+      toast.error(t("pleaseSelectMember") || "Please select a member");
+      return;
+    }
+    if (!paymentForm.purchase_id) {
+      const msg = paymentForm.purchase_type === "product" 
+        ? (t("pleaseSelectProduct") || "Please select a product")
+        : (t("pleaseSelectPlan") || "Please select a plan");
+      toast.error(msg);
+      return;
+    }
+    if (!paymentForm.payment_date) {
+      toast.error(t("pleaseSelectDate") || "Please select a date");
+      return;
+    }
+
     setSubmitting(true);
     const payload = {
       ...paymentForm,

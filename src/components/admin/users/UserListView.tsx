@@ -58,7 +58,7 @@ export const UserListView = ({
   const { id: currentUserId } = useAuthStore();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; left: number } | null>(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -92,11 +92,27 @@ export const UserListView = ({
       return;
     }
     const rect = e.currentTarget.getBoundingClientRect();
-    // Position below the button, aligned to its right edge
-    setMenuPos({
-      top: rect.bottom + 8,
-      left: Math.min(rect.right - 224, window.innerWidth - 236),
-    });
+    const menuWidth = 240;
+    const menuMaxHeight = 400; // Estimated
+    
+    let left = rect.right - menuWidth;
+    if (left < 10) left = 10;
+    if (left + menuWidth > window.innerWidth - 10) left = window.innerWidth - menuWidth - 10;
+
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    if (spaceBelow < menuMaxHeight && spaceAbove > spaceBelow) {
+      setMenuPos({
+        bottom: window.innerHeight - rect.top + 8,
+        left,
+      });
+    } else {
+      setMenuPos({
+        top: rect.bottom + 8,
+        left,
+      });
+    }
     setOpenMenuId(userId);
   };
 
@@ -233,16 +249,23 @@ export const UserListView = ({
             initial={{ opacity: 0, scale: 0.93, y: -6 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            style={{ position: "fixed", top: menuPos.top, left: menuPos.left, zIndex: 9999 }}
-            className="w-60 rounded-2xl border border-white/15 bg-slate-950 shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden"
+            style={{ 
+              position: "fixed", 
+              top: menuPos.top, 
+              bottom: menuPos.bottom,
+              left: menuPos.left, 
+              zIndex: 9999,
+              maxHeight: "min(calc(100vh - 40px), 480px)"
+            }}
+            className="w-60 rounded-2xl border border-white/15 bg-slate-950 shadow-[0_20px_60px_rgba(0,0,0,0.9)] flex flex-col"
           >
             {/* Header */}
-            <div className="px-4 py-3 border-b border-white/10 bg-gradient-to-r from-indigo-600/10 to-transparent">
+            <div className="px-4 py-3 border-b border-white/10 bg-gradient-to-r from-indigo-600/10 to-transparent shrink-0">
               <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400/80">{t("moreActions")}</p>
               <p className="text-[12px] font-black text-white truncate mt-0.5">{user.name}</p>
             </div>
             {/* Actions */}
-            <div className="p-2 space-y-0.5">
+            <div className="p-2 space-y-0.5 overflow-y-auto custom-scrollbar">
               <button onClick={() => { onOpenIdCard(user); setOpenMenuId(null); setMenuPos(null); }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-emerald-500/20 text-emerald-400 transition-all group/item">
                 <div className="h-7 w-7 rounded-lg bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center shrink-0"><Contact size={13} /></div>
