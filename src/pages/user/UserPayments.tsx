@@ -165,20 +165,46 @@ export function UserPayments() {
       ) : fetchedPayments.length > 0 ? (
         <GlassCard>
           <Table
-            headers={["Reference", "Date", "Purchase", "Method", "Amount", "Status"]}
-            rows={fetchedPayments.map((p) => [
-              <span key={`${p.id}-ref`} className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">#{p.id.slice(-6)}</span>,
-              <span key={`${p.id}-date`} className="text-xs font-bold text-slate-400">{fmtPayDate(p.payment_date)}</span>,
-              <div key={`${p.id}-type`} className="flex flex-col">
-                <span className="text-xs font-black text-white uppercase tracking-tight italic">{p.purchase_type}</span>
-                <span className="text-[9px] text-slate-500 truncate max-w-[150px]">
-                  {p.purchase_details ? JSON.stringify(p.purchase_details).slice(0, 40) + "..." : "---"}
-                </span>
-              </div>,
-              <span key={`${p.id}-method`} className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">{p.payment_method}</span>,
-              <span key={`${p.id}-amt`} className="text-sm font-black text-white italic">{currencySymbol}{p.amount}</span>,
-              <StatusBadge key={`${p.id}-status`} status={p.status.charAt(0).toUpperCase() + p.status.slice(1) as any} />
-            ])}
+            columns={[
+              {
+                key: "ref",
+                label: "Reference",
+                render: (p) => <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">#{p.id.slice(-6)}</span>
+              },
+              {
+                key: "date",
+                label: "Date",
+                render: (p) => <span className="text-xs font-bold text-slate-400">{fmtPayDate(p.payment_date)}</span>
+              },
+              {
+                key: "purchase",
+                label: "Purchase",
+                render: (p) => (
+                  <div className="flex flex-col">
+                    <span className="text-xs font-black text-white uppercase tracking-tight italic">{p.purchase_type}</span>
+                    <span className="text-[9px] text-slate-500 truncate max-w-[150px]">
+                      {p.purchase_details ? JSON.stringify(p.purchase_details).slice(0, 40) + "..." : "---"}
+                    </span>
+                  </div>
+                )
+              },
+              {
+                key: "method",
+                label: "Method",
+                render: (p) => <span className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">{p.payment_method}</span>
+              },
+              {
+                key: "amount",
+                label: "Amount",
+                render: (p) => <span className="text-sm font-black text-white italic">{currencySymbol}{p.amount}</span>
+              },
+              {
+                key: "status",
+                label: "Status",
+                render: (p) => <StatusBadge status={p.status.charAt(0).toUpperCase() + p.status.slice(1) as any} />
+              }
+            ]}
+            data={fetchedPayments}
           />
         </GlassCard>
       ) : (

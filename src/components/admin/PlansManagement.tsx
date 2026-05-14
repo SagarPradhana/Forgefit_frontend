@@ -157,9 +157,13 @@ export function PlansManagement() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (assignModalOpen) fetchUsers(userSearch);
+      if (assignModalOpen) {
+        fetchUsers(userSearch);
+      }
     }, 400);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+    };
   }, [userSearch, assignModalOpen]);
 
   // Handle search and tab changes with debouncing
@@ -179,27 +183,29 @@ export function PlansManagement() {
     // Debounce API call to avoid too many requests
     const timer = setTimeout(() => {
       if (activeTab === "workout") {
-        fetchWorkouts(1); // Reset to page 1 on search/tab change
+        fetchWorkouts(1);
       } else {
-        fetchDiets(1); // Reset to page 1 on search/tab change
+        fetchDiets(1);
       }
     }, 500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+    };
   }, [workoutSearch, dietSearch, activeTab, searchParams, setSearchParams]);
 
   // === EVENT HANDLERS ===
   const handleSaveWorkout = async () => {
     if (!workoutForm.name.trim()) {
-      toast.error("Protocol name is required");
+      toast.error("Plan name is required");
       return;
     }
     if (!workoutForm.focus.trim()) {
-      toast.error("Objective focus is required");
+      toast.error("Focus area is required");
       return;
     }
     if (workoutForm.workout_details.length === 0) {
-      toast.error("Please add at least one training day");
+      toast.error("Please add at least one workout day");
       return;
     }
     try {
@@ -222,7 +228,7 @@ export function PlansManagement() {
 
   const handleSaveDiet = async () => {
     if (!dietForm.name.trim()) {
-      toast.error("Protocol name is required");
+      toast.error("Plan name is required");
       return;
     }
     if (!dietForm.focus.trim()) {
@@ -230,7 +236,7 @@ export function PlansManagement() {
       return;
     }
     if (dietForm.diet_details.length === 0) {
-      toast.error("Please add at least one nutritional day");
+      toast.error("Please add at least one diet day");
       return;
     }
     try {
@@ -428,58 +434,88 @@ export function PlansManagement() {
           ) : workouts.length > 0 ? (
             <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 backdrop-blur-md">
               <Table
-                headers={[t("planDetails"), t("typeFocus"), t("days"), t("created"), t("actions")]}
-                rows={workouts.map((p) => [
-                  <div key={`${p.id}-info`} className="flex flex-col gap-1 py-1">
-                    <span className="font-black text-white uppercase tracking-tight text-sm group-hover:text-indigo-400 transition-colors">{p.name}</span>
-                    <span className="text-[11px] text-slate-400 line-clamp-1 max-w-[200px]">{p.description}</span>
-                  </div>,
-                  <div key={`${p.id}-type`} className="flex flex-col gap-1">
-                    <span className="text-[9px] font-black uppercase text-indigo-400 tracking-[0.2em]">{p.type}</span>
-                    <span className="text-xs font-bold text-slate-300">{p.focus}</span>
-                  </div>,
-                  <div key={`${p.id}-days`} className="flex items-center">
-                    <span className="text-[11px] font-black text-indigo-100 bg-indigo-500/20 px-2.5 py-1 rounded-full border border-indigo-500/20 uppercase tracking-wider">
-                      {p.workout_details?.length || 0} {t("days")}
-                    </span>
-                  </div>,
-                  <span key={`${p.id}-date`} className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">
-                    {p.created_date ? new Date(p.created_date * 1000).toLocaleDateString() : "--"}
-                  </span>,
-                  <div key={`${p.id}-act`} className="flex gap-2">
-                    <button
-                      title="Assign to User"
-                      className="group/btn text-emerald-400 hover:text-emerald-300 transition-all hover:scale-110 bg-emerald-500/10 hover:bg-emerald-500/20 p-2.5 rounded-xl border border-emerald-500/10"
-                      onClick={() => {
-                        setAssignType("workout");
-                        setAssignPlanId(p.id!);
-                        fetchUsers();
-                        setAssignModalOpen(true);
-                      }}
-                    >
-                      <Plus size={16} className="group-hover/btn:rotate-90 transition-transform" />
-                    </button>
-                    <button
-                      className="group/btn text-indigo-400 hover:text-indigo-300 transition-all hover:scale-110 bg-indigo-500/10 hover:bg-indigo-500/20 p-2.5 rounded-xl border border-indigo-500/10"
-                      onClick={() => {
-                        setWorkoutForm(p);
-                        setEditWorkoutId(p.id!);
-                        setWorkoutModalOpen(true);
-                      }}
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button
-                      className="group/btn text-red-400 hover:text-red-300 transition-all hover:scale-110 bg-red-500/10 hover:bg-red-500/20 p-2.5 rounded-xl border border-red-500/10"
-                      onClick={() => {
-                        setDeleteTarget({ type: "workout", id: p.id! });
-                        setDeleteModalOpen(true);
-                      }}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ])}
+                columns={[
+                  {
+                    key: "details",
+                    label: t("planDetails"),
+                    render: (p) => (
+                      <div className="flex flex-col gap-1 py-1">
+                        <span className="font-black text-white uppercase tracking-tight text-sm group-hover:text-indigo-400 transition-colors">{p.name}</span>
+                        <span className="text-[11px] text-slate-400 line-clamp-1 max-w-[200px]">{p.description}</span>
+                      </div>
+                    )
+                  },
+                  {
+                    key: "type",
+                    label: t("typeFocus"),
+                    render: (p) => (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[9px] font-black uppercase text-indigo-400 tracking-[0.2em]">{p.type}</span>
+                        <span className="text-xs font-bold text-slate-300">{p.focus}</span>
+                      </div>
+                    )
+                  },
+                  {
+                    key: "days",
+                    label: t("days"),
+                    render: (p) => (
+                      <div className="flex items-center">
+                        <span className="text-[11px] font-black text-indigo-100 bg-indigo-500/20 px-2.5 py-1 rounded-full border border-indigo-500/20 uppercase tracking-wider">
+                          {p.workout_details?.length || 0} {t("days")}
+                        </span>
+                      </div>
+                    )
+                  },
+                  {
+                    key: "created",
+                    label: t("created"),
+                    render: (p) => (
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">
+                        {p.created_date ? new Date(p.created_date * 1000).toLocaleDateString() : "--"}
+                      </span>
+                    )
+                  },
+                  {
+                    key: "actions",
+                    label: t("actions"),
+                    render: (p) => (
+                      <div className="flex gap-2">
+                        <button
+                          title="Assign to User"
+                          className="group/btn text-emerald-400 hover:text-emerald-300 transition-all hover:scale-110 bg-emerald-500/10 hover:bg-emerald-500/20 p-2.5 rounded-xl border border-emerald-500/10"
+                          onClick={() => {
+                            setAssignType("workout");
+                            setAssignPlanId(p.id!);
+                            fetchUsers();
+                            setAssignModalOpen(true);
+                          }}
+                        >
+                          <Plus size={16} className="group-hover/btn:rotate-90 transition-transform" />
+                        </button>
+                        <button
+                          className="group/btn text-indigo-400 hover:text-indigo-300 transition-all hover:scale-110 bg-indigo-500/10 hover:bg-indigo-500/20 p-2.5 rounded-xl border border-indigo-500/10"
+                          onClick={() => {
+                            setWorkoutForm(p);
+                            setEditWorkoutId(p.id!);
+                            setWorkoutModalOpen(true);
+                          }}
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          className="group/btn text-red-400 hover:text-red-300 transition-all hover:scale-110 bg-red-500/10 hover:bg-red-500/20 p-2.5 rounded-xl border border-red-500/10"
+                          onClick={() => {
+                            setDeleteTarget({ type: "workout", id: p.id! });
+                            setDeleteModalOpen(true);
+                          }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )
+                  }
+                ]}
+                data={workouts}
               />
               <LoadingOverlay show={workoutsLoading && workouts.length > 0} label="Refreshing workout plans" compact />
             </div>
@@ -570,59 +606,88 @@ export function PlansManagement() {
           ) : diets.length > 0 ? (
             <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/5 backdrop-blur-md">
               <Table
-                headers={[t("planName"), t("focusArea"), t("days"), t("created"), t("actions")]}
-                rows={diets.map((p) => [
-                  <span key={`${p.id}-name`} className="font-black text-white uppercase tracking-tight text-sm py-1 block group-hover:text-emerald-400 transition-colors">{p.name}</span>,
-                  <span key={`${p.id}-focus`} className="text-xs font-bold text-slate-300">{p.focus}</span>,
-                  <div key={`${p.id}-days`} className="flex items-center">
-                    <span className="text-[11px] font-black text-emerald-100 bg-emerald-500/20 px-2.5 py-1 rounded-full border border-emerald-500/20 uppercase tracking-wider">
-                      {p.diet_details?.length || 0} {t("days")}
-                    </span>
-                  </div>,
-                  <span key={`${p.id}-date`} className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">
-                    {p.created_date ? new Date(p.created_date * 1000).toLocaleDateString() : "--"}
-                  </span>,
-                  <div key={`${p.id}-act`} className="flex gap-2">
-                    <button
-                      title="Assign to User"
-                      className="group/btn text-emerald-400 hover:text-emerald-300 transition-all hover:scale-110 bg-emerald-500/10 hover:bg-emerald-500/20 p-2.5 rounded-xl border border-emerald-500/10"
-                      onClick={() => {
-                        setAssignType("diet");
-                        setAssignPlanId(p.id!);
-                        fetchUsers();
-                        setAssignModalOpen(true);
-                      }}
-                    >
-                      <Plus size={16} className="group-hover/btn:rotate-90 transition-transform" />
-                    </button>
-                    <button
-                      className="group/btn text-indigo-400 hover:text-indigo-300 transition-all hover:scale-110 bg-indigo-500/10 hover:bg-indigo-500/20 p-2.5 rounded-xl border border-indigo-500/10"
-                      onClick={() => {
-                        setDietForm(p);
-                        setEditDietId(p.id!);
-                        setDietModalOpen(true);
-                      }}
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button
-                      className="group/btn text-red-400 hover:text-red-300 transition-all hover:scale-110 bg-red-500/10 hover:bg-red-500/20 p-2.5 rounded-xl border border-red-500/10"
-                      onClick={() => {
-                        setDeleteTarget({ type: "diet", id: p.id! });
-                        setDeleteModalOpen(true);
-                      }}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ])}
+                columns={[
+                  {
+                    key: "name",
+                    label: t("planName"),
+                    render: (p) => (
+                      <span className="font-black text-white uppercase tracking-tight text-sm py-1 block group-hover:text-emerald-400 transition-colors">{p.name}</span>
+                    )
+                  },
+                  {
+                    key: "focus",
+                    label: t("focusArea"),
+                    render: (p) => (
+                      <span className="text-xs font-bold text-slate-300">{p.focus}</span>
+                    )
+                  },
+                  {
+                    key: "days",
+                    label: t("days"),
+                    render: (p) => (
+                      <div className="flex items-center">
+                        <span className="text-[11px] font-black text-emerald-100 bg-emerald-500/20 px-2.5 py-1 rounded-full border border-emerald-500/20 uppercase tracking-wider">
+                          {p.diet_details?.length || 0} {t("days")}
+                        </span>
+                      </div>
+                    )
+                  },
+                  {
+                    key: "created",
+                    label: t("created"),
+                    render: (p) => (
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">
+                        {p.created_date ? new Date(p.created_date * 1000).toLocaleDateString() : "--"}
+                      </span>
+                    )
+                  },
+                  {
+                    key: "actions",
+                    label: t("actions"),
+                    render: (p) => (
+                      <div className="flex gap-2">
+                        <button
+                          title="Assign to User"
+                          className="group/btn text-emerald-400 hover:text-emerald-300 transition-all hover:scale-110 bg-emerald-500/10 hover:bg-emerald-500/20 p-2.5 rounded-xl border border-emerald-500/10"
+                          onClick={() => {
+                            setAssignType("diet");
+                            setAssignPlanId(p.id!);
+                            fetchUsers();
+                            setAssignModalOpen(true);
+                          }}
+                        >
+                          <Plus size={16} className="group-hover/btn:rotate-90 transition-transform" />
+                        </button>
+                        <button
+                          className="group/btn text-indigo-400 hover:text-indigo-300 transition-all hover:scale-110 bg-indigo-500/10 hover:bg-indigo-500/20 p-2.5 rounded-xl border border-indigo-500/10"
+                          onClick={() => {
+                            setDietForm(p);
+                            setEditDietId(p.id!);
+                            setDietModalOpen(true);
+                          }}
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          className="group/btn text-red-400 hover:text-red-300 transition-all hover:scale-110 bg-red-500/10 hover:bg-red-500/20 p-2.5 rounded-xl border border-red-500/10"
+                          onClick={() => {
+                            setDeleteTarget({ type: "diet", id: p.id! });
+                            setDeleteModalOpen(true);
+                          }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )
+                  }
+                ]}
+                data={diets}
               />
               <LoadingOverlay show={dietsLoading && diets.length > 0} label="Refreshing diet plans" compact />
             </div>
           ) : (
             <EmptyState title="No Diet Plans" hint="Formulate a nutritional strategy to start." />
           )}
-
           <Pagination
             currentPage={dietMeta.page_no}
             totalPages={Math.ceil(dietMeta.total_count / dietMeta.page_size) || 1}

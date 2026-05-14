@@ -546,7 +546,7 @@ function UserDashboard() {
               Your current access protocol is scheduled to terminate in <span className="text-orange-400 font-bold">{planInfo.daysRemaining} days</span>. Please process renewal to maintain continuity.
             </p>
           </div>
-          <GlowButton className="w-full h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest">Execute Immediate Renewal</GlowButton>
+          <GlowButton className="w-full h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest">Renew Now</GlowButton>
         </div>
       </Modal>
 

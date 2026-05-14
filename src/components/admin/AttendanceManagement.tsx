@@ -115,37 +115,37 @@ export function AttendanceManagement() {
         ? adminAttendanceService.updateAttendance(editingRecord.id, editingRecord.user_id, payload)
         : adminAttendanceService.createAttendance(payload),
     onSuccess: () => {
-      toast.success(editingRecord ? "Attendance record updated" : "New attendance logged");
+      toast.success(editingRecord ? t("success") : t("success"));
       queryClient.invalidateQueries({ queryKey: ["admin", "attendance"] });
       setModalOpen(false);
       setEditingRecord(null);
     },
-    onError: () => toast.error("Failed to save record")
+    onError: () => toast.error(t("error"))
   });
 
   // 🛡️ DELETE MUTATION
   const deleteMutation = useMutation({
     mutationFn: (id: string) => adminAttendanceService.deleteAttendance(id),
     onSuccess: () => {
-      toast.success("Record purged from registry");
+      toast.success(t("success"));
       queryClient.invalidateQueries({ queryKey: ["admin", "attendance"] });
       setDeleteModalOpen(false);
       setDeleteId(null);
     },
-    onError: () => toast.error("Process failure")
+    onError: () => toast.error(t("error"))
   });
 
   const handleSave = async () => {
     if (!form.user_id) {
-      toast.error("Please select a member");
+      toast.error(t("pleaseSelectMember"));
       return;
     }
     if (!form.date) {
-      toast.error("Please select a date");
+      toast.error(t("pleaseSelectDate"));
       return;
     }
     if (!form.checkIn) {
-      toast.error("Please select a check-in time");
+      toast.error(t("pleaseSelectDateCheckIn"));
       return;
     }
 
@@ -284,7 +284,7 @@ export function AttendanceManagement() {
               ))}
               {records.length === 0 && (
                 <div className="col-span-full py-20 text-center border border-dashed border-white/10 rounded-2xl">
-                  <p className="text-slate-500">No attendance records found for this date.</p>
+                  <p className="text-slate-500 font-bold">{t("noAttendanceFound")}</p>
                 </div>
               )}
             </motion.div>

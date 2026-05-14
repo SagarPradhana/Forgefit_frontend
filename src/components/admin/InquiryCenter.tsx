@@ -70,7 +70,7 @@ export function InquiryCenter() {
       }
     },
     onSuccess: () => {
-      toast.success("Record marked as resolved");
+      toast.success(t("success"));
       queryClient.invalidateQueries({ queryKey: ["admin", "inquiries"] });
     },
     onError: () => toast.error("Resolve operation failed")
@@ -88,7 +88,7 @@ export function InquiryCenter() {
       }
     },
     onSuccess: () => {
-      toast.success("Record deleted successfully");
+      toast.success(t("success"));
       queryClient.invalidateQueries({ queryKey: ["admin", "inquiries"] });
       setDeleteModalOpen(false);
       setDeleteTargetId(null);
@@ -322,7 +322,7 @@ export function InquiryCenter() {
 
             {data.length === 0 && (
               <div className="text-center py-20 border border-dashed border-white/10 rounded-2xl">
-                <p className="text-slate-500 uppercase font-black tracking-widest text-xs">No inquiries found in this section.</p>
+                <p className="text-slate-500 uppercase font-black tracking-widest text-xs">{t("noRecords")}</p>
               </div>
             )}
 
@@ -343,9 +343,9 @@ export function InquiryCenter() {
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={() => deleteTargetId && deleteMutation.mutate(deleteTargetId)}
-        title="Delete Record"
-        description="This inquiry record will be permanently removed from the system."
-        confirmLabel="Delete"
+        title={t("deleteRecordQuestion")}
+        description={t("removalDescription")}
+        confirmLabel={t("delete")}
         isProcessing={deleteMutation.isPending}
       />
 

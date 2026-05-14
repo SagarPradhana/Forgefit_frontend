@@ -86,10 +86,10 @@ export const adminPaymentService = {
   },
 
   updatePayment: async (id: string, data: Partial<PaymentRequest>) => {
-    return api.patch(API_ENDPOINTS.ADMIN.PAYMENT_DETAIL(id), data) as Promise<CommonPaymentResponse>;
+    return api.patch(`${API_ENDPOINTS.ADMIN.PAYMENTS}?payment_id=${id}`, data) as Promise<CommonPaymentResponse>;
   },
 
   deletePayment: async (id: string) => {
-    return api.delete(API_ENDPOINTS.ADMIN.PAYMENT_DETAIL(id)) as Promise<CommonPaymentResponse>;
+    return api.delete(`${API_ENDPOINTS.ADMIN.PAYMENTS}?payment_id=${id}`) as Promise<CommonPaymentResponse>;
   },
 };

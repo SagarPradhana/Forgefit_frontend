@@ -35,7 +35,7 @@ export function AssignPlanModal({
     <Modal
       open={isOpen}
       onClose={onClose}
-      title={assignType === "workout" ? t("assignTrainingProtocol") : t("assignNutritionalStrategy")}
+      title={assignType === "workout" ? t("assignWorkoutPlan") : t("assignDietPlan")}
       footer={
         <div className="flex gap-3 justify-end w-full">
           <button
@@ -46,14 +46,14 @@ export function AssignPlanModal({
             {t("cancel")}
           </button>
           <GlowButton onClick={onAssign} disabled={assigning} className="px-8">
-            <ButtonLoader label={t("executeAssignment")} loadingLabel={t("loading")} loading={assigning} />
+            <ButtonLoader label={t("submit")} loadingLabel={t("loading")} loading={assigning} />
           </GlowButton>
         </div>
       }
     >
       <div className="space-y-6 py-2">
         <div className="space-y-2">
-          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">{t("memberIdentification")}</label>
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">{t("selectMember")}</label>
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
             <input
@@ -72,14 +72,14 @@ export function AssignPlanModal({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">{t("deploymentTarget")}</label>
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">{t("assignTo")}</label>
           <select
             className="w-full rounded-2xl bg-slate-950 border border-white/5 p-4 text-white focus:border-indigo-500/50 outline-none transition duration-300 text-sm font-bold shadow-inner"
             value={assignUserId}
             onChange={(e) => setAssignUserId(e.target.value)}
             disabled={usersLoading}
           >
-            <option value="" className="bg-slate-900">{t("selectRegistryEntity")}</option>
+            <option value="" className="bg-slate-900">{t("chooseMember")}</option>
             {usersDropdown.map((u: any) => (
               <option key={u.id} value={u.id} className="bg-slate-900">{u.name} (@{u.username || u.member_id})</option>
             ))}
@@ -88,7 +88,7 @@ export function AssignPlanModal({
 
         <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4">
           <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest leading-relaxed">
-            {t("deploymentAlert", { type: assignType })}
+            {t("assignmentAlert", { type: assignType })}
           </p>
         </div>
       </div>

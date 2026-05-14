@@ -100,15 +100,33 @@ export const AttendanceModal = ({ isOpen, onClose, selectedUser }: AttendanceMod
           </div>
         ) : (
           <PrimitiveTable
-            headers={[t("date"), t("checkIn"), t("checkOut"), t("status")]}
-            rows={records.map(r => [
-              new Date(r.date * 1000).toLocaleDateString(),
-              new Date(r.check_in * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : t("active"),
-              <span key={r.id} className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${r.status.toLowerCase() === 'present' ? 'text-emerald-400 bg-emerald-400/10' : 'text-red-400 bg-red-400/10'}`}>
-                {r.status}
-              </span>
-            ])}
+            columns={[
+              {
+                key: "date",
+                label: t("date"),
+                render: (r) => new Date(r.date * 1000).toLocaleDateString()
+              },
+              {
+                key: "checkIn",
+                label: t("checkIn"),
+                render: (r) => new Date(r.check_in * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              },
+              {
+                key: "checkOut",
+                label: t("checkOut"),
+                render: (r) => r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : t("active")
+              },
+              {
+                key: "status",
+                label: t("status"),
+                render: (r) => (
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${r.status.toLowerCase() === 'present' ? 'text-emerald-400 bg-emerald-400/10' : 'text-red-400 bg-red-400/10'}`}>
+                    {r.status}
+                  </span>
+                )
+              }
+            ]}
+            data={records}
           />
         )}
 

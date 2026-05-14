@@ -142,36 +142,60 @@ export function LocationsTab() {
       ) : locations.length > 0 ? (
         <>
           <Table
-            headers={["Address", "Status", "Working Hours", "Contact", "Actions"]}
-            rows={locations.map((loc) => [
-              <span key={`address-${loc.id}`} className="font-bold text-white text-xs block max-w-xs truncate">{loc.address}</span>,
-              <span key={`status-${loc.id}`} className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${loc.gym_open_status ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
-                {loc.gym_open_status ? "Open" : "Closed"}
-              </span>,
-              <span key={`hours-${loc.id}`} className="text-slate-300 text-xs">{loc.working_hours_from_time} - {loc.working_hours_to_time}</span>,
-              <span key={`contact-${loc.id}`} className="text-slate-400 text-xs block">{loc.phone || loc.email || "N/A"}</span>,
-              <div key={`actions-${loc.id}`} className="flex gap-3">
-                <button
-                  className="text-indigo-400 hover:text-indigo-300"
-                  onClick={() => {
-                    setForm(loc);
-                    setEditId(loc.id!);
-                    setModalOpen(true);
-                  }}
-                >
-                  <Edit2 size={16} />
-                </button>
-                <button
-                  className="text-red-400 hover:text-red-300"
-                  onClick={() => {
-                    setDeleteId(loc.id!);
-                    setDeleteModalOpen(true);
-                  }}
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ])}
+            columns={[
+              {
+                key: "address",
+                label: "Address",
+                render: (loc) => <span className="font-bold text-white text-xs block max-w-xs truncate">{loc.address}</span>
+              },
+              {
+                key: "status",
+                label: "Status",
+                render: (loc) => (
+                  <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${loc.gym_open_status ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                    {loc.gym_open_status ? "Open" : "Closed"}
+                  </span>
+                )
+              },
+              {
+                key: "hours",
+                label: "Working Hours",
+                render: (loc) => <span className="text-slate-300 text-xs">{loc.working_hours_from_time} - {loc.working_hours_to_time}</span>
+              },
+              {
+                key: "contact",
+                label: "Contact",
+                render: (loc) => <span className="text-slate-400 text-xs block">{loc.phone || loc.email || "N/A"}</span>
+              },
+              {
+                key: "actions",
+                label: "Actions",
+                render: (loc) => (
+                  <div className="flex gap-3">
+                    <button
+                      className="text-indigo-400 hover:text-indigo-300"
+                      onClick={() => {
+                        setForm(loc);
+                        setEditId(loc.id!);
+                        setModalOpen(true);
+                      }}
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button
+                      className="text-red-400 hover:text-red-300"
+                      onClick={() => {
+                        setDeleteId(loc.id!);
+                        setDeleteModalOpen(true);
+                      }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                )
+              }
+            ]}
+            data={locations}
           />
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-4 mt-6">

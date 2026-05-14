@@ -86,9 +86,10 @@ export function PaymentModal({
         <div className="space-y-1">
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t("selectMember")}</label>
           <select
-            className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
+            className={`w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold ${editPaymentId ? "opacity-50 cursor-not-allowed" : ""}`}
             value={paymentForm.user_id}
             onChange={(e) => setPaymentForm({ ...paymentForm, user_id: e.target.value })}
+            disabled={!!editPaymentId}
           >
             <option value="">{t("chooseRegistryEntity")}</option>
             {usersDropdown.map((u: any) => (

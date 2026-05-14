@@ -43,7 +43,7 @@ export function WorkoutPlanModal({
         </div>
       }
     >
-      <div className="space-y-8 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar py-2">
+      <div className="space-y-8 py-2">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">{t("planIdentity")}</label>
@@ -55,12 +55,12 @@ export function WorkoutPlanModal({
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">{t("protocolType")}</label>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">{t("planType")}</label>
             <input
               className="w-full rounded-2xl bg-slate-950 border border-white/5 p-4 text-white focus:border-indigo-500/50 outline-none transition duration-300 text-sm font-bold shadow-inner"
               value={workoutForm.type}
               onChange={(e) => setWorkoutForm({ ...workoutForm, type: e.target.value })}
-              placeholder={t("protocolTypePlaceholder")}
+              placeholder={t("planTypePlaceholder")}
             />
           </div>
           <div className="space-y-2 md:col-span-2">
@@ -73,12 +73,12 @@ export function WorkoutPlanModal({
             />
           </div>
           <div className="space-y-2 md:col-span-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">{t("strategyDescription")}</label>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">{t("planDescription")}</label>
             <textarea
               className="w-full rounded-2xl bg-slate-950 border border-white/5 p-4 text-white focus:border-indigo-500/50 outline-none transition duration-300 text-sm font-medium resize-none h-24 shadow-inner"
               value={workoutForm.description}
               onChange={(e) => setWorkoutForm({ ...workoutForm, description: e.target.value })}
-              placeholder={t("strategyDescriptionPlaceholder")}
+              placeholder={t("planDescriptionPlaceholder")}
             />
           </div>
         </div>

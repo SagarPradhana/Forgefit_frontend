@@ -185,20 +185,46 @@ export function TrainerAttendance() {
               exit={{ opacity: 0, x: 20 }}
             >
               <Table
-                headers={["Member", "Date", "Check In", "Check Out", "Status", "Duration"]}
-                rows={filteredRecords.map(r => [
-                  <span key={r.id} className="text-sm font-medium text-white">{r.user_name || '-'}</span>,
-                  new Date(r.date * 1000).toLocaleDateString(),
-                  new Date(r.check_in * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                  r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : <span className="text-blue-400">Active</span>,
-                  <span key={`${r.id}-status`} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${r.status?.toLowerCase() === "present" ? "bg-emerald-500/20 text-emerald-400" :
-                    r.status?.toLowerCase() === "late" ? "bg-amber-500/20 text-amber-400" :
-                      "bg-red-500/20 text-red-400"
-                    }`}>
-                    {r.status || 'N/A'}
-                  </span>,
-                  <span key={`${r.id}-dur`} className="text-slate-400 text-sm">{r.duration || '-'}</span>
-                ])}
+                columns={[
+                  {
+                    key: "user_name",
+                    label: "Member",
+                    render: (r) => <span className="text-sm font-medium text-white">{r.user_name || '-'}</span>
+                  },
+                  {
+                    key: "date",
+                    label: "Date",
+                    render: (r) => new Date(r.date * 1000).toLocaleDateString()
+                  },
+                  {
+                    key: "check_in",
+                    label: "Check In",
+                    render: (r) => new Date(r.check_in * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  },
+                  {
+                    key: "check_out",
+                    label: "Check Out",
+                    render: (r) => r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : <span className="text-blue-400">Active</span>
+                  },
+                  {
+                    key: "status",
+                    label: "Status",
+                    render: (r) => (
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${r.status?.toLowerCase() === "present" ? "bg-emerald-500/20 text-emerald-400" :
+                        r.status?.toLowerCase() === "late" ? "bg-amber-500/20 text-amber-400" :
+                          "bg-red-500/20 text-red-400"
+                        }`}>
+                        {r.status || 'N/A'}
+                      </span>
+                    )
+                  },
+                  {
+                    key: "duration",
+                    label: "Duration",
+                    render: (r) => <span className="text-slate-400 text-sm">{r.duration || '-'}</span>
+                  }
+                ]}
+                data={filteredRecords}
               />
             </motion.div>
           )}

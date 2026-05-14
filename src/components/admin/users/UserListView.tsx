@@ -397,7 +397,7 @@ export const UserListView = ({
                             <button
                               onClick={() => onOpenSubscription(user)}
                               className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.07] hover:bg-purple-500 text-purple-400 hover:text-white border border-white/5 transition-all shadow-xl hover:shadow-purple-500/40"
-                              title={t("membershipProtocol")}
+                              title={t("memberPlan")}
                             >
                               <CreditCard size={16} />
                             </button>
@@ -590,7 +590,7 @@ export const UserListView = ({
                 <div className="h-3 w-48 bg-white/5 rounded-md animate-pulse" />
               </div>
            </div>
-           <SkeletonRows n={8} />
+           <SkeletonRows count={8} />
         </div>
       ) : (
         <div className="text-center py-32 bg-slate-900/60 rounded-[3rem] border border-white/10 backdrop-blur-3xl shadow-2xl">

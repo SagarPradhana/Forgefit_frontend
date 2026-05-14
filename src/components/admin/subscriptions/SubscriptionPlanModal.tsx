@@ -39,7 +39,7 @@ export function SubscriptionPlanModal({
       return;
     }
     if (!planForm.price || Number(planForm.price) <= 0) {
-      toast.error("Valuation price must be greater than 0");
+      toast.error("Selling price must be greater than 0");
       return;
     }
     if (planForm.actual_price && Number(planForm.actual_price) < Number(planForm.price)) {

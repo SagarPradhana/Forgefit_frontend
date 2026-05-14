@@ -16,43 +16,43 @@ import { useGymStore } from "../../store/gymStore";
 import { useTranslation } from "react-i18next";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-interface RevenueStats {
-  total_revenue: number;
-  subscription_revenue: number;
-  product_revenue: number;
-  renewal_revenue: number;
-}
+// interface RevenueStats {
+//   total_revenue: number;
+//   subscription_revenue: number;
+//   product_revenue: number;
+//   renewal_revenue: number;
+// }
 
-interface PaymentRecord {
-  id: string;
-  user_id: string;
-  name: string;
-  username: string;
-  mobile: string;
-  email: string;
-  amount: number;
-  payment_date: number;
-  payment_method: string;
-  status: string;
-  purchase_type: string;
-  purchase_id: string;
-  purchase_details: Record<string, any>;
-  created_date: number;
-  updated_date: number;
-}
+// interface PaymentRecord {
+//   id: string;
+//   user_id: string;
+//   name: string;
+//   username: string;
+//   mobile: string;
+//   email: string;
+//   amount: number;
+//   payment_date: number;
+//   payment_method: string;
+//   status: string;
+//   purchase_type: string;
+//   purchase_id: string;
+//   purchase_details: Record<string, any>;
+//   created_date: number;
+//   updated_date: number;
+// }
 
-interface ContactInquiry {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  subject: string;
-  message: string;
-  inquiry_date: number;
-  status: boolean;
-  created_date: number;
-  updated_date: number;
-}
+// interface ContactInquiry {
+//   id: string;
+//   name: string;
+//   email: string;
+//   phone: string;
+//   subject: string;
+//   message: string;
+//   inquiry_date: number;
+//   status: boolean;
+//   created_date: number;
+//   updated_date: number;
+// }
 
 type Tab = "all" | "subscriptions" | "products" | "inquiries";
 
@@ -118,18 +118,17 @@ function Badge({ value, green, red }: { value: string; green?: string[]; red?: s
   const isGreen = green?.includes(v);
   const isRed = red?.includes(v);
   return (
-    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
-      isGreen ? "bg-emerald-500/20 text-emerald-400" :
-      isRed   ? "bg-red-500/20 text-red-400" :
-               "bg-indigo-500/20 text-indigo-300"
-    }`}>
+    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${isGreen ? "bg-emerald-500/20 text-emerald-400" :
+      isRed ? "bg-red-500/20 text-red-400" :
+        "bg-indigo-500/20 text-indigo-300"
+      }`}>
       {value || "—"}
     </span>
   );
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../constants/queryKeys";
 
 export function RevenueOps() {
@@ -163,7 +162,7 @@ export function RevenueOps() {
     queryFn: () => {
       const params = new URLSearchParams();
       if (dateRange.from_date) params.set("from_date", String(dateRange.from_date));
-      if (dateRange.to_date)   params.set("to_date",   String(dateRange.to_date));
+      if (dateRange.to_date) params.set("to_date", String(dateRange.to_date));
       return api.get(`${API_ENDPOINTS.ADMIN.REVENUE_STATS}?${params}`) as any;
     },
   });
@@ -183,25 +182,25 @@ export function RevenueOps() {
       if (activeTab === "inquiries") {
         const params = new URLSearchParams({
           offset: String((page - 1) * PAGE_SIZE),
-          count:  String(PAGE_SIZE),
+          count: String(PAGE_SIZE),
         });
         if (dateRange.from_date) params.set("from_date", String(dateRange.from_date));
-        if (dateRange.to_date)   params.set("to_date",   String(dateRange.to_date));
-        if (debouncedSearch)     params.set("search",    debouncedSearch);
+        if (dateRange.to_date) params.set("to_date", String(dateRange.to_date));
+        if (debouncedSearch) params.set("search", debouncedSearch);
         return api.get(`${API_ENDPOINTS.ADMIN.REVENUE_CONTACT_INQUIRIES}?${params}`) as any;
       } else {
         const endpoint =
           activeTab === "subscriptions" ? API_ENDPOINTS.ADMIN.REVENUE_PAYMENTS_SUBSCRIPTIONS :
-          activeTab === "products"      ? API_ENDPOINTS.ADMIN.REVENUE_PAYMENTS_PRODUCTS :
-                                          API_ENDPOINTS.ADMIN.REVENUE_PAYMENTS;
+            activeTab === "products" ? API_ENDPOINTS.ADMIN.REVENUE_PAYMENTS_PRODUCTS :
+              API_ENDPOINTS.ADMIN.REVENUE_PAYMENTS;
         const params = new URLSearchParams({
           offset: String((page - 1) * PAGE_SIZE),
-          count:  String(PAGE_SIZE),
+          count: String(PAGE_SIZE),
         });
         if (dateRange.from_date) params.set("from_date", String(dateRange.from_date));
-        if (dateRange.to_date)   params.set("to_date",   String(dateRange.to_date));
-        if (debouncedSearch)     params.set("search",    debouncedSearch);
-        if (paymentMethod)       params.set("payment_method", paymentMethod);
+        if (dateRange.to_date) params.set("to_date", String(dateRange.to_date));
+        if (debouncedSearch) params.set("search", debouncedSearch);
+        if (paymentMethod) params.set("payment_method", paymentMethod);
         return api.get(`${endpoint}?${params}`) as any;
       }
     },
@@ -216,10 +215,10 @@ export function RevenueOps() {
   const isRefreshing = listFetching;
 
   const tabs: { id: Tab; label: string; icon: any }[] = [
-    { id: "all",           label: t("allPayments"),    icon: IndianRupee },
-    { id: "subscriptions", label: t("subscriptions"),   icon: CreditCard },
-    { id: "products",      label: t("products"),        icon: ShoppingBag },
-    { id: "inquiries",     label: t("inquiries"),       icon: Mail },
+    { id: "all", label: t("allPayments"), icon: IndianRupee },
+    { id: "subscriptions", label: t("subscriptions"), icon: CreditCard },
+    { id: "products", label: t("products"), icon: ShoppingBag },
+    { id: "inquiries", label: t("inquiries"), icon: Mail },
   ];
 
   return (
@@ -244,7 +243,7 @@ export function RevenueOps() {
               queryClient.invalidateQueries({ queryKey: queryKeys.admin.dashboard.monthlyRevenue({}) });
             }}
             className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-indigo-500 hover:border-indigo-500 text-indigo-400 hover:text-white transition-all"
-            title="Refresh"
+            title={t("refreshAll")}
           >
             <RefreshCw size={13} className={isRefreshing ? "animate-spin" : ""} />
           </button>
@@ -254,10 +253,10 @@ export function RevenueOps() {
       {/* ── Stats Cards ── */}
       {stats && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard label={t("totalRevenue")}        value={stats.total_revenue}        icon={TrendingUp}  color="bg-indigo-500"  delay={0}    currency={currency} />
-          <StatCard label={t("subscriptionRevenue")} value={stats.subscription_revenue} icon={CreditCard}  color="bg-violet-500"  delay={0.05} currency={currency} />
-          <StatCard label={t("productRevenue")}      value={stats.product_revenue}      icon={ShoppingBag} color="bg-amber-500"   delay={0.1}  currency={currency} />
-          <StatCard label={t("renewalRevenue")}      value={stats.renewal_revenue}      icon={RefreshCw}   color="bg-emerald-500" delay={0.15} currency={currency} />
+          <StatCard label={t("totalRevenue")} value={stats.total_revenue} icon={TrendingUp} color="bg-indigo-500" delay={0} currency={currency} />
+          <StatCard label={t("subscriptionRevenue")} value={stats.subscription_revenue} icon={CreditCard} color="bg-violet-500" delay={0.05} currency={currency} />
+          <StatCard label={t("productRevenue")} value={stats.product_revenue} icon={ShoppingBag} color="bg-amber-500" delay={0.1} currency={currency} />
+          <StatCard label={t("renewalRevenue")} value={stats.renewal_revenue} icon={RefreshCw} color="bg-emerald-500" delay={0.15} currency={currency} />
         </div>
       )}
 
@@ -271,8 +270,7 @@ export function RevenueOps() {
           <div className="flex items-center gap-2">
             {[3, 6, 12].map((m) => (
               <button key={m} onClick={() => setRevenueMonths(m)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                  revenueMonths === m ? "bg-indigo-500 text-white" : "bg-white/5 text-slate-400 hover:text-white border border-white/10"}`}>
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${revenueMonths === m ? "bg-indigo-500 text-white" : "bg-white/5 text-slate-400 hover:text-white border border-white/10"}`}>
                 {m}M
               </button>
             ))}
@@ -294,8 +292,8 @@ export function RevenueOps() {
                 <Tooltip content={<RevTooltip currency={currency} />} />
                 <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700, paddingTop: 12 }} />
                 <Bar dataKey="subscription_revenue" name={t("subscriptions")} fill="#6366f1" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="product_revenue"      name={t("products")}      fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="renewal_revenue"      name={t("renewals")}      fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="product_revenue" name={t("products")} fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="renewal_revenue" name={t("renewals")} fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -308,11 +306,10 @@ export function RevenueOps() {
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-              activeTab === id
-                ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/20"
-                : "text-slate-400 hover:text-white hover:bg-white/5"
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === id
+              ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/20"
+              : "text-slate-400 hover:text-white hover:bg-white/5"
+              }`}
           >
             <Icon size={14} />
             {label}
@@ -361,7 +358,7 @@ export function RevenueOps() {
               </tr>
             </thead>
             <tbody>
-              {paymentsLoading ? (
+              {isLoading ? (
                 [...Array(5)].map((_, i) => (
                   <tr key={i} className="border-b border-white/5">
                     {[...Array(6)].map((__, j) => (
@@ -419,13 +416,13 @@ export function RevenueOps() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-white/10 bg-white/5">
-                {["Name, mobile/email", "Subject", "Message", "Status", "Date"].map((h) => (
+                {[t("nameMobileEmail"), t("subjectObjective"), t("contactMessage"), t("status"), t("date")].map((h) => (
                   <th key={h} className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {inquiriesLoading ? (
+              {isLoading ? (
                 [...Array(5)].map((_, i) => (
                   <tr key={i} className="border-b border-white/5">
                     {[...Array(5)].map((__, j) => (

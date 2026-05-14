@@ -76,13 +76,13 @@ export function AdminPayments() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => adminPaymentService.deletePayment(id),
     onSuccess: () => {
-      toast.success("Transaction purged from registry");
+      toast.success("Payment record deleted successfully");
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.payments({}) });
       setDeleteModalOpen(false);
       setDeleteTarget(null);
     },
     onError: () => {
-      toast.error("Operation failed");
+      toast.error("Failed to process payment record");
     }
   });
 
@@ -93,7 +93,7 @@ export function AdminPayments() {
         ? adminPaymentService.updatePayment(editPayment, payload)
         : adminPaymentService.createPayment(payload),
     onSuccess: () => {
-      toast.success(editPayment ? "Financial record updated" : "New transaction logged");
+      toast.success(editPayment ? "Payment record updated" : "Payment logged successfully");
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.payments({}) });
       setPaymentModalOpen(false);
       setEditPayment(null);
@@ -361,8 +361,8 @@ export function AdminPayments() {
             deleteMutation.mutate(deleteTarget.id);
           }
         }}
-        title="Registry Purge"
-        description="This financial record will be permanently erased from the master ledger."
+        title="Delete Payment"
+        description="This financial record will be permanently deleted from the system."
         confirmLabel="Submit"
         isProcessing={deleteMutation.isPending}
       />

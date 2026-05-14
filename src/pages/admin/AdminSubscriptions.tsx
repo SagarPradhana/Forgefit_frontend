@@ -70,24 +70,24 @@ export function AdminSubscriptions() {
         ? adminSubscriptionService.updatePlan(editPlan, payload)
         : adminSubscriptionService.createPlan(payload),
     onSuccess: () => {
-      toast.success(editPlan ? "Strategic tier updated successfully" : "New membership strategy deployed");
+      toast.success(editPlan ? "Subscription plan updated successfully" : "New subscription plan created");
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.subscriptions({}) });
       setPlanModalOpen(false);
     },
-    onError: () => toast.error("Strategy modification failed. Verify parameters.")
+    onError: () => toast.error("Failed to save subscription plan. Please check all fields.")
   });
 
   // 🛡️ DELETE PLAN MUTATION
   const deleteMutation = useMutation({
     mutationFn: (id: string) => adminSubscriptionService.deletePlan(id),
     onSuccess: () => {
-      toast.success("Strategy terminated successfully");
+      toast.success("Subscription plan deleted successfully");
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.subscriptions({}) });
       setDeleteModalOpen(false);
       setDeleteTarget(null);
     },
     onError: () => {
-      toast.error("Termination failed. Active dependencies detected.");
+      toast.error("Deletion failed. This plan may be active for some users.");
     }
   });
 

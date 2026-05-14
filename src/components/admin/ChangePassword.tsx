@@ -59,7 +59,7 @@ export function ChangePassword() {
             <ShieldCheck size={24} />
           </div>
           <div>
-            <h2 className="text-2xl font-black text-white uppercase tracking-tight italic">Security Protocol</h2>
+            <h2 className="text-2xl font-black text-white uppercase tracking-tight italic">Change Password</h2>
             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Update Your Access Credentials</p>
           </div>
         </div>
@@ -88,7 +88,7 @@ export function ChangePassword() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">New Strategic Password</label>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">New Password</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
               <input
@@ -110,7 +110,7 @@ export function ChangePassword() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirm New Credentials</label>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirm New Password</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
               <input
@@ -137,7 +137,7 @@ export function ChangePassword() {
               disabled={loading}
               className="w-full h-14 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-amber-500/20"
             >
-              {loading ? "Re-encrypting..." : "Initialize Security Update"}
+              {loading ? "Updating..." : "Update Password"}
             </GlowButton>
           </div>
         </form>

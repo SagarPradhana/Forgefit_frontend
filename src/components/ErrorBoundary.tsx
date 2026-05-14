@@ -85,7 +85,7 @@ class ErrorBoundary extends Component<Props, State> {
                 className="flex w-full sm:w-auto items-center justify-center gap-3 rounded-2xl bg-white/5 px-8 py-4 font-black uppercase tracking-widest text-slate-300 border border-white/10 transition-all hover:bg-white/10 hover:text-white"
               >
                 <Home size={18} />
-                Abort
+                Cancel
               </button>
             </div>
 

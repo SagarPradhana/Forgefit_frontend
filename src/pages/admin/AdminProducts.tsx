@@ -65,24 +65,24 @@ export function AdminProducts() {
         ? adminProductService.updateProduct(editProduct, payload)
         : adminProductService.createProduct(payload),
     onSuccess: () => {
-      toast.success(editProduct ? "Inventory specifications updated" : "New product deployed to catalog");
+      toast.success(editProduct ? "Product updated successfully" : "Product created and added to catalog");
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.products({}) });
       setProductModalOpen(false);
     },
-    onError: () => toast.error("Inventory sync failed")
+    onError: () => toast.error("Failed to save product. Please check all fields.")
   });
 
   // 🛡️ DELETE PRODUCT MUTATION
   const deleteMutation = useMutation({
     mutationFn: (id: string) => adminProductService.deleteProduct(id),
     onSuccess: () => {
-      toast.success("Inventory item terminated successfully");
+      toast.success("Product deleted successfully");
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.products({}) });
       setDeleteModalOpen(false);
       setDeleteTarget(null);
     },
     onError: () => {
-      toast.error("Termination failed");
+      toast.error("Failed to delete product");
     }
   });
 

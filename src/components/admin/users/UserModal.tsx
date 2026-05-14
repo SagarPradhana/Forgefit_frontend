@@ -119,13 +119,13 @@ export const UserModal = ({
               </div> */}
 
               <div>
-                <label className="block text-sm font-semibold text-white mb-2">Full Name <span className="text-orange-400">*</span></label>
+                <label className="block text-sm font-semibold text-white mb-2">{t("fullName")} <span className="text-orange-400">*</span></label>
                 <input
                   id="user_registration_full_name_field"
                   name="user_registration_full_name_field"
                   type="text"
                   autoComplete="new-password"
-                  placeholder="Enter full name"
+                  placeholder={t("fullName")}
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
@@ -134,11 +134,11 @@ export const UserModal = ({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-white mb-2">Mobile <span className="text-orange-400">*</span></label>
+                  <label className="block text-sm font-semibold text-white mb-2">{t("mobile")} <span className="text-orange-400">*</span></label>
                   <input
                     name="user_account_mobile"
                     type="tel"
-                    placeholder="Mobile number"
+                    placeholder={t("mobile")}
                     value={formData.mobile}
                     onChange={(e) => setFormData({ ...formData, mobile: sanitizePhone(e.target.value) })}
                     onKeyDown={handlePhoneKeyDown}
@@ -147,13 +147,13 @@ export const UserModal = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-white mb-2">Email</label>
+                  <label className="block text-sm font-semibold text-white mb-2">{t("email")}</label>
                   <input
                     id="user_registration_email_field"
                     name="user_registration_email_field"
                     type="email"
                     autoComplete="new-password"
-                    placeholder="Email address (optional)"
+                    placeholder={t("email")}
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
@@ -163,11 +163,11 @@ export const UserModal = ({
 
               {!editingUserId && (
                 <div>
-                  <label className="block text-sm font-semibold text-white mb-2">Password <span className="text-orange-400">*</span></label>
+                  <label className="block text-sm font-semibold text-white mb-2">{t("password")} <span className="text-orange-400">*</span></label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
-                      placeholder="Security password"
+                      placeholder={t("password")}
                       value={formData.password || ""}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 pr-12 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/50 transition"
@@ -192,7 +192,7 @@ export const UserModal = ({
               className="space-y-5"
             >
               <div>
-                <label className="block text-sm font-semibold text-white mb-2">Role <span className="text-orange-400">*</span></label>
+                <label className="block text-sm font-semibold text-white mb-2">{t("role")} <span className="text-orange-400">*</span></label>
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
@@ -207,9 +207,9 @@ export const UserModal = ({
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-white mb-2">Address <span className="text-orange-400">*</span></label>
+                <label className="block text-sm font-semibold text-white mb-2">{t("residence")} <span className="text-orange-400">*</span></label>
                 <textarea
-                  placeholder="Enter full address"
+                  placeholder={t("residence")}
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:border-indigo-400 transition resize-none"
@@ -218,7 +218,7 @@ export const UserModal = ({
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-white mb-2">Joining Date <span className="text-orange-400">*</span></label>
+                <label className="block text-sm font-semibold text-white mb-2">{t("joiningDate")} <span className="text-orange-400">*</span></label>
                 <input
                   type="date"
                   max={new Date().toISOString().split('T')[0]}
@@ -244,20 +244,20 @@ export const UserModal = ({
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-white mb-1">Specialization <span className="text-orange-400">*</span></label>
+                      <label className="block text-xs font-semibold text-white mb-1">{t("specialization")} <span className="text-orange-400">*</span></label>
                       <input
                         type="text"
-                        placeholder="e.g., Strength Training, Yoga, HIIT"
+                        placeholder={t("specialization")}
                         value={formData.metadata.specialization || ""}
                         onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, specialization: e.target.value } })}
                         className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-400"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-white mb-1">Experience (Years) <span className="text-orange-400">*</span></label>
+                      <label className="block text-xs font-semibold text-white mb-1">{t("experience")} <span className="text-orange-400">*</span></label>
                       <input
                         type="number"
-                        placeholder="Years of experience"
+                        placeholder={t("experience")}
                         value={formData.metadata.experience || ""}
                         onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, experience: Number(e.target.value) } })}
                         className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-400"
@@ -265,10 +265,10 @@ export const UserModal = ({
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-white mb-1">Certifications</label>
+                    <label className="block text-xs font-semibold text-white mb-1">{t("certifications")}</label>
                     <input
                       type="text"
-                      placeholder="Any certifications or credentials"
+                      placeholder={t("certifications")}
                       value={formData.metadata.certifications || ""}
                       onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, certifications: e.target.value } })}
                       className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-400"
@@ -279,7 +279,7 @@ export const UserModal = ({
                 <>
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Height</label>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t("height")}</label>
                       <input
                         type="number"
                         value={formData.metadata.height}
@@ -288,7 +288,7 @@ export const UserModal = ({
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Weight</label>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t("weight")}</label>
                       <input
                         type="number"
                         value={formData.metadata.weight}
@@ -297,7 +297,7 @@ export const UserModal = ({
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">DOB</label>
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t("dob")}</label>
                       <input
                         type="date"
                         max={new Date().toISOString().split('T')[0]}
@@ -313,19 +313,19 @@ export const UserModal = ({
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-white mb-1">Gender</label>
+                      <label className="block text-xs font-semibold text-white mb-1">{t("gender")}</label>
                       <select
                         value={formData.metadata.gender}
                         onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, gender: e.target.value } })}
                         className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs"
                       >
-                        <option value="male" className="bg-slate-900">Male</option>
-                        <option value="female" className="bg-slate-900">Female</option>
-                        <option value="other" className="bg-slate-900">Other</option>
+                        <option value="male" className="bg-slate-900">{t("male")}</option>
+                        <option value="female" className="bg-slate-900">{t("female")}</option>
+                        <option value="other" className="bg-slate-900">{t("other")}</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-white mb-1">Emergency Contact</label>
+                      <label className="block text-xs font-semibold text-white mb-1">{t("emergencyContact")}</label>
                       <input
                         type="tel"
                         value={formData.metadata.emergency_contact}

@@ -43,24 +43,24 @@ export function DietPlanModal({
         </div>
       }
     >
-      <div className="space-y-8 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar py-2">
+      <div className="space-y-8 py-2">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">{t("protocolDesignation")}</label>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">{t("dietPlanName")}</label>
             <input
               className="w-full rounded-2xl bg-slate-950 border border-white/5 p-4 text-white focus:border-emerald-500/50 outline-none transition duration-300 text-sm font-bold shadow-inner"
               value={dietForm.name}
               onChange={(e) => setDietForm({ ...dietForm, name: e.target.value })}
-              placeholder={t("protocolDesignationPlaceholder")}
+              placeholder={t("dietPlanNamePlaceholder")}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">{t("strategicFocus")}</label>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">{t("planFocus")}</label>
             <input
               className="w-full rounded-2xl bg-slate-950 border border-white/5 p-4 text-white focus:border-emerald-500/50 outline-none transition duration-300 text-sm font-bold shadow-inner"
               value={dietForm.focus}
               onChange={(e) => setDietForm({ ...dietForm, focus: e.target.value })}
-              placeholder={t("strategicFocusPlaceholder")}
+              placeholder={t("planFocusPlaceholder")}
             />
           </div>
         </div>

@@ -144,21 +144,24 @@ export function UserAttendance() {
         ) : (
           <GlassCard>
             <Table
-              headers={["Date", "Check In", "Check Out", "Action"]}
-              rows={formatAttendanceForUI(fetchedAttendance).map((a) => [
-                a.date,
-                a.checkIn,
-                a.checkOut,
-                a.records.length > 1 ? (
-                  <button
-                    onClick={() => setViewMoreAttendance(a.records)}
-                    className="px-2 py-1 bg-indigo-500/20 text-indigo-400 text-[10px] rounded hover:bg-indigo-500/40"
-                    key={a.date}
-                  >
-                    +{a.records.length - 1} More
-                  </button>
-                ) : null
-              ])}
+              columns={[
+                { key: "date", label: "Date" },
+                { key: "checkIn", label: "Check In" },
+                { key: "checkOut", label: "Check Out" },
+                {
+                  key: "action",
+                  label: "Action",
+                  render: (a) => a.records.length > 1 ? (
+                    <button
+                      onClick={() => setViewMoreAttendance(a.records)}
+                      className="px-2 py-1 bg-indigo-500/20 text-indigo-400 text-[10px] rounded hover:bg-indigo-500/40"
+                    >
+                      +{a.records.length - 1} More
+                    </button>
+                  ) : null
+                }
+              ]}
+              data={formatAttendanceForUI(fetchedAttendance)}
             />
           </GlassCard>
         )
@@ -169,13 +172,29 @@ export function UserAttendance() {
       <Modal open={!!viewMoreAttendance} onClose={() => setViewMoreAttendance(null)} title="Check-in Details">
         <div className="p-4">
           <Table
-            headers={["Check In", "Check Out", "Status", "Duration"]}
-            rows={(viewMoreAttendance || []).map((r) => [
-              new Date(r.check_in * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "---",
-              <StatusBadge key={r.id} status={r.status === "present" ? "Present" : (r.status as any)} />,
-              r.duration || "—"
-            ])}
+            columns={[
+              {
+                key: "checkIn",
+                label: "Check In",
+                render: (r) => new Date(r.check_in * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              },
+              {
+                key: "checkOut",
+                label: "Check Out",
+                render: (r) => r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "---"
+              },
+              {
+                key: "status",
+                label: "Status",
+                render: (r) => <StatusBadge status={r.status === "present" ? "Active" : (r.status as any)} />
+              },
+              {
+                key: "duration",
+                label: "Duration",
+                render: (r) => r.duration || "—"
+              }
+            ]}
+            data={viewMoreAttendance || []}
           />
         </div>
       </Modal>

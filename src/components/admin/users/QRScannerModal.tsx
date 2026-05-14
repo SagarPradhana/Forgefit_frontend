@@ -200,7 +200,7 @@ export function QRScannerModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                     <div className="h-32 w-32 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-8 border-4 border-emerald-500/30 shadow-[0_0_50px_rgba(16,185,129,0.4)]">
                       <CheckCircle size={64} />
                     </div>
-                    <p className="text-3xl font-black text-white mb-3 tracking-tight">Attendance Logged!</p>
+                    <p className="text-3xl font-black text-white mb-3 tracking-tight">Check-in Recorded</p>
                     <p className="text-base text-slate-400 break-all mb-4">Ready for next scan.</p>
                   </div>
                 )}
