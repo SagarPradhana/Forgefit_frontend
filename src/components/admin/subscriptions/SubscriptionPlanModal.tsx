@@ -1,6 +1,5 @@
 import { Modal, GlowButton } from "../../ui/primitives";
 import { toast } from "../../../store/toastStore";
-import { adminSubscriptionService } from "../../../services/adminSubscriptionService";
 import { handlePhoneKeyDown, handlePhonePaste, sanitizePhone } from "../../../utils/formUtils";
 import { useTranslation } from "react-i18next";
 
@@ -18,6 +17,8 @@ interface SubscriptionPlanModalProps {
   setPlanForm: (form: any) => void;
   currencySymbol: string;
   onSuccess: () => void;
+  onSave: (payload: any) => void;
+  isSaving: boolean;
 }
 
 export function SubscriptionPlanModal({
@@ -27,9 +28,11 @@ export function SubscriptionPlanModal({
   planForm,
   setPlanForm,
   currencySymbol,
-  onSuccess
+  onSave,
+  isSaving
 }: SubscriptionPlanModalProps) {
   const { t } = useTranslation();
+
   const handleSubmit = async () => {
     if (!planForm.name.trim()) {
       toast.error("Plan name is required");
@@ -52,19 +55,7 @@ export function SubscriptionPlanModal({
       duration_in_months: Number(planForm.duration_in_months),
     };
 
-    try {
-      if (editPlanId) {
-        await adminSubscriptionService.updatePlan(editPlanId, payload);
-        toast.success("Strategic tier updated successfully");
-      } else {
-        await adminSubscriptionService.createPlan(payload);
-        toast.success("New membership strategy deployed");
-      }
-      onSuccess();
-      onClose();
-    } catch (err) {
-      toast.error("Strategy modification failed. Verify parameters.");
-    }
+    onSave(payload);
   };
 
   return (
@@ -74,8 +65,10 @@ export function SubscriptionPlanModal({
       title={editPlanId ? t("editStrategy") : t("defineStrategy")}
       footer={
         <>
-          <GlowButton className="bg-gray-600" onClick={onClose}>{t("cancel")}</GlowButton>
-          <GlowButton onClick={handleSubmit}>{t("submit")}</GlowButton>
+          <GlowButton className="bg-gray-600" onClick={onClose} disabled={isSaving}>{t("cancel")}</GlowButton>
+          <GlowButton onClick={handleSubmit} disabled={isSaving}>
+            {t("submit")}
+          </GlowButton>
         </>
       }
     >

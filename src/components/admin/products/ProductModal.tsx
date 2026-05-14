@@ -1,6 +1,5 @@
 import { Modal, GlowButton } from "../../ui/primitives";
 import { toast } from "../../../store/toastStore";
-import { adminProductService } from "../../../services/adminProductService";
 import { handlePhoneKeyDown, handlePhonePaste, sanitizePhone } from "../../../utils/formUtils";
 import { useTranslation } from "react-i18next";
 
@@ -20,6 +19,8 @@ interface ProductModalProps {
   setProductForm: (form: any) => void;
   currencySymbol: string;
   onSuccess: () => void;
+  onSave: (payload: any) => void;
+  isSaving: boolean;
 }
 
 export function ProductModal({
@@ -29,9 +30,11 @@ export function ProductModal({
   productForm,
   setProductForm,
   currencySymbol,
-  onSuccess
+  onSave,
+  isSaving
 }: ProductModalProps) {
   const { t } = useTranslation();
+
   const handleSubmit = async () => {
     if (!productForm.name.trim()) {
       toast.error("Product name is required");
@@ -55,19 +58,8 @@ export function ProductModal({
       image_url: productForm.image || "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&q=80&w=400",
       description: productForm.description
     };
-    try {
-      if (editProductId) {
-        await adminProductService.updateProduct(editProductId, payload);
-        toast.success("Inventory specifications updated");
-      } else {
-        await adminProductService.createProduct(payload);
-        toast.success("New product deployed to catalog");
-      }
-      onSuccess();
-      onClose();
-    } catch (err) {
-      toast.error("Inventory sync failed");
-    }
+
+    onSave(payload);
   };
 
   return (
@@ -77,8 +69,10 @@ export function ProductModal({
       title={editProductId ? t("modifyInventory") : t("registerProduct")}
       footer={
         <>
-          <GlowButton className="bg-gray-600" onClick={onClose}>{t("cancel")}</GlowButton>
-          <GlowButton onClick={handleSubmit}>{t("submit")}</GlowButton>
+          <GlowButton className="bg-gray-600" onClick={onClose} disabled={isSaving}>{t("cancel")}</GlowButton>
+          <GlowButton onClick={handleSubmit} disabled={isSaving}>
+            {t("submit")}
+          </GlowButton>
         </>
       }
     >

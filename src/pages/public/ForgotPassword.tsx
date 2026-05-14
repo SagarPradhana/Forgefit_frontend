@@ -2,7 +2,7 @@ import { useState } from "react";
 import { PublicLayout } from "../../layouts/PublicLayout";
 import {
   CommonButton,
-  CommonCard,
+  GlassCard,
   InputField,
 } from "../../components/ui/primitives";
 import { Mail, ArrowLeft } from "lucide-react";
@@ -32,7 +32,7 @@ export function ForgotPasswordPage() {
     <PublicLayout>
       <div className="min-h-[80vh] flex items-center justify-center">
         <div className="w-full max-w-md">
-          <CommonCard className="p-8 backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl">
+          <GlassCard className="p-8 backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl">
             {!submitted ? (
               <>
                 {/* 🔙 BACK */}
@@ -104,7 +104,7 @@ export function ForgotPasswordPage() {
                 </div>
               </>
             )}
-          </CommonCard>
+          </GlassCard>
         </div>
       </div>
     </PublicLayout>

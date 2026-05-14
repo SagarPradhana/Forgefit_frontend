@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useGymStore } from "../../store/gymStore";
 import { useTranslation } from "react-i18next";
 import { 
@@ -8,30 +8,28 @@ import {
   Skeleton, 
   Table, 
   EmptyState,
-  Pagination
+  Pagination,
+  LoadingOverlay
 } from "../../components/ui/primitives";
 import { Search, Edit2, Trash2 } from "lucide-react";
-import { adminProductService, type ProductResponse } from "../../services/adminProductService";
+import { adminProductService } from "../../services/adminProductService";
 import { getCurrencySymbol } from "../../utils/currency";
 import { toast } from "../../store/toastStore";
 import { DeleteConfirmationModal } from "../../components/common/DeleteConfirmationModal";
-import { handlePhoneKeyDown, handlePhonePaste, sanitizePhone } from "../../utils/formUtils";
 import { ProductModal } from "../../components/admin/products/ProductModal";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../constants/queryKeys";
 
 export function AdminProducts() {
   const { t } = useTranslation();
   const { appConfig } = useGymStore();
+  const queryClient = useQueryClient();
   const currencySymbol = getCurrencySymbol(appConfig?.currency || "INR");
 
-  const [fetchedProducts, setFetchedProducts] = useState<ProductResponse[]>([]);
   const [productsMeta, setProductsMeta] = useState({
     page_no: 1,
-    total_count: 0,
     page_size: 10,
-    has_next: false,
-    has_previous: false
   });
-  const [productsLoading, setProductsLoading] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const [productCategory, setProductCategory] = useState("All");
   const [productModalOpen, setProductModalOpen] = useState(false);
@@ -49,44 +47,48 @@ export function AdminProducts() {
     description: ""
   });
 
-  const fetchProducts = async (p = productsMeta.page_no || 1, search = productSearch, category = productCategory) => {
-    setProductsLoading(true);
-    try {
-      const currentPage = Number(p) || 1;
-      const pageSize = Number(productsMeta.page_size) || 10;
-      const offset = (currentPage - 1) * pageSize;
-      const res = await adminProductService.getProducts({
-        count: pageSize,
-        offset,
-        search,
-        category: category !== "All" ? category : undefined
-      });
-      if (res && res.data) {
-        const totalCount = Number(
-          res.total_count ?? res.totalcount ?? res.pagination?.total_count ?? res.count ?? res.data.length ?? 0
-        );
-        setFetchedProducts(res.data);
-        setProductsMeta({
-          page_no: Math.floor(offset / pageSize) + 1,
-          total_count: totalCount,
-          page_size: pageSize,
-          has_next: offset + pageSize < totalCount,
-          has_previous: offset > 0
-        });
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setProductsLoading(false);
+  // 🛡️ FETCH PRODUCTS QUERY
+  const { data: productsData, isLoading: productsLoading } = useQuery({
+    queryKey: queryKeys.admin.products({ page: productsMeta.page_no, search: productSearch, category: productCategory }),
+    queryFn: () => adminProductService.getProducts({
+      count: productsMeta.page_size,
+      offset: (productsMeta.page_no - 1) * productsMeta.page_size,
+      search: productSearch,
+      category: productCategory !== "All" ? productCategory : undefined
+    }),
+  });
+
+  // 🛡️ SAVE PRODUCT MUTATION
+  const saveMutation = useMutation({
+    mutationFn: (payload: any) => 
+      editProduct 
+        ? adminProductService.updateProduct(editProduct, payload)
+        : adminProductService.createProduct(payload),
+    onSuccess: () => {
+      toast.success(editProduct ? "Inventory specifications updated" : "New product deployed to catalog");
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.products({}) });
+      setProductModalOpen(false);
+    },
+    onError: () => toast.error("Inventory sync failed")
+  });
+
+  // 🛡️ DELETE PRODUCT MUTATION
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => adminProductService.deleteProduct(id),
+    onSuccess: () => {
+      toast.success("Inventory item terminated successfully");
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.products({}) });
+      setDeleteModalOpen(false);
+      setDeleteTarget(null);
+    },
+    onError: () => {
+      toast.error("Termination failed");
     }
-  };
+  });
 
-  useEffect(() => {
-    const timer = setTimeout(() => fetchProducts(1), 300);
-    return () => clearTimeout(timer);
-  }, [productSearch, productCategory]);
-
-  const lastPage = Math.ceil(productsMeta.total_count / productsMeta.page_size) || 1;
+  const fetchedProducts = productsData?.data || [];
+  const totalCount = productsData?.totalcount || productsData?.count || 0;
+  const lastPage = Math.ceil(totalCount / productsMeta.page_size) || 1;
 
   return (
     <GlassCard>
@@ -139,60 +141,78 @@ export function AdminProducts() {
       ) : fetchedProducts.length > 0 ? (
         <>
           <Table
-            headers={["Product Info", "Category", "Price", "Stock", "Actions"]}
-            rows={fetchedProducts.map((p) => [
-              <div key={p.id} className="flex items-center gap-3 text-left">
-                <img src={p.image_url || "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&q=80&w=400"} alt={p.name} className="h-10 w-10 rounded-lg object-cover border border-white/10" />
-                <div className="flex flex-col">
-                  <span className="font-bold text-white tracking-tight uppercase text-xs">{p.name}</span>
-                  <span className="text-[10px] text-slate-500 truncate max-w-[120px]">{p.description}</span>
-                </div>
-              </div>,
-              <span key={`${p.id}-cat`} className="text-[10px] font-black uppercase tracking-widest text-slate-400">{p.category}</span>,
-              <span key={`${p.id}-price`} className="text-emerald-400 font-bold">{currencySymbol}{p.price}</span>,
-              <div key={`${p.id}-stock`} className="flex flex-col items-center gap-1">
-                <span className={`text-xs font-bold ${p.stock_count < 10 ? 'text-red-400' : 'text-indigo-300'}`}>{p.stock_count}</span>
-                {p.stock_count < 10 && <span className="text-[8px] font-black uppercase text-red-500/80 animate-pulse">{t("lowStock")}</span>}
-              </div>,
-              <div key={`${p.id}-actions`} className="flex gap-4">
-                <button
-                  className="text-indigo-400 hover:text-indigo-300 transition-transform hover:scale-125"
-                  onClick={() => {
-                    setProductForm({
-                      name: p.name,
-                      category: p.category,
-                      price: p.price.toString(),
-                      stock: p.stock_count.toString(),
-                      unit: p.unit || "kg",
-                      image: p.image_url || "",
-                      description: p.description || ""
-                    });
-                    setEditProduct(p.id);
-                    setProductModalOpen(true);
-                  }}
-                >
-                  <Edit2 size={18} />
-                </button>
-                <button
-                  className="text-red-400 hover:text-red-300 transition-transform hover:scale-125"
-                  onClick={() => {
-                    setDeleteTarget({ type: "product", id: p.id });
-                    setDeleteModalOpen(true);
-                  }}
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>,
-            ])}
+            columns={[
+              { 
+                key: "info", 
+                label: "Product Info", 
+                render: (p) => (
+                  <div className="flex items-center gap-3 text-left">
+                    <img src={p.image_url || "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&q=80&w=400"} alt={p.name} className="h-10 w-10 rounded-lg object-cover border border-white/10" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white tracking-tight uppercase text-xs">{p.name}</span>
+                      <span className="text-[10px] text-slate-500 truncate max-w-[120px]">{p.description}</span>
+                    </div>
+                  </div>
+                ) 
+              },
+              { key: "category", label: "Category", render: (p) => <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{p.category}</span> },
+              { key: "price", label: "Price", render: (p) => <span className="text-emerald-400 font-bold">{currencySymbol}{p.price}</span> },
+              { 
+                key: "stock", 
+                label: "Stock", 
+                render: (p) => (
+                  <div className="flex flex-col items-center gap-1">
+                    <span className={`text-xs font-bold ${p.stock_count < 10 ? 'text-red-400' : 'text-indigo-300'}`}>{p.stock_count}</span>
+                    {p.stock_count < 10 && <span className="text-[8px] font-black uppercase text-red-500/80 animate-pulse">{t("lowStock")}</span>}
+                  </div>
+                ) 
+              },
+              { 
+                key: "actions", 
+                label: "Actions", 
+                render: (p) => (
+                  <div className="flex gap-4">
+                    <button
+                      className="text-indigo-400 hover:text-indigo-300 transition-transform hover:scale-125"
+                      onClick={() => {
+                        setProductForm({
+                          name: p.name,
+                          category: p.category,
+                          price: p.price.toString(),
+                          stock: p.stock_count.toString(),
+                          unit: p.unit || "kg",
+                          image: p.image_url || "",
+                          description: p.description || ""
+                        });
+                        setEditProduct(p.id);
+                        setProductModalOpen(true);
+                      }}
+                    >
+                      <Edit2 size={18} />
+                    </button>
+                    <button
+                      className="text-red-400 hover:text-red-300 transition-transform hover:scale-125"
+                      onClick={() => {
+                        setDeleteTarget({ type: "product", id: p.id });
+                        setDeleteModalOpen(true);
+                      }}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ) 
+              },
+            ]}
+            data={fetchedProducts}
           />
 
           <Pagination
             currentPage={productsMeta.page_no}
             totalPages={lastPage}
-            hasPrev={productsMeta.has_previous}
-            hasNext={productsMeta.has_next}
-            onPrev={() => fetchProducts(productsMeta.page_no - 1)}
-            onNext={() => fetchProducts(productsMeta.page_no + 1)}
+            hasPrev={productsMeta.page_no > 1}
+            hasNext={productsMeta.page_no < lastPage}
+            onPrev={() => setProductsMeta({ ...productsMeta, page_no: productsMeta.page_no - 1 })}
+            onNext={() => setProductsMeta({ ...productsMeta, page_no: productsMeta.page_no + 1 })}
           />
         </>
       ) : (
@@ -209,29 +229,25 @@ export function AdminProducts() {
         productForm={productForm}
         setProductForm={setProductForm}
         currencySymbol={currencySymbol}
-        onSuccess={() => fetchProducts(1)}
+        onSuccess={() => {}}
+        onSave={(payload) => saveMutation.mutate(payload)}
+        isSaving={saveMutation.isPending}
       />
 
       <DeleteConfirmationModal
         isOpen={deleteModalOpen && deleteTarget?.type === "product"}
         onClose={() => setDeleteModalOpen(false)}
-        onConfirm={async () => {
+        onConfirm={() => {
           if (deleteTarget && deleteTarget.type === "product") {
-            try {
-              await adminProductService.deleteProduct(deleteTarget.id);
-              toast.success("Inventory item terminated successfully");
-              fetchProducts(productsMeta.page_no);
-            } catch (err) {
-              toast.error("Termination failed");
-            }
+            deleteMutation.mutate(deleteTarget.id);
           }
-          setDeleteModalOpen(false);
-          setDeleteTarget(null);
         }}
         title={t("inventoryPurge")}
         description={t("inventoryPurgeDesc")}
         confirmLabel={t("submit")}
       />
+      {/* FULL SCREEN LOADING OVERLAY */}
+      <LoadingOverlay show={deleteMutation.isPending || saveMutation.isPending} label={t("processingRequest") || "Processing Request..."} />
     </GlassCard>
   );
 }

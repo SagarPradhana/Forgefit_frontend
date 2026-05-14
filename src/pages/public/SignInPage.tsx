@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   CommonButton,
-  CommonCard,
+  GlassCard,
   InputField,
 } from "../../components/ui/primitives";
 import { PublicLayout } from "../../layouts/PublicLayout";
@@ -152,7 +152,7 @@ export function SignInPage() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="w-full max-w-md mx-auto"
         >
-          <CommonCard className="p-6 md:p-10 backdrop-blur-2xl bg-white/5 border border-white/10 shadow-2xl relative overflow-hidden group">
+          <GlassCard className="p-6 md:p-10 backdrop-blur-2xl bg-white/5 border border-white/10 shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-opacity">
               <Sparkles className="text-orange-400 h-12 w-12" />
             </div>
@@ -253,7 +253,7 @@ export function SignInPage() {
                 Don't have an account? <Link to="/contact" className="text-orange-400 hover:underline font-medium">Join us</Link>
               </motion.p>
             </form>
-          </CommonCard>
+          </GlassCard>
         </motion.div>
       </div>
     </PublicLayout>

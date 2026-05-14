@@ -1,4 +1,4 @@
-import { CommonButton, Modal } from "../../ui/primitives";
+import { CommonButton, Modal, ButtonLoader } from "../../ui/primitives";
 import { useTranslation } from "react-i18next";
 
 interface ManualAttendanceModalProps {
@@ -16,6 +16,7 @@ interface ManualAttendanceModalProps {
   setForm: (form: any) => void;
   members: any[];
   onSave: () => void;
+  isSaving?: boolean;
 }
 
 export function ManualAttendanceModal({
@@ -25,7 +26,8 @@ export function ManualAttendanceModal({
   form,
   setForm,
   members,
-  onSave
+  onSave,
+  isSaving
 }: ManualAttendanceModalProps) {
   const { t } = useTranslation();
   return (
@@ -35,8 +37,10 @@ export function ManualAttendanceModal({
       title={editingRecord ? t("editAttendanceLog") : t("manualCheckIn")}
       footer={
         <div className="flex gap-3">
-          <CommonButton variant="ghost" onClick={onClose}>{t("cancel")}</CommonButton>
-          <CommonButton onClick={onSave}>{t("submit")}</CommonButton>
+          <CommonButton variant="ghost" onClick={onClose} disabled={isSaving}>{t("cancel")}</CommonButton>
+          <CommonButton onClick={onSave} disabled={isSaving}>
+            <ButtonLoader loading={isSaving} label={t("submit")} loadingLabel={t("loading")} />
+          </CommonButton>
         </div>
       }
     >

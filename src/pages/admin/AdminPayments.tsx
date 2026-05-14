@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useGymStore } from "../../store/gymStore";
 import { useTranslation } from "react-i18next";
 import {
@@ -11,7 +11,6 @@ import {
   StatusBadge,
   CommonButton,
   Pagination,
-  ButtonLoader,
   LoadingOverlay,
   InlineSpinner,
 } from "../../components/ui/primitives";
@@ -30,25 +29,23 @@ import * as XLSX from "xlsx";
 import { API_ENDPOINTS } from "../../utils/url";
 import { api } from "../../utils/httputils";
 import { PaymentModal } from "../../components/admin/payments/PaymentModal";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../constants/queryKeys";
 
 export function AdminPayments() {
   const { t } = useTranslation();
   const { appConfig } = useGymStore();
   const currencySymbol = getCurrencySymbol(appConfig?.currency || "INR");
 
-  const [fetchedPayments, setFetchedPayments] = useState<PaymentResponse[]>([]);
+  const queryClient = useQueryClient();
   const [paymentsMeta, setPaymentsMeta] = useState({
     page_no: 1,
-    total_count: 0,
     page_size: 10,
-    has_next: false,
-    has_previous: false
   });
-  const [paymentsLoading, setPaymentsLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<"All" | "Paid" | "Pending">("All");
   const [paymentDateRange, setPaymentDateRange] = useState<DateRange>({ label: "This Month" });
 
-  const [paymentModalOpen, setModalOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [editPayment, setEditPayment] = useState<string | null>(null);
   const [usersDropdown, setUsersDropdown] = useState<any[]>([]);
   const [subscriptionPlans, setSubscriptionPlans] = useState<PlanResponse[]>([]);
@@ -58,7 +55,58 @@ export function AdminPayments() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentResponse | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: string; id: any } | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // 🛡️ FETCH PAYMENTS QUERY
+  const { data: paymentsData, isLoading: paymentsLoading } = useQuery({
+    queryKey: queryKeys.admin.payments({
+      page: paymentsMeta.page_no,
+      status: paymentStatus,
+      range: paymentDateRange
+    }),
+    queryFn: () => adminPaymentService.getPayments({
+      count: paymentsMeta.page_size,
+      offset: (paymentsMeta.page_no - 1) * paymentsMeta.page_size,
+      status: paymentStatus !== "All" ? paymentStatus.toLowerCase() as any : undefined,
+      from_date: paymentDateRange.from_date,
+      to_date: paymentDateRange.to_date,
+    }),
+  });
+
+  // 🛡️ DELETE PAYMENT MUTATION
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => adminPaymentService.deletePayment(id),
+    onSuccess: () => {
+      toast.success("Transaction purged from registry");
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.payments({}) });
+      setDeleteModalOpen(false);
+      setDeleteTarget(null);
+    },
+    onError: () => {
+      toast.error("Operation failed");
+    }
+  });
+
+  // 📝 SAVE PAYMENT MUTATION (CREATE/UPDATE)
+  const saveMutation = useMutation({
+    mutationFn: (payload: any) =>
+      editPayment
+        ? adminPaymentService.updatePayment(editPayment, payload)
+        : adminPaymentService.createPayment(payload),
+    onSuccess: () => {
+      toast.success(editPayment ? "Financial record updated" : "New transaction logged");
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.payments({}) });
+      setPaymentModalOpen(false);
+      setEditPayment(null);
+    },
+    onError: () => {
+      toast.error("Process failed");
+    }
+  });
+
+  const fetchedPayments = paymentsData?.data || [];
+  const totalCount = paymentsData?.total_count || paymentsData?.count || 0;
+  const lastPage = Math.ceil(totalCount / paymentsMeta.page_size) || 1;
+
   const [modalBootstrapping, setModalBootstrapping] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
@@ -74,73 +122,15 @@ export function AdminPayments() {
     purchase_details: { additionalProp1: {} } as any
   });
 
-  const fetchPayments = async (p = paymentsMeta.page_no || 1) => {
-    setPaymentsLoading(true);
-    try {
-      const currentPage = Number(p) || 1;
-      const pageSize = Number(paymentsMeta.page_size) || 10;
-      const offset = (currentPage - 1) * pageSize;
 
-      const res = await adminPaymentService.getPayments({
-        count: pageSize,
-        offset,
-        status: paymentStatus !== "All" ? paymentStatus.toLowerCase() as any : undefined,
-        from_date: paymentDateRange.from_date,
-        to_date: paymentDateRange.to_date,
-      });
-
-      if (res && res.data) {
-        const totalCount = Number(
-          res.total_count ?? res.count ?? res.data.length ?? 0
-        );
-        setFetchedPayments(res.data);
-        setPaymentsMeta({
-          page_no: Math.floor(offset / pageSize) + 1,
-          total_count: totalCount,
-          page_size: pageSize,
-          has_next: offset + pageSize < totalCount,
-          has_previous: offset > 0
-        });
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setPaymentsLoading(false);
-    }
-  };
-
-  const fetchDropdownUsers = async () => {
-    try {
-      const res = await api.get(API_ENDPOINTS.ADMIN.GET_USERS_DROPDOWN) as any;
-      if (res && res.data) setUsersDropdown(res.data);
-    } catch (err) { console.error(err); }
-  };
-
-  const fetchSubscriptionPlans = async () => {
-    try {
-      const res = await adminSubscriptionService.getPlans({ count: 100 });
-      if (res && res.data) setSubscriptionPlans(res.data);
-    } catch (err) { console.error(err); }
-  };
-
-  const fetchProductsForDropdown = async () => {
-    try {
-      const res = await adminProductService.getProducts({ count: 100 });
-      if (res && res.data) setFetchedProducts(res.data);
-    } catch (err) { console.error(err); }
-  };
-
-  useEffect(() => {
-    fetchPayments(1);
-  }, [paymentStatus, paymentDateRange]);
 
   const bootstrapPaymentModal = async (payment?: PaymentResponse) => {
     setModalBootstrapping(true);
     try {
       await Promise.all([
-        fetchDropdownUsers(),
-        fetchProductsForDropdown(),
-        fetchSubscriptionPlans(),
+        api.get(API_ENDPOINTS.ADMIN.GET_USERS_DROPDOWN).then((res: any) => res.data && setUsersDropdown(res.data)),
+        adminProductService.getProducts({ count: 100 }).then((res: any) => res.data && setFetchedProducts(res.data)),
+        adminSubscriptionService.getPlans({ count: 100 }).then((res: any) => res.data && setSubscriptionPlans(res.data)),
       ]);
 
       if (payment) {
@@ -169,7 +159,7 @@ export function AdminPayments() {
         setEditPayment(null);
       }
 
-      setModalOpen(true);
+      setPaymentModalOpen(true);
     } finally {
       setModalBootstrapping(false);
     }
@@ -230,7 +220,7 @@ export function AdminPayments() {
     }
   };
 
-  const lastPage = Math.ceil(paymentsMeta.total_count / paymentsMeta.page_size) || 1;
+
 
   return (
     <GlassCard>
@@ -243,7 +233,7 @@ export function AdminPayments() {
           onClick={() => bootstrapPaymentModal()}
           disabled={modalBootstrapping}
         >
-          <ButtonLoader label={t("createNewPayment")} loadingLabel="Preparing" loading={modalBootstrapping} />
+          {t("createNewPayment")}
         </GlowButton>
       </div>
 
@@ -284,57 +274,61 @@ export function AdminPayments() {
       ) : fetchedPayments.length > 0 ? (
         <div className="relative">
           <Table
-            headers={[t("name"), t("contact"), t("timestamp"), t("valuation"), t("method"), t("type"), t("status"), t("operations")]}
-            rows={fetchedPayments.map((p) => [
-              <span key={`${p.id}-name`} className="text-xs font-bold text-white uppercase tracking-tight italic">{(p as any).name || p.Name || '--'}</span>,
-              <span key={`${p.id}-contact`} className="text-[10px] font-black text-indigo-400 tracking-widest">{p.mobile || '--'}</span>,
-              <span key={`${p.id}-date`} className="text-xs font-medium text-slate-300">
-                {new Date(p.payment_date * 1000).toLocaleDateString()}
-              </span>,
-              <span key={`${p.id}-amt`} className="text-emerald-400 font-black italic">{currencySymbol}{p.amount}</span>,
-              <span key={`${p.id}-method`} className="text-[10px] font-black uppercase text-indigo-400 tracking-widest">{p.payment_method}</span>,
-              <span key={`${p.id}-type`} className="text-[10px] font-bold text-slate-400 uppercase">{p.purchase_type}</span>,
-              <StatusBadge key={`${p.id}-status`} status={p.status.charAt(0).toUpperCase() + p.status.slice(1) as any} />,
-              <div key={`${p.id}-act`} className="flex gap-2 justify-center">
-                <button
-                  onClick={() => bootstrapPaymentModal(p)}
-                  className={`${p.purchase_type === "subscription" ? "text-slate-600 cursor-not-allowed pointer-events-none" : "text-indigo-400 hover:text-indigo-300"}`}
-                  title={p.purchase_type === "subscription" ? t("cannotEditSubPayment") : t("editPayment")}
-                >
-                  <Edit2 size={16} />
-                </button>
-                <button
-                  onClick={() => {
-                    setDeleteTarget({ type: "payment", id: p.id });
-                    setDeleteModalOpen(true);
-                  }}
-                  className={`${p.purchase_type === "subscription" ? "text-slate-600 cursor-not-allowed pointer-events-none" : "text-red-400 hover:text-red-300"}`}
-                  title={p.purchase_type === "subscription" ? t("cannotDeleteSubPayment") : t("deletePayment")}
-                >
-                  <Trash2 size={16} />
-                </button>
-                <button
-                  onClick={() => {
-                    setSelectedPayment(p);
-                    setInvoiceModalOpen(true);
-                  }}
-                  className="text-emerald-400 hover:text-emerald-300"
-                  title={t("downloadInvoice")}
-                >
-                  <Printer size={16} />
-                </button>
-              </div>
-            ])}
+            columns={[
+              { key: "name", label: t("name"), render: (p) => <span className="text-xs font-bold text-white uppercase tracking-tight italic">{(p as any).name || p.Name || '--'}</span> },
+              { key: "contact", label: t("contact"), render: (p) => <span className="text-[10px] font-black text-indigo-400 tracking-widest">{p.mobile || '--'}</span> },
+              { key: "date", label: t("timestamp"), render: (p) => <span className="text-xs font-medium text-slate-300">{new Date(p.payment_date * 1000).toLocaleDateString()}</span> },
+              { key: "amount", label: t("valuation"), render: (p) => <span className="text-emerald-400 font-black italic">{currencySymbol}{p.amount}</span> },
+              { key: "method", label: t("method"), render: (p) => <span className="text-[10px] font-black uppercase text-indigo-400 tracking-widest">{p.payment_method}</span> },
+              { key: "type", label: t("type"), render: (p) => <span className="text-[10px] font-bold text-slate-400 uppercase">{p.purchase_type}</span> },
+              { key: "status", label: t("status"), render: (p) => <StatusBadge status={p.status.charAt(0).toUpperCase() + p.status.slice(1) as any} /> },
+              {
+                key: "actions",
+                label: t("operations"),
+                render: (p) => (
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      onClick={() => bootstrapPaymentModal(p)}
+                      className={`${p.purchase_type === "subscription" ? "text-slate-600 cursor-not-allowed pointer-events-none" : "text-indigo-400 hover:text-indigo-300"}`}
+                      title={p.purchase_type === "subscription" ? t("cannotEditSubPayment") : t("editPayment")}
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDeleteTarget({ type: "payment", id: p.id });
+                        setDeleteModalOpen(true);
+                      }}
+                      className={`${p.purchase_type === "subscription" ? "text-slate-600 cursor-not-allowed pointer-events-none" : "text-red-400 hover:text-red-300"}`}
+                      title={p.purchase_type === "subscription" ? t("cannotDeleteSubPayment") : t("deletePayment")}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedPayment(p);
+                        setInvoiceModalOpen(true);
+                      }}
+                      className="text-emerald-400 hover:text-emerald-300"
+                      title={t("downloadInvoice")}
+                    >
+                      <Printer size={16} />
+                    </button>
+                  </div>
+                )
+              },
+            ]}
+            data={fetchedPayments}
           />
           <LoadingOverlay show={paymentsLoading && fetchedPayments.length > 0} label="Refreshing payments" compact />
 
           <Pagination
             currentPage={paymentsMeta.page_no}
             totalPages={lastPage}
-            hasPrev={paymentsMeta.has_previous}
-            hasNext={paymentsMeta.has_next}
-            onPrev={() => fetchPayments(paymentsMeta.page_no - 1)}
-            onNext={() => fetchPayments(paymentsMeta.page_no + 1)}
+            hasPrev={paymentsMeta.page_no > 1}
+            hasNext={paymentsMeta.page_no < lastPage}
+            onPrev={() => setPaymentsMeta({ ...paymentsMeta, page_no: paymentsMeta.page_no - 1 })}
+            onNext={() => setPaymentsMeta({ ...paymentsMeta, page_no: paymentsMeta.page_no + 1 })}
           />
         </div>
       ) : (
@@ -347,7 +341,7 @@ export function AdminPayments() {
       {/* Create/Edit Payment Modal */}
       <PaymentModal
         isOpen={paymentModalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => setPaymentModalOpen(false)}
         editPaymentId={editPayment}
         paymentForm={paymentForm}
         setPaymentForm={setPaymentForm}
@@ -355,32 +349,22 @@ export function AdminPayments() {
         subscriptionPlans={subscriptionPlans}
         fetchedProducts={fetchedProducts}
         currencySymbol={currencySymbol}
-        onSuccess={() => fetchPayments(1)}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: queryKeys.admin.payments({}) })}
+        mutation={saveMutation}
       />
 
       <DeleteConfirmationModal
         isOpen={deleteModalOpen && deleteTarget?.type === "payment"}
         onClose={() => setDeleteModalOpen(false)}
-        onConfirm={async () => {
+        onConfirm={() => {
           if (deleteTarget && deleteTarget.type === "payment") {
-            setDeleteLoading(true);
-            try {
-              await adminPaymentService.deletePayment(deleteTarget.id);
-              toast.success("Transaction purged successfully");
-              fetchPayments(paymentsMeta.page_no);
-            } catch (err) {
-              toast.error("Purge failed");
-            } finally {
-              setDeleteLoading(false);
-            }
+            deleteMutation.mutate(deleteTarget.id);
           }
-          setDeleteModalOpen(false);
-          setDeleteTarget(null);
         }}
         title="Registry Purge"
         description="This financial record will be permanently erased from the master ledger."
         confirmLabel="Submit"
-        isProcessing={deleteLoading}
+        isProcessing={deleteMutation.isPending}
       />
 
       <InvoiceModal
@@ -390,6 +374,12 @@ export function AdminPayments() {
           setSelectedPayment(null);
         }}
         payment={selectedPayment}
+      />
+
+      {/* FULL SCREEN LOADING OVERLAY */}
+      <LoadingOverlay
+        show={deleteMutation.isPending || saveMutation.isPending || modalBootstrapping}
+        label={modalBootstrapping ? "Preparing Modal..." : (t("processingRequest") || "Processing Request...")}
       />
     </GlassCard>
   );

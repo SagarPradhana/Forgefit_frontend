@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Table,
@@ -12,116 +12,92 @@ import { Trash2, CheckCircle, Search } from "lucide-react";
 import { toast } from "../../store/toastStore";
 import { adminInquiryService } from "../../services/adminInquiryService";
 import { DeleteConfirmationModal } from "../common/DeleteConfirmationModal";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../constants/queryKeys";
 
 type InquiryType = "subscriptions" | "products" | "contacts" | "expiry";
 
 export function InquiryCenter() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<InquiryType>("subscriptions");
-  const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [data, setData] = useState<any[]>([]);
-  const [meta, setMeta] = useState({ total: 0, count: 10, offset: 0 });
+  const [meta, setMeta] = useState({ count: 10, offset: 0 });
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const [resolveTargetId, setResolveTargetId] = useState<string | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = {
-        search: debouncedSearchQuery || undefined,
-        count: meta.count,
-        offset: meta.offset,
-      };
-
-      let res;
-      switch (activeTab) {
-        case "subscriptions":
-          res = await adminInquiryService.getSubscriptionInquiries(params);
-          break;
-        case "products":
-          res = await adminInquiryService.getProductOrders(params);
-          break;
-        case "contacts":
-          res = await adminInquiryService.getContactInquiries(params);
-          break;
-        case "expiry":
-          res = await adminInquiryService.getExpiringMembers(params);
-          break;
-      }
-
-      if (res && res.data) {
-        setData(res.data);
-        setMeta(prev => ({ ...prev, total: res.totalcount }));
-      }
-    } catch (err) {
-      toast.error("Failed to fetch inquiries");
-    } finally {
-      setLoading(false);
-      setInitialLoading(false);
-    }
-  }, [activeTab, debouncedSearchQuery, meta.count, meta.offset]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery.trim());
       setMeta((prev) => ({ ...prev, offset: 0 }));
     }, 350);
-
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const handleDelete = (id: string) => {
-    setDeleteTargetId(id);
-    setDeleteModalOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (!deleteTargetId) return;
-    setDeleteLoading(true);
-    try {
+  // 🛡️ FETCH INQUIRIES QUERY
+  const { data: inquiriesData, isLoading: initialLoading, isFetching: loading } = useQuery({
+    queryKey: queryKeys.admin.inquiries(activeTab, { 
+      search: debouncedSearchQuery, 
+      offset: meta.offset, 
+      count: meta.count 
+    }),
+    queryFn: async () => {
+      const params = {
+        search: debouncedSearchQuery || undefined,
+        count: meta.count,
+        offset: meta.offset,
+      };
       switch (activeTab) {
-        case "subscriptions": await adminInquiryService.deleteSubscriptionInquiry(deleteTargetId); break;
-        case "products": await adminInquiryService.deleteProductOrder(deleteTargetId); break;
-        case "contacts": await adminInquiryService.deleteContactInquiry(deleteTargetId); break;
-        case "expiry": await adminInquiryService.deleteExpiringMemberRecord(deleteTargetId); break;
+        case "subscriptions": return adminInquiryService.getSubscriptionInquiries(params);
+        case "products": return adminInquiryService.getProductOrders(params);
+        case "contacts": return adminInquiryService.getContactInquiries(params);
+        case "expiry": return adminInquiryService.getExpiringMembers(params);
+        default: return { data: [], totalcount: 0 };
       }
+    },
+  });
+
+  // 🛡️ RESOLVE MUTATION
+  const resolveMutation = useMutation({
+    mutationFn: (id: string) => {
+      switch (activeTab) {
+        case "subscriptions": return adminInquiryService.updateSubscriptionInquiry(id);
+        case "products": return adminInquiryService.updateProductOrder(id);
+        case "contacts": return adminInquiryService.updateContactInquiry(id);
+        case "expiry": return adminInquiryService.updateExpiringMemberRecord(id);
+        default: throw new Error("Invalid tab");
+      }
+    },
+    onSuccess: () => {
+      toast.success("Record marked as resolved");
+      queryClient.invalidateQueries({ queryKey: ["admin", "inquiries"] });
+    },
+    onError: () => toast.error("Resolve operation failed")
+  });
+
+  // 🛡️ DELETE MUTATION
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => {
+      switch (activeTab) {
+        case "subscriptions": return adminInquiryService.deleteSubscriptionInquiry(id);
+        case "products": return adminInquiryService.deleteProductOrder(id);
+        case "contacts": return adminInquiryService.deleteContactInquiry(id);
+        case "expiry": return adminInquiryService.deleteExpiringMemberRecord(id);
+        default: throw new Error("Invalid tab");
+      }
+    },
+    onSuccess: () => {
       toast.success("Record deleted successfully");
-      fetchData();
-    } catch (err) {
-      toast.error("Delete operation failed");
-    } finally {
-      setDeleteLoading(false);
+      queryClient.invalidateQueries({ queryKey: ["admin", "inquiries"] });
       setDeleteModalOpen(false);
       setDeleteTargetId(null);
-    }
-  };
+    },
+    onError: () => toast.error("Delete operation failed")
+  });
 
-  const handleResolve = async (id: string) => {
-    setResolveTargetId(id);
-    try {
-      switch (activeTab) {
-        case "subscriptions": await adminInquiryService.updateSubscriptionInquiry(id); break;
-        case "products": await adminInquiryService.updateProductOrder(id); break;
-        case "contacts": await adminInquiryService.updateContactInquiry(id); break;
-        case "expiry": await adminInquiryService.updateExpiringMemberRecord(id); break;
-      }
-      toast.success("Record marked as resolved");
-      fetchData();
-    } catch (err) {
-      toast.error("Resolve operation failed");
-    } finally {
-      setResolveTargetId(null);
-    }
-  };
+  const data = inquiriesData?.data || [];
+  const totalCount = inquiriesData?.totalcount || 0;
 
   const tabs: { id: InquiryType; label: string }[] = [
     { id: "subscriptions", label: t("subscriptions") },
@@ -135,20 +111,19 @@ export function InquiryCenter() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
         <div className="flex flex-wrap gap-2">
           {tabs.map((tab) => (
-            <div key={tab.id} className="flex flex-col">
-              <button
-                onClick={() => {
-                  setActiveTab(tab.id);
-                  setMeta({ ...meta, offset: 0 });
-                }}
-                className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 border ${activeTab === tab.id
-                  ? "bg-indigo-500 border-indigo-400 text-white shadow-lg shadow-indigo-500/20"
-                  : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
-                  }`}
-              >
-                {t(tab.id)}
-              </button>
-            </div>
+            <button
+              key={tab.id}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setMeta({ ...meta, offset: 0 });
+              }}
+              className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 border ${activeTab === tab.id
+                ? "bg-indigo-500 border-indigo-400 text-white shadow-lg shadow-indigo-500/20"
+                : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
+                }`}
+            >
+              {t(tab.id)}
+            </button>
           ))}
         </div>
 
@@ -179,119 +154,169 @@ export function InquiryCenter() {
           <>
             {activeTab === "subscriptions" && (
               <Table
-                headers={[t("name"), t("mobileEmail"), t("requestedPlan"), t("inquiryDate"), t("status"), t("actions")]}
-                rows={data.map((r) => [
-                  <p key={`${r.id}-name`} className="font-bold text-white uppercase tracking-tighter text-xs">{r.user_name || r.name || r.username || '—'}</p>,
-                  <p key={`${r.id}-contact`} className="text-[10px] text-slate-500">{r.user_mobile || r.email || '—'}</p>,
-                  <div key={`${r.id}-plan`}>
-                    <p className="text-indigo-400 font-black italic text-xs">
-                      {r.plan_name || r.subscription_plan_name || r.subscription_name || `Plan: ${r.subscription_plan_id?.substring(0, 8)}…`}
-                    </p>
-                    {r.description && <p className="text-[10px] text-slate-500 mt-0.5 italic line-clamp-1">{r.description}</p>}
-                  </div>,
-                  <span key={`${r.id}-date`} className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span>,
-                  <StatusBadge key={`${r.id}-status`} status={r.status ? t("resolved") as any : t("pending") as any} />,
-                  <div key={`${r.id}-actions`} className="flex gap-3">
-                    <button
-                      onClick={() => handleResolve(r.id)}
-                      disabled={resolveTargetId === r.id}
-                      className="text-emerald-400 hover:scale-125 transition-transform disabled:opacity-60 disabled:hover:scale-100"
-                      title={t("resolve")}
-                    >
-                      {resolveTargetId === r.id ? <InlineSpinner size={16} /> : <CheckCircle size={16} />}
-                    </button>
-                    <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title={t("delete")}><Trash2 size={16} /></button>
-                  </div>
-                ])}
+                columns={[
+                  { key: "name", label: t("name"), render: (r) => <p className="font-bold text-white uppercase tracking-tighter text-xs">{r.user_name || r.name || r.username || '—'}</p> },
+                  { key: "contact", label: t("mobileEmail"), render: (r) => <p className="text-[10px] text-slate-500">{r.user_mobile || r.email || '—'}</p> },
+                  { 
+                    key: "plan", 
+                    label: t("requestedPlan"), 
+                    render: (r) => (
+                      <div>
+                        <p className="text-indigo-400 font-black italic text-xs">
+                          {r.plan_name || r.subscription_plan_name || r.subscription_name || `Plan: ${r.subscription_plan_id?.substring(0, 8)}…`}
+                        </p>
+                        {r.description && <p className="text-[10px] text-slate-500 mt-0.5 italic line-clamp-1">{r.description}</p>}
+                      </div>
+                    ) 
+                  },
+                  { key: "date", label: t("inquiryDate"), render: (r) => <span className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span> },
+                  { key: "status", label: t("status"), render: (r) => <StatusBadge status={r.status ? t("resolved") as any : t("pending") as any} /> },
+                  { 
+                    key: "actions", 
+                    label: t("actions"), 
+                    render: (r) => (
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => resolveMutation.mutate(r.id)}
+                          disabled={resolveMutation.isPending && resolveMutation.variables === r.id}
+                          className="text-emerald-400 hover:scale-125 transition-transform disabled:opacity-60 disabled:hover:scale-100"
+                          title={t("resolve")}
+                        >
+                          {resolveMutation.isPending && resolveMutation.variables === r.id ? <InlineSpinner size={16} /> : <CheckCircle size={16} />}
+                        </button>
+                        <button onClick={() => { setDeleteTargetId(r.id); setDeleteModalOpen(true); }} className="text-red-400 hover:scale-125 transition-transform" title={t("delete")}><Trash2 size={16} /></button>
+                      </div>
+                    ) 
+                  },
+                ]}
+                data={data}
               />
             )}
 
             {activeTab === "products" && (
               <Table
-                headers={[t("name"), t("mobileEmail"), t("product"), t("qty"), t("date"), t("status"), t("actions")]}
-                rows={data.map((r) => [
-                  <p key={`${r.id}-name`} className="font-bold text-white uppercase tracking-tighter text-xs">{r.user_name || r.name || r.username || '—'}</p>,
-                  <p key={`${r.id}-contact`} className="text-[10px] text-slate-500">{r.user_mobile || r.email || '—'}</p>,
-                  <div key={`${r.id}-prod`}>
-                    <p className="text-orange-400 font-black text-xs">
-                      {r.product_name || r.product?.name || `Product: ${r.product_id?.substring(0, 8)}…`}
-                    </p>
-                    {r.description && <p className="text-[10px] text-slate-500 mt-0.5 italic line-clamp-1">{r.description}</p>}
-                  </div>,
-                  <span key={`${r.id}-qty`} className="text-slate-200 font-black italic text-lg">{r.quantity}</span>,
-                  <span key={`${r.id}-date`} className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span>,
-                  <StatusBadge key={`${r.id}-status`} status={r.status ? t("resolved") as any : t("pending") as any} />,
-                  <div key={`${r.id}-actions`} className="flex gap-3">
-                    <button
-                      onClick={() => handleResolve(r.id)}
-                      disabled={resolveTargetId === r.id}
-                      className="text-emerald-400 hover:scale-125 transition-transform disabled:opacity-60 disabled:hover:scale-100"
-                      title={t("resolve")}
-                    >
-                      {resolveTargetId === r.id ? <InlineSpinner size={16} /> : <CheckCircle size={16} />}
-                    </button>
-                    <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title={t("delete")}><Trash2 size={16} /></button>
-                  </div>
-                ])}
+                columns={[
+                  { key: "name", label: t("name"), render: (r) => <p className="font-bold text-white uppercase tracking-tighter text-xs">{r.user_name || r.name || r.username || '—'}</p> },
+                  { key: "contact", label: t("mobileEmail"), render: (r) => <p className="text-[10px] text-slate-500">{r.user_mobile || r.email || '—'}</p> },
+                  { 
+                    key: "prod", 
+                    label: t("product"), 
+                    render: (r) => (
+                      <div>
+                        <p className="text-orange-400 font-black text-xs">
+                          {r.product_name || r.product?.name || `Product: ${r.product_id?.substring(0, 8)}…`}
+                        </p>
+                        {r.description && <p className="text-[10px] text-slate-500 mt-0.5 italic line-clamp-1">{r.description}</p>}
+                      </div>
+                    ) 
+                  },
+                  { key: "qty", label: t("qty"), render: (r) => <span className="text-slate-200 font-black italic text-lg">{r.quantity}</span> },
+                  { key: "date", label: t("date"), render: (r) => <span className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span> },
+                  { key: "status", label: t("status"), render: (r) => <StatusBadge status={r.status ? t("resolved") as any : t("pending") as any} /> },
+                  { 
+                    key: "actions", 
+                    label: t("actions"), 
+                    render: (r) => (
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => resolveMutation.mutate(r.id)}
+                          disabled={resolveMutation.isPending && resolveMutation.variables === r.id}
+                          className="text-emerald-400 hover:scale-125 transition-transform disabled:opacity-60 disabled:hover:scale-100"
+                          title={t("resolve")}
+                        >
+                          {resolveMutation.isPending && resolveMutation.variables === r.id ? <InlineSpinner size={16} /> : <CheckCircle size={16} />}
+                        </button>
+                        <button onClick={() => { setDeleteTargetId(r.id); setDeleteModalOpen(true); }} className="text-red-400 hover:scale-125 transition-transform" title={t("delete")}><Trash2 size={16} /></button>
+                      </div>
+                    ) 
+                  },
+                ]}
+                data={data}
               />
             )}
 
             {activeTab === "contacts" && (
               <Table
-                headers={[t("name"), t("mobileEmail"), t("subjectObjective"), t("date"), t("status"), t("actions")]}
-                rows={data.map((r) => [
-                  <p key={`${r.id}-name`} className="font-bold text-white uppercase tracking-tighter text-xs">{r.name}</p>,
-                  <p key={`${r.id}-contact`} className="text-[10px] text-slate-500">{r.phone || r.email}</p>,
-                  <div key={`${r.id}-msg`} className="max-w-xs">
-                    <p className="text-xs font-bold text-indigo-400 uppercase tracking-tight">{r.subject || t("contactMessage")}</p>
-                    <p className="text-[10px] text-slate-400 line-clamp-2 italic">"{r.message}"</p>
-                  </div>,
-                  <div key={`${r.id}-contact`} className="flex flex-col">
-                    <span className="text-[10px] font-black text-white">{r.phone}</span>
-                    <span className="text-[8px] text-slate-500 font-bold uppercase">{r.email}</span>
-                  </div>,
-                  <span key={`${r.id}-date`} className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span>,
-                  <StatusBadge key={`${r.id}-status`} status={r.status ? t("resolved") as any : t("pending") as any} />,
-                  <div key={`${r.id}-actions`} className="flex gap-3">
-                    <button
-                      onClick={() => handleResolve(r.id)}
-                      disabled={resolveTargetId === r.id}
-                      className="text-emerald-400 hover:scale-125 transition-transform disabled:opacity-60 disabled:hover:scale-100"
-                      title={t("resolve")}
-                    >
-                      {resolveTargetId === r.id ? <InlineSpinner size={16} /> : <CheckCircle size={16} />}
-                    </button>
-                    <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform" title={t("delete")}><Trash2 size={16} /></button>
-                  </div>
-                ])}
+                columns={[
+                  { key: "name", label: t("name"), render: (r) => <p className="font-bold text-white uppercase tracking-tighter text-xs">{r.name}</p> },
+                  { key: "contact", label: t("mobileEmail"), render: (r) => <p className="text-[10px] text-slate-500">{r.phone || r.email}</p> },
+                  { 
+                    key: "msg", 
+                    label: t("subjectObjective"), 
+                    render: (r) => (
+                      <div className="max-w-xs">
+                        <p className="text-xs font-bold text-indigo-400 uppercase tracking-tight">{r.subject || t("contactMessage")}</p>
+                        <p className="text-[10px] text-slate-400 line-clamp-2 italic">"{r.message}"</p>
+                      </div>
+                    ) 
+                  },
+                  { key: "date", label: t("date"), render: (r) => <span className="text-slate-400 text-xs">{new Date(r.inquiry_date * 1000).toLocaleDateString()}</span> },
+                  { key: "status", label: t("status"), render: (r) => <StatusBadge status={r.status ? t("resolved") as any : t("pending") as any} /> },
+                  { 
+                    key: "actions", 
+                    label: t("actions"), 
+                    render: (r) => (
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => resolveMutation.mutate(r.id)}
+                          disabled={resolveMutation.isPending && resolveMutation.variables === r.id}
+                          className="text-emerald-400 hover:scale-125 transition-transform disabled:opacity-60 disabled:hover:scale-100"
+                          title={t("resolve")}
+                        >
+                          {resolveMutation.isPending && resolveMutation.variables === r.id ? <InlineSpinner size={16} /> : <CheckCircle size={16} />}
+                        </button>
+                        <button onClick={() => { setDeleteTargetId(r.id); setDeleteModalOpen(true); }} className="text-red-400 hover:scale-125 transition-transform" title={t("delete")}><Trash2 size={16} /></button>
+                      </div>
+                    ) 
+                  },
+                ]}
+                data={data}
               />
             )}
 
             {activeTab === "expiry" && (
               <Table
-                headers={[t("name"), t("mobileEmail"), t("timeline"), t("status"), t("actions")]}
-                rows={data.map((r) => [
-                  <p key={`${r.id}-name`} className="font-bold text-white uppercase tracking-tight italic">{r.user_name || r.name || r.username || '—'}</p>,
-                  <p key={`${r.id}-contact`} className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">{r.user_mobile || r.mobile || r.email || '—'}</p>,
-                  <div key={`${r.id}-cycle`} className="flex flex-col">
-                    <span className="text-xl font-black text-orange-400 italic leading-none">{r.remaining_days} {t("days")}</span>
-                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1">{t("daysRemaining")}</span>
-                  </div>,
-                  <div key={`${r.id}-status`} className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
-                    <span className="text-[10px] font-black text-white uppercase tracking-widest">{r.status ? t(t("resolved")) : t("renewalCritical")}</span>
-                  </div>,
-                  <div key={`${r.id}-actions`} className="flex gap-3">
-                    <button
-                      onClick={() => handleResolve(r.id)}
-                      disabled={resolveTargetId === r.id}
-                      className="h-8 px-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all flex items-center gap-2 disabled:opacity-60"
-                    >
-                      {resolveTargetId === r.id ? <InlineSpinner size={12} /> : <CheckCircle size={12} />} {t("resolve")}
-                    </button>
-                    <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:scale-125 transition-transform p-2"><Trash2 size={16} /></button>
-                  </div>
-                ])}
+                columns={[
+                  { key: "name", label: t("name"), render: (r) => <p className="font-bold text-white uppercase tracking-tight italic">{r.user_name || r.name || r.username || '—'}</p> },
+                  { key: "contact", label: t("mobileEmail"), render: (r) => <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">{r.user_mobile || r.mobile || r.email || '—'}</p> },
+                  { 
+                    key: "cycle", 
+                    label: t("timeline"), 
+                    render: (r) => (
+                      <div className="flex flex-col">
+                        <span className="text-xl font-black text-orange-400 italic leading-none">{r.remaining_days} {t("days")}</span>
+                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1">{t("daysRemaining")}</span>
+                      </div>
+                    ) 
+                  },
+                  { 
+                    key: "status", 
+                    label: t("status"), 
+                    render: (r) => (
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
+                        <span className="text-[10px] font-black text-white uppercase tracking-widest">{r.status ? t("resolved") : t("renewalCritical")}</span>
+                      </div>
+                    ) 
+                  },
+                  { 
+                    key: "actions", 
+                    label: t("actions"), 
+                    render: (r) => (
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => resolveMutation.mutate(r.id)}
+                          disabled={resolveMutation.isPending && resolveMutation.variables === r.id}
+                          className="h-8 px-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all flex items-center gap-2 disabled:opacity-60"
+                        >
+                          {resolveMutation.isPending && resolveMutation.variables === r.id ? <InlineSpinner size={12} /> : <CheckCircle size={12} />} {t("resolve")}
+                        </button>
+                        <button onClick={() => { setDeleteTargetId(r.id); setDeleteModalOpen(true); }} className="text-red-400 hover:scale-125 transition-transform p-2"><Trash2 size={16} /></button>
+                      </div>
+                    ) 
+                  },
+                ]}
+                data={data}
               />
             )}
 
@@ -303,26 +328,29 @@ export function InquiryCenter() {
 
             <Pagination
               currentPage={Math.floor(meta.offset / meta.count) + 1}
-              totalPages={Math.ceil((meta?.total || 0) / (meta?.count || 1))}
+              totalPages={Math.ceil((totalCount || 0) / (meta?.count || 1))}
               hasPrev={meta.offset > 0}
-              hasNext={meta.offset + meta.count < meta.total}
+              hasNext={meta.offset + meta.count < totalCount}
               onPrev={() => setMeta({ ...meta, offset: Math.max(0, meta.offset - meta.count) })}
               onNext={() => setMeta({ ...meta, offset: meta.offset + meta.count })}
             />
           </>
         )}
-        <LoadingOverlay show={loading && !initialLoading} label="Refreshing records" compact />
+        <LoadingOverlay show={loading && !initialLoading} label={t("refreshing") || "Refreshing records..."} compact />
       </div>
 
       <DeleteConfirmationModal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        onConfirm={confirmDelete}
+        onConfirm={() => deleteTargetId && deleteMutation.mutate(deleteTargetId)}
         title="Delete Record"
         description="This inquiry record will be permanently removed from the system."
         confirmLabel="Delete"
-        isProcessing={deleteLoading}
+        isProcessing={deleteMutation.isPending}
       />
+
+      {/* FULL SCREEN LOADING OVERLAY */}
+      <LoadingOverlay show={deleteMutation.isPending || resolveMutation.isPending} label={t("processingRequest") || "Processing Request..."} />
     </div>
   );
 }

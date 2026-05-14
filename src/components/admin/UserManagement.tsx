@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { GlassCard, SectionTitle } from "../../components/ui/primitives";
+import { GlassCard, SectionTitle, LoadingOverlay } from "../../components/ui/primitives";
 import { Search, Grid, List, Plus, Filter } from "lucide-react";
 import { motion } from "framer-motion";
-import { useGet, useMutation } from "../../hooks/useApi";
 import { API_ENDPOINTS } from "../../utils/url";
 import { api } from "../../utils/httputils";
 import { toast } from "../../store/toastStore";
@@ -27,9 +26,13 @@ import { UserCreationSuccessModal } from "./users/UserCreationSuccessModal";
 // Types
 import type { ViewType, ModalStep, UserFormData } from "./users/types";
 
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../constants/queryKeys";
+
 export function UserManagement({ portalType = "admin" }: { portalType?: "admin" | "trainer" }) {
   const { t } = useTranslation();
   const location = useLocation();
+  const queryClient = useQueryClient();
 
   // Read initial role from URL query param (e.g. ?role=admin from dashboard redirect)
   const initialRole = useMemo(() => {
@@ -142,65 +145,68 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
   const tempPasswordRef = useRef<string>("");
 
   // --- API Fetching ---
-  const usersApiUrl = useMemo(() => {
-    const currentPage = Number(page) || 1;
-    const currentCount = Number(perPage) || 10;
-    const params = new URLSearchParams({
-      offset: String((currentPage - 1) * currentCount),
-      count: String(currentCount),
-    });
-    if (debouncedSearch.trim()) {
-      params.append("search", debouncedSearch.trim());
-      params.append("member_id", debouncedSearch.trim()); // The user specified member_id is a parameter in GET
-    }
-    if (roleFilter && !isTrainer) {
-      params.append("role", roleFilter);
-    }
-    if (planStatusFilter) {
-      params.append("plan_status", planStatusFilter);
-    }
-    if (isActiveFilter) {
-      params.append("is_active", isActiveFilter);
-    }
-    return isTrainer ? `${API_ENDPOINTS.ADMIN.TRAINER_USERS}?${params.toString()}` : `${API_ENDPOINTS.ADMIN.USERS}?${params.toString()}`;
+  const usersParams = useMemo(() => {
+    return {
+      offset: (page - 1) * perPage,
+      count: perPage,
+      search: debouncedSearch.trim() || undefined,
+      member_id: debouncedSearch.trim() || undefined,
+      role: (roleFilter && !isTrainer) ? roleFilter : undefined,
+      plan_status: planStatusFilter || undefined,
+      is_active: isActiveFilter || undefined,
+    };
   }, [page, perPage, debouncedSearch, roleFilter, planStatusFilter, isActiveFilter, isTrainer]);
 
-  const { loading: usersLoading, refetch: refetchUsers } = useGet(
-    usersApiUrl,
-    {
-      onSuccess: (res) => {
-        const newUsers = res.data || [];
-        if (page === 1) setAllUsers(newUsers);
-        else setAllUsers((prev) => [...prev, ...newUsers]);
-        setHasMore(newUsers.length === perPage);
-      },
-    }
-  );
+  const { isLoading: usersLoading } = useQuery({
+    queryKey: queryKeys.admin.users(usersParams),
+    queryFn: async () => {
+      const res = isTrainer 
+        ? await api.get(API_ENDPOINTS.ADMIN.TRAINER_USERS, { params: usersParams }) as any
+        : await api.get(API_ENDPOINTS.ADMIN.USERS, { params: usersParams }) as any;
+      
+      const newUsers = res.data || [];
+      if (page === 1) setAllUsers(newUsers);
+      else setAllUsers((prev) => [...prev, ...newUsers]);
+      setHasMore(newUsers.length === perPage);
+      return res;
+    },
+  });
 
-  const { data: rolesData } = useGet(!isTrainer ? API_ENDPOINTS.ADMIN.ROLES : null, { useCache: true });
+  const { data: rolesData } = useQuery({
+    queryKey: ["admin", "roles"],
+    queryFn: () => !isTrainer ? api.get(API_ENDPOINTS.ADMIN.ROLES) as any : Promise.resolve({ data: [] }),
+    staleTime: Infinity
+  });
+
   const roles = useMemo<string[]>(() => {
     if (!rolesData?.data) return ["admin", "trainer", "user"];
-    // Extract unique roles from data
     const unique = Array.from(new Set(rolesData.data.map((r: any) => r.role))) as string[];
     return unique.length > 0 ? unique : ["admin", "trainer", "user"];
   }, [rolesData]);
 
-  const { data: plansData } = useGet(!isTrainer ? API_ENDPOINTS.ADMIN.PLANS : null, { useCache: true });
+  const { data: plansData } = useQuery({
+    queryKey: ["admin", "plans"],
+    queryFn: () => !isTrainer ? api.get(API_ENDPOINTS.ADMIN.PLANS) as any : Promise.resolve({ data: [] }),
+    staleTime: Infinity
+  });
   const plans = plansData?.data || [];
-  const { data: trainersData } = useGet(!isTrainer ? API_ENDPOINTS.ADMIN.TRAINER_LIST : null, { useCache: true });
+
+  const { data: trainersData } = useQuery({
+    queryKey: ["admin", "trainers"],
+    queryFn: () => !isTrainer ? api.get(API_ENDPOINTS.ADMIN.TRAINER_LIST) as any : Promise.resolve({ data: [] }),
+    staleTime: Infinity
+  });
   const trainers = trainersData?.data || [];
 
   // --- Mutations ---
-  const { mutate: createUser, loading: creating } = useMutation("post", {
-    onSuccess: (res) => {
+  const createUserMutation = useMutation({
+    mutationFn: (payload: any) => api.post(API_ENDPOINTS.ADMIN.USER_CREATE, payload),
+    onSuccess: (res: any) => {
       setModalOpen(false);
       setPage(1);
       toast.success("User created successfully");
-
       const responseUser = Array.isArray(res?.data) ? res.data[0] : (res?.data || res);
-
-      // Show success popup with user details
-      const userData = {
+      setUserCreatedData({
         username: responseUser?.username || responseUser?.user_name || responseUser?.member_id || "",
         role: formData.role,
         email: responseUser?.email || formData.email || "",
@@ -208,49 +214,48 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
         name: responseUser?.name || formData.name,
         joining_date: responseUser?.joining_date || formData.joining_date,
         password: tempPasswordRef.current || formData.password || "Password@123"
-      };
-      setUserCreatedData(userData);
+      });
       setShowUserCreatedModal(true);
-
-      refetchUsers();
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
     }
   });
 
-
-  const { mutate: editUser, loading: editing } = useMutation("patch", {
+  const editUserMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string, payload: any }) => api.patch(API_ENDPOINTS.ADMIN.USER_EDIT(id), payload),
     onSuccess: () => {
       setModalOpen(false);
       setPage(1);
       toast.success("User updated successfully");
-      refetchUsers();
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
     }
   });
 
-
-
-  const { mutate: patchStatus, loading: statusUpdating } = useMutation("patch", {
+  const patchStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string, status: boolean }) => api.patch(API_ENDPOINTS.ADMIN.USER_STATUS(id), { status }),
     onSuccess: () => {
       toast.success("User status updated successfully");
       setLoadingStatusId(null);
-      refetchUsers();
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
     },
     onError: () => setLoadingStatusId(null)
   });
 
-  const { mutate: deleteUserRecord, loading: deletingRecord } = useMutation("delete", {
+  const deleteUserMutation = useMutation({
+    mutationFn: (id: string) => api.delete(API_ENDPOINTS.ADMIN.USER_DELETE(id)),
     onSuccess: () => {
       toast.success("User deleted successfully from records");
       setDeleteModalOpen(false);
       setLoadingDeleteId(null);
-      refetchUsers();
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
     },
     onError: () => setLoadingDeleteId(null)
   });
 
-  const { mutate: deleteDocument, loading: docDeleting } = useMutation("delete", {
+  const deleteDocumentMutation = useMutation({
+    mutationFn: (url: string) => api.delete(url),
     onSuccess: () => {
       toast.success("Document permanently removed");
-      refetchUsers();
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
     }
   });
 
@@ -336,6 +341,8 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
         medical_conditions: "",
         workout_time: "morning",
         emergency_contact: "",
+        specialization: "",
+        experience: 0,
       },
       trainer_id: "",
       subscription_id: "",
@@ -368,6 +375,9 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
         medical_conditions: user.metadata?.medical_conditions || "",
         workout_time: user.metadata?.workout_time || "morning",
         emergency_contact: user.metadata?.emergency_contact || "",
+        specialization: user.metadata?.specialization || "",
+        experience: user.metadata?.experience || 0,
+        purchase_id: user.metadata?.purchase_id || user.purchase_id || "",
       },
       trainer_id: user.trainer_id || "",
       subscription_id: user.subscription_id || "",
@@ -377,6 +387,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
       start_date: user.start_date || 0,
       end_date: user.end_date || 0,
       profilePhoto: user.profile_image_path || user.metadata?.profile_image_path || "",
+      purchase_id: user.purchase_id || user.metadata?.purchase_id || "",
     });
     setEditingUserId(user.id);
     setModalStep("role");
@@ -414,6 +425,16 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
       return;
     }
     if (modalStep === "metadata") {
+      if (formData.role === "trainer") {
+        if (!formData.metadata.specialization?.trim()) {
+          toast.error("Specialization is required for trainers");
+          return;
+        }
+        if (!formData.metadata.experience || formData.metadata.experience <= 0) {
+          toast.error("Valid Experience (Years) is required for trainers");
+          return;
+        }
+      }
       setModalStep("membership");
       return;
     }
@@ -444,6 +465,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
       medical_conditions: rawPayload.metadata.medical_conditions,
       workout_time: rawPayload.metadata.workout_time,
       emergency_contact: rawPayload.metadata.emergency_contact,
+      purchase_id: rawPayload.metadata.purchase_id,
     };
 
     if (editingUserId) {
@@ -462,9 +484,10 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
         amount: rawPayload.amount,
         status: rawPayload.status,
         start_date: rawPayload.start_date,
+        purchase_id: rawPayload.purchase_id || rawPayload.metadata.purchase_id,
         end_date: rawPayload.end_date,
       };
-      editUser(API_ENDPOINTS.ADMIN.USER_EDIT(editingUserId), editPayload);
+      editUserMutation.mutate({ id: editingUserId, payload: editPayload });
     } else {
       // Store password temporarily for success popup
       tempPasswordRef.current = rawPayload.password || "Password@123";
@@ -481,19 +504,19 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
         joining_date: rawPayload.joining_date,
         trainer_id,
       };
-      createUser(API_ENDPOINTS.ADMIN.USER_CREATE, createPayload);
+      createUserMutation.mutate(createPayload);
     }
   };
 
   const handleToggleStatus = (userId: string, currentStatus: boolean) => {
     setLoadingStatusId(userId);
-    patchStatus(API_ENDPOINTS.ADMIN.USER_STATUS(userId), { status: !currentStatus });
+    patchStatusMutation.mutate({ id: userId, status: !currentStatus });
   };
 
   const handleDocDelete = (docType: string, docUrl: string) => {
     if (!selectedUserForDocs) return;
     const url = `${API_ENDPOINTS.ADMIN.USER_DOC_DELETE(selectedUserForDocs.id)}?doc_type=${docType}&doc_full_url=${encodeURIComponent(docUrl)}`;
-    deleteDocument(url);
+    deleteDocumentMutation.mutate(url);
   };
 
   const handleOpenIdCard = async (user: any) => {
@@ -546,7 +569,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
 
   const handleDeleteUser = (userId: string) => {
     setLoadingDeleteId(userId);
-    deleteUserRecord(API_ENDPOINTS.ADMIN.USER_DELETE(userId));
+    deleteUserMutation.mutate(userId);
     setDeleteTarget(null);
   };
 
@@ -565,7 +588,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
   };
 
   const isFinalStep = modalStep === "membership";
-  const isAnyLoading = creating || editing || statusUpdating || deletingRecord || docDeleting || !!docUploading;
+  const isAnyLoading = createUserMutation.isPending || editUserMutation.isPending || patchStatusMutation.isPending || deleteUserMutation.isPending || deleteDocumentMutation.isPending || !!docUploading;
 
   return (
     <GlassCard>
@@ -713,8 +736,8 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
         viewType={viewType}
         users={allUsers}
         usersLoading={usersLoading}
-        statusUpdating={!!loadingStatusId}
-        deletingRecord={!!loadingDeleteId}
+        statusUpdating={patchStatusMutation.isPending}
+        deletingRecord={deleteUserMutation.isPending}
         loadingStatusId={loadingStatusId}
         loadingDeleteId={loadingDeleteId}
         page={page}
@@ -763,7 +786,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
         docUploading={docUploading}
         setDocUploading={setDocUploading}
         onDeleteDoc={handleDocDelete}
-        onRefresh={refetchUsers}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: ["admin", "users"] })}
       />
 
       <AttendanceModal
@@ -806,6 +829,9 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
           portalType="admin"
         />
       )}
+
+      {/* FULL SCREEN LOADING OVERLAY */}
+      <LoadingOverlay show={isAnyLoading} label={t("processingRequest") || "Processing Request..."} />
     </GlassCard>
   );
 }

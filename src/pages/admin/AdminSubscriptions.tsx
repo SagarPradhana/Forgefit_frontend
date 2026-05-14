@@ -1,22 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useGymStore } from "../../store/gymStore";
 import { useTranslation } from "react-i18next";
-import { 
-  GlassCard, 
-  GlowButton, 
-  SectionTitle, 
-  Skeleton, 
-  Table, 
+import {
+  GlassCard,
+  GlowButton,
+  SectionTitle,
+  Skeleton,
+  Table,
   EmptyState,
-  Modal
+  LoadingOverlay
 } from "../../components/ui/primitives";
 import { Search, Edit2, Trash2 } from "lucide-react";
-import { adminSubscriptionService, type PlanResponse } from "../../services/adminSubscriptionService";
+import { adminSubscriptionService } from "../../services/adminSubscriptionService";
 import { getCurrencySymbol } from "../../utils/currency";
 import { toast } from "../../store/toastStore";
 import { DeleteConfirmationModal } from "../../components/common/DeleteConfirmationModal";
-import { handlePhoneKeyDown, handlePhonePaste, sanitizePhone } from "../../utils/formUtils";
 import { SubscriptionPlanModal } from "../../components/admin/subscriptions/SubscriptionPlanModal";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../constants/queryKeys";
 
 const getDurationLabel = (months: number) => {
   if (!months) return "1 Month";
@@ -30,19 +31,15 @@ const getDurationLabel = (months: number) => {
 export function AdminSubscriptions() {
   const { t } = useTranslation();
   const { appConfig } = useGymStore();
+  const queryClient = useQueryClient();
   const currency = appConfig?.currency || "INR";
   const currencySymbol = getCurrencySymbol(currency);
 
-  const [plans, setPlans] = useState<PlanResponse[]>([]);
   const [plansMeta, setPlansMeta] = useState({
     page_no: 1,
-    total_count: 0,
     page_size: 10,
-    has_next: false,
-    has_previous: false
   });
   const [planSearch, setPlanSearch] = useState("");
-  const [plansLoading, setPlansLoading] = useState(false);
   const [editPlan, setEditPlan] = useState<string | null>(null);
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -56,36 +53,47 @@ export function AdminSubscriptions() {
     duration_in_months: "1",
   });
 
-  const fetchPlans = async (p = plansMeta.page_no || 1, search = planSearch) => {
-    setPlansLoading(true);
-    try {
-      const currentPage = Number(p) || 1;
-      const pageSize = Number(plansMeta.page_size) || 10;
-      const offset = (currentPage - 1) * pageSize;
-      const res = await adminSubscriptionService.getPlans({ count: pageSize, offset, search });
-      if (res && res.data) {
-        setPlans(res.data);
-        setPlansMeta({
-          page_no: res.page_no || 1,
-          total_count: res.total_count || 0,
-          page_size: res.page_size || 10,
-          has_next: res.has_next,
-          has_previous: res.has_previous
-        });
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setPlansLoading(false);
+  // 🛡️ FETCH PLANS QUERY
+  const { data: plansData, isLoading: plansLoading } = useQuery({
+    queryKey: queryKeys.admin.subscriptions({ page: plansMeta.page_no, search: planSearch }),
+    queryFn: () => adminSubscriptionService.getPlans({
+      count: plansMeta.page_size,
+      offset: (plansMeta.page_no - 1) * plansMeta.page_size,
+      search: planSearch
+    }),
+  });
+
+  // 🛡️ SAVE PLAN MUTATION
+  const saveMutation = useMutation({
+    mutationFn: (payload: any) => 
+      editPlan 
+        ? adminSubscriptionService.updatePlan(editPlan, payload)
+        : adminSubscriptionService.createPlan(payload),
+    onSuccess: () => {
+      toast.success(editPlan ? "Strategic tier updated successfully" : "New membership strategy deployed");
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.subscriptions({}) });
+      setPlanModalOpen(false);
+    },
+    onError: () => toast.error("Strategy modification failed. Verify parameters.")
+  });
+
+  // 🛡️ DELETE PLAN MUTATION
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => adminSubscriptionService.deletePlan(id),
+    onSuccess: () => {
+      toast.success("Strategy terminated successfully");
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.subscriptions({}) });
+      setDeleteModalOpen(false);
+      setDeleteTarget(null);
+    },
+    onError: () => {
+      toast.error("Termination failed. Active dependencies detected.");
     }
-  };
+  });
 
-  useEffect(() => {
-    const timer = setTimeout(() => fetchPlans(1), 300);
-    return () => clearTimeout(timer);
-  }, [planSearch]);
-
-  const lastPage = Math.ceil(plansMeta.total_count / plansMeta.page_size) || 1;
+  const plans = plansData?.data || [];
+  const totalCount = plansData?.total_count || 0;
+  const lastPage = Math.ceil(totalCount / plansMeta.page_size) || 1;
 
   return (
     <GlassCard>
@@ -127,48 +135,54 @@ export function AdminSubscriptions() {
       ) : plans.length > 0 ? (
         <>
           <Table
-            headers={[t("planDetails"), t("actualPrice"), t("valuation"), t("duration"), t("description"), t("actions")]}
-            rows={plans.map((p) => [
-              <span className="font-bold text-white uppercase tracking-tight" key={p.id}>{p.name}</span>,
-              <span className="text-slate-400 line-through text-xs" key={`${p.id}-actual`}>{currencySymbol}{p.actual_price}</span>,
-              <span className="text-emerald-400 font-black" key={`${p.id}-price`}>{currencySymbol}{p.price}</span>,
-              <span className="text-indigo-300 font-bold" key={`${p.id}-dur`}>{getDurationLabel(p.duration_in_months)}</span>,
-              <span className="text-slate-400 text-xs truncate max-w-xs block" key={`${p.id}-desc`}>{p.description}</span>,
-              <div key={`${p.id}-actions`} className="flex gap-4">
-                <button
-                  className="text-indigo-400 hover:text-indigo-300 transition-transform hover:scale-125"
-                  onClick={() => {
-                    setPlanForm({
-                      name: p.name,
-                      description: p.description,
-                      actual_price: p.actual_price?.toString() || "",
-                      price: p.price.toString(),
-                      duration_in_months: p.duration_in_months.toString(),
-                    });
-                    setEditPlan(p.id);
-                    setPlanModalOpen(true);
-                  }}
-                >
-                  <Edit2 size={18} />
-                </button>
-                <button
-                  className="text-red-400 hover:text-red-300 transition-transform hover:scale-125"
-                  onClick={() => {
-                    setDeleteTarget({ type: "plan", id: p.id });
-                    setDeleteModalOpen(true);
-                  }}
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>,
-            ])}
+            columns={[
+              { key: "name", label: t("planDetails"), render: (p) => <span className="font-bold text-white uppercase tracking-tight">{p.name}</span> },
+              { key: "actual_price", label: t("actualPrice"), render: (p) => <span className="text-slate-400 line-through text-xs">{currencySymbol}{p.actual_price}</span> },
+              { key: "price", label: t("valuation"), render: (p) => <span className="text-emerald-400 font-black">{currencySymbol}{p.price}</span> },
+              { key: "duration", label: t("duration"), render: (p) => <span className="text-indigo-300 font-bold">{getDurationLabel(p.duration_in_months)}</span> },
+              { key: "description", label: t("description"), render: (p) => <span className="text-slate-400 text-xs truncate max-w-xs block">{p.description}</span> },
+              { 
+                key: "actions", 
+                label: t("actions"), 
+                render: (p) => (
+                  <div className="flex gap-4">
+                    <button
+                      className="text-indigo-400 hover:text-indigo-300 transition-transform hover:scale-125"
+                      onClick={() => {
+                        setPlanForm({
+                          name: p.name,
+                          description: p.description,
+                          actual_price: p.actual_price?.toString() || "",
+                          price: p.price.toString(),
+                          duration_in_months: p.duration_in_months.toString(),
+                        });
+                        setEditPlan(p.id);
+                        setPlanModalOpen(true);
+                      }}
+                    >
+                      <Edit2 size={18} />
+                    </button>
+                    <button
+                      className="text-red-400 hover:text-red-300 transition-transform hover:scale-125"
+                      onClick={() => {
+                        setDeleteTarget({ type: "plan", id: p.id });
+                        setDeleteModalOpen(true);
+                      }}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ) 
+              },
+            ]}
+            data={plans}
           />
 
           {lastPage > 1 && (
             <div className="flex justify-center items-center gap-4 mt-6">
               <button
-                disabled={!plansMeta.has_previous}
-                onClick={() => fetchPlans(plansMeta.page_no - 1)}
+                disabled={plansMeta.page_no === 1}
+                onClick={() => setPlansMeta({ ...plansMeta, page_no: plansMeta.page_no - 1 })}
                 className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-xs font-bold uppercase tracking-widest disabled:opacity-30"
               >
                 {t("prev")}
@@ -177,8 +191,8 @@ export function AdminSubscriptions() {
                 {t("pageOf", { current: plansMeta.page_no, total: lastPage })}
               </span>
               <button
-                disabled={!plansMeta.has_next}
-                onClick={() => fetchPlans(plansMeta.page_no + 1)}
+                disabled={plansMeta.page_no >= lastPage}
+                onClick={() => setPlansMeta({ ...plansMeta, page_no: plansMeta.page_no + 1 })}
                 className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-xs font-bold uppercase tracking-widest disabled:opacity-30"
               >
                 {t("next")}
@@ -200,30 +214,26 @@ export function AdminSubscriptions() {
         planForm={planForm}
         setPlanForm={setPlanForm}
         currencySymbol={currencySymbol}
-        onSuccess={() => fetchPlans(1)}
+        onSuccess={() => {}}
+        onSave={(payload) => saveMutation.mutate(payload)}
+        isSaving={saveMutation.isPending}
       />
 
       {/* Delete Modal for Plans */}
       <DeleteConfirmationModal
         isOpen={deleteModalOpen && deleteTarget?.type === "plan"}
         onClose={() => setDeleteModalOpen(false)}
-        onConfirm={async () => {
+        onConfirm={() => {
           if (deleteTarget && deleteTarget.type === "plan") {
-            try {
-              await adminSubscriptionService.deletePlan(deleteTarget.id);
-              toast.success("Strategy terminated successfully");
-              fetchPlans(plansMeta.page_no);
-            } catch (err) {
-              toast.error("Termination failed. Active dependencies detected.");
-            }
+            deleteMutation.mutate(deleteTarget.id);
           }
-          setDeleteModalOpen(false);
-          setDeleteTarget(null);
         }}
         title={t("strategyTermination")}
         description={t("strategyTerminationDesc")}
         confirmLabel={t("submit")}
       />
+      {/* FULL SCREEN LOADING OVERLAY */}
+      <LoadingOverlay show={deleteMutation.isPending || saveMutation.isPending} label={t("processingRequest") || "Processing Request..."} />
     </GlassCard>
   );
 }

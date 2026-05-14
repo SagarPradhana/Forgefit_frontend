@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../constants/queryKeys";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -134,6 +136,7 @@ function RevTooltip({ active, payload, label, currency = "INR" }: any) {
 export default function AdminDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const monthRange = getMonthRange();
 
   // Global date range (for most sections) — default: This Month with proper dates
@@ -172,28 +175,11 @@ export default function AdminDashboard() {
 
   const [scannerOpen, setScannerOpen] = useState(false);
 
-  // ── Data states ──
-  const [stats, setStats] = useState<any>(null);
-  const [inquiries, setInquiries] = useState<any>(null);
-  const [payments, setPayments] = useState<any[]>([]);
-  const [subscriptions, setSubscriptions] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [attendance, setAttendance] = useState<any>(null);
-  const [monthlyRevenue, setMonthlyRevenue] = useState<any[]>([]);
-
-  const [loading, setLoading] = useState({
-    stats: false, inquiries: false, payments: false,
-    subscriptions: false, products: false, attendance: false, revenue: false,
-  });
-
-  const setLoad = (key: string, val: boolean) =>
-    setLoading((prev) => ({ ...prev, [key]: val }));
-
   const { appConfig } = useGymStore();
   const currency = appConfig?.currency || "INR";
   const fmt = createFmt(currency);
 
-  // ── Date params helper — uses unix timestamps from DateRange directly ──
+  // ── Date params helper ──
   const dateParams = useCallback((range: DateRange) => {
     const p = new URLSearchParams();
     if (range.from_date) p.set("from_date", String(range.from_date));
@@ -201,130 +187,75 @@ export default function AdminDashboard() {
     return p;
   }, []);
 
-  // ── Fetchers ──
-  const fetchStats = useCallback(async () => {
-    setLoad("stats", true);
-    try {
-      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_STATS}?${dateParams(dateRange)}`);
-      if (res && res.code === 200) {
-        setStats({
-          total_users: res.total_users,
-          total_trainers: res.total_trainers,
-          total_admins: res.total_admins,
-          total_members: res.total_members,
-          total_active_subscriptions: res.total_active_subscriptions,
-          total_expired_subscriptions: res.total_expired_subscriptions,
-          total_no_subscriptions: res.total_no_subscriptions,
-          new_registrations: res.new_registrations,
-          upcoming_renewals: res.upcoming_renewals,
-          total_revenue: res.total_revenue,
-        });
-      }
-    } catch (e) { console.error(e); } finally { setLoad("stats", false); }
-  }, [dateRange, dateParams]);
+  // 🛡️ QUERIES
+  const { data: statsRaw, isLoading: statsLoading, isFetching: statsFetching } = useQuery({
+    queryKey: queryKeys.admin.dashboard.stats(dateRange),
+    queryFn: () => api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_STATS}?${dateParams(dateRange)}`) as any,
+  });
+  const stats = useMemo(() => {
+    if (!statsRaw) return null;
+    return {
+      total_users: statsRaw.total_users,
+      total_trainers: statsRaw.total_trainers,
+      total_admins: statsRaw.total_admins,
+      total_members: statsRaw.total_members,
+      total_active_subscriptions: statsRaw.total_active_subscriptions,
+      total_expired_subscriptions: statsRaw.total_expired_subscriptions,
+      total_no_subscriptions: statsRaw.total_no_subscriptions,
+      new_registrations: statsRaw.new_registrations,
+      upcoming_renewals: statsRaw.upcoming_renewals,
+      total_revenue: statsRaw.total_revenue,
+    };
+  }, [statsRaw]);
 
-  const fetchInquiries = useCallback(async () => {
-    setLoad("inquiries", true);
-    try {
-      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_INQUIRIES}?${dateParams(dateRange)}`);
-      if (res?.data) setInquiries(res.data);
-    } catch (e) { console.error(e); } finally { setLoad("inquiries", false); }
-  }, [dateRange, dateParams]);
+  const { data: inquiriesData, isLoading: inquiriesLoading, isFetching: inquiriesFetching } = useQuery({
+    queryKey: queryKeys.admin.dashboard.recentInquiries(dateRange),
+    queryFn: () => api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_INQUIRIES}?${dateParams(dateRange)}`) as any,
+  });
+  const inquiries = inquiriesData?.data || null;
 
-  const fetchPayments = useCallback(async () => {
-    setLoad("payments", true);
-    try {
-      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_PAYMENTS}?${dateParams(dateRange)}`);
-      if (res?.data) setPayments(res.data);
-    } catch (e) { console.error(e); } finally { setLoad("payments", false); }
-  }, [dateRange, dateParams]);
+  const { data: paymentsData, isLoading: paymentsLoading, isFetching: paymentsFetching } = useQuery({
+    queryKey: queryKeys.admin.dashboard.recentPayments(dateRange),
+    queryFn: () => api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_PAYMENTS}?${dateParams(dateRange)}`) as any,
+  });
+  const payments = paymentsData?.data || [];
 
-  const fetchSubscriptions = useCallback(async () => {
-    setLoad("subscriptions", true);
-    try {
-      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_SUBSCRIPTIONS}?${dateParams(dateRange)}`);
-      if (res?.data) setSubscriptions(res.data);
-    } catch (e) { console.error(e); } finally { setLoad("subscriptions", false); }
-  }, [dateRange, dateParams]);
+  const { data: subscriptionsData, isLoading: subscriptionsLoading, isFetching: subscriptionsFetching } = useQuery({
+    queryKey: queryKeys.admin.dashboard.recentSubscriptions(dateRange),
+    queryFn: () => api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_SUBSCRIPTIONS}?${dateParams(dateRange)}`) as any,
+  });
+  const subscriptions = subscriptionsData?.data || [];
 
-  const fetchProducts = useCallback(async () => {
-    setLoad("products", true);
-    try {
-      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_PRODUCTS}?${dateParams(dateRange)}`);
-      if (res?.data) setProducts(res.data);
-    } catch (e) { console.error(e); } finally { setLoad("products", false); }
-  }, [dateRange, dateParams]);
+  const { data: productsData, isLoading: productsLoading, isFetching: productsFetching } = useQuery({
+    queryKey: queryKeys.admin.dashboard.recentProducts(dateRange),
+    queryFn: () => api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_RECENT_PRODUCTS}?${dateParams(dateRange)}`) as any,
+  });
+  const products = productsData?.data || [];
 
-  const fetchAttendance = useCallback(async () => {
-    setLoad("attendance", true);
-    try {
+  const { data: attendanceData, isLoading: attendanceLoading, isFetching: attendanceFetching } = useQuery({
+    queryKey: queryKeys.admin.dashboard.attendance(dateRange),
+    queryFn: () => {
       const p = new URLSearchParams();
       if (dateRange.from_date) p.set("from_date", String(dateRange.from_date));
       if (dateRange.to_date) p.set("to_date", String(dateRange.to_date));
-      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_ATTENDANCE}?${p}`);
-      if (res?.data) setAttendance(res.data);
-    } catch (e) { console.error(e); } finally { setLoad("attendance", false); }
-  }, [dateRange]);
+      return api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_ATTENDANCE}?${p}`) as any;
+    },
+  });
+  const attendance = attendanceData?.data || null;
 
-  const fetchMonthlyRevenue = useCallback(async () => {
-    setLoad("revenue", true);
-    try {
-      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_MONTHLY_REVENUE}?months=${derivedRevenueMonths}`);
-      if (res?.data) setMonthlyRevenue(res.data);
-    } catch (e) { console.error(e); } finally { setLoad("revenue", false); }
-  }, [derivedRevenueMonths]);
+  const { data: monthlyRevenueData, isLoading: revenueLoading, isFetching: revenueFetching } = useQuery({
+    queryKey: queryKeys.admin.dashboard.monthlyRevenue({ months: derivedRevenueMonths, ...dateRange }),
+    queryFn: () => api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_MONTHLY_REVENUE}?months=${derivedRevenueMonths}&${dateParams(dateRange)}`) as any,
+  });
+  const monthlyRevenue = monthlyRevenueData?.data || [];
 
-  // ── Effects ──
-  // Single effect - fetches on mount with initial dateRange values
+  const isRefreshing = statsFetching || inquiriesFetching || paymentsFetching || subscriptionsFetching || productsFetching || attendanceFetching || revenueFetching;
 
-  const refreshAll = useCallback(async () => {
-    setLoad("stats", true);
-    setLoad("inquiries", true);
-    setLoad("payments", true);
-    setLoad("subscriptions", true);
-    setLoad("products", true);
-    setLoad("attendance", true);
-    setLoad("revenue", true);
+  const refreshAll = () => {
+    queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
+  };
 
-    try {
-      await Promise.all([
-        fetchStats(),
-        fetchInquiries(),
-        fetchPayments(),
-        fetchSubscriptions(),
-        fetchProducts(),
-        fetchAttendance(),
-        fetchMonthlyRevenue()
-      ]);
-    } catch (e) {
-      console.error("Dashboard refresh error:", e);
-    } finally {
-      // Loaders are handled inside individual fetchers, but set them false here as backup
-      setLoad("stats", false);
-      setLoad("inquiries", false);
-      setLoad("payments", false);
-      setLoad("subscriptions", false);
-      setLoad("products", false);
-      setLoad("attendance", false);
-      setLoad("revenue", false);
-    }
-  }, [fetchStats, fetchInquiries, fetchPayments, fetchSubscriptions, fetchProducts, fetchAttendance, fetchMonthlyRevenue]);
 
-  useEffect(() => {
-    fetchStats();
-    fetchInquiries();
-    fetchPayments();
-    fetchSubscriptions();
-    fetchProducts();
-    fetchAttendance();
-  }, [dateRange]);
-
-  // Revenue chart is INDEPENDENT of the global date filter — only depends on revenueMonths
-  useEffect(() => {
-    fetchMonthlyRevenue();
-  }, [fetchMonthlyRevenue]);
-
-  const isAnyLoading = Object.values(loading).some(Boolean);
 
   // ── Inquiry tab data ──
   const inqData: any[] = inquiries?.[inqTab] ?? [];
@@ -352,11 +283,12 @@ export default function AdminDashboard() {
           </motion.button>
           <DateRangeFilter
             defaultPreset="monthly"
+            value={dateRange}
             onChange={(r) => setDateRange(r)}
           />
           <button onClick={refreshAll}
             className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-indigo-500 hover:border-indigo-500 text-indigo-400 hover:text-white transition-all" title={t("refreshAll")}>
-            <RefreshCw size={14} className={isAnyLoading ? "animate-spin" : ""} />
+            <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
           </button>
         </div>
       </div>
@@ -425,7 +357,7 @@ export default function AdminDashboard() {
             ))}
           </div>
         </div>
-        {loading.inquiries ? (
+        {inquiriesLoading ? (
           <div className="space-y-2">
             {[...Array(4)].map((_, i) => <div key={i} className="h-16 rounded-xl bg-white/5 animate-pulse" />)}
           </div>
@@ -445,10 +377,10 @@ export default function AdminDashboard() {
               >
                 <div
                   className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-black shrink-0 ${inqTab === "subscriptions"
-                      ? "bg-indigo-500/20 text-indigo-400"
-                      : inqTab === "product_orders"
-                        ? "bg-emerald-500/20 text-emerald-400"
-                        : "bg-amber-500/20 text-amber-400"
+                    ? "bg-indigo-500/20 text-indigo-400"
+                    : inqTab === "product_orders"
+                      ? "bg-emerald-500/20 text-emerald-400"
+                      : "bg-amber-500/20 text-amber-400"
                     }`}
                 >
                   {(item.user_name ?? "?")?.[0]?.toUpperCase()}
@@ -462,8 +394,8 @@ export default function AdminDashboard() {
 
                     <span
                       className={`text-[10px] font-bold uppercase px-2 py-1 rounded-md ${item.status
-                          ? "bg-emerald-500/10 text-emerald-400"
-                          : "bg-amber-500/10 text-amber-400"
+                        ? "bg-emerald-500/10 text-emerald-400"
+                        : "bg-amber-500/10 text-amber-400"
                         }`}
                     >
                       {item.status ? t("resolved") : t("pending")}
@@ -492,7 +424,7 @@ export default function AdminDashboard() {
         {/* Recent Payments */}
         <GlassCard>
           <SectionHeader title={t("recentPayments")} sub={t("thisMonth")} onRedirect={() => navigate('/admin/payments')} />
-          {loading.payments ? <SkeletonRows /> : payments.length === 0 ? (
+          {paymentsLoading ? <SkeletonRows /> : payments.length === 0 ? (
             <p className="text-slate-500 text-xs text-center py-8">{t("noPayments")}</p>
           ) : (
             <div className="space-y-2">
@@ -516,7 +448,7 @@ export default function AdminDashboard() {
         {/* Recent Subscription History */}
         <GlassCard>
           <SectionHeader title={t("subscriptionHistory")} sub={t("thisMonth")} onRedirect={() => navigate('/admin/subscriptions')} />
-          {loading.subscriptions ? <SkeletonRows /> : subscriptions.length === 0 ? (
+          {subscriptionsLoading ? <SkeletonRows /> : subscriptions.length === 0 ? (
             <p className="text-slate-500 text-xs text-center py-8">{t("noRecords")}</p>
           ) : (
             <div className="space-y-2">
@@ -540,7 +472,7 @@ export default function AdminDashboard() {
         {/* Recent Product Purchases */}
         <GlassCard>
           <SectionHeader title={t("productPurchases")} sub={t("thisMonth")} onRedirect={() => navigate('/admin/products')} />
-          {loading.products ? <SkeletonRows /> : products.length === 0 ? (
+          {productsLoading ? <SkeletonRows /> : products.length === 0 ? (
             <p className="text-slate-500 text-xs text-center py-8">{t("noRecords")}</p>
           ) : (
             <div className="space-y-2">
@@ -565,9 +497,13 @@ export default function AdminDashboard() {
       {/* ── [ROW 4] Attendance Count ── */}
       <GlassCard>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-          <SectionHeader title={t("attendanceOverview")} sub={t("activityPeriod")} onRedirect={() => navigate('/admin/attendance')} />
+          <SectionHeader 
+            title={t("attendanceOverview")} 
+            sub={t("activityPeriod")} 
+            onRedirect={() => navigate(`/admin/attendance?from_date=${dateRange.from_date}&to_date=${dateRange.to_date}&label=${encodeURIComponent(dateRange.label || "")}`)} 
+          />
         </div>
-        {loading.attendance ? (
+        {attendanceLoading ? (
           <div className="grid grid-cols-3 gap-4"><div className="h-20 rounded-xl bg-white/5 animate-pulse" /><div className="h-20 rounded-xl bg-white/5 animate-pulse" /><div className="h-20 rounded-xl bg-white/5 animate-pulse" /></div>
         ) : (
           <div className="grid grid-cols-3 gap-4">
@@ -599,7 +535,7 @@ export default function AdminDashboard() {
             ))}
           </div>
         </div>
-        {loading.revenue ? (
+        {revenueLoading ? (
           <div className="h-64 rounded-xl bg-white/5 animate-pulse" />
         ) : monthlyRevenue.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-16 text-slate-500">

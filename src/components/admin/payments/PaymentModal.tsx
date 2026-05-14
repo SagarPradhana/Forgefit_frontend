@@ -1,7 +1,6 @@
-import { useState } from "react";
 import { Modal, GlowButton, ButtonLoader } from "../../ui/primitives";
 import { toast } from "../../../store/toastStore";
-import { adminPaymentService, type PaymentMethod, type PaymentStatus, type PurchaseType } from "../../../services/adminPaymentService";
+import { type PaymentMethod, type PaymentStatus, type PurchaseType } from "../../../services/adminPaymentService";
 import { useTranslation } from "react-i18next";
 
 interface PaymentModalProps {
@@ -24,7 +23,9 @@ interface PaymentModalProps {
   fetchedProducts: any[];
   currencySymbol: string;
   onSuccess: () => void;
+  mutation: any;
 }
+
 
 export function PaymentModal({
   isOpen,
@@ -36,10 +37,9 @@ export function PaymentModal({
   subscriptionPlans,
   fetchedProducts,
   currencySymbol,
-  onSuccess
+  mutation: paymentMutation
 }: PaymentModalProps) {
   const { t } = useTranslation();
-  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
     // 🛡️ VALIDATION
@@ -48,7 +48,7 @@ export function PaymentModal({
       return;
     }
     if (!paymentForm.purchase_id) {
-      const msg = paymentForm.purchase_type === "product" 
+      const msg = paymentForm.purchase_type === "product"
         ? (t("pleaseSelectProduct") || "Please select a product")
         : (t("pleaseSelectPlan") || "Please select a plan");
       toast.error(msg);
@@ -59,27 +59,13 @@ export function PaymentModal({
       return;
     }
 
-    setSubmitting(true);
     const payload = {
       ...paymentForm,
       amount: Number(paymentForm.amount),
       payment_date: Math.floor(new Date(paymentForm.payment_date).getTime() / 1000)
     };
-    try {
-      if (editPaymentId) {
-        await adminPaymentService.updatePayment(editPaymentId, payload);
-        toast.success("Financial record updated");
-      } else {
-        await adminPaymentService.createPayment(payload);
-        toast.success("New transaction logged");
-      }
-      onSuccess();
-      onClose();
-    } catch (err) {
-      toast.error("Process failed");
-    } finally {
-      setSubmitting(false);
-    }
+
+    paymentMutation.mutate(payload);
   };
 
   return (
@@ -89,9 +75,9 @@ export function PaymentModal({
       title={editPaymentId ? t("financialAdjustment") : t("logTransaction")}
       footer={
         <>
-          <GlowButton className="bg-gray-600" onClick={onClose} disabled={submitting}>{t("cancel")}</GlowButton>
-          <GlowButton onClick={handleSubmit} disabled={submitting}>
-            <ButtonLoader label={t("submit")} loadingLabel={t("loading")} loading={submitting} />
+          <GlowButton className="bg-gray-600" onClick={onClose} disabled={paymentMutation.isPending}>{t("cancel")}</GlowButton>
+          <GlowButton onClick={handleSubmit} disabled={paymentMutation.isPending}>
+            <ButtonLoader label={t("submit")} loadingLabel={t("loading")} loading={paymentMutation.isPending} />
           </GlowButton>
         </>
       }

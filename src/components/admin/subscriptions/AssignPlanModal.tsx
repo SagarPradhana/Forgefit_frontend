@@ -21,7 +21,6 @@ export function AssignPlanModal({
   isOpen,
   onClose,
   assignType,
-  assignPlanId,
   assignUserId,
   setAssignUserId,
   userSearch,

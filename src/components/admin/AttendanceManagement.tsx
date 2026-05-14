@@ -1,24 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { GlassCard, SectionTitle, Table, CommonButton } from "../ui/primitives";
+import { useSearchParams } from "react-router-dom";
+import { GlassCard, SectionTitle, Table, CommonButton, Skeleton, LoadingOverlay } from "../ui/primitives";
 import { Grid, List, Search, Clock, Edit2, Trash2, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { adminAttendanceService, type AttendanceResponse, type AttendanceRequest } from "../../services/adminAttendanceService";
-import { useEffect, useCallback, useMemo } from "react";
-import { Skeleton } from "../ui/primitives";
 import { toast } from "../../store/toastStore";
-import { useGet } from "../../hooks/useApi";
 import { API_ENDPOINTS } from "../../utils/url";
+import { api } from "../../utils/httputils";
 import { DateRangeFilter, type DateRange } from "../ui/DateRangeFilter";
 import { DeleteConfirmationModal } from "../common/DeleteConfirmationModal";
 import { ManualAttendanceModal } from "./attendance/ManualAttendanceModal";
-import { t } from "i18next";
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../constants/queryKeys";
 
 type AttendanceView = "grid" | "list";
 
-
 export function AttendanceManagement() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+
   const toUnix = (d: string, end = false) => {
     const dt = new Date(d);
     end ? dt.setHours(23, 59, 59, 999) : dt.setHours(0, 0, 0, 0);
@@ -28,18 +31,42 @@ export function AttendanceManagement() {
   const [viewType, setViewType] = useState<AttendanceView>("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const today = new Date().toISOString().split('T')[0];
-  const [dateRange, setDateRange] = useState<DateRange>({
-    label: "Today",
-    from_date: toUnix(today, false),
-    to_date: toUnix(today, true)
+  
+  const [dateRange, setDateRange] = useState<DateRange>(() => {
+    const fromParam = searchParams.get("from_date");
+    const toParam = searchParams.get("to_date");
+    const labelParam = searchParams.get("label");
+
+    if (fromParam && toParam) {
+      return {
+        from_date: Number(fromParam),
+        to_date: Number(toParam),
+        label: labelParam || "Custom Range"
+      };
+    }
+
+    return {
+      label: "Today",
+      from_date: toUnix(today, false),
+      to_date: toUnix(today, true)
+    };
   });
 
-  const { data: statsData, refetch: fetchStats } = useGet(
-    dateRange ? `${API_ENDPOINTS.ADMIN.ATTENDANCE_STATS}?from_date=${dateRange.from_date}&to_date=${dateRange.to_date}` : null,
-    { useCache: false }
-  );
+  // Sync dateRange if URL params change (e.g. navigation from dashboard)
+  useEffect(() => {
+    const fromParam = searchParams.get("from_date");
+    const toParam = searchParams.get("to_date");
+    const labelParam = searchParams.get("label");
 
-  const stats = statsData || { total_checkins_today: 0, present_now: 0, checked_out_today: 0, avg_time_hours: 0 };
+    if (fromParam && toParam) {
+      setDateRange({
+        from_date: Number(fromParam),
+        to_date: Number(toParam),
+        label: labelParam || "Custom Range"
+      });
+    }
+  }, [searchParams]);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<AttendanceResponse | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -54,37 +81,59 @@ export function AttendanceManagement() {
     status: "present"
   });
 
-  const [records, setRecords] = useState<AttendanceResponse[]>([]);
-  const [loading, setLoading] = useState(false);
+  // 🛡️ FETCH STATS QUERY
+  const { data: statsData } = useQuery({
+    queryKey: ["admin", "attendance", "stats", dateRange],
+    queryFn: () => api.get(`${API_ENDPOINTS.ADMIN.ATTENDANCE_STATS}?from_date=${dateRange.from_date}&to_date=${dateRange.to_date}`) as any,
+    enabled: !!dateRange
+  });
+  const stats = statsData || { total_checkins_today: 0, present_now: 0, checked_out_today: 0, avg_time_hours: 0 };
 
-  const { data: usersDropdownData } = useGet(API_ENDPOINTS.ADMIN.GET_USERS_DROPDOWN, { useCache: true });
+  // 🛡️ FETCH RECORDS QUERY
+  const { data: recordsData, isLoading: loading } = useQuery({
+    queryKey: ["admin", "attendance", "list", { searchQuery, dateRange }],
+    queryFn: () => adminAttendanceService.getAttendance({
+      search: searchQuery || undefined,
+      from_date: dateRange.from_date,
+      to_date: dateRange.to_date,
+      count: 100
+    }),
+  });
+  const records = recordsData?.data || [];
+
+  const { data: usersDropdownData } = useQuery({
+    queryKey: ["admin", "users", "dropdown"],
+    queryFn: () => api.get(API_ENDPOINTS.ADMIN.GET_USERS_DROPDOWN) as any,
+    staleTime: Infinity
+  });
   const members = useMemo(() => usersDropdownData?.data || [], [usersDropdownData]);
 
-  const fetchRecords = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await adminAttendanceService.getAttendance({
-        search: searchQuery || undefined,
-        from_date: dateRange.from_date,
-        to_date: dateRange.to_date,
-        count: 100
-      });
-      if (res && res.data) setRecords(res.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [searchQuery, dateRange]);
+  // 🛡️ SAVE MUTATION
+  const saveMutation = useMutation({
+    mutationFn: (payload: AttendanceRequest) => 
+      editingRecord 
+        ? adminAttendanceService.updateAttendance(editingRecord.id, editingRecord.user_id, payload)
+        : adminAttendanceService.createAttendance(payload),
+    onSuccess: () => {
+      toast.success(editingRecord ? "Attendance record updated" : "New attendance logged");
+      queryClient.invalidateQueries({ queryKey: ["admin", "attendance"] });
+      setModalOpen(false);
+      setEditingRecord(null);
+    },
+    onError: () => toast.error("Failed to save record")
+  });
 
-  useEffect(() => {
-    fetchRecords();
-  }, []);
-
-  // Refetch when filters change
-  useEffect(() => {
-    fetchRecords();
-  }, [searchQuery, dateRange]);
+  // 🛡️ DELETE MUTATION
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => adminAttendanceService.deleteAttendance(id),
+    onSuccess: () => {
+      toast.success("Record purged from registry");
+      queryClient.invalidateQueries({ queryKey: ["admin", "attendance"] });
+      setDeleteModalOpen(false);
+      setDeleteId(null);
+    },
+    onError: () => toast.error("Process failure")
+  });
 
   const handleSave = async () => {
     if (!form.user_id) {
@@ -100,36 +149,20 @@ export function AttendanceManagement() {
       return;
     }
 
-    try {
-      // Use epoch conversion
-      const dateTimestamp = Math.floor(new Date(form.date).getTime() / 1000);
+    const dateTimestamp = Math.floor(new Date(form.date).getTime() / 1000);
+    const checkInTime = new Date(form.date + 'T' + form.checkIn);
+    const checkOutTime = form.checkOut ? new Date(form.date + 'T' + form.checkOut) : undefined;
 
-      const checkInTime = new Date(form.date + 'T' + form.checkIn);
-      const checkOutTime = form.checkOut ? new Date(form.date + 'T' + form.checkOut) : undefined;
+    const payload: AttendanceRequest = {
+      user_id: form.user_id,
+      status: form.status.toLowerCase(),
+      date: dateTimestamp,
+      check_in: Math.floor(checkInTime.getTime() / 1000),
+      check_out: checkOutTime ? Math.floor(checkOutTime.getTime() / 1000) : undefined,
+      description: ""
+    };
 
-      const payload: AttendanceRequest = {
-        user_id: form.user_id,
-        status: form.status.toLowerCase(),
-        date: dateTimestamp,
-        check_in: Math.floor(checkInTime.getTime() / 1000),
-        check_out: checkOutTime ? Math.floor(checkOutTime.getTime() / 1000) : undefined,
-        description: ""
-      };
-
-      if (editingRecord) {
-        await adminAttendanceService.updateAttendance(editingRecord.id, editingRecord.user_id, payload);
-        toast.success("Attendance record updated");
-      } else {
-        await adminAttendanceService.createAttendance(payload);
-        toast.success("New attendance logged");
-      }
-      setModalOpen(false);
-      setEditingRecord(null);
-      fetchRecords();
-      fetchStats();
-    } catch (err) {
-      toast.error("Failed to save record");
-    }
+    saveMutation.mutate(payload);
   };
 
   const handleEdit = (r: AttendanceResponse) => {
@@ -145,20 +178,7 @@ export function AttendanceManagement() {
     setModalOpen(true);
   };
 
-  const handleDelete = async () => {
-    if (deleteId) {
-      try {
-        await adminAttendanceService.deleteAttendance(deleteId);
-        toast.success("Record purged from registry");
-        setDeleteModalOpen(false);
-        setDeleteId(null);
-        fetchRecords();
-        fetchStats();
-      } catch (err) {
-        toast.error("Process failure");
-      }
-    }
-  };
+
 
   return (
     <div className="space-y-6">
@@ -278,30 +298,48 @@ export function AttendanceManagement() {
               exit={{ opacity: 0, x: 20 }}
             >
               <Table
-                headers={[t("nameMobileEmail"), t("checkIn"), t("checkOut"), t("status"), t("actions")]}
-                rows={records.map(r => [
-                  <div key={r.id} className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-indigo-500/30 to-violet-500/30 flex items-center justify-center text-xs font-black text-white shrink-0">
-                      {r.user_name?.[0]?.toUpperCase() || "?"}
-                    </div>
-                    <div className="text-left">
-                      <p className="text-xs font-bold text-white">{r.user_name || "—"}</p>
-                      <p className="text-[10px] text-slate-500">{(r as any).email || (r as any).mobile || "—"}</p>
-                    </div>
-                  </div>,
-                  new Date(r.check_in * 1000).toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-                  r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' }) : t("active"),
-                  <span key={`${r.id}-status`} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${r.status?.toLowerCase() === "present" ? "bg-emerald-500/20 text-emerald-400" :
-                    r.status?.toLowerCase() === "late" ? "bg-amber-500/20 text-amber-400" :
-                      "bg-red-500/20 text-red-400"
-                    }`}>
-                    {r.status || 'N/A'}
-                  </span>,
-                  <div key={`${r.id}-act`} className="flex gap-3 justify-center">
-                    <button onClick={() => handleEdit(r)} className="text-indigo-400 hover:text-indigo-300 transition-transform hover:scale-125"><Edit2 size={16} /></button>
-                    <button onClick={() => { setDeleteId(r.id); setDeleteModalOpen(true); }} className="text-red-400 hover:text-red-300 transition-transform hover:scale-125"><Trash2 size={16} /></button>
-                  </div>
-                ])}
+                columns={[
+                  { 
+                    key: "user", 
+                    label: t("nameMobileEmail"), 
+                    render: (r) => (
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-indigo-500/30 to-violet-500/30 flex items-center justify-center text-xs font-black text-white shrink-0">
+                          {r.user_name?.[0]?.toUpperCase() || "?"}
+                        </div>
+                        <div className="text-left">
+                          <p className="text-xs font-bold text-white">{r.user_name || "—"}</p>
+                          <p className="text-[10px] text-slate-500">{(r as any).email || (r as any).mobile || "—"}</p>
+                        </div>
+                      </div>
+                    ) 
+                  },
+                  { key: "checkIn", label: t("checkIn"), render: (r) => new Date(r.check_in * 1000).toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' }) },
+                  { key: "checkOut", label: t("checkOut"), render: (r) => r.check_out ? new Date(r.check_out * 1000).toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' }) : t("active") },
+                  { 
+                    key: "status", 
+                    label: t("status"), 
+                    render: (r) => (
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${r.status?.toLowerCase() === "present" ? "bg-emerald-500/20 text-emerald-400" :
+                        r.status?.toLowerCase() === "late" ? "bg-amber-500/20 text-amber-400" :
+                          "bg-red-500/20 text-red-400"
+                        }`}>
+                        {r.status || 'N/A'}
+                      </span>
+                    ) 
+                  },
+                  { 
+                    key: "actions", 
+                    label: t("actions"), 
+                    render: (r) => (
+                      <div className="flex gap-3 justify-center">
+                        <button onClick={() => handleEdit(r)} className="text-indigo-400 hover:text-indigo-300 transition-transform hover:scale-125"><Edit2 size={16} /></button>
+                        <button onClick={() => { setDeleteId(r.id); setDeleteModalOpen(true); }} className="text-red-400 hover:text-red-300 transition-transform hover:scale-125"><Trash2 size={16} /></button>
+                      </div>
+                    ) 
+                  },
+                ]}
+                data={records}
               />
             </motion.div>
           )}
@@ -317,22 +355,29 @@ export function AttendanceManagement() {
         setForm={setForm}
         members={members}
         onSave={handleSave}
+        isSaving={saveMutation.isPending}
       />
 
       {/* Delete Confirmation */}
       <DeleteConfirmationModal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        onConfirm={handleDelete}
+        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
         title={t("deleteRecordQuestion")}
         description={t("deleteRecordDescription")}
         confirmLabel={t("submit")}
+        isProcessing={deleteMutation.isPending}
+      />
+      <LoadingOverlay 
+        show={saveMutation.isPending || deleteMutation.isPending} 
+        label={t("processingRequest") || "Processing Request..."} 
       />
     </div>
   );
 }
 
 function AttendanceGridCard({ record, onEdit, onDelete }: { record: AttendanceResponse, onEdit: () => void, onDelete: () => void }) {
+  const { t } = useTranslation();
   return (
     <div className="group bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-indigo-500/50 transition-all hover:bg-white/[0.08] relative overflow-hidden">
       <div className="flex items-center gap-4 mb-4 relative z-10">

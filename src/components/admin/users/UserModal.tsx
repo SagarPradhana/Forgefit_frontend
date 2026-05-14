@@ -239,7 +239,6 @@ export const UserModal = ({
               animate={{ opacity: 1, x: 0 }}
               className="space-y-6"
             >
-              {/* Metadata section placeholder if needed, currently empty to revert changes */}
 
               {formData.role === "trainer" ? (
                 <>
@@ -412,9 +411,9 @@ export const UserModal = ({
               animate={{ opacity: 1, x: 0 }}
               className="space-y-6"
             >
-              {(portalType === "admin" || portalType === "trainer") ? (
-                <div className="py-4 text-center text-slate-400 text-sm">
-                  User will be assigned to your portal automatically
+              {formData.role === "admin" || formData.role === "trainer" ? (
+                <div className="py-4 text-center text-slate-400 text-sm italic font-medium">
+                  {formData.role === "admin" ? t("adminRoleNoTrainer") || "Admin role - no trainer required" : t("trainerRoleNoTrainer") || "Trainer role - no trainer assignment needed"}
                 </div>
               ) : (
                 <div>
@@ -465,14 +464,8 @@ export const UserModal = ({
               onClick={isFinalStep ? onSave : onNext}
               className="flex-1 sm:flex-none px-10 py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-xl shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 active:scale-95"
             >
-              {isAnyLoading ? (
-                <Loader2 size={20} className="animate-spin" />
-              ) : (
-                <>
-                  {isFinalStep ? t("submit") : t("next")}
-                  {!isFinalStep && <ChevronRight size={20} />}
-                </>
-              )}
+              {isFinalStep ? t("submit") : t("next")}
+              {!isFinalStep && <ChevronRight size={20} />}
             </motion.button>
           </div>
         </div>

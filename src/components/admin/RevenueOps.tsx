@@ -129,27 +129,19 @@ function Badge({ value, green, red }: { value: string; green?: string[]; red?: s
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "../../constants/queryKeys";
+
 export function RevenueOps() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [dateRange, setDateRange] = useState<DateRange>({ label: "This Month" });
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [page, setPage] = useState(1);
-
-  // Data states
-  const [stats, setStats] = useState<RevenueStats | null>(null);
-  const [statsLoading, setStatsLoading] = useState(false);
-  const [payments, setPayments] = useState<PaymentRecord[]>([]);
-  const [paymentsTotal, setPaymentsTotal] = useState(0);
-  const [paymentsLoading, setPaymentsLoading] = useState(false);
-  const [inquiries, setInquiries] = useState<ContactInquiry[]>([]);
-  const [inquiriesTotal, setInquiriesTotal] = useState(0);
-  const [inquiriesLoading, setInquiriesLoading] = useState(false);
-  const [monthlyRevenue, setMonthlyRevenue] = useState<any[]>([]);
   const [revenueMonths, setRevenueMonths] = useState(6);
-  const [revenueLoading, setRevenueLoading] = useState(false);
 
   const { appConfig } = useGymStore();
   const currency = appConfig?.currency || "INR";
@@ -158,88 +150,70 @@ export function RevenueOps() {
 
   // Debounce search
   useEffect(() => {
-    const t = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 500);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 500);
+    return () => clearTimeout(timer);
   }, [search]);
 
   // Reset page on filter changes
   useEffect(() => { setPage(1); }, [activeTab, dateRange, paymentMethod]);
 
-  // Fetch Stats
-  const fetchStats = useCallback(async () => {
-    setStatsLoading(true);
-    try {
+  // 🛡️ REVENUE STATS QUERY
+  const { data: statsData, isLoading: statsLoading } = useQuery({
+    queryKey: queryKeys.admin.dashboard.revenueStats(dateRange),
+    queryFn: () => {
       const params = new URLSearchParams();
       if (dateRange.from_date) params.set("from_date", String(dateRange.from_date));
       if (dateRange.to_date)   params.set("to_date",   String(dateRange.to_date));
-      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.REVENUE_STATS}?${params}`);
-      if (res?.data) setStats(res.data);
-    } catch (e) { console.error(e); } finally { setStatsLoading(false); }
-  }, [dateRange]);
+      return api.get(`${API_ENDPOINTS.ADMIN.REVENUE_STATS}?${params}`) as any;
+    },
+  });
+  const stats = statsData?.data || null;
 
-  // Fetch Payments (all / subscriptions / products)
-  const fetchPayments = useCallback(async () => {
-    if (activeTab === "inquiries") return;
-    setPaymentsLoading(true);
-    try {
-      const endpoint =
-        activeTab === "subscriptions" ? API_ENDPOINTS.ADMIN.REVENUE_PAYMENTS_SUBSCRIPTIONS :
-        activeTab === "products"      ? API_ENDPOINTS.ADMIN.REVENUE_PAYMENTS_PRODUCTS :
-                                        API_ENDPOINTS.ADMIN.REVENUE_PAYMENTS;
-      const params = new URLSearchParams({
-        offset: String((page - 1) * PAGE_SIZE),
-        count:  String(PAGE_SIZE),
-      });
-      if (dateRange.from_date) params.set("from_date", String(dateRange.from_date));
-      if (dateRange.to_date)   params.set("to_date",   String(dateRange.to_date));
-      if (debouncedSearch)     params.set("search",    debouncedSearch);
-      if (paymentMethod)       params.set("payment_method", paymentMethod);
-      const res: any = await api.get(`${endpoint}?${params}`);
-      if (res?.data) {
-        setPayments(res.data);
-        setPaymentsTotal(res.totalcount ?? res.count ?? 0);
+  // 🛡️ MONTHLY REVENUE QUERY
+  const { data: monthlyRevenueData, isLoading: revenueLoading } = useQuery({
+    queryKey: queryKeys.admin.dashboard.monthlyRevenue(revenueMonths),
+    queryFn: () => api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_MONTHLY_REVENUE}?months=${revenueMonths}`) as any,
+  });
+  const monthlyRevenue = monthlyRevenueData?.data || [];
+
+  // 🛡️ PAYMENTS/INQUIRIES QUERY
+  const { data: listData, isLoading: listLoading, isFetching: listFetching } = useQuery({
+    queryKey: ["admin", "revenue", activeTab, { page, dateRange, debouncedSearch, paymentMethod }],
+    queryFn: async () => {
+      if (activeTab === "inquiries") {
+        const params = new URLSearchParams({
+          offset: String((page - 1) * PAGE_SIZE),
+          count:  String(PAGE_SIZE),
+        });
+        if (dateRange.from_date) params.set("from_date", String(dateRange.from_date));
+        if (dateRange.to_date)   params.set("to_date",   String(dateRange.to_date));
+        if (debouncedSearch)     params.set("search",    debouncedSearch);
+        return api.get(`${API_ENDPOINTS.ADMIN.REVENUE_CONTACT_INQUIRIES}?${params}`) as any;
+      } else {
+        const endpoint =
+          activeTab === "subscriptions" ? API_ENDPOINTS.ADMIN.REVENUE_PAYMENTS_SUBSCRIPTIONS :
+          activeTab === "products"      ? API_ENDPOINTS.ADMIN.REVENUE_PAYMENTS_PRODUCTS :
+                                          API_ENDPOINTS.ADMIN.REVENUE_PAYMENTS;
+        const params = new URLSearchParams({
+          offset: String((page - 1) * PAGE_SIZE),
+          count:  String(PAGE_SIZE),
+        });
+        if (dateRange.from_date) params.set("from_date", String(dateRange.from_date));
+        if (dateRange.to_date)   params.set("to_date",   String(dateRange.to_date));
+        if (debouncedSearch)     params.set("search",    debouncedSearch);
+        if (paymentMethod)       params.set("payment_method", paymentMethod);
+        return api.get(`${endpoint}?${params}`) as any;
       }
-    } catch (e) { console.error(e); } finally { setPaymentsLoading(false); }
-  }, [activeTab, page, dateRange, debouncedSearch, paymentMethod]);
+    },
+  });
 
-  // Fetch Contact Inquiries
-  const fetchInquiries = useCallback(async () => {
-    if (activeTab !== "inquiries") return;
-    setInquiriesLoading(true);
-    try {
-      const params = new URLSearchParams({
-        offset: String((page - 1) * PAGE_SIZE),
-        count:  String(PAGE_SIZE),
-      });
-      if (dateRange.from_date) params.set("from_date", String(dateRange.from_date));
-      if (dateRange.to_date)   params.set("to_date",   String(dateRange.to_date));
-      if (debouncedSearch)     params.set("search",    debouncedSearch);
-      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.REVENUE_CONTACT_INQUIRIES}?${params}`);
-      if (res?.data) {
-        setInquiries(res.data);
-        setInquiriesTotal(res.totalcount ?? res.count ?? 0);
-      }
-    } catch (e) { console.error(e); } finally { setInquiriesLoading(false); }
-  }, [activeTab, page, dateRange, debouncedSearch]);
+  const payments = activeTab !== "inquiries" ? listData?.data || [] : [];
+  const inquiries = activeTab === "inquiries" ? listData?.data || [] : [];
+  const totalItems = listData?.totalcount || listData?.count || 0;
+  const totalPages = Math.ceil(totalItems / PAGE_SIZE);
 
-  // Fetch Monthly Revenue
-  const fetchMonthlyRevenue = useCallback(async () => {
-    setRevenueLoading(true);
-    try {
-      const res: any = await api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_MONTHLY_REVENUE}?months=${revenueMonths}`);
-      if (res?.data) setMonthlyRevenue(res.data);
-    } catch (e) { console.error(e); } finally { setRevenueLoading(false); }
-  }, [revenueMonths]);
-
-  useEffect(() => { fetchStats(); }, [fetchStats]);
-  useEffect(() => { fetchPayments(); }, [fetchPayments]);
-  useEffect(() => { fetchInquiries(); }, [fetchInquiries]);
-  useEffect(() => { fetchMonthlyRevenue(); }, [fetchMonthlyRevenue]);
-
-  const isLoading = statsLoading || paymentsLoading || inquiriesLoading;
-  const totalPages = activeTab === "inquiries"
-    ? Math.ceil(inquiriesTotal / PAGE_SIZE)
-    : Math.ceil(paymentsTotal / PAGE_SIZE);
+  const isLoading = statsLoading || listLoading || revenueLoading;
+  const isRefreshing = listFetching;
 
   const tabs: { id: Tab; label: string; icon: any }[] = [
     { id: "all",           label: t("allPayments"),    icon: IndianRupee },
@@ -264,11 +238,15 @@ export function RevenueOps() {
             onChange={(r) => setDateRange(r)}
           />
           <button
-            onClick={() => { fetchStats(); fetchPayments(); fetchInquiries(); }}
+            onClick={() => {
+              queryClient.invalidateQueries({ queryKey: ["admin", "revenue"] });
+              queryClient.invalidateQueries({ queryKey: queryKeys.admin.dashboard.revenueStats({}) });
+              queryClient.invalidateQueries({ queryKey: queryKeys.admin.dashboard.monthlyRevenue({}) });
+            }}
             className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-indigo-500 hover:border-indigo-500 text-indigo-400 hover:text-white transition-all"
             title="Refresh"
           >
-            <RefreshCw size={13} className={isLoading ? "animate-spin" : ""} />
+            <RefreshCw size={13} className={isRefreshing ? "animate-spin" : ""} />
           </button>
         </div>
       </div>

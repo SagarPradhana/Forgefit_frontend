@@ -50,6 +50,7 @@ interface Props {
   defaultPreset?: Preset;
   onChange: (range: DateRange) => void;
   className?: string;
+  value?: DateRange; // Controlled value
 }
 
 const PRESETS: { id: Preset; label: string }[] = [
@@ -60,13 +61,24 @@ const PRESETS: { id: Preset; label: string }[] = [
   { id: "custom",    label: "Custom Range" },
 ];
 
-export function DateRangeFilter({ defaultPreset = "today", onChange, className = "" }: Props) {
+export function DateRangeFilter({ defaultPreset = "today", onChange, className = "", value }: Props) {
   const [open, setOpen] = useState(false);
   const [preset, setPreset] = useState<Preset>(defaultPreset);
   const [customFrom, setCustomFrom] = useState("");
   const [customTo,   setCustomTo]   = useState("");
-  const [label, setLabel] = useState(buildRange(defaultPreset, "", "").label);
+  const [label, setLabel] = useState(value?.label || buildRange(defaultPreset, "", "").label);
   const ref = useRef<HTMLDivElement>(null);
+
+  // Sync internal label if external value changes
+  useEffect(() => {
+    if (value?.label) {
+      setLabel(value.label);
+      // Try to find a matching preset
+      const found = PRESETS.find(p => p.label === value.label);
+      if (found) setPreset(found.id);
+      else if (value.label.includes(" – ")) setPreset("custom");
+    }
+  }, [value]);
 
 
   // Close on outside click
