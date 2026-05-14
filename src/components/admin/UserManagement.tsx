@@ -368,7 +368,6 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
         medical_conditions: user.metadata?.medical_conditions || "",
         workout_time: user.metadata?.workout_time || "morning",
         emergency_contact: user.metadata?.emergency_contact || "",
-        purchase_id: user.metadata?.purchase_id || user.purchase_id || "",
       },
       trainer_id: user.trainer_id || "",
       subscription_id: user.subscription_id || "",
@@ -378,7 +377,6 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
       start_date: user.start_date || 0,
       end_date: user.end_date || 0,
       profilePhoto: user.profile_image_path || user.metadata?.profile_image_path || "",
-      purchase_id: user.purchase_id || user.metadata?.purchase_id || "",
     });
     setEditingUserId(user.id);
     setModalStep("role");
@@ -446,7 +444,6 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
       medical_conditions: rawPayload.metadata.medical_conditions,
       workout_time: rawPayload.metadata.workout_time,
       emergency_contact: rawPayload.metadata.emergency_contact,
-      purchase_id: rawPayload.metadata.purchase_id,
     };
 
     if (editingUserId) {
@@ -465,7 +462,6 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
         amount: rawPayload.amount,
         status: rawPayload.status,
         start_date: rawPayload.start_date,
-        purchase_id: rawPayload.purchase_id || rawPayload.metadata.purchase_id,
         end_date: rawPayload.end_date,
       };
       editUser(API_ENDPOINTS.ADMIN.USER_EDIT(editingUserId), editPayload);

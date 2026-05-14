@@ -239,23 +239,7 @@ export const UserModal = ({
               animate={{ opacity: 1, x: 0 }}
               className="space-y-6"
             >
-              {/* Product Identifier Section */}
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Administrative Metadata</h4>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-tight mb-2">Product ID (Internal Ref)</label>
-                  <input
-                    type="text"
-                    placeholder="Enter purchase_id or product identifier"
-                    value={formData.metadata.purchase_id || ""}
-                    onChange={(e) => setFormData({ ...formData, metadata: { ...formData.metadata, purchase_id: e.target.value } })}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500 transition"
-                  />
-                </div>
-              </div>
+              {/* Metadata section placeholder if needed, currently empty to revert changes */}
 
               {formData.role === "trainer" ? (
                 <>
@@ -428,9 +412,9 @@ export const UserModal = ({
               animate={{ opacity: 1, x: 0 }}
               className="space-y-6"
             >
-              {(portalType === "admin" || portalType === "trainer") && formData.role !== "user" ? (
+              {(portalType === "admin" || portalType === "trainer") ? (
                 <div className="py-4 text-center text-slate-400 text-sm">
-                  {formData.role === "admin" ? "Admin role - no trainer needed" : "Trainer role - no trainer needed"}
+                  User will be assigned to your portal automatically
                 </div>
               ) : (
                 <div>
