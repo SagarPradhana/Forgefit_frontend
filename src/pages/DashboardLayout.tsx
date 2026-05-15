@@ -348,7 +348,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className={`relative z-[60] rounded-xl lg:rounded-3xl border p-1.5 md:p-2.5 lg:p-4 backdrop-blur-xl mx-0 mt-1 lg:mx-0 lg:mt-0`}
+            className={`relative z-[100] rounded-xl lg:rounded-3xl border p-1.5 md:p-2.5 lg:p-4 backdrop-blur-xl mx-0 mt-1 lg:mx-0 lg:mt-0`}
             style={{
               background: currentTheme.cardBgRaw,
               borderColor: currentTheme.borderRaw,

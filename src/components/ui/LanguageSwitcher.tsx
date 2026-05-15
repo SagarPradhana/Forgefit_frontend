@@ -1,10 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Languages, ChevronDown } from "lucide-react";
 
 const LanguageSwitcher: React.FC = () => {
   const { i18n } = useTranslation();
   const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]);
 
   const languages = [
     { code: "en", name: "English", flag: "🇺🇸" },
@@ -20,7 +35,7 @@ const LanguageSwitcher: React.FC = () => {
   };
 
   return (
-    <div className="relative inline-block">
+    <div className="relative inline-block" ref={dropdownRef}>
       {/* 🔥 BUTTON */}
       <button
         onClick={() => setOpen(!open)}
@@ -38,7 +53,7 @@ const LanguageSwitcher: React.FC = () => {
 
       {/* 💎 DROPDOWN */}
       {open && (
-        <div className="absolute right-0 mt-2 w-44 rounded-xl bg-slate-900 border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.8)] z-[200] overflow-hidden">
+        <div className="absolute right-0 mt-2 w-44 rounded-xl bg-slate-900 border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.8)] z-[1000] overflow-hidden">
           {languages.map((lang) => (
             <button
               key={lang.code}
