@@ -163,8 +163,8 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
     queryKey: queryKeys.admin.users(usersParams),
     queryFn: async () => {
       const res = isTrainer 
-        ? await api.get(API_ENDPOINTS.ADMIN.TRAINER_USERS, { params: usersParams }) as any
-        : await api.get(API_ENDPOINTS.ADMIN.USERS, { params: usersParams }) as any;
+        ? await api.get(API_ENDPOINTS.ADMIN.TRAINER_USERS, usersParams) as any
+        : await api.get(API_ENDPOINTS.ADMIN.USERS, usersParams) as any;
       return res;
     },
   });

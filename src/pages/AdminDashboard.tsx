@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../constants/queryKeys";
 import { useTranslation } from "react-i18next";
@@ -328,14 +328,14 @@ export default function AdminDashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center items-center! justify-between gap-3 mb-5">
           <SectionHeader title={t("recentInquiries")} sub={t("latestRequests")} onRedirect={() => navigate('/admin/inquiries')} />
           {/* Tab pills */}
-          <div className="flex gap-x-1.5 gap-y-0">
+          <div className="flex gap-x-1.5 gap-y-0 flex-nowrap">
             {inqTabs.map(({ id, label, icon: Icon }) => (
-              <button key={id} onClick={() => setInqTab(id as any)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${inqTab === id
+              <button key={id} onClick={() => setInqTab(id as any)} title={t(id)}
+                className={`flex items-center gap-1.5 px-1.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${inqTab === id
                   ? "bg-indigo-500 border-indigo-400 text-white shadow-lg shadow-indigo-500/20"
                   : "bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10"
                   }`}>
-                <Icon size={11} />{t(id)}
+                <Icon size={11} />
               </button>
             ))}
           </div>
