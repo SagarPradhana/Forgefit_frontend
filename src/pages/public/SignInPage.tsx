@@ -8,7 +8,7 @@ import {
 } from "../../components/ui/primitives";
 import { PublicLayout } from "../../layouts/PublicLayout";
 import { useAuthStore } from "../../store/authStore";
-import { Dumbbell, Loader2, Eye, EyeOff, Sparkles } from "lucide-react";
+import { Dumbbell, Loader2, Eye, EyeOff, Sparkles, User } from "lucide-react";
 import { useMutation } from "../../hooks/useApi";
 import { API_ENDPOINTS } from "../../utils/url";
 import { useGymStore } from "../../store/gymStore";
@@ -174,12 +174,16 @@ export function SignInPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
+                className="relative"
               >
+                <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                  <User size={18} className="text-slate-400" />
+                </div>
                 <InputField
                   placeholder="Username / Email / Phone"
                   value={email}
                   onChange={(e: any) => { setEmail(e); if (errors.email) setErrors(prev => ({ ...prev, email: undefined })); }}
-                  className={`bg-white/5 focus:bg-white/10 transition-all border-white/10 focus:border-indigo-400 ${errors.email ? "!border-red-500" : ""}`}
+                  className={`pr-10 bg-white/5 focus:bg-white/10 transition-all border-white/10 focus:border-indigo-400 ${errors.email ? "!border-red-500" : ""}`}
                 />
                 {errors.email && (
                   <p className="mt-1.5 text-xs text-red-400 font-medium">{errors.email}</p>
