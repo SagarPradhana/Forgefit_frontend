@@ -47,7 +47,7 @@ export function LocationsTab() {
     try {
       const res = await adminLocationService.getLocations({ offset: (p - 1) * 10, count: 10, search });
       setLocations(res.data || []);
-      setTotalCount(res.totalcount || 0);
+      setTotalCount(res.total_count || 0);
     } catch (err) {
       console.error(err);
     } finally {

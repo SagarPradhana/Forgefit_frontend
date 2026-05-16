@@ -53,7 +53,7 @@ export function InquiryCenter() {
         case "products": return adminInquiryService.getProductOrders(params);
         case "contacts": return adminInquiryService.getContactInquiries(params);
         case "expiry": return adminInquiryService.getExpiringMembers(params);
-        default: return { data: [], totalcount: 0 };
+        default: return { data: [], total_count: 0 };
       }
     },
   });
@@ -97,7 +97,7 @@ export function InquiryCenter() {
   });
 
   const data = inquiriesData?.data || [];
-  const totalCount = inquiriesData?.totalcount || 0;
+  const totalCount = inquiriesData?.total_count || 0;
 
   const tabs: { id: InquiryType; label: string }[] = [
     { id: "subscriptions", label: t("subscriptions") },

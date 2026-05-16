@@ -132,6 +132,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
   // ID Card Modal State
   const [idCardOpen, setIdCardOpen] = useState(false);
   const [selectedUserForCard, setSelectedUserForCard] = useState<any>(null);
+  const [idCardLoading, setIdCardLoading] = useState(false);
 
   // Pagination & Search State
   const [page, setPage] = useState(1);
@@ -140,6 +141,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
+  const allUsersRef = useRef<any[]>([]);
 
   // Temp storage for user creation data for popup
   const tempPasswordRef = useRef<string>("");
@@ -157,20 +159,29 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
     };
   }, [page, perPage, debouncedSearch, roleFilter, planStatusFilter, isActiveFilter, isTrainer]);
 
-  const { isLoading: usersLoading } = useQuery({
+  const { isLoading: usersLoading, data: usersData } = useQuery({
     queryKey: queryKeys.admin.users(usersParams),
     queryFn: async () => {
       const res = isTrainer 
         ? await api.get(API_ENDPOINTS.ADMIN.TRAINER_USERS, { params: usersParams }) as any
         : await api.get(API_ENDPOINTS.ADMIN.USERS, { params: usersParams }) as any;
-      
-      const newUsers = res.data || [];
-      if (page === 1) setAllUsers(newUsers);
-      else setAllUsers((prev) => [...prev, ...newUsers]);
-      setHasMore(newUsers.length === perPage);
       return res;
     },
   });
+
+  // Sync allUsers from query data (handles both first fetch and cache-restore on re-mount)
+  useEffect(() => {
+    if (usersData) {
+      const newUsers = usersData.data || [];
+      if (page === 1) {
+        allUsersRef.current = newUsers;
+      } else {
+        allUsersRef.current = [...allUsersRef.current, ...newUsers];
+      }
+      setAllUsers(allUsersRef.current);
+      setHasMore(newUsers.length === perPage);
+    }
+  }, [usersData]);
 
   const { data: rolesData } = useQuery({
     queryKey: ["admin", "roles"],
@@ -520,14 +531,16 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
   };
 
   const handleOpenIdCard = async (user: any) => {
+    setIdCardLoading(true);
     try {
       const res = await api.get(API_ENDPOINTS.USER.MY_DETAILS(user.id));
-      // res is the direct JSON object containing user details and latest_subscription_details
       const fullUserDetails = { ...user, ...res };
       setSelectedUserForCard(fullUserDetails);
       setIdCardOpen(true);
     } catch (err) {
       toast.error("Failed to fetch user details for ID Card.");
+    } finally {
+      setIdCardLoading(false);
     }
   };
 
@@ -588,7 +601,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
   };
 
   const isFinalStep = modalStep === "membership";
-  const isAnyLoading = createUserMutation.isPending || editUserMutation.isPending || patchStatusMutation.isPending || deleteUserMutation.isPending || deleteDocumentMutation.isPending || !!docUploading;
+  const isAnyLoading = createUserMutation.isPending || editUserMutation.isPending || patchStatusMutation.isPending || deleteUserMutation.isPending || deleteDocumentMutation.isPending || !!docUploading || idCardLoading;
 
   return (
     <GlassCard>
@@ -734,7 +747,7 @@ export function UserManagement({ portalType = "admin" }: { portalType?: "admin" 
 
       <UserListView
         viewType={viewType}
-        users={allUsers}
+        users={allUsers.length > 0 ? allUsers : (usersData?.data || [])}
         usersLoading={usersLoading}
         statusUpdating={patchStatusMutation.isPending}
         deletingRecord={deleteUserMutation.isPending}

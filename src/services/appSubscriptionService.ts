@@ -16,8 +16,7 @@ export interface AppSubscriptionPlanResponse {
 
 export interface PaginatedAppSubscriptionPlanResponse {
   count: number;
-  totalcount: number;
-  data: AppSubscriptionPlanResponse[];
+  total_count: number;
 }
 
 export interface AppCurrentSubscriptionResponse {
@@ -39,7 +38,7 @@ export interface AppCurrentSubscriptionResponse {
 
 export interface PaginatedAppCurrentSubscriptionResponse {
   count?: number;
-  totalcount?: number;
+  total_count?: number;
   data?: AppCurrentSubscriptionResponse[];
   id?: string;
   user_id?: string;
@@ -61,7 +60,7 @@ export interface AppSubscriptionHistoryResponse {
 
 export interface PaginatedAppSubscriptionHistoryResponse {
   count: number;
-  totalcount: number;
+  total_count: number;
   data: AppSubscriptionHistoryResponse[];
 }
 

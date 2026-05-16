@@ -87,7 +87,7 @@ export function AdminProducts() {
   });
 
   const fetchedProducts = productsData?.data || [];
-  const totalCount = productsData?.totalcount || productsData?.count || 0;
+  const totalCount = productsData?.total_count || productsData?.count || 0;
   const lastPage = Math.ceil(totalCount / productsMeta.page_size) || 1;
 
   return (

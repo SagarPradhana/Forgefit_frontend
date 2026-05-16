@@ -24,7 +24,7 @@ export interface AppAttendanceResponse {
 
 export interface PaginatedAppAttendanceResponse {
   count: number;
-  totalcount: number;
+  total_count: number;
   data: AppAttendanceResponse[];
 }
 

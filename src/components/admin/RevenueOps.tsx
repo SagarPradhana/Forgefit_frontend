@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import { API_ENDPOINTS } from "../../utils/url";
 import { api } from "../../utils/httputils";
-import { GlassCard, SectionTitle } from "../ui/primitives";
+import { GlassCard, SectionTitle, Skeleton } from "../ui/primitives";
 import { DateRangeFilter, type DateRange } from "../ui/DateRangeFilter";
 import { useGymStore } from "../../store/gymStore";
 import { useTranslation } from "react-i18next";
@@ -208,7 +208,7 @@ export function RevenueOps() {
 
   const payments = activeTab !== "inquiries" ? listData?.data || [] : [];
   const inquiries = activeTab === "inquiries" ? listData?.data || [] : [];
-  const totalItems = listData?.totalcount || listData?.count || 0;
+  const totalItems = listData?.total_count || listData?.count || 0;
   const totalPages = Math.ceil(totalItems / PAGE_SIZE);
 
   const isLoading = statsLoading || listLoading || revenueLoading;
@@ -251,14 +251,18 @@ export function RevenueOps() {
       </div>
 
       {/* ── Stats Cards ── */}
-      {stats && (
+      {statsLoading ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32" />)}
+        </div>
+      ) : stats ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard label={t("totalRevenue")} value={stats.total_revenue} icon={TrendingUp} color="bg-indigo-500" delay={0} currency={currency} />
           <StatCard label={t("subscriptionRevenue")} value={stats.subscription_revenue} icon={CreditCard} color="bg-violet-500" delay={0.05} currency={currency} />
           <StatCard label={t("productRevenue")} value={stats.product_revenue} icon={ShoppingBag} color="bg-amber-500" delay={0.1} currency={currency} />
           <StatCard label={t("renewalRevenue")} value={stats.renewal_revenue} icon={RefreshCw} color="bg-emerald-500" delay={0.15} currency={currency} />
         </div>
-      )}
+      ) : null}
 
       {/* ── Monthly Revenue Bar Chart ── */}
       <div className="mb-8 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl">
@@ -277,7 +281,7 @@ export function RevenueOps() {
           </div>
         </div>
         {revenueLoading ? (
-          <div className="h-64 rounded-xl bg-white/5 animate-pulse" />
+          <Skeleton className="h-64" />
         ) : monthlyRevenue.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-16 text-slate-500">
             <TrendingUp size={40} className="opacity-20" /><p className="text-sm font-bold">{t("noRevenueData")}</p>
@@ -363,7 +367,7 @@ export function RevenueOps() {
                   <tr key={i} className="border-b border-white/5">
                     {[...Array(6)].map((__, j) => (
                       <td key={j} className="px-4 py-3">
-                        <div className="h-4 bg-white/5 rounded animate-pulse" />
+                        <Skeleton className="h-4 w-full" />
                       </td>
                     ))}
                   </tr>
@@ -427,7 +431,7 @@ export function RevenueOps() {
                   <tr key={i} className="border-b border-white/5">
                     {[...Array(5)].map((__, j) => (
                       <td key={j} className="px-4 py-3">
-                        <div className="h-4 bg-white/5 rounded animate-pulse" />
+                        <Skeleton className="h-4 w-full" />
                       </td>
                     ))}
                   </tr>

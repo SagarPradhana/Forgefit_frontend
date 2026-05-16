@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Modal } from '../ui/primitives';
 import { useTranslation } from 'react-i18next';
-import { Download, } from 'lucide-react';
+import { Download, Printer } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 
 interface IdCardModalProps {
@@ -115,196 +115,194 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user,
       open={isOpen}
       onClose={onClose}
       title=""
-      maxWidth="max-w-4xl"
-      hideTitle
-      className="!bg-transparent !border-none !shadow-none"
     >
       <div className="flex flex-col items-center py-6">
         <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-8">
           {brandName} Gym Portal · Member ID Card
         </div>
 
-        {/* Action Buttons at Top (Accessibility Fix) */}
-        <div className="flex gap-4 w-full justify-center mb-10">
+        {/* Floating Action Buttons Overlapping Bottom of Card */}
+        <div className="flex gap-3 absolute left-4 top-4 z-10">
           <button
             onClick={handlePrint}
-            className="px-8 md:px-10 h-14 rounded-xl text-[11px] font-black uppercase tracking-widest bg-white/90 text-slate-700 shadow-xl hover:scale-105 transition-transform"
+            className="w-12 h-12 rounded-full bg-white/90 text-slate-700 shadow-xl hover:scale-110 hover:shadow-2xl transition-all flex items-center justify-center backdrop-blur-sm border border-white/20"
+            title={t("print") || "Print Card"}
           >
-            {t("print") || "Print Card"}
+            <Printer size={18} />
           </button>
           <button
             onClick={handleDownload}
-            className="px-6 h-14 rounded-xl text-[10px] font-black uppercase tracking-widest bg-slate-800 text-slate-400 hover:text-white transition-all flex items-center justify-center border border-white/10"
+            className="w-12 h-12 rounded-full bg-white/90 text-slate-700 shadow-xl hover:scale-110 hover:shadow-2xl transition-all flex items-center justify-center backdrop-blur-sm border border-white/20"
             title="Download Image"
           >
             <Download size={18} />
           </button>
         </div>
-
         {/* The Card */}
-        <div ref={cardRef} className="id-card-render-container">
-          <style>{idCardStyles}</style>
-          <div className="card" id="card">
+        <div>
+          <div ref={cardRef} className="id-card-render-container">
+            <style>{idCardStyles}</style>
+            <div className="card" id="card">
 
-            {/* ── DARK TOP SECTION ── */}
-            <div className="card-top">
-              {/* Logo */}
-              <div className="logo-row">
-                <div className="logo-left">
-                  <div className="flame-wrap overflow-hidden">
-                    {brandLogo ? (
-                      <img src={brandLogo} alt="Logo" className="h-full w-full object-contain" />
-                    ) : (
-                      <svg width="26" height="28" viewBox="0 0 26 28" fill="none">
-                        <path d="M13 1C11.5 5 9.5 7 10.5 11C8.5 9 8.5 6 9.5 4C6 8 5 13 8 16.5C6.5 15.5 5.5 13.5 6 12C4 15 5 20 9.5 21.5C8 21 7 19 7.5 17.5C6 20 7 24.5 11.5 26L14.5 26C19 24.5 20 20 18.5 17.5C19 19 18 21 16.5 21.5C21 20 22 15 20 12C20.5 13.5 19.5 15.5 18 16.5C21 13 20 8 16.5 4C17.5 6 17.5 9 15.5 11C16.5 7 14.5 5 13 1Z" fill="url(#fg)" />
-                        <defs>
-                          <linearGradient id="fg" x1="13" y1="1" x2="13" y2="26" gradientUnits="userSpaceOnUse">
-                            <stop offset="0%" stopColor="#fbbf24" />
-                            <stop offset="55%" stopColor="#f07040" />
-                            <stop offset="100%" stopColor="#e8501a" />
-                          </linearGradient>
-                        </defs>
-                      </svg>
-                    )}
+              {/* ── DARK TOP SECTION ── */}
+              <div className="card-top">
+                {/* Logo */}
+                <div className="logo-row">
+                  <div className="logo-left">
+                    <div className="flame-wrap overflow-hidden">
+                      {brandLogo ? (
+                        <img src={brandLogo} alt="Logo" className="h-full w-full object-contain" />
+                      ) : (
+                        <svg width="26" height="28" viewBox="0 0 26 28" fill="none">
+                          <path d="M13 1C11.5 5 9.5 7 10.5 11C8.5 9 8.5 6 9.5 4C6 8 5 13 8 16.5C6.5 15.5 5.5 13.5 6 12C4 15 5 20 9.5 21.5C8 21 7 19 7.5 17.5C6 20 7 24.5 11.5 26L14.5 26C19 24.5 20 20 18.5 17.5C19 19 18 21 16.5 21.5C21 20 22 15 20 12C20.5 13.5 19.5 15.5 18 16.5C21 13 20 8 16.5 4C17.5 6 17.5 9 15.5 11C16.5 7 14.5 5 13 1Z" fill="url(#fg)" />
+                          <defs>
+                            <linearGradient id="fg" x1="13" y1="1" x2="13" y2="26" gradientUnits="userSpaceOnUse">
+                              <stop offset="0%" stopColor="#fbbf24" />
+                              <stop offset="55%" stopColor="#f07040" />
+                              <stop offset="100%" stopColor="#e8501a" />
+                            </linearGradient>
+                          </defs>
+                        </svg>
+                      )}
+                    </div>
+                    <div className="logo-text-block">
+                      <div className="logo-wordmark">{brandName}</div>
+                      <div className="logo-sub">{publicAppConfig?.description || "Strength · Performance · Results"}</div>
+                    </div>
                   </div>
-                  <div className="logo-text-block">
-                    <div className="logo-wordmark">{brandName}</div>
-                    <div className="logo-sub">{publicAppConfig?.description || "Strength · Performance · Results"}</div>
+                  <div className="id-badge">{(user.role?.toUpperCase() || 'USER')}</div>
+                </div>
+
+                {/* Profile */}
+                <div className="profile-area">
+                  <div className="avatar-ring">
+                    <div className="avatar-inner">
+                      {(user.profile_image_path || user.metadata?.profile_image_path) ? (
+                        <img src={user.profile_image_path || user.metadata?.profile_image_path} alt="Photo" style={{ display: 'block' }} />
+                      ) : (
+                        <svg width="56" height="68" viewBox="0 0 56 68" fill="none">
+                          <circle cx="28" cy="22" r="15" fill="rgba(255,255,255,0.18)" />
+                          <path d="M2 68C2 50 54 50 54 68" fill="rgba(255,255,255,0.18)" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="hero-info">
+                    <div className="hero-name">{(user.name || '').length > 21 ? (user.name || '').slice(0, 21) + '...' : user.name}</div>
+                    <div className="status-row">
+                      <span className="tag tag-teal">● Active</span>
+                      {isUser && user.metadata?.gender && (
+                        <span className="tag tag-orange" style={{ textTransform: 'capitalize' }}>{user.metadata.gender}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="id-badge">{(user.role?.toUpperCase() || 'USER')}</div>
               </div>
 
-              {/* Profile */}
-              <div className="profile-area">
-                <div className="avatar-ring">
-                  <div className="avatar-inner">
-                    {(user.profile_image_path || user.metadata?.profile_image_path) ? (
-                      <img src={user.profile_image_path || user.metadata?.profile_image_path} alt="Photo" style={{ display: 'block' }} />
-                    ) : (
-                      <svg width="56" height="68" viewBox="0 0 56 68" fill="none">
-                        <circle cx="28" cy="22" r="15" fill="rgba(255,255,255,0.18)" />
-                        <path d="M2 68C2 50 54 50 54 68" fill="rgba(255,255,255,0.18)" />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-
-                <div className="hero-info">
-                  <div className="hero-name">{(user.name || '').length > 21 ? (user.name || '').slice(0, 21) + '...' : user.name}</div>
-                  <div className="status-row">
-                    <span className="tag tag-teal">● Active</span>
-                    {isUser && user.metadata?.gender && (
-                      <span className="tag tag-orange" style={{ textTransform: 'capitalize' }}>{user.metadata.gender}</span>
-                    )}
-                  </div>
-                </div>
+              {/* Wave transition */}
+              <div className="wave-divider">
+                <svg viewBox="0 0 400 28" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0 0 Q100 28 200 14 Q300 0 400 22 L400 28 L0 28Z" fill="#faf9f4" />
+                </svg>
               </div>
-            </div>
 
-            {/* Wave transition */}
-            <div className="wave-divider">
-              <svg viewBox="0 0 400 28" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0 0 Q100 28 200 14 Q300 0 400 22 L400 28 L0 28Z" fill="#faf9f4" />
-              </svg>
-            </div>
+              {/* ── BODY ── */}
+              <div className="card-body">
+                {/* QR Code Section (Centered & Large) */}
+                <div className="qr-center-wrapper">
+                  <div className="qr-frame-lg">
+                    {user.qr_url ? (
+                      <img src={user.qr_url} alt="QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    ) : (
+                      <QrSvg value={JSON.stringify({
+                        user_id: user.id,
+                        subscription_id: user.latest_subscription_details?.subscription_id || null,
+                        subscription_name: user.latest_subscription_details?.subscription_name || null,
+                        start_date: user.latest_subscription_details?.start_date || null,
+                        end_date: user.latest_subscription_details?.end_date || null,
+                      })} />
+                    )}
+                  </div>
+                  <div className="qr-info-center">
+                    <div className="qr-code-id">{username}</div>
+                    <div className="qr-status">
+                      <span className="live-dot"></span> Valid Member
+                    </div>
+                  </div>
+                </div>
 
-            {/* ── BODY ── */}
-            <div className="card-body">
-              {/* QR Code Section (Centered & Large) */}
-              <div className="qr-center-wrapper">
-                <div className="qr-frame-lg">
-                  {user.qr_url ? (
-                    <img src={user.qr_url} alt="QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                {/* Membership Tier */}
+                {isUser && user.latest_subscription_details && (
+                  <div className="tier-panel-wide">
+                    <div className="tier-icon-wrap">
+                      <svg width="28" height="22" viewBox="0 0 28 22" fill="none">
+                        <path d="M2 18 L4 8 L9 14 L14 2 L19 14 L24 8 L26 18Z" fill="#c9922a" opacity="0.9" />
+                        <rect x="2" y="18" width="24" height="3" rx="1.5" fill="#c9922a" />
+                        <circle cx="2" cy="8" r="2" fill="#c9922a" />
+                        <circle cx="14" cy="2" r="2" fill="#c9922a" />
+                        <circle cx="26" cy="8" r="2" fill="#c9922a" />
+                      </svg>
+                    </div>
+                    <div className="tier-text-stack">
+                      <div className="tier-label-sm">Membership Plan</div>
+                      <div className="tier-name">{user.latest_subscription_details.subscription_name || 'N/A'}</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Detail cells — role-aware */}
+                <div className="details-grid">
+                  {!isUser ? (
+                    <>
+                      <div className="detail-cell">
+                        <div className="d-label">Date of Birth</div>
+                        <div className="d-value">{formatDate(user.metadata?.dob)}</div>
+                      </div>
+                      <div className="detail-cell">
+                        <div className="d-label">Gender</div>
+                        <div className="d-value accent" style={{ textTransform: 'capitalize' }}>{user.metadata?.gender || 'N/A'}</div>
+                      </div>
+                      <div className="detail-cell">
+                        <div className="d-label">Mobile</div>
+                        <div className="d-value">{user.mobile || 'N/A'}</div>
+                      </div>
+                      <div className="detail-cell">
+                        <div className="d-label">Emergency</div>
+                        <div className="d-value">{user.metadata?.emergency_contact || 'N/A'}</div>
+                      </div>
+                    </>
                   ) : (
-                    <QrSvg value={JSON.stringify({
-                      user_id: user.id,
-                      subscription_id: user.latest_subscription_details?.subscription_id || null,
-                      subscription_name: user.latest_subscription_details?.subscription_name || null,
-                      start_date: user.latest_subscription_details?.start_date || null,
-                      end_date: user.latest_subscription_details?.end_date || null,
-                    })} />
+                    <>
+                      <div className="detail-cell">
+                        <div className="d-label">Contact / Emergency</div>
+                        <div className="d-value">
+                          {user.mobile || 'N/A'}
+                          {user.metadata?.emergency_contact ? ` / ${user.metadata.emergency_contact}` : ''}
+                        </div>
+                      </div>
+                      <div className="detail-cell">
+                        <div className="d-label">Workout Time</div>
+                        <div className="d-value" style={{ textTransform: 'capitalize' }}>{user.metadata?.workout_time || 'N/A'}</div>
+                      </div>
+                    </>
                   )}
                 </div>
-                <div className="qr-info-center">
-                  <div className="qr-code-id">{username}</div>
-                  <div className="qr-status">
-                    <span className="live-dot"></span> Valid Member
-                  </div>
-                </div>
               </div>
 
-              {/* Membership Tier */}
-              {isUser && user.latest_subscription_details && (
-                <div className="tier-panel-wide">
-                  <div className="tier-icon-wrap">
-                    <svg width="28" height="22" viewBox="0 0 28 22" fill="none">
-                      <path d="M2 18 L4 8 L9 14 L14 2 L19 14 L24 8 L26 18Z" fill="#c9922a" opacity="0.9" />
-                      <rect x="2" y="18" width="24" height="3" rx="1.5" fill="#c9922a" />
-                      <circle cx="2" cy="8" r="2" fill="#c9922a" />
-                      <circle cx="14" cy="2" r="2" fill="#c9922a" />
-                      <circle cx="26" cy="8" r="2" fill="#c9922a" />
-                    </svg>
-                  </div>
-                  <div className="tier-text-stack">
-                    <div className="tier-label-sm">Membership Plan</div>
-                    <div className="tier-name">{user.latest_subscription_details.subscription_name || 'N/A'}</div>
-                  </div>
+              {/* ── FOOTER STRIP ── */}
+              <div className="card-footer">
+                <div className="footer-text">{(publicAppConfig as any)?.website || 'gymportal.in'} &nbsp;·&nbsp; strength begins here</div>
+                <div className="footer-dots">
+                  <div className="footer-dot"></div>
+                  <div className="footer-dot"></div>
+                  <div className="footer-dot"></div>
                 </div>
-              )}
-
-              {/* Detail cells — role-aware */}
-              <div className="details-grid">
-                {!isUser ? (
-                  <>
-                    <div className="detail-cell">
-                      <div className="d-label">Date of Birth</div>
-                      <div className="d-value">{formatDate(user.metadata?.dob)}</div>
-                    </div>
-                    <div className="detail-cell">
-                      <div className="d-label">Gender</div>
-                      <div className="d-value accent" style={{ textTransform: 'capitalize' }}>{user.metadata?.gender || 'N/A'}</div>
-                    </div>
-                    <div className="detail-cell">
-                      <div className="d-label">Mobile</div>
-                      <div className="d-value">{user.mobile || 'N/A'}</div>
-                    </div>
-                    <div className="detail-cell">
-                      <div className="d-label">Emergency</div>
-                      <div className="d-value">{user.metadata?.emergency_contact || 'N/A'}</div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="detail-cell">
-                      <div className="d-label">Contact / Emergency</div>
-                      <div className="d-value">
-                        {user.mobile || 'N/A'}
-                        {user.metadata?.emergency_contact ? ` / ${user.metadata.emergency_contact}` : ''}
-                      </div>
-                    </div>
-                    <div className="detail-cell">
-                      <div className="d-label">Workout Time</div>
-                      <div className="d-value" style={{ textTransform: 'capitalize' }}>{user.metadata?.workout_time || 'N/A'}</div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* ── FOOTER STRIP ── */}
-            <div className="card-footer">
-              <div className="footer-text">{(publicAppConfig as any)?.website || 'gymportal.in'} &nbsp;·&nbsp; strength begins here</div>
-              <div className="footer-dots">
-                <div className="footer-dot"></div>
-                <div className="footer-dot"></div>
-                <div className="footer-dot"></div>
               </div>
             </div>
           </div>
+
         </div>
-
-
       </div>
     </Modal>
   );

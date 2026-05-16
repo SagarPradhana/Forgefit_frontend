@@ -23,7 +23,7 @@ export interface PaginatedProductResponse {
   mCode: string;
   message: string;
   count: number;
-  totalcount: number;
+  total_count: number;
   data: ProductResponse[];
 }
 

@@ -25,7 +25,7 @@ export interface AppPaymentResponse {
 
 export interface PaginatedAppPaymentResponse {
   count: number;
-  totalcount: number;
+  total_count: number;
   data: AppPaymentResponse[];
 }
 

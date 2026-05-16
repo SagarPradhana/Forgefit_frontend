@@ -12,7 +12,7 @@ import {
   ShoppingBag, Mail, Bell, Activity,
   ChevronRight, TrendingUp, Clock, Camera,
 } from "lucide-react";
-import { GlassCard, SectionTitle, SkeletonRows } from "../components/ui/primitives";
+import { GlassCard, SectionTitle, Skeleton, SkeletonRows } from "../components/ui/primitives";
 import { api } from "../utils/httputils";
 import { API_ENDPOINTS } from "../utils/url";
 import { DateRangeFilter, type DateRange } from "../components/ui/DateRangeFilter";
@@ -94,7 +94,7 @@ function StatCard({ label, value, icon: Icon, color, delay, prefix = "", subLabe
 // ─── Section Header ───────────────────────────────────────────────────────────
 function SectionHeader({ title, sub, onRedirect }: { title: string; sub?: string; onRedirect?: () => void }) {
   return (
-    <div className="mb-4 flex items-center justify-between w-full">
+    <div className="flex items-center justify-between w-full">
       <div>
         <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{sub}</p>
         <h3 className="text-base font-black text-white uppercase tracking-tight flex items-center gap-2">
@@ -152,24 +152,7 @@ export default function AdminDashboard() {
   // Inquiry tab
   const [inqTab, setInqTab] = useState<"subscriptions" | "product_orders" | "contact_inquiries">("subscriptions");
 
-  // Derived months for revenue chart from global dateRange
-  const derivedRevenueMonths = useMemo(() => {
-    if (!dateRange.from_date || !dateRange.to_date) return revenueMonths;
-    const d1 = new Date(dateRange.from_date * 1000);
-    const d2 = new Date(dateRange.to_date * 1000);
-    const m = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()) + 1;
-    return Math.max(1, m);
-  }, [dateRange, revenueMonths]);
-
-  // Sync dateRange when revenue months buttons are clicked
   const handleRevenueMonthsChange = useCallback((n: number) => {
-    const now = new Date();
-    const from = new Date(now.getFullYear(), now.getMonth() - (n - 1), 1);
-    setDateRange({
-      from_date: toUnix(from, false),
-      to_date: toUnix(now, true),
-      label: `Last ${n} Months`
-    });
     setRevenueMonths(n);
   }, []);
 
@@ -244,8 +227,8 @@ export default function AdminDashboard() {
   const attendance = attendanceData?.data || null;
 
   const { data: monthlyRevenueData, isLoading: revenueLoading, isFetching: revenueFetching } = useQuery({
-    queryKey: queryKeys.admin.dashboard.monthlyRevenue({ months: derivedRevenueMonths, ...dateRange }),
-    queryFn: () => api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_MONTHLY_REVENUE}?months=${derivedRevenueMonths}&${dateParams(dateRange)}`) as any,
+    queryKey: queryKeys.admin.dashboard.monthlyRevenue({ months: revenueMonths }),
+    queryFn: () => api.get(`${API_ENDPOINTS.ADMIN.DASHBOARD_MONTHLY_REVENUE}?months=${revenueMonths}`) as any,
   });
   const monthlyRevenue = monthlyRevenueData?.data || [];
 
@@ -342,10 +325,10 @@ export default function AdminDashboard() {
 
       {/* ── [ROW 2] Recent Inquiries ── */}
       <GlassCard>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+        <div className="flex flex-col sm:flex-row sm:items-center items-center! justify-between gap-3 mb-5">
           <SectionHeader title={t("recentInquiries")} sub={t("latestRequests")} onRedirect={() => navigate('/admin/inquiries')} />
           {/* Tab pills */}
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex gap-x-1.5 gap-y-0">
             {inqTabs.map(({ id, label, icon: Icon }) => (
               <button key={id} onClick={() => setInqTab(id as any)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${inqTab === id
@@ -358,9 +341,7 @@ export default function AdminDashboard() {
           </div>
         </div>
         {inquiriesLoading ? (
-          <div className="space-y-2">
-            {[...Array(4)].map((_, i) => <div key={i} className="h-16 rounded-xl bg-white/5 animate-pulse" />)}
-          </div>
+          <SkeletonRows count={4} />
         ) : inqData.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-10 text-slate-500">
             <Bell size={32} className="opacity-20" /><p className="text-sm font-bold">{t("noRecords")}</p>
@@ -497,14 +478,18 @@ export default function AdminDashboard() {
       {/* ── [ROW 4] Attendance Count ── */}
       <GlassCard>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-          <SectionHeader 
-            title={t("attendanceOverview")} 
-            sub={t("activityPeriod")} 
-            onRedirect={() => navigate(`/admin/attendance?from_date=${dateRange.from_date}&to_date=${dateRange.to_date}&label=${encodeURIComponent(dateRange.label || "")}`)} 
+          <SectionHeader
+            title={t("attendanceOverview")}
+            sub={t("activityPeriod")}
+            onRedirect={() => navigate(`/admin/attendance?from_date=${dateRange.from_date}&to_date=${dateRange.to_date}&label=${encodeURIComponent(dateRange.label || "")}`)}
           />
         </div>
         {attendanceLoading ? (
-          <div className="grid grid-cols-3 gap-4"><div className="h-20 rounded-xl bg-white/5 animate-pulse" /><div className="h-20 rounded-xl bg-white/5 animate-pulse" /><div className="h-20 rounded-xl bg-white/5 animate-pulse" /></div>
+          <div className="grid grid-cols-3 gap-4">
+            <Skeleton className="h-20" />
+            <Skeleton className="h-20" />
+            <Skeleton className="h-20" />
+          </div>
         ) : (
           <div className="grid grid-cols-3 gap-4">
             {[
@@ -529,14 +514,14 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-2">
             {[3, 6, 12].map((m) => (
               <button key={m} onClick={() => handleRevenueMonthsChange(m)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${derivedRevenueMonths === m ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" : "bg-white/5 text-slate-400 hover:text-white border border-white/10"}`}>
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${revenueMonths === m ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" : "bg-white/5 text-slate-400 hover:text-white border border-white/10"}`}>
                 {m}M
               </button>
             ))}
           </div>
         </div>
         {revenueLoading ? (
-          <div className="h-64 rounded-xl bg-white/5 animate-pulse" />
+          <Skeleton className="h-64" />
         ) : monthlyRevenue.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-16 text-slate-500">
             <TrendingUp size={40} className="opacity-20" /><p className="text-sm font-bold">{t("noRevenueData")}</p>

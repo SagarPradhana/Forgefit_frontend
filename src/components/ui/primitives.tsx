@@ -10,14 +10,14 @@ import { createPortal } from "react-dom";
    ───────────────────────────────────────────────────────────────────────────── */
 export function GlassCard({ className, children, style, ...props }: import("framer-motion").HTMLMotionProps<"div">) {
   return (
-    <motion.div 
-      className={clsx("rounded-2xl border p-4 md:p-6 backdrop-blur-xl transition-all duration-300 shadow-2xl overflow-hidden relative", className)} 
-      style={{ 
+    <motion.div
+      className={clsx("rounded-2xl border p-4 md:p-6 backdrop-blur-xl transition-all duration-300 shadow-2xl overflow-hidden relative", className)}
+      style={{
         background: "var(--theme-card-bg, rgba(255, 255, 255, 0.05))",
         borderColor: "var(--theme-border, rgba(255, 255, 255, 0.1))",
         boxShadow: "0 8px 32px 0 var(--theme-shadow, rgba(31, 38, 135, 0.15))",
-        ...style 
-      }} 
+        ...style
+      }}
       {...props}
     >
       {children}
@@ -30,9 +30,9 @@ export function GlassCard({ className, children, style, ...props }: import("fram
    ───────────────────────────────────────────────────────────────────────────── */
 export function GlowButton({ children, className, variant = "primary", ...props }: import("framer-motion").HTMLMotionProps<"button"> & { variant?: "primary" | "secondary"; }) {
   return (
-    <motion.button 
-      whileHover={{ scale: 1.02, boxShadow: "0 0 20px var(--theme-glow, rgba(99, 102, 241, 0.4))" }} 
-      whileTap={{ scale: 0.98 }} 
+    <motion.button
+      whileHover={{ scale: 1.02, boxShadow: "0 0 20px var(--theme-glow, rgba(99, 102, 241, 0.4))" }}
+      whileTap={{ scale: 0.98 }}
       className={clsx("rounded-xl border px-5 py-2.5 text-sm font-black uppercase tracking-widest transition-all duration-300 disabled:pointer-events-none disabled:opacity-40 text-white", className)}
       style={{
         background: variant === "primary" ? "var(--theme-accent, linear-gradient(to right, #6366f1, #a855f7))" : "rgba(255,255,255,0.05)",
@@ -52,11 +52,11 @@ export function CommonButton({ children, className, variant = "primary", ...prop
     ghost: "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10",
     danger: "bg-red-500 text-white shadow-red-500/20",
   };
-  
+
   return (
-    <motion.button 
-      whileHover={{ scale: 1.02 }} 
-      whileTap={{ scale: 0.98 }} 
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
       className={clsx("rounded-xl px-5 py-2.5 text-xs font-black uppercase tracking-widest transition-all duration-300 disabled:pointer-events-none disabled:opacity-40", styles[variant], className)}
       style={{
         background: (variant === "primary" || variant === "secondary") ? "var(--theme-accent)" : undefined,
@@ -109,7 +109,7 @@ export function Modal({
 }) {
   const isModalOpen = open ?? isOpen;
   const sizes = { sm: "max-w-md", md: "max-w-lg", lg: "max-w-2xl", xl: "max-w-4xl" };
-  
+
   useEffect(() => {
     if (isModalOpen) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "unset";
@@ -121,12 +121,12 @@ export function Modal({
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95, y: 20 }} 
-        animate={{ opacity: 1, scale: 1, y: 0 }} 
-        exit={{ opacity: 0, scale: 0.95, y: 20 }} 
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
         className={clsx("relative w-full rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] overflow-hidden border backdrop-blur-3xl transition-all duration-500", sizes[size])}
-        style={{ 
+        style={{
           background: "var(--theme-card-bg, #0f172a)",
           borderColor: "var(--theme-border, rgba(255,255,255,0.1))",
         }}
@@ -135,7 +135,7 @@ export function Modal({
           <h2 className="text-xl font-black text-white uppercase tracking-tight">{title}</h2>
           <button onClick={onClose} className="p-2 text-slate-500 hover:text-white hover:bg-white/5 rounded-xl transition-all"><X className="w-5 h-5" /></button>
         </div>
-        <div className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">{children}</div>
+        <div className="max-h-[70vh] overflow-y-auto custom-scrollbar">{children}</div>
         {footer && (
           <div className="px-8 py-5 border-t border-white/10 bg-white/5 flex justify-end gap-3">
             {footer}
@@ -200,12 +200,12 @@ export function Table({ columns, data, onRowClick, emptyMessage }: { columns: { 
             </tr>
           ) : (
             data.map((row, idx) => (
-              <motion.tr 
-                key={idx} 
+              <motion.tr
+                key={idx}
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.02 }}
-                onClick={() => onRowClick?.(row)} 
+                onClick={() => onRowClick?.(row)}
                 className={clsx("hover:bg-white/5 transition-all duration-300 group", onRowClick && "cursor-pointer")}
               >
                 {columns.map((col) => (
@@ -230,19 +230,19 @@ export function InputField({ label, type = "text", value, onChange, placeholder,
     <div className={className}>
       {label && <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">{label}</label>}
       <div className="relative group">
-        <input 
-          type={type} 
-          value={value} 
+        <input
+          type={type}
+          value={value}
           onChange={(e) => {
             let val = e.target.value;
             if (isNumeric || isPhone) val = val.replace(/[^\d]/g, "");
             onChange(val);
-          }} 
-          placeholder={placeholder} 
+          }}
+          placeholder={placeholder}
           className={clsx(
-            "w-full px-4 py-3 bg-black/40 border rounded-xl text-xs font-bold text-white placeholder-slate-500 focus:outline-none transition-all duration-300", 
+            "w-full px-4 py-3 bg-black/40 border rounded-xl text-xs font-bold text-white placeholder-slate-500 focus:outline-none transition-all duration-300",
             error ? "border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.15)]" : "border-white/10 focus:border-indigo-500/50"
-          )} 
+          )}
           style={{ borderColor: error ? undefined : "var(--theme-border)" }}
         />
       </div>
@@ -255,11 +255,11 @@ export function SearchInput({ value, onChange, placeholder, className }: { value
   return (
     <div className={clsx("relative group", className)}>
       <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-white transition-colors" />
-      <input 
-        type="text" 
-        value={value} 
-        onChange={(e) => onChange(e.target.value)} 
-        placeholder={placeholder || "Search registry..."} 
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder || "Search registry..."}
         className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs font-bold text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-all shadow-inner"
         style={{ borderColor: "var(--theme-border, rgba(255,255,255,0.1))" }}
       />
@@ -271,9 +271,9 @@ export function Dropdown({ value, onChange, options, placeholder, className }: {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div className={clsx("relative", className)}>
-      <button 
-        type="button" 
-        onClick={() => setIsOpen(!isOpen)} 
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-indigo-500/50 transition-all"
         style={{ borderColor: "var(--theme-border, rgba(255,255,255,0.1))" }}
       >
@@ -284,7 +284,7 @@ export function Dropdown({ value, onChange, options, placeholder, className }: {
         {isOpen && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -311,16 +311,16 @@ export function Tabs({ tabs, activeTab, onChange }: { tabs: { id: string; label:
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
-          <button 
-            key={tab.id} 
-            onClick={() => onChange(tab.id)} 
+          <button
+            key={tab.id}
+            onClick={() => onChange(tab.id)}
             className={clsx(
               "relative px-6 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all duration-300",
               isActive ? "text-white" : "text-slate-500 hover:text-slate-300"
             )}
           >
             {isActive && (
-              <motion.div 
+              <motion.div
                 layoutId="active-tab"
                 className="absolute inset-0 rounded-lg shadow-lg"
                 style={{ background: "var(--theme-accent, #6366f1)" }}
@@ -340,7 +340,7 @@ export function Tabs({ tabs, activeTab, onChange }: { tabs: { id: string; label:
 export function Skeleton({ className }: { className?: string }) {
   return (
     <div className={clsx("relative overflow-hidden rounded-xl bg-white/[0.08] animate-pulse", className)}>
-       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent -translate-x-full animate-shimmer" />
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent -translate-x-full animate-shimmer" />
     </div>
   );
 }

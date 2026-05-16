@@ -14,7 +14,7 @@ export interface PaginatedInquiryResponse<T> {
   code: number;
   data: T[];
   count: number;
-  totalcount: number;
+  total_count: number;
 }
 
 export const adminInquiryService = {

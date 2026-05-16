@@ -17,7 +17,7 @@ export interface AppProductResponse {
 
 export interface PaginatedAppProductResponse {
   count: number;
-  totalcount: number;
+  total_count: number;
   data: AppProductResponse[];
 }
 

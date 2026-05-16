@@ -27,7 +27,7 @@ export interface LocationData {
 
 export interface LocationListResponse {
   count: number;
-  totalcount: number;
+  total_count: number;
   data: LocationData[];
 }
 
