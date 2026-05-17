@@ -138,7 +138,7 @@ export function DateRangeFilter({ defaultPreset = "today", onChange, className =
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 top-full mt-2 z-50 w-64 rounded-2xl bg-slate-950 border border-white/10 shadow-2xl shadow-black/50 overflow-hidden">
+        <div className="absolute left-0 top-full mt-2 z-50 w-64 rounded-2xl bg-slate-950 border border-white/10 shadow-2xl shadow-black/50 overflow-hidden">
           {/* Preset list */}
           <div className="p-2 space-y-0.5">
             {PRESETS.map(({ id, label: pl }) => (

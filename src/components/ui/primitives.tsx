@@ -111,9 +111,9 @@ export function Modal({
   const sizes = { sm: "max-w-md", md: "max-w-lg", lg: "max-w-2xl", xl: "max-w-4xl" };
 
   useEffect(() => {
-    if (isModalOpen) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "unset";
-    return () => { document.body.style.overflow = "unset"; };
+    if (isModalOpen) document.body.style.overflow = "auto";
+    else document.body.style.overflow = "auto";
+    return () => { document.body.style.overflow = "auto"; };
   }, [isModalOpen]);
 
   if (!isModalOpen) return null;
@@ -135,7 +135,7 @@ export function Modal({
           <h2 className="text-xl font-black text-white uppercase tracking-tight">{title}</h2>
           <button onClick={onClose} className="p-2 text-slate-500 hover:text-white hover:bg-white/5 rounded-xl transition-all"><X className="w-5 h-5" /></button>
         </div>
-        <div className="max-h-[70vh] overflow-y-auto custom-scrollbar">{children}</div>
+        <div className="px-6 py-2 mb-1 max-h-[70vh] overflow-y-auto custom-scrollbar">{children}</div>
         {footer && (
           <div className="px-8 py-5 border-t border-white/10 bg-white/5 flex justify-end gap-3">
             {footer}
@@ -228,7 +228,7 @@ export function Table({ columns, data, onRowClick, emptyMessage }: { columns: { 
 export function InputField({ label, type = "text", value, onChange, placeholder, error, className, isNumeric = false, isPhone = false }: { label?: string; type?: string; value: string; onChange: (value: string) => void; placeholder?: string; error?: string; className?: string; isNumeric?: boolean; isPhone?: boolean; }) {
   return (
     <div className={className}>
-      {label && <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">{label}</label>}
+      {label && <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wide mb-2">{label}</label>}
       <div className="relative group">
         <input
           type={type}

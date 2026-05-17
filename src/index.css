@@ -259,4 +259,10 @@ body {
 [style*="--theme-card-bg"] [class*="bg-orange-950"],
 [style*="--theme-card-bg"] [class*="bg-amber-950"] {
   background: var(--theme-card-bg, rgba(15, 23, 42, 0.4)) !important;
+}
+
+/* ── Label letter-spacing fix: tracking-widest (0.1em) makes multi-word   ── */
+/* ── labels (e.g. "Full Name", "Email Address") lose word boundaries.     ── */
+label {
+  letter-spacing: 0.03em !important;
 }

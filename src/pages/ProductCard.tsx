@@ -72,19 +72,6 @@ export function ProductCard({ product }: ProductCardProps) {
       >
         <GlassCard className="h-full p-6 flex flex-col gap-5 overflow-hidden border-white/5 hover:border-white/20 transition-all duration-500 shadow-2xl">
           {/* 🔥 TOP BADGE */}
-          <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 items-end">
-            {product.stock_count > 0 ? (
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-                <CheckCircle2 size={10} />
-                <span className="text-[9px] font-black uppercase tracking-widest">In Stock</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400">
-                <Package size={10} />
-                <span className="text-[9px] font-black uppercase tracking-widest">Out of Stock</span>
-              </div>
-            )}
-          </div>
 
           {/* 🖼 VISUAL HERO */}
           <div className="relative h-44 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 border border-white/5 flex items-center justify-center overflow-hidden group-hover:shadow-[0_0_30px_rgba(99,102,241,0.1)] transition-all">

@@ -325,7 +325,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
 
       <div className="flex h-full gap-0 lg:gap-6 p-1.5 md:p-3 lg:p-6">
         <div
-          className={`fixed inset-y-0 left-0 z-[100] w-[260px] md:w-[280px] transform transition-transform duration-300 lg:relative lg:w-auto lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+          className={`fixed inset-y-0 left-0 z-[110] w-[260px] md:w-[280px] transform transition-transform duration-300 lg:relative lg:w-auto lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
         >
           <div className="h-full p-2 md:p-4 lg:p-0">
             <Sidebar

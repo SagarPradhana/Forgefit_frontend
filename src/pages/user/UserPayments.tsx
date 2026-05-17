@@ -1,15 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useGymStore } from "../../store/gymStore";
-import { 
-  GlassCard, 
-  SectionTitle, 
-  Skeleton, 
-  EmptyState, 
-  Table, 
-  StatusBadge 
+import {
+  GlassCard,
+  SectionTitle,
+  Skeleton,
+  EmptyState,
+  Table,
+  StatusBadge,
+  Modal
 } from "../../components/ui/primitives";
-import { CreditCard, CheckCircle2, Clock, RefreshCw } from "lucide-react";
+import { CreditCard, CheckCircle2, Clock, RefreshCw, Eye, Calendar, ChevronRight } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { appPaymentService, type AppPaymentResponse } from "../../services/appPaymentService";
 import { DateRangeFilter, type DateRange } from "../../components/ui/DateRangeFilter";
@@ -28,6 +29,8 @@ export function UserPayments() {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>("");
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>("");
   const [paymentPurchaseTypeFilter, setPaymentPurchaseTypeFilter] = useState<string>("");
+  const [selectedPayment, setSelectedPayment] = useState<AppPaymentResponse | null>(null);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
 
   const fetchPayments = useCallback(async () => {
     if (!userId) return;
@@ -167,6 +170,19 @@ export function UserPayments() {
           <Table
             columns={[
               {
+                key: "action",
+                label: "",
+                render: (p) => (
+                  <button
+                    onClick={() => { setSelectedPayment(p); setViewModalOpen(true); }}
+                    className="h-8 w-8 flex items-center justify-center rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 transition-all"
+                    title="View Details"
+                  >
+                    <Eye size={15} />
+                  </button>
+                )
+              },
+              {
                 key: "ref",
                 label: "Reference",
                 render: (p) => <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">#{p.id.slice(-6)}</span>
@@ -182,9 +198,6 @@ export function UserPayments() {
                 render: (p) => (
                   <div className="flex flex-col">
                     <span className="text-xs font-black text-white uppercase tracking-tight italic">{p.purchase_type}</span>
-                    <span className="text-[9px] text-slate-500 truncate max-w-[150px]">
-                      {p.purchase_details ? JSON.stringify(p.purchase_details).slice(0, 40) + "..." : "---"}
-                    </span>
                   </div>
                 )
               },
@@ -210,6 +223,70 @@ export function UserPayments() {
       ) : (
         <EmptyState title="Financial Ledger Clean" hint="No transaction markers detected for the current selection." />
       )}
+
+      <Modal open={viewModalOpen} onClose={() => setViewModalOpen(false)} title="Payment Details">
+        {selectedPayment && (
+          <div className="space-y-5 pt-2">
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-indigo-500/10 to-transparent border border-white/10">
+              <div>
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Reference</p>
+                <p className="text-lg font-black text-white italic">#{selectedPayment.id.slice(-8).toUpperCase()}</p>
+              </div>
+              <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${selectedPayment.status === "paid" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : selectedPayment.status === "pending" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-red-500/10 text-red-400 border border-red-500/20"}`}>
+                {selectedPayment.status}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Date & Time</p>
+                <div className="flex items-center gap-2">
+                  <Calendar size={14} className="text-indigo-400" />
+                  <p className="text-sm font-bold text-white">
+                    {new Date(selectedPayment.payment_date * 1000).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                  </p>
+                </div>
+                <p className="text-xs text-slate-400 pl-6">
+                  {new Date(selectedPayment.payment_date * 1000).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Amount</p>
+                <p className="text-2xl font-black text-white italic">{currencySymbol}{selectedPayment.amount}</p>
+                <p className="text-xs text-slate-400">{selectedPayment.payment_method.toUpperCase()}</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
+              <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Purchase Details</p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-white uppercase tracking-tight">{selectedPayment.purchase_type}</span>
+                <ChevronRight size={12} className="text-slate-600" />
+                <span className="text-xs text-slate-400">
+                  {selectedPayment.purchase_details?.plan_name ||
+                    selectedPayment.purchase_details?.product_name ||
+                    selectedPayment.purchase_details?.name ||
+                    JSON.stringify(selectedPayment.purchase_details).slice(0, 50) || "—"}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Member</p>
+                <p className="text-sm font-bold text-white">{selectedPayment.name}</p>
+                <p className="text-[10px] text-slate-400">@{selectedPayment.username}</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Contact</p>
+                <p className="text-sm font-bold text-white">{selectedPayment.mobile}</p>
+                <p className="text-[10px] text-slate-400 truncate">{selectedPayment.email}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

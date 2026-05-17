@@ -109,7 +109,7 @@ export function SubscriptionPlanModal({
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Duration</label>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t("duration")}</label>
             <select
               className="w-full rounded-xl bg-slate-950 border border-white/10 p-4 text-white focus:border-indigo-500 outline-none transition font-bold"
               value={planForm.duration_in_months}

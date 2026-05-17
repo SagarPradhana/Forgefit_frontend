@@ -31,7 +31,7 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
 
   const { mutate: subscribe, loading: subscribing } = useMutation("post", {
     onSuccess: () => {
-      toast.success("Strategic membership activated");
+      toast.success(t("strategicMembershipActivated"));
       refetchHistory();
       setActiveTab("history");
     }
@@ -58,7 +58,7 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
 
   const handleSubscribe = () => {
     if (!selectedPlanId) {
-      toast.error("Please select a target plan");
+      toast.error(t("pleaseSelectTargetPlan"));
       return;
     }
     const payload = {
@@ -131,14 +131,14 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
             <div className="grid lg:grid-cols-2 gap-12">
               <div className="space-y-8">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 ml-1">Select Membership Plan</label>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 ml-1">{t("selectMembershipPlan")}</label>
                   <div className="relative group">
                     <select 
                       value={selectedPlanId} 
                       onChange={(e) => handlePlanSelect(e.target.value)}
                       className="w-full bg-slate-900/50 border border-white/10 rounded-2xl px-6 py-5 text-white font-black text-sm appearance-none focus:outline-none focus:border-indigo-500/50 transition-all hover:bg-slate-900"
                     >
-                      <option value="" className="bg-slate-900">Choose a plan...</option>
+                      <option value="" className="bg-slate-900">{t("choosePlan")}</option>
                       {plans.map((p: any) => (
                         <option key={p.id} value={p.id} className="bg-slate-900">{p.name} — ₹{p.price}</option>
                       ))}
@@ -150,17 +150,17 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 ml-1">Payment Method</label>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 ml-1">{t("paymentMethod")}</label>
                   <div className="relative group">
                     <select 
                       value={paymentMethod} 
                       onChange={(e) => setPaymentMethod(e.target.value)}
                       className="w-full bg-slate-900/50 border border-white/10 rounded-2xl px-6 py-5 text-indigo-400 font-black text-sm appearance-none focus:outline-none focus:border-indigo-500/20 transition-all hover:bg-slate-900"
                     >
-                      <option value="cash" className="bg-slate-900">Cash</option>
-                      <option value="card" className="bg-slate-900">Card</option>
-                      <option value="upi" className="bg-slate-900">UPI</option>
-                      <option value="other" className="bg-slate-900">Other</option>
+                      <option value="cash" className="bg-slate-900">{t("cash")}</option>
+                      <option value="card" className="bg-slate-900">{t("card")}</option>
+                      <option value="upi" className="bg-slate-900">{t("upi")}</option>
+                      <option value="other" className="bg-slate-900">{t("other")}</option>
                     </select>
                     <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 group-hover:text-indigo-400 transition-colors">
                       <CreditCard size={16} />
@@ -172,21 +172,21 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 blur-3xl rounded-full -mr-16 -mt-16" />
                    
                    <div className="flex items-center justify-between relative z-10">
-                     <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Base Price</span>
+                      <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{t("basePrice")}</span>
                      <span className="text-2xl font-black text-white italic">₹{amount}</span>
                    </div>
                    <div className="flex items-center justify-between relative z-10">
-                     <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Plan Duration</span>
+                      <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{t("planDuration")}</span>
                      <div className="flex items-center gap-2">
                         <Calendar size={14} className="text-indigo-400" />
-                        <span className="text-sm font-black text-slate-200">{duration} Months</span>
+                         <span className="text-sm font-black text-slate-200">{duration} {t("months")}</span>
                      </div>
                    </div>
                    <div className="h-px bg-white/10 relative z-10" />
                    <div className="flex items-center justify-between relative z-10">
                      <div className="flex flex-col">
-                        <span className="text-[10px] text-indigo-400 font-black uppercase tracking-widest">Final Price</span>
-                        <span className="text-[8px] text-slate-500 font-bold uppercase mt-0.5 whitespace-nowrap">Standard plan rate</span>
+                         <span className="text-[10px] text-indigo-400 font-black uppercase tracking-widest">{t("finalPrice")}</span>
+                         <span className="text-[8px] text-slate-500 font-bold uppercase mt-0.5 whitespace-nowrap">{t("standardPlanRate")}</span>
                      </div>
                      <div className="flex items-center gap-2 bg-indigo-500/5 px-4 py-2 rounded-xl border border-indigo-500/10">
                         <span className="text-indigo-400 font-black italic">₹</span>
@@ -199,11 +199,11 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
               <div className="space-y-8">
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Start Date</label>
+                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">{t("startDate")}</label>
                     <input type="date" max={new Date().toISOString().split('T')[0]} value={joiningDate} onChange={(e) => setJoiningDate(e.target.value)} className="w-full bg-slate-900/50 border border-white/10 p-4 rounded-2xl text-white font-bold text-xs focus:outline-none focus:border-indigo-500/50 transition-all" />
                   </div>
                   <div className="space-y-3">
-                    <label className="block text-[10px] font-black text-indigo-500/50 uppercase tracking-widest text-right mr-1">End Date</label>
+                     <label className="block text-[10px] font-black text-indigo-500/50 uppercase tracking-widest text-right mr-1">{t("endDate")}</label>
                     <div className="p-4 text-right text-indigo-400 font-black font-mono text-xs bg-indigo-500/5 rounded-2xl border border-indigo-500/20">
                       {endDate}
                     </div>
@@ -215,9 +215,9 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
                     <Calendar size={20} />
                   </div>
                   <p className="text-[10px] text-slate-400 leading-relaxed uppercase font-bold">
-                    Plan expires on <span className="text-white font-black">{endDate}</span>. 
+                    {t("planExpiresOn")} <span className="text-white font-black">{endDate}</span>. 
                     <br />
-                    <span className="text-orange-500/80">Pricing and duration can be manually adjusted.</span>
+                    <span className="text-orange-500/80">{t("pricingDurationAdjustable")}</span>
                   </p>
                 </div>
 
@@ -228,7 +228,7 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
                     onClick={onClose}
                     className="flex-1 px-6 py-5 rounded-[1.5rem] bg-white/5 border border-white/10 font-black uppercase text-[10px] tracking-widest text-slate-400 hover:bg-white/10 hover:text-white transition-all"
                   >
-                    Cancel
+                    {t("cancel")}
                   </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.02, y: -2 }}
@@ -240,7 +240,7 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
                     {subscribing ? <Loader2 className="animate-spin" size={24} /> : (
                       <>
                         <CheckCircle2 size={24} className="group-hover:rotate-12 transition-transform" /> 
-                        Submit
+                        {t("submit")}
                       </>
                     )}
                   </motion.button>
@@ -252,17 +252,17 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
               {historyLoading ? (
                 <div className="py-24 flex flex-col items-center gap-4">
                     <Loader2 className="animate-spin text-indigo-500" size={48} />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Retrieving Logs...</span>
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t("retrievingLogs")}</span>
                 </div>
               ) : history.length > 0 ? (
                 <div className="overflow-hidden rounded-[2rem] border border-white/5 bg-slate-900/20">
                   <table className="w-full text-left">
                     <thead className="bg-white/5">
                       <tr>
-                        <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">Plan Name</th>
-                        <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Duration</th>
-                        <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">Price</th>
-                        <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
+                        <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t("planName")}</th>
+                        <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">{t("duration")}</th>
+                        <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t("price")}</th>
+                        <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">{t("planStatus")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
@@ -270,7 +270,7 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
                         <tr key={idx} className="hover:bg-white/[0.02] transition-colors group">
                           <td className="px-8 py-5">
                             <p className="font-black text-white uppercase tracking-tighter italic text-sm">{sub.plan_name}</p>
-                            <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mt-0.5">{sub.duration_in_months || sub.duration} Month Span</p>
+                            <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mt-0.5">{sub.duration_in_months || sub.duration} {t("monthSpan")}</p>
                           </td>
                           <td className="px-8 py-5 text-center">
                             <div className="flex flex-col items-center gap-1">
@@ -285,7 +285,7 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
                           </td>
                           <td className="px-8 py-5 text-center">
                             <span className="bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-400/5">
-                                Active
+                                {t("active")}
                             </span>
                           </td>
                         </tr>
@@ -298,8 +298,8 @@ export const SubscriptionModal = ({ isOpen, onClose, selectedUser, plans }: Subs
                    <div className="h-24 w-24 rounded-[2rem] bg-white/5 border border-white/5 flex items-center justify-center mx-auto mb-6 shadow-inner">
                     <History size={40} className="text-slate-700" />
                   </div>
-                  <h3 className="text-xl font-black text-white uppercase tracking-tighter">No Active Plans</h3>
-                  <p className="text-slate-500 font-bold uppercase tracking-widest text-[9px] mt-2 italic">No subscription history available for this member.</p>
+                   <h3 className="text-xl font-black text-white uppercase tracking-tighter">{t("noActivePlans")}</h3>
+                   <p className="text-slate-500 font-bold uppercase tracking-widest text-[9px] mt-2 italic">{t("noSubscriptionHistory")}</p>
                 </div>
               )}
             </div>

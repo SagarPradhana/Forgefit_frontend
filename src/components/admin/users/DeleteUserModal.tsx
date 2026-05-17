@@ -12,9 +12,9 @@ export const DeleteUserModal = ({ isOpen, onClose, onConfirm }: DeleteUserModalP
       isOpen={isOpen}
       onClose={onClose}
       onConfirm={onConfirm}
-      title="User Termination"
-      description="This user profile and all associated data will be permanently purged from the master database. This action is irreversible."
-      confirmLabel="Submit"
+      title="Delete User"
+      description="This user and all their data will be permanently removed. This action cannot be undone."
+      confirmLabel="Delete"
     />
   );
 };

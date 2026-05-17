@@ -212,17 +212,7 @@ export const IdCardModal: React.FC<IdCardModalProps> = ({ isOpen, onClose, user,
                 {/* QR Code Section (Centered & Large) */}
                 <div className="qr-center-wrapper">
                   <div className="qr-frame-lg">
-                    {user.qr_url ? (
-                      <img src={user.qr_url} alt="QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                    ) : (
-                      <QrSvg value={JSON.stringify({
-                        user_id: user.id,
-                        subscription_id: user.latest_subscription_details?.subscription_id || null,
-                        subscription_name: user.latest_subscription_details?.subscription_name || null,
-                        start_date: user.latest_subscription_details?.start_date || null,
-                        end_date: user.latest_subscription_details?.end_date || null,
-                      })} />
-                    )}
+                    <img src={user.qr_url} alt="QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                   </div>
                   <div className="qr-info-center">
                     <div className="qr-code-id">{username}</div>

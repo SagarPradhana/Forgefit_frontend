@@ -65,8 +65,8 @@ export function AdminSubscriptions() {
 
   // 🛡️ SAVE PLAN MUTATION
   const saveMutation = useMutation({
-    mutationFn: (payload: any) => 
-      editPlan 
+    mutationFn: (payload: any) =>
+      editPlan
         ? adminSubscriptionService.updatePlan(editPlan, payload)
         : adminSubscriptionService.createPlan(payload),
     onSuccess: () => {
@@ -121,7 +121,7 @@ export function AdminSubscriptions() {
               setPlanModalOpen(true);
             }}
           >
-            {t("createPlan") || "Create Plan"}
+            {t("create") || "Create"}
           </GlowButton>
         </div>
       </div>
@@ -141,9 +141,9 @@ export function AdminSubscriptions() {
               { key: "price", label: t("valuation"), render: (p) => <span className="text-emerald-400 font-black">{currencySymbol}{p.price}</span> },
               { key: "duration", label: t("duration"), render: (p) => <span className="text-indigo-300 font-bold">{getDurationLabel(p.duration_in_months)}</span> },
               { key: "description", label: t("description"), render: (p) => <span className="text-slate-400 text-xs truncate max-w-xs block">{p.description}</span> },
-              { 
-                key: "actions", 
-                label: t("actions"), 
+              {
+                key: "actions",
+                label: t("actions"),
                 render: (p) => (
                   <div className="flex gap-4">
                     <button
@@ -172,7 +172,7 @@ export function AdminSubscriptions() {
                       <Trash2 size={18} />
                     </button>
                   </div>
-                ) 
+                )
               },
             ]}
             data={plans}
@@ -214,7 +214,7 @@ export function AdminSubscriptions() {
         planForm={planForm}
         setPlanForm={setPlanForm}
         currencySymbol={currencySymbol}
-        onSuccess={() => {}}
+        onSuccess={() => { }}
         onSave={(payload) => saveMutation.mutate(payload)}
         isSaving={saveMutation.isPending}
       />

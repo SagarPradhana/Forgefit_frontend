@@ -183,7 +183,7 @@ export function SignInPage() {
                   placeholder="Username / Email / Phone"
                   value={email}
                   onChange={(e: any) => { setEmail(e); if (errors.email) setErrors(prev => ({ ...prev, email: undefined })); }}
-                  className={`pr-10 bg-white/5 focus:bg-white/10 transition-all border-white/10 focus:border-indigo-400 ${errors.email ? "!border-red-500" : ""}`}
+                  className={`pr-12 bg-white/5 focus:bg-white/10 transition-all border-white/10 focus:border-indigo-400 ${errors.email ? "!border-red-500" : ""}`}
                 />
                 {errors.email && (
                   <p className="mt-1.5 text-xs text-red-400 font-medium">{errors.email}</p>
@@ -222,7 +222,7 @@ export function SignInPage() {
                 transition={{ delay: 0.5 }}
                 className="flex justify-end"
               >
-                <Link to="/forgot-password">
+                <Link to="/contact">
                   <button type="button" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors font-medium">
                     Forgot password?
                   </button>
